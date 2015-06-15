@@ -1,0 +1,571 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.sql.rowset;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.sql.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.sql.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.naming.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.io.*;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.math.*;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import org.xml.sax.*;<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>/**<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * The standard interface that all implementations of a &lt;code&gt;WebRowSet&lt;/code&gt;<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * must implement.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;P&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;h3&gt;1.0 Overview&lt;/h3&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * The &lt;code&gt;WebRowSetImpl&lt;/code&gt; provides the standard<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * reference implementation, which may be extended if required.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;P&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * The standard WebRowSet XML Schema definition is available at the following<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * URI:<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;ul&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;pre&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;a href="http://java.sun.com/xml/ns/jdbc/webrowset.xsd"&gt;http://java.sun.com/xml/ns/jdbc/webrowset.xsd&lt;/a&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;/pre&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;/ul&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * It describes the standard XML document format required when describing a<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;code&gt;RowSet&lt;/code&gt; object in XML and must be used be all standard implementations<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * of the &lt;code&gt;WebRowSet&lt;/code&gt; interface to ensure interoperability. In addition,<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * the &lt;code&gt;WebRowSet&lt;/code&gt; schema uses specific SQL/XML Schema annotations,<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * thus ensuring greater cross<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * platform inter-operability. This is an effort currently under way at the ISO<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * organization. The SQL/XML definition is available at the following URI:<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;ul&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;pre&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * &lt;a href="http://standards.iso.org/iso/9075/2002/12/sqlxml"&gt;http://standards.iso.org/iso/9075/2002/12/sqlxml&lt;/a&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;/pre&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;/ul&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * The schema definition describes the internal data of a &lt;code&gt;RowSet&lt;/code&gt; object<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * in three distinct areas:<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;UL&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * &lt;li&gt;&lt;b&gt;properties&lt;/b&gt;&lt;/li&gt;<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * These properties describe the standard synchronization provider properties in<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * addition to the more general &lt;code&gt;RowSet&lt;/code&gt; properties.<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;p&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * &lt;li&gt;&lt;b&gt;metadata&lt;/b&gt;&lt;/li&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * This describes the metadata associated with the tabular structure governed by a<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;code&gt;WebRowSet&lt;/code&gt; object. The metadata described is closely aligned with the<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * metadata accessible in the underlying &lt;code&gt;java.sql.ResultSet&lt;/code&gt; interface.<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * &lt;p&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;li&gt;&lt;b&gt;data&lt;/b&gt;&lt;/li&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * This describes the original data (the state of data since the last population<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * or last synchronization of the &lt;code&gt;WebRowSet&lt;/code&gt; object) and the current<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * data. By keeping track of the delta between the original data and the current data,<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * a &lt;code&gt;WebRowSet&lt;/code&gt; maintains<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * the ability to synchronize changes in its data back to the originating data source.<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * &lt;/ul&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * &lt;P&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;h3&gt;2.0 WebRowSet States&lt;/h3&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * The following sections demonstrates how a &lt;code&gt;WebRowSet&lt;/code&gt; implementation<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * should use the XML Schema to describe update, insert, and delete operations<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * and to describe the state of a &lt;code&gt;WebRowSet&lt;/code&gt; object in XML.<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;p&gt;<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * &lt;h4&gt;2.1 State 1 - Outputting a &lt;code&gt;WebRowSet&lt;/code&gt; Object to XML&lt;/h3&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * In this example, a &lt;code&gt;WebRowSet&lt;/code&gt; object is created and populated with a simple 2 column,<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * 5 row table from a data source. Having the 5 rows in a &lt;code&gt;WebRowSet&lt;/code&gt; object<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * makes it possible to describe them in XML. The<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * metadata describing the various standard JavaBeans properties as defined<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * in the RowSet interface plus the standard properties defined in<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * the &lt;code&gt;CachedRowSet&lt;/code&gt;&lt;sup&gt;&lt;font size=-2&gt;TM&lt;/font&gt;&lt;/sup&gt; interface<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * provide key details that describe WebRowSet<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * properties. Outputting the WebRowSet object to XML using the standard<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;code&gt;writeXml&lt;/code&gt; methods describes the internal properties as follows:<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * &lt;PRE&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * &amp;lt;&lt;font color=red&gt;properties&lt;/font&gt;&amp;gt;<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *       &amp;lt;&lt;font color=red&gt;command&lt;/font&gt;&amp;gt;select co1, col2 from test_table&amp;lt;&lt;font color=red&gt;/command&lt;/font&gt;&amp;gt;<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *      &amp;lt;&lt;font color=red&gt;concurrency&lt;/font&gt;&amp;gt;1&amp;lt;&lt;font color=red&gt;/concurrency&lt;/font&gt;&amp;gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *      &amp;lt;&lt;font color=red&gt;datasource/&lt;/font&gt;&amp;gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *      &amp;lt;&lt;font color=red&gt;escape-processing&lt;/font&gt;&amp;gt;true&amp;lt;&lt;font color=red&gt;/escape-processing&lt;/font&gt;&amp;gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *      &amp;lt;&lt;font color=red&gt;fetch-direction&lt;/font&gt;&amp;gt;0&amp;lt;&lt;font color=red&gt;/fetch-direction&lt;/font&gt;&amp;gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *      &amp;lt;&lt;font color=red&gt;fetch-size&lt;/font&gt;&amp;gt;0&amp;lt;&lt;font color=red&gt;/fetch-size&lt;/font&gt;&amp;gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *      &amp;lt;&lt;font color=red&gt;isolation-level&lt;/font&gt;&amp;gt;1&amp;lt;&lt;font color=red&gt;/isolation-level&lt;/font&gt;&amp;gt;<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *      &amp;lt;&lt;font color=red&gt;key-columns/&lt;/font&gt;&amp;gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *      &amp;lt;&lt;font color=red&gt;map/&lt;/font&gt;&amp;gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *      &amp;lt;&lt;font color=red&gt;max-field-size&lt;/font&gt;&amp;gt;0&amp;lt;&lt;font color=red&gt;/max-field-size&lt;/font&gt;&amp;gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *      &amp;lt;&lt;font color=red&gt;max-rows&lt;/font&gt;&amp;gt;0&amp;lt;&lt;font color=red&gt;/max-rows&lt;/font&gt;&amp;gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *      &amp;lt;&lt;font color=red&gt;query-timeout&lt;/font&gt;&amp;gt;0&amp;lt;&lt;font color=red&gt;/query-timeout&lt;/font&gt;&amp;gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *      &amp;lt;&lt;font color=red&gt;read-only&lt;/font&gt;&amp;gt;false&amp;lt;&lt;font color=red&gt;/read-only&lt;/font&gt;&amp;gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *      &amp;lt;&lt;font color=red&gt;rowset-type&lt;/font&gt;&amp;gt;TRANSACTION_READ_UNCOMMITED&amp;lt;&lt;font color=red&gt;/rowset-type&lt;/font&gt;&amp;gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *      &amp;lt;&lt;font color=red&gt;show-deleted&lt;/font&gt;&amp;gt;false&amp;lt;&lt;font color=red&gt;/show-deleted&lt;/font&gt;&amp;gt;<a name="line.113"></a>
+<span class="sourceLineNo">114</span> *      &amp;lt;&lt;font color=red&gt;table-name/&lt;/font&gt;&amp;gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *      &amp;lt;&lt;font color=red&gt;url&lt;/font&gt;&amp;gt;jdbc:thin:oracle&amp;lt;&lt;font color=red&gt;/url&lt;/font&gt;&amp;gt;<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *      &amp;lt;&lt;font color=red&gt;sync-provider&lt;/font&gt;&amp;gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span> *              &amp;lt;&lt;font color=red&gt;sync-provider-name&lt;/font&gt;&amp;gt;.com.rowset.provider.RIOptimisticProvider&amp;lt;&lt;font color=red&gt;/sync-provider-name&lt;/font&gt;&amp;gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span> *              &amp;lt;&lt;font color=red&gt;sync-provider-vendor&lt;/font&gt;&amp;gt;Oracle Corporation&amp;lt;&lt;font color=red&gt;/sync-provider-vendor&lt;/font&gt;&amp;gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *              &amp;lt;&lt;font color=red&gt;sync-provider-version&lt;/font&gt;&amp;gt;1.0&amp;lt;&lt;font color=red&gt;/sync-provider-name&lt;/font&gt;&amp;gt;<a name="line.119"></a>
+<span class="sourceLineNo">120</span> *              &amp;lt;&lt;font color=red&gt;sync-provider-grade&lt;/font&gt;&amp;gt;LOW&amp;lt;&lt;font color=red&gt;/sync-provider-grade&lt;/font&gt;&amp;gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span> *              &amp;lt;&lt;font color=red&gt;data-source-lock&lt;/font&gt;&amp;gt;NONE&amp;lt;&lt;font color=red&gt;/data-source-lock&lt;/font&gt;&amp;gt;<a name="line.121"></a>
+<span class="sourceLineNo">122</span> *      &amp;lt;&lt;font color=red&gt;/sync-provider&lt;/font&gt;&amp;gt;<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * &amp;lt;&lt;font color=red&gt;/properties&lt;/font&gt;&amp;gt;<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * &lt;/PRE&gt;<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * The meta-data describing the make up of the WebRowSet is described<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * in XML as detailed below. Note both columns are described between the<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * &lt;code&gt;column-definition&lt;/code&gt; tags.<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * &lt;PRE&gt;<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * &amp;lt;&lt;font color=red&gt;metadata&lt;/font&gt;&amp;gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span> *      &amp;lt;&lt;font color=red&gt;column-count&lt;/font&gt;&amp;gt;2&amp;lt;&lt;font color=red&gt;/column-count&lt;/font&gt;&amp;gt;<a name="line.130"></a>
+<span class="sourceLineNo">131</span> *      &amp;lt;&lt;font color=red&gt;column-definition&lt;/font&gt;&amp;gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span> *              &amp;lt;&lt;font color=red&gt;column-index&lt;/font&gt;&amp;gt;1&amp;lt;&lt;font color=red&gt;/column-index&lt;/font&gt;&amp;gt;<a name="line.132"></a>
+<span class="sourceLineNo">133</span> *              &amp;lt;&lt;font color=red&gt;auto-increment&lt;/font&gt;&amp;gt;false&amp;lt;&lt;font color=red&gt;/auto-increment&lt;/font&gt;&amp;gt;<a name="line.133"></a>
+<span class="sourceLineNo">134</span> *              &amp;lt;&lt;font color=red&gt;case-sensitive&lt;/font&gt;&amp;gt;true&amp;lt;&lt;font color=red&gt;/case-sensitive&lt;/font&gt;&amp;gt;<a name="line.134"></a>
+<span class="sourceLineNo">135</span> *              &amp;lt;&lt;font color=red&gt;currency&lt;/font&gt;&amp;gt;false&amp;lt;&lt;font color=red&gt;/currency&lt;/font&gt;&amp;gt;<a name="line.135"></a>
+<span class="sourceLineNo">136</span> *              &amp;lt;&lt;font color=red&gt;nullable&lt;/font&gt;&amp;gt;1&amp;lt;&lt;font color=red&gt;/nullable&lt;/font&gt;&amp;gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span> *              &amp;lt;&lt;font color=red&gt;signed&lt;/font&gt;&amp;gt;false&amp;lt;&lt;font color=red&gt;/signed&lt;/font&gt;&amp;gt;<a name="line.137"></a>
+<span class="sourceLineNo">138</span> *              &amp;lt;&lt;font color=red&gt;searchable&lt;/font&gt;&amp;gt;true&amp;lt;&lt;font color=red&gt;/searchable&lt;/font&gt;&amp;gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span> *              &amp;lt;&lt;font color=red&gt;column-display-size&lt;/font&gt;&amp;gt;10&amp;lt;&lt;font color=red&gt;/column-display-size&lt;/font&gt;&amp;gt;<a name="line.139"></a>
+<span class="sourceLineNo">140</span> *              &amp;lt;&lt;font color=red&gt;column-label&lt;/font&gt;&amp;gt;COL1&amp;lt;&lt;font color=red&gt;/column-label&lt;/font&gt;&amp;gt;<a name="line.140"></a>
+<span class="sourceLineNo">141</span> *              &amp;lt;&lt;font color=red&gt;column-name&lt;/font&gt;&amp;gt;COL1&amp;lt;&lt;font color=red&gt;/column-name&lt;/font&gt;&amp;gt;<a name="line.141"></a>
+<span class="sourceLineNo">142</span> *              &amp;lt;&lt;font color=red&gt;schema-name/&lt;/font&gt;&amp;gt;<a name="line.142"></a>
+<span class="sourceLineNo">143</span> *              &amp;lt;&lt;font color=red&gt;column-precision&lt;/font&gt;&amp;gt;10&amp;lt;&lt;font color=red&gt;/column-precision&lt;/font&gt;&amp;gt;<a name="line.143"></a>
+<span class="sourceLineNo">144</span> *              &amp;lt;&lt;font color=red&gt;column-scale&lt;/font&gt;&amp;gt;0&amp;lt;&lt;font color=red&gt;/column-scale&lt;/font&gt;&amp;gt;<a name="line.144"></a>
+<span class="sourceLineNo">145</span> *              &amp;lt;&lt;font color=red&gt;table-name/&lt;/font&gt;&amp;gt;<a name="line.145"></a>
+<span class="sourceLineNo">146</span> *              &amp;lt;&lt;font color=red&gt;catalog-name/&lt;/font&gt;&amp;gt;<a name="line.146"></a>
+<span class="sourceLineNo">147</span> *              &amp;lt;&lt;font color=red&gt;column-type&lt;/font&gt;&amp;gt;1&amp;lt;&lt;font color=red&gt;/column-type&lt;/font&gt;&amp;gt;<a name="line.147"></a>
+<span class="sourceLineNo">148</span> *              &amp;lt;&lt;font color=red&gt;column-type-name&lt;/font&gt;&amp;gt;CHAR&amp;lt;&lt;font color=red&gt;/column-type-name&lt;/font&gt;&amp;gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span> *      &amp;lt;&lt;font color=red&gt;/column-definition&lt;/font&gt;&amp;gt;<a name="line.149"></a>
+<span class="sourceLineNo">150</span> *      &amp;lt;&lt;font color=red&gt;column-definition&lt;/font&gt;&amp;gt;<a name="line.150"></a>
+<span class="sourceLineNo">151</span> *              &amp;lt;&lt;font color=red&gt;column-index&lt;/font&gt;&amp;gt;2&amp;lt;&lt;font color=red&gt;/column-index&lt;/font&gt;&amp;gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span> *              &amp;lt;&lt;font color=red&gt;auto-increment&lt;/font&gt;&amp;gt;false&amp;lt;&lt;font color=red&gt;/auto-increment&lt;/font&gt;&amp;gt;<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *              &amp;lt;&lt;font color=red&gt;case-sensitive&lt;/font&gt;&amp;gt;false&amp;lt;&lt;font color=red&gt;/case-sensitive&lt;/font&gt;&amp;gt;<a name="line.153"></a>
+<span class="sourceLineNo">154</span> *              &amp;lt;&lt;font color=red&gt;currency&lt;/font&gt;&amp;gt;false&amp;lt;&lt;font color=red&gt;/currency&lt;/font&gt;&amp;gt;<a name="line.154"></a>
+<span class="sourceLineNo">155</span> *              &amp;lt;&lt;font color=red&gt;nullable&lt;/font&gt;&amp;gt;1&amp;lt;&lt;font color=red&gt;/nullable&lt;/font&gt;&amp;gt;<a name="line.155"></a>
+<span class="sourceLineNo">156</span> *              &amp;lt;&lt;font color=red&gt;signed&lt;/font&gt;&amp;gt;true&amp;lt;&lt;font color=red&gt;/signed&lt;/font&gt;&amp;gt;<a name="line.156"></a>
+<span class="sourceLineNo">157</span> *              &amp;lt;&lt;font color=red&gt;searchable&lt;/font&gt;&amp;gt;true&amp;lt;&lt;font color=red&gt;/searchable&lt;/font&gt;&amp;gt;<a name="line.157"></a>
+<span class="sourceLineNo">158</span> *              &amp;lt;&lt;font color=red&gt;column-display-size&lt;/font&gt;&amp;gt;39&amp;lt;&lt;font color=red&gt;/column-display-size&lt;/font&gt;&amp;gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span> *              &amp;lt;&lt;font color=red&gt;column-label&lt;/font&gt;&amp;gt;COL2&amp;lt;&lt;font color=red&gt;/column-label&lt;/font&gt;&amp;gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span> *              &amp;lt;&lt;font color=red&gt;column-name&lt;/font&gt;&amp;gt;COL2&amp;lt;&lt;font color=red&gt;/column-name&lt;/font&gt;&amp;gt;<a name="line.160"></a>
+<span class="sourceLineNo">161</span> *              &amp;lt;&lt;font color=red&gt;schema-name/&lt;/font&gt;&amp;gt;<a name="line.161"></a>
+<span class="sourceLineNo">162</span> *              &amp;lt;&lt;font color=red&gt;column-precision&lt;/font&gt;&amp;gt;38&amp;lt;&lt;font color=red&gt;/column-precision&lt;/font&gt;&amp;gt;<a name="line.162"></a>
+<span class="sourceLineNo">163</span> *              &amp;lt;&lt;font color=red&gt;column-scale&lt;/font&gt;&amp;gt;0&amp;lt;&lt;font color=red&gt;/column-scale&lt;/font&gt;&amp;gt;<a name="line.163"></a>
+<span class="sourceLineNo">164</span> *              &amp;lt;&lt;font color=red&gt;table-name/&lt;/font&gt;&amp;gt;<a name="line.164"></a>
+<span class="sourceLineNo">165</span> *              &amp;lt;&lt;font color=red&gt;catalog-name/&lt;/font&gt;&amp;gt;<a name="line.165"></a>
+<span class="sourceLineNo">166</span> *              &amp;lt;&lt;font color=red&gt;column-type&lt;/font&gt;&amp;gt;3&amp;lt;&lt;font color=red&gt;/column-type&lt;/font&gt;&amp;gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span> *              &amp;lt;&lt;font color=red&gt;column-type-name&lt;/font&gt;&amp;gt;NUMBER&amp;lt;&lt;font color=red&gt;/column-type-name&lt;/font&gt;&amp;gt;<a name="line.167"></a>
+<span class="sourceLineNo">168</span> *      &amp;lt;&lt;font color=red&gt;/column-definition&lt;/font&gt;&amp;gt;<a name="line.168"></a>
+<span class="sourceLineNo">169</span> * &amp;lt;&lt;font color=red&gt;/metadata&lt;/font&gt;&amp;gt;<a name="line.169"></a>
+<span class="sourceLineNo">170</span> * &lt;/PRE&gt;<a name="line.170"></a>
+<span class="sourceLineNo">171</span> * Having detailed how the properties and metadata are described, the following details<a name="line.171"></a>
+<span class="sourceLineNo">172</span> * how the contents of a &lt;code&gt;WebRowSet&lt;/code&gt; object is described in XML. Note, that<a name="line.172"></a>
+<span class="sourceLineNo">173</span> * this describes a &lt;code&gt;WebRowSet&lt;/code&gt; object that has not undergone any<a name="line.173"></a>
+<span class="sourceLineNo">174</span> * modifications since its instantiation.<a name="line.174"></a>
+<span class="sourceLineNo">175</span> * A &lt;code&gt;currentRow&lt;/code&gt; tag is mapped to each row of the table structure that the<a name="line.175"></a>
+<span class="sourceLineNo">176</span> * &lt;code&gt;WebRowSet&lt;/code&gt; object provides. A &lt;code&gt;columnValue&lt;/code&gt; tag may contain<a name="line.176"></a>
+<span class="sourceLineNo">177</span> * either the &lt;code&gt;stringData&lt;/code&gt; or &lt;code&gt;binaryData&lt;/code&gt; tag, according to<a name="line.177"></a>
+<span class="sourceLineNo">178</span> * the SQL type that<a name="line.178"></a>
+<span class="sourceLineNo">179</span> * the XML value is mapping back to. The &lt;code&gt;binaryData&lt;/code&gt; tag contains data in the<a name="line.179"></a>
+<span class="sourceLineNo">180</span> * Base64 encoding and is typically used for &lt;code&gt;BLOB&lt;/code&gt; and &lt;code&gt;CLOB&lt;/code&gt; type data.<a name="line.180"></a>
+<span class="sourceLineNo">181</span> * &lt;PRE&gt;<a name="line.181"></a>
+<span class="sourceLineNo">182</span> * &amp;lt;&lt;font color=red&gt;data&lt;/font&gt;&amp;gt;<a name="line.182"></a>
+<span class="sourceLineNo">183</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.183"></a>
+<span class="sourceLineNo">184</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.184"></a>
+<span class="sourceLineNo">185</span> *                      firstrow<a name="line.185"></a>
+<span class="sourceLineNo">186</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.186"></a>
+<span class="sourceLineNo">187</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.187"></a>
+<span class="sourceLineNo">188</span> *                      1<a name="line.188"></a>
+<span class="sourceLineNo">189</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.189"></a>
+<span class="sourceLineNo">190</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.190"></a>
+<span class="sourceLineNo">191</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.191"></a>
+<span class="sourceLineNo">192</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.192"></a>
+<span class="sourceLineNo">193</span> *                      secondrow<a name="line.193"></a>
+<span class="sourceLineNo">194</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.194"></a>
+<span class="sourceLineNo">195</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.195"></a>
+<span class="sourceLineNo">196</span> *                      2<a name="line.196"></a>
+<span class="sourceLineNo">197</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.197"></a>
+<span class="sourceLineNo">198</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.198"></a>
+<span class="sourceLineNo">199</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.199"></a>
+<span class="sourceLineNo">200</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.200"></a>
+<span class="sourceLineNo">201</span> *                      thirdrow<a name="line.201"></a>
+<span class="sourceLineNo">202</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.202"></a>
+<span class="sourceLineNo">203</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.203"></a>
+<span class="sourceLineNo">204</span> *                      3<a name="line.204"></a>
+<span class="sourceLineNo">205</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.205"></a>
+<span class="sourceLineNo">206</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.206"></a>
+<span class="sourceLineNo">207</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.207"></a>
+<span class="sourceLineNo">208</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.208"></a>
+<span class="sourceLineNo">209</span> *                      fourthrow<a name="line.209"></a>
+<span class="sourceLineNo">210</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.210"></a>
+<span class="sourceLineNo">211</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.211"></a>
+<span class="sourceLineNo">212</span> *                      4<a name="line.212"></a>
+<span class="sourceLineNo">213</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.213"></a>
+<span class="sourceLineNo">214</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.214"></a>
+<span class="sourceLineNo">215</span> * &amp;lt;&lt;font color=red&gt;/data&lt;/font&gt;&amp;gt;<a name="line.215"></a>
+<span class="sourceLineNo">216</span> * &lt;/PRE&gt;<a name="line.216"></a>
+<span class="sourceLineNo">217</span> * &lt;h4&gt;2.2 State 2 - Deleting a Row&lt;/h4&gt;<a name="line.217"></a>
+<span class="sourceLineNo">218</span> * Deleting a row in a &lt;code&gt;WebRowSet&lt;/code&gt; object involves simply moving to the row<a name="line.218"></a>
+<span class="sourceLineNo">219</span> * to be deleted and then calling the method &lt;code&gt;deleteRow&lt;/code&gt;, as in any other<a name="line.219"></a>
+<span class="sourceLineNo">220</span> * &lt;code&gt;RowSet&lt;/code&gt; object.  The following<a name="line.220"></a>
+<span class="sourceLineNo">221</span> * two lines of code, in which &lt;i&gt;wrs&lt;/i&gt; is a &lt;code&gt;WebRowSet&lt;/code&gt; object, delete<a name="line.221"></a>
+<span class="sourceLineNo">222</span> * the third row.<a name="line.222"></a>
+<span class="sourceLineNo">223</span> * &lt;PRE&gt;<a name="line.223"></a>
+<span class="sourceLineNo">224</span> *     wrs.absolute(3);<a name="line.224"></a>
+<span class="sourceLineNo">225</span> *     wrs.deleteRow();<a name="line.225"></a>
+<span class="sourceLineNo">226</span> * &lt;/PRE&gt;<a name="line.226"></a>
+<span class="sourceLineNo">227</span> * The XML description shows the third row is marked as a &lt;code&gt;deleteRow&lt;/code&gt;,<a name="line.227"></a>
+<span class="sourceLineNo">228</span> *  which eliminates the third row in the &lt;code&gt;WebRowSet&lt;/code&gt; object.<a name="line.228"></a>
+<span class="sourceLineNo">229</span> * &lt;PRE&gt;<a name="line.229"></a>
+<span class="sourceLineNo">230</span> * &amp;lt;&lt;font color=red&gt;data&lt;/font&gt;&amp;gt;<a name="line.230"></a>
+<span class="sourceLineNo">231</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.231"></a>
+<span class="sourceLineNo">232</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.232"></a>
+<span class="sourceLineNo">233</span> *                      firstrow<a name="line.233"></a>
+<span class="sourceLineNo">234</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.234"></a>
+<span class="sourceLineNo">235</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.235"></a>
+<span class="sourceLineNo">236</span> *                      1<a name="line.236"></a>
+<span class="sourceLineNo">237</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.237"></a>
+<span class="sourceLineNo">238</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.238"></a>
+<span class="sourceLineNo">239</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.239"></a>
+<span class="sourceLineNo">240</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.240"></a>
+<span class="sourceLineNo">241</span> *                      secondrow<a name="line.241"></a>
+<span class="sourceLineNo">242</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.242"></a>
+<span class="sourceLineNo">243</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.243"></a>
+<span class="sourceLineNo">244</span> *                      2<a name="line.244"></a>
+<span class="sourceLineNo">245</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.245"></a>
+<span class="sourceLineNo">246</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.246"></a>
+<span class="sourceLineNo">247</span> *      &amp;lt;&lt;font color=red&gt;deleteRow&lt;/font&gt;&amp;gt;<a name="line.247"></a>
+<span class="sourceLineNo">248</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.248"></a>
+<span class="sourceLineNo">249</span> *                      thirdrow<a name="line.249"></a>
+<span class="sourceLineNo">250</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.250"></a>
+<span class="sourceLineNo">251</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.251"></a>
+<span class="sourceLineNo">252</span> *                      3<a name="line.252"></a>
+<span class="sourceLineNo">253</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.253"></a>
+<span class="sourceLineNo">254</span> *      &amp;lt;&lt;font color=red&gt;/deleteRow&lt;/font&gt;&amp;gt;<a name="line.254"></a>
+<span class="sourceLineNo">255</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.255"></a>
+<span class="sourceLineNo">256</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.256"></a>
+<span class="sourceLineNo">257</span> *                      fourthrow<a name="line.257"></a>
+<span class="sourceLineNo">258</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.258"></a>
+<span class="sourceLineNo">259</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.259"></a>
+<span class="sourceLineNo">260</span> *                      4<a name="line.260"></a>
+<span class="sourceLineNo">261</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.261"></a>
+<span class="sourceLineNo">262</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.262"></a>
+<span class="sourceLineNo">263</span> * &amp;lt;&lt;font color=red&gt;/data&lt;/font&gt;&amp;gt;<a name="line.263"></a>
+<span class="sourceLineNo">264</span> * &lt;/PRE&gt;<a name="line.264"></a>
+<span class="sourceLineNo">265</span> * &lt;h4&gt;2.3 State 3 - Inserting a Row&lt;/h4&gt;<a name="line.265"></a>
+<span class="sourceLineNo">266</span> * A &lt;code&gt;WebRowSet&lt;/code&gt; object can insert a new row by moving to the insert row,<a name="line.266"></a>
+<span class="sourceLineNo">267</span> * calling the appropriate updater methods for each column in the row, and then<a name="line.267"></a>
+<span class="sourceLineNo">268</span> * calling the method &lt;code&gt;insertRow&lt;/code&gt;.<a name="line.268"></a>
+<span class="sourceLineNo">269</span> * &lt;PRE&gt;<a name="line.269"></a>
+<span class="sourceLineNo">270</span> * wrs.moveToInsertRow();<a name="line.270"></a>
+<span class="sourceLineNo">271</span> * wrs.updateString(1, "fifththrow");<a name="line.271"></a>
+<span class="sourceLineNo">272</span> * wrs.updateString(2, "5");<a name="line.272"></a>
+<span class="sourceLineNo">273</span> * wrs.insertRow();<a name="line.273"></a>
+<span class="sourceLineNo">274</span> * &lt;/PRE&gt;<a name="line.274"></a>
+<span class="sourceLineNo">275</span> * The following code fragment changes the second column value in the row just inserted.<a name="line.275"></a>
+<span class="sourceLineNo">276</span> * Note that this code applies when new rows are inserted right after the current row,<a name="line.276"></a>
+<span class="sourceLineNo">277</span> * which is why the method &lt;code&gt;next&lt;/code&gt; moves the cursor to the correct row.<a name="line.277"></a>
+<span class="sourceLineNo">278</span> * Calling the method &lt;code&gt;acceptChanges&lt;/code&gt; writes the change to the data source.<a name="line.278"></a>
+<span class="sourceLineNo">279</span> *<a name="line.279"></a>
+<span class="sourceLineNo">280</span> * &lt;PRE&gt;<a name="line.280"></a>
+<span class="sourceLineNo">281</span> * wrs.moveToCurrentRow();<a name="line.281"></a>
+<span class="sourceLineNo">282</span> * wrs.next();<a name="line.282"></a>
+<span class="sourceLineNo">283</span> * wrs.updateString(2, "V");<a name="line.283"></a>
+<span class="sourceLineNo">284</span> * wrs.acceptChanges();<a name="line.284"></a>
+<span class="sourceLineNo">285</span> * :<a name="line.285"></a>
+<span class="sourceLineNo">286</span> * &lt;/PRE&gt;<a name="line.286"></a>
+<span class="sourceLineNo">287</span> * Describing this in XML demonstrates where the Java code inserts a new row and then<a name="line.287"></a>
+<span class="sourceLineNo">288</span> * performs an update on the newly inserted row on an individual field.<a name="line.288"></a>
+<span class="sourceLineNo">289</span> * &lt;PRE&gt;<a name="line.289"></a>
+<span class="sourceLineNo">290</span> * &amp;lt;&lt;font color=red&gt;data&lt;/font&gt;&amp;gt;<a name="line.290"></a>
+<span class="sourceLineNo">291</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.291"></a>
+<span class="sourceLineNo">292</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.292"></a>
+<span class="sourceLineNo">293</span> *                      firstrow<a name="line.293"></a>
+<span class="sourceLineNo">294</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.294"></a>
+<span class="sourceLineNo">295</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.295"></a>
+<span class="sourceLineNo">296</span> *                      1<a name="line.296"></a>
+<span class="sourceLineNo">297</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.297"></a>
+<span class="sourceLineNo">298</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.298"></a>
+<span class="sourceLineNo">299</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.299"></a>
+<span class="sourceLineNo">300</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.300"></a>
+<span class="sourceLineNo">301</span> *                      secondrow<a name="line.301"></a>
+<span class="sourceLineNo">302</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.302"></a>
+<span class="sourceLineNo">303</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.303"></a>
+<span class="sourceLineNo">304</span> *                      2<a name="line.304"></a>
+<span class="sourceLineNo">305</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.305"></a>
+<span class="sourceLineNo">306</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.306"></a>
+<span class="sourceLineNo">307</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.307"></a>
+<span class="sourceLineNo">308</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.308"></a>
+<span class="sourceLineNo">309</span> *                      newthirdrow<a name="line.309"></a>
+<span class="sourceLineNo">310</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.310"></a>
+<span class="sourceLineNo">311</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.311"></a>
+<span class="sourceLineNo">312</span> *                      III<a name="line.312"></a>
+<span class="sourceLineNo">313</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.313"></a>
+<span class="sourceLineNo">314</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.314"></a>
+<span class="sourceLineNo">315</span> *      &amp;lt;&lt;font color=red&gt;insertRow&lt;/font&gt;&amp;gt;<a name="line.315"></a>
+<span class="sourceLineNo">316</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.316"></a>
+<span class="sourceLineNo">317</span> *                      fifthrow<a name="line.317"></a>
+<span class="sourceLineNo">318</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.318"></a>
+<span class="sourceLineNo">319</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.319"></a>
+<span class="sourceLineNo">320</span> *                      5<a name="line.320"></a>
+<span class="sourceLineNo">321</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.321"></a>
+<span class="sourceLineNo">322</span> *              &amp;lt;&lt;font color=red&gt;updateValue&lt;/font&gt;&amp;gt;<a name="line.322"></a>
+<span class="sourceLineNo">323</span> *                      V<a name="line.323"></a>
+<span class="sourceLineNo">324</span> *              &amp;lt;&lt;font color=red&gt;/updateValue&lt;/font&gt;&amp;gt;<a name="line.324"></a>
+<span class="sourceLineNo">325</span> *      &amp;lt;&lt;font color=red&gt;/insertRow&lt;/font&gt;&amp;gt;<a name="line.325"></a>
+<span class="sourceLineNo">326</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.326"></a>
+<span class="sourceLineNo">327</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.327"></a>
+<span class="sourceLineNo">328</span> *                      fourthrow<a name="line.328"></a>
+<span class="sourceLineNo">329</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.329"></a>
+<span class="sourceLineNo">330</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.330"></a>
+<span class="sourceLineNo">331</span> *                      4<a name="line.331"></a>
+<span class="sourceLineNo">332</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.332"></a>
+<span class="sourceLineNo">333</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.333"></a>
+<span class="sourceLineNo">334</span> * &amp;lt;&lt;font color=red&gt;/date&lt;/font&gt;&amp;gt;<a name="line.334"></a>
+<span class="sourceLineNo">335</span> * &lt;/PRE&gt;<a name="line.335"></a>
+<span class="sourceLineNo">336</span> * &lt;h4&gt;2.4 State 4 - Modifying a Row&lt;/h4&gt;<a name="line.336"></a>
+<span class="sourceLineNo">337</span> * Modifying a row produces specific XML that records both the new value and the<a name="line.337"></a>
+<span class="sourceLineNo">338</span> * value that was replaced.  The value that was replaced becomes the original value,<a name="line.338"></a>
+<span class="sourceLineNo">339</span> * and the new value becomes the current value. The following<a name="line.339"></a>
+<span class="sourceLineNo">340</span> * code moves the cursor to a specific row, performs some modifications, and updates<a name="line.340"></a>
+<span class="sourceLineNo">341</span> * the row when complete.<a name="line.341"></a>
+<span class="sourceLineNo">342</span> * &lt;PRE&gt;<a name="line.342"></a>
+<span class="sourceLineNo">343</span> * wrs.absolute(5);<a name="line.343"></a>
+<span class="sourceLineNo">344</span> * wrs.updateString(1, "new4thRow");<a name="line.344"></a>
+<span class="sourceLineNo">345</span> * wrs.updateString(2, "IV");<a name="line.345"></a>
+<span class="sourceLineNo">346</span> * wrs.updateRow();<a name="line.346"></a>
+<span class="sourceLineNo">347</span> * &lt;/PRE&gt;<a name="line.347"></a>
+<span class="sourceLineNo">348</span> * In XML, this is described by the &lt;code&gt;modifyRow&lt;/code&gt; tag. Both the original and new<a name="line.348"></a>
+<span class="sourceLineNo">349</span> * values are contained within the tag for original row tracking purposes.<a name="line.349"></a>
+<span class="sourceLineNo">350</span> * &lt;PRE&gt;<a name="line.350"></a>
+<span class="sourceLineNo">351</span> * &amp;lt;&lt;font color=red&gt;data&lt;/font&gt;&amp;gt;<a name="line.351"></a>
+<span class="sourceLineNo">352</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.352"></a>
+<span class="sourceLineNo">353</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.353"></a>
+<span class="sourceLineNo">354</span> *                      firstrow<a name="line.354"></a>
+<span class="sourceLineNo">355</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.355"></a>
+<span class="sourceLineNo">356</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.356"></a>
+<span class="sourceLineNo">357</span> *                      1<a name="line.357"></a>
+<span class="sourceLineNo">358</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.358"></a>
+<span class="sourceLineNo">359</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.359"></a>
+<span class="sourceLineNo">360</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.360"></a>
+<span class="sourceLineNo">361</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.361"></a>
+<span class="sourceLineNo">362</span> *                      secondrow<a name="line.362"></a>
+<span class="sourceLineNo">363</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.363"></a>
+<span class="sourceLineNo">364</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.364"></a>
+<span class="sourceLineNo">365</span> *                      2<a name="line.365"></a>
+<span class="sourceLineNo">366</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.366"></a>
+<span class="sourceLineNo">367</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.367"></a>
+<span class="sourceLineNo">368</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.368"></a>
+<span class="sourceLineNo">369</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.369"></a>
+<span class="sourceLineNo">370</span> *                      newthirdrow<a name="line.370"></a>
+<span class="sourceLineNo">371</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.371"></a>
+<span class="sourceLineNo">372</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.372"></a>
+<span class="sourceLineNo">373</span> *                      III<a name="line.373"></a>
+<span class="sourceLineNo">374</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.374"></a>
+<span class="sourceLineNo">375</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.375"></a>
+<span class="sourceLineNo">376</span> *      &amp;lt;&lt;font color=red&gt;currentRow&lt;/font&gt;&amp;gt;<a name="line.376"></a>
+<span class="sourceLineNo">377</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.377"></a>
+<span class="sourceLineNo">378</span> *                      fifthrow<a name="line.378"></a>
+<span class="sourceLineNo">379</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.379"></a>
+<span class="sourceLineNo">380</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.380"></a>
+<span class="sourceLineNo">381</span> *                      5<a name="line.381"></a>
+<span class="sourceLineNo">382</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.382"></a>
+<span class="sourceLineNo">383</span> *      &amp;lt;&lt;font color=red&gt;/currentRow&lt;/font&gt;&amp;gt;<a name="line.383"></a>
+<span class="sourceLineNo">384</span> *      &amp;lt;&lt;font color=red&gt;modifyRow&lt;/font&gt;&amp;gt;<a name="line.384"></a>
+<span class="sourceLineNo">385</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.385"></a>
+<span class="sourceLineNo">386</span> *                      fourthrow<a name="line.386"></a>
+<span class="sourceLineNo">387</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.387"></a>
+<span class="sourceLineNo">388</span> *              &amp;lt;&lt;font color=red&gt;updateValue&lt;/font&gt;&amp;gt;<a name="line.388"></a>
+<span class="sourceLineNo">389</span> *                      new4thRow<a name="line.389"></a>
+<span class="sourceLineNo">390</span> *              &amp;lt;&lt;font color=red&gt;/updateValue&lt;/font&gt;&amp;gt;<a name="line.390"></a>
+<span class="sourceLineNo">391</span> *              &amp;lt;&lt;font color=red&gt;columnValue&lt;/font&gt;&amp;gt;<a name="line.391"></a>
+<span class="sourceLineNo">392</span> *                      4<a name="line.392"></a>
+<span class="sourceLineNo">393</span> *              &amp;lt;&lt;font color=red&gt;/columnValue&lt;/font&gt;&amp;gt;<a name="line.393"></a>
+<span class="sourceLineNo">394</span> *              &amp;lt;&lt;font color=red&gt;updateValue&lt;/font&gt;&amp;gt;<a name="line.394"></a>
+<span class="sourceLineNo">395</span> *                      IV<a name="line.395"></a>
+<span class="sourceLineNo">396</span> *              &amp;lt;&lt;font color=red&gt;/updateValue&lt;/font&gt;&amp;gt;<a name="line.396"></a>
+<span class="sourceLineNo">397</span> *      &amp;lt;&lt;font color=red&gt;/modifyRow&lt;/font&gt;&amp;gt;<a name="line.397"></a>
+<span class="sourceLineNo">398</span> * &amp;lt;&lt;font color=red&gt;/data&lt;/font&gt;&amp;gt;<a name="line.398"></a>
+<span class="sourceLineNo">399</span> * &lt;/PRE&gt;<a name="line.399"></a>
+<span class="sourceLineNo">400</span> *<a name="line.400"></a>
+<span class="sourceLineNo">401</span> * @see javax.sql.rowset.JdbcRowSet<a name="line.401"></a>
+<span class="sourceLineNo">402</span> * @see javax.sql.rowset.CachedRowSet<a name="line.402"></a>
+<span class="sourceLineNo">403</span> * @see javax.sql.rowset.FilteredRowSet<a name="line.403"></a>
+<span class="sourceLineNo">404</span> * @see javax.sql.rowset.JoinRowSet<a name="line.404"></a>
+<span class="sourceLineNo">405</span> */<a name="line.405"></a>
+<span class="sourceLineNo">406</span><a name="line.406"></a>
+<span class="sourceLineNo">407</span>public interface WebRowSet extends CachedRowSet {<a name="line.407"></a>
+<span class="sourceLineNo">408</span><a name="line.408"></a>
+<span class="sourceLineNo">409</span>   /**<a name="line.409"></a>
+<span class="sourceLineNo">410</span>    * Reads a &lt;code&gt;WebRowSet&lt;/code&gt; object in its XML format from the given<a name="line.410"></a>
+<span class="sourceLineNo">411</span>    * &lt;code&gt;Reader&lt;/code&gt; object.<a name="line.411"></a>
+<span class="sourceLineNo">412</span>    *<a name="line.412"></a>
+<span class="sourceLineNo">413</span>    * @param reader the &lt;code&gt;java.io.Reader&lt;/code&gt; stream from which this<a name="line.413"></a>
+<span class="sourceLineNo">414</span>    *        &lt;code&gt;WebRowSet&lt;/code&gt; object will be populated<a name="line.414"></a>
+<span class="sourceLineNo">415</span><a name="line.415"></a>
+<span class="sourceLineNo">416</span>    * @throws SQLException if a database access error occurs<a name="line.416"></a>
+<span class="sourceLineNo">417</span>    */<a name="line.417"></a>
+<span class="sourceLineNo">418</span>    public void readXml(java.io.Reader reader) throws SQLException;<a name="line.418"></a>
+<span class="sourceLineNo">419</span><a name="line.419"></a>
+<span class="sourceLineNo">420</span>    /**<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * Reads a stream based XML input to populate this &lt;code&gt;WebRowSet&lt;/code&gt;<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     * object.<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     *<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * @param iStream the &lt;code&gt;java.io.InputStream&lt;/code&gt; from which this<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     *        &lt;code&gt;WebRowSet&lt;/code&gt; object will be populated<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     * @throws SQLException if a data source access error occurs<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * @throws IOException if an IO exception occurs<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     */<a name="line.428"></a>
+<span class="sourceLineNo">429</span>    public void readXml(java.io.InputStream iStream) throws SQLException, IOException;<a name="line.429"></a>
+<span class="sourceLineNo">430</span><a name="line.430"></a>
+<span class="sourceLineNo">431</span>   /**<a name="line.431"></a>
+<span class="sourceLineNo">432</span>    * Populates this &lt;code&gt;WebRowSet&lt;/code&gt; object with<a name="line.432"></a>
+<span class="sourceLineNo">433</span>    * the contents of the given &lt;code&gt;ResultSet&lt;/code&gt; object and writes its<a name="line.433"></a>
+<span class="sourceLineNo">434</span>    * data, properties, and metadata<a name="line.434"></a>
+<span class="sourceLineNo">435</span>    * to the given &lt;code&gt;Writer&lt;/code&gt; object in XML format.<a name="line.435"></a>
+<span class="sourceLineNo">436</span>    * &lt;p&gt;<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    * NOTE: The &lt;code&gt;WebRowSet&lt;/code&gt; cursor may be moved to write out the<a name="line.437"></a>
+<span class="sourceLineNo">438</span>    * contents to the XML data source. If implemented in this way, the cursor &lt;b&gt;must&lt;/b&gt;<a name="line.438"></a>
+<span class="sourceLineNo">439</span>    * be returned to its position just prior to the &lt;code&gt;writeXml()&lt;/code&gt; call.<a name="line.439"></a>
+<span class="sourceLineNo">440</span>    *<a name="line.440"></a>
+<span class="sourceLineNo">441</span>    * @param rs the &lt;code&gt;ResultSet&lt;/code&gt; object with which to populate this<a name="line.441"></a>
+<span class="sourceLineNo">442</span>    *        &lt;code&gt;WebRowSet&lt;/code&gt; object<a name="line.442"></a>
+<span class="sourceLineNo">443</span>    * @param writer the &lt;code&gt;java.io.Writer&lt;/code&gt; object to write to.<a name="line.443"></a>
+<span class="sourceLineNo">444</span>    * @throws SQLException if an error occurs writing out the rowset<a name="line.444"></a>
+<span class="sourceLineNo">445</span>    *          contents in XML format<a name="line.445"></a>
+<span class="sourceLineNo">446</span>    */<a name="line.446"></a>
+<span class="sourceLineNo">447</span>    public void writeXml(ResultSet rs, java.io.Writer writer) throws SQLException;<a name="line.447"></a>
+<span class="sourceLineNo">448</span><a name="line.448"></a>
+<span class="sourceLineNo">449</span>   /**<a name="line.449"></a>
+<span class="sourceLineNo">450</span>    * Populates this &lt;code&gt;WebRowSet&lt;/code&gt; object with<a name="line.450"></a>
+<span class="sourceLineNo">451</span>    * the contents of the given &lt;code&gt;ResultSet&lt;/code&gt; object and writes its<a name="line.451"></a>
+<span class="sourceLineNo">452</span>    * data, properties, and metadata<a name="line.452"></a>
+<span class="sourceLineNo">453</span>    * to the given &lt;code&gt;OutputStream&lt;/code&gt; object in XML format.<a name="line.453"></a>
+<span class="sourceLineNo">454</span>    * &lt;p&gt;<a name="line.454"></a>
+<span class="sourceLineNo">455</span>    * NOTE: The &lt;code&gt;WebRowSet&lt;/code&gt; cursor may be moved to write out the<a name="line.455"></a>
+<span class="sourceLineNo">456</span>    * contents to the XML data source. If implemented in this way, the cursor &lt;b&gt;must&lt;/b&gt;<a name="line.456"></a>
+<span class="sourceLineNo">457</span>    * be returned to its position just prior to the &lt;code&gt;writeXml()&lt;/code&gt; call.<a name="line.457"></a>
+<span class="sourceLineNo">458</span>    *<a name="line.458"></a>
+<span class="sourceLineNo">459</span>    * @param rs the &lt;code&gt;ResultSet&lt;/code&gt; object with which to populate this<a name="line.459"></a>
+<span class="sourceLineNo">460</span>    *        &lt;code&gt;WebRowSet&lt;/code&gt; object<a name="line.460"></a>
+<span class="sourceLineNo">461</span>    * @param oStream the &lt;code&gt;java.io.OutputStream&lt;/code&gt; to write to<a name="line.461"></a>
+<span class="sourceLineNo">462</span>    * @throws SQLException if a data source access error occurs<a name="line.462"></a>
+<span class="sourceLineNo">463</span>    * @throws IOException if a IO exception occurs<a name="line.463"></a>
+<span class="sourceLineNo">464</span>    */<a name="line.464"></a>
+<span class="sourceLineNo">465</span>    public void writeXml(ResultSet rs, java.io.OutputStream oStream) throws SQLException, IOException;<a name="line.465"></a>
+<span class="sourceLineNo">466</span><a name="line.466"></a>
+<span class="sourceLineNo">467</span>   /**<a name="line.467"></a>
+<span class="sourceLineNo">468</span>    * Writes the data, properties, and metadata for this &lt;code&gt;WebRowSet&lt;/code&gt; object<a name="line.468"></a>
+<span class="sourceLineNo">469</span>    * to the given &lt;code&gt;Writer&lt;/code&gt; object in XML format.<a name="line.469"></a>
+<span class="sourceLineNo">470</span>    *<a name="line.470"></a>
+<span class="sourceLineNo">471</span>    * @param writer the &lt;code&gt;java.io.Writer&lt;/code&gt; stream to write to<a name="line.471"></a>
+<span class="sourceLineNo">472</span>    * @throws SQLException if an error occurs writing out the rowset<a name="line.472"></a>
+<span class="sourceLineNo">473</span>    *          contents to XML<a name="line.473"></a>
+<span class="sourceLineNo">474</span>    */<a name="line.474"></a>
+<span class="sourceLineNo">475</span>    public void writeXml(java.io.Writer writer) throws SQLException;<a name="line.475"></a>
+<span class="sourceLineNo">476</span><a name="line.476"></a>
+<span class="sourceLineNo">477</span>    /**<a name="line.477"></a>
+<span class="sourceLineNo">478</span>     * Writes the data, properties, and metadata for this &lt;code&gt;WebRowSet&lt;/code&gt; object<a name="line.478"></a>
+<span class="sourceLineNo">479</span>     * to the given &lt;code&gt;OutputStream&lt;/code&gt; object in XML format.<a name="line.479"></a>
+<span class="sourceLineNo">480</span>     *<a name="line.480"></a>
+<span class="sourceLineNo">481</span>     * @param oStream the &lt;code&gt;java.io.OutputStream&lt;/code&gt; stream to write to<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     * @throws SQLException if a data source access error occurs<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     * @throws IOException if a IO exception occurs<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     */<a name="line.484"></a>
+<span class="sourceLineNo">485</span>    public void writeXml(java.io.OutputStream oStream) throws SQLException, IOException;<a name="line.485"></a>
+<span class="sourceLineNo">486</span><a name="line.486"></a>
+<span class="sourceLineNo">487</span>    /**<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     * The public identifier for the XML Schema definition that defines the XML<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     * tags and their valid values for a &lt;code&gt;WebRowSet&lt;/code&gt; implementation.<a name="line.489"></a>
+<span class="sourceLineNo">490</span>     */<a name="line.490"></a>
+<span class="sourceLineNo">491</span>    public static String PUBLIC_XML_SCHEMA =<a name="line.491"></a>
+<span class="sourceLineNo">492</span>        "--//Oracle Corporation//XSD Schema//EN";<a name="line.492"></a>
+<span class="sourceLineNo">493</span><a name="line.493"></a>
+<span class="sourceLineNo">494</span>    /**<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     * The URL for the XML Schema definition file that defines the XML tags and<a name="line.495"></a>
+<span class="sourceLineNo">496</span>     * their valid values for a &lt;code&gt;WebRowSet&lt;/code&gt; implementation.<a name="line.496"></a>
+<span class="sourceLineNo">497</span>     */<a name="line.497"></a>
+<span class="sourceLineNo">498</span>    public static String SCHEMA_SYSTEM_ID = "http://java.sun.com/xml/ns/jdbc/webrowset.xsd";<a name="line.498"></a>
+<span class="sourceLineNo">499</span>}<a name="line.499"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

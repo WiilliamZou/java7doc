@@ -1,0 +1,293 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>/*<a name="line.26"></a>
+<span class="sourceLineNo">027</span> * (C) Copyright Taligent, Inc. 1996 - 1997, All Rights Reserved<a name="line.27"></a>
+<span class="sourceLineNo">028</span> * (C) Copyright IBM Corp. 1996 - 1998, All Rights Reserved<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * The original version of this source code and documentation is<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * copyrighted and owned by Taligent, Inc., a wholly-owned subsidiary<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * of IBM. These materials are provided under terms of a License<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * Agreement between Taligent and Sun. This technology is protected<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * by multiple US and International patents.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * This notice and attribution to Taligent may not be removed.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * Taligent is a registered trademark of Taligent, Inc.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> *<a name="line.38"></a>
+<span class="sourceLineNo">039</span> */<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>package java.awt.font;<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>import java.awt.Graphics2D;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import java.awt.Font;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import java.awt.Shape;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import java.awt.geom.AffineTransform;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import java.awt.geom.Rectangle2D;<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>/**<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * This class is used with the CHAR_REPLACEMENT attribute.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;p&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * The &lt;code&gt;GraphicAttribute&lt;/code&gt; class represents a graphic embedded<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * in text. Clients subclass this class to implement their own char<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * replacement graphics.  Clients wishing to embed shapes and images in<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * text need not subclass this class.  Instead, clients can use the<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * {@link ShapeGraphicAttribute} and {@link ImageGraphicAttribute}<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * classes.<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;p&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * Subclasses must ensure that their objects are immutable once they<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * are constructed.  Mutating a &lt;code&gt;GraphicAttribute&lt;/code&gt; that<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * is used in a {@link TextLayout} results in undefined behavior from the<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * &lt;code&gt;TextLayout&lt;/code&gt;.<a name="line.62"></a>
+<span class="sourceLineNo">063</span> */<a name="line.63"></a>
+<span class="sourceLineNo">064</span>public abstract class GraphicAttribute {<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>    private int fAlignment;<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>    /**<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * Aligns top of graphic to top of line.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    public static final int TOP_ALIGNMENT = -1;<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * Aligns bottom of graphic to bottom of line.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     */<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    public static final int BOTTOM_ALIGNMENT = -2;<a name="line.76"></a>
+<span class="sourceLineNo">077</span><a name="line.77"></a>
+<span class="sourceLineNo">078</span>    /**<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * Aligns origin of graphic to roman baseline of line.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     */<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    public static final int ROMAN_BASELINE = Font.ROMAN_BASELINE;<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    /**<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * Aligns origin of graphic to center baseline of line.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     */<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    public static final int CENTER_BASELINE = Font.CENTER_BASELINE;<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>    /**<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * Aligns origin of graphic to hanging baseline of line.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     */<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    public static final int HANGING_BASELINE = Font.HANGING_BASELINE;<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>    /**<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * Constructs a &lt;code&gt;GraphicAttribute&lt;/code&gt;.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * Subclasses use this to define the alignment of the graphic.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @param alignment an int representing one of the<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * &lt;code&gt;GraphicAttribute&lt;/code&gt; alignment fields<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * @throws IllegalArgumentException if alignment is not one of the<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * five defined values.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     */<a name="line.100"></a>
+<span class="sourceLineNo">101</span>    protected GraphicAttribute(int alignment) {<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        if (alignment &lt; BOTTOM_ALIGNMENT || alignment &gt; HANGING_BASELINE) {<a name="line.102"></a>
+<span class="sourceLineNo">103</span>          throw new IllegalArgumentException("bad alignment");<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        }<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        fAlignment = alignment;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    }<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    /**<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * Returns the ascent of this &lt;code&gt;GraphicAttribute&lt;/code&gt;.  A<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * graphic can be rendered above its ascent.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * @return the ascent of this &lt;code&gt;GraphicAttribute&lt;/code&gt;.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @see #getBounds()<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     */<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    public abstract float getAscent();<a name="line.114"></a>
+<span class="sourceLineNo">115</span><a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>    /**<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * Returns the descent of this &lt;code&gt;GraphicAttribute&lt;/code&gt;.  A<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * graphic can be rendered below its descent.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * @return the descent of this &lt;code&gt;GraphicAttribute&lt;/code&gt;.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * @see #getBounds()<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     */<a name="line.122"></a>
+<span class="sourceLineNo">123</span>    public abstract float getDescent();<a name="line.123"></a>
+<span class="sourceLineNo">124</span><a name="line.124"></a>
+<span class="sourceLineNo">125</span>    /**<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * Returns the advance of this &lt;code&gt;GraphicAttribute&lt;/code&gt;.  The<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * &lt;code&gt;GraphicAttribute&lt;/code&gt; object's advance is the distance<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * from the point at which the graphic is rendered and the point where<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * the next character or graphic is rendered.  A graphic can be<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * rendered beyond its advance<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @return the advance of this &lt;code&gt;GraphicAttribute&lt;/code&gt;.<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @see #getBounds()<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     */<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    public abstract float getAdvance();<a name="line.134"></a>
+<span class="sourceLineNo">135</span><a name="line.135"></a>
+<span class="sourceLineNo">136</span>    /**<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * Returns a {@link Rectangle2D} that encloses all of the<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * bits drawn by this &lt;code&gt;GraphicAttribute&lt;/code&gt; relative to the<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * rendering position.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * A graphic may be rendered beyond its origin, ascent, descent,<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * or advance;  but if it is, this method's implementation must<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * indicate where the graphic is rendered.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * Default bounds is the rectangle (0, -ascent, advance, ascent+descent).<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @return a &lt;code&gt;Rectangle2D&lt;/code&gt; that encloses all of the bits<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * rendered by this &lt;code&gt;GraphicAttribute&lt;/code&gt;.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     */<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    public Rectangle2D getBounds() {<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        float ascent = getAscent();<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        return new Rectangle2D.Float(0, -ascent,<a name="line.149"></a>
+<span class="sourceLineNo">150</span>                                        getAdvance(), ascent+getDescent());<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    }<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    /**<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * Return a {@link java.awt.Shape} that represents the region that<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * this &lt;code&gt;GraphicAttribute&lt;/code&gt; renders.  This is used when a<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * {@link TextLayout} is requested to return the outline of the text.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * The (untransformed) shape must not extend outside the rectangular<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * bounds returned by &lt;code&gt;getBounds&lt;/code&gt;.<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * The default implementation returns the rectangle returned by<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * {@link #getBounds}, transformed by the provided {@link AffineTransform}<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * if present.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @param tx an optional {@link AffineTransform} to apply to the<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     *   outline of this &lt;code&gt;GraphicAttribute&lt;/code&gt;. This can be null.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @return a &lt;code&gt;Shape&lt;/code&gt; representing this graphic attribute,<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     *   suitable for stroking or filling.<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @since 1.6<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     */<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    public Shape getOutline(AffineTransform tx) {<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        Shape b = getBounds();<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        if (tx != null) {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>            b = tx.createTransformedShape(b);<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        }<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        return b;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    }<a name="line.174"></a>
+<span class="sourceLineNo">175</span><a name="line.175"></a>
+<span class="sourceLineNo">176</span>    /**<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * Renders this &lt;code&gt;GraphicAttribute&lt;/code&gt; at the specified<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * location.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @param graphics the {@link Graphics2D} into which to render the<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * graphic<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * @param x the user-space X coordinate where the graphic is rendered<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * @param y the user-space Y coordinate where the graphic is rendered<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     */<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    public abstract void draw(Graphics2D graphics, float x, float y);<a name="line.184"></a>
+<span class="sourceLineNo">185</span><a name="line.185"></a>
+<span class="sourceLineNo">186</span>    /**<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * Returns the alignment of this &lt;code&gt;GraphicAttribute&lt;/code&gt;.<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * Alignment can be to a particular baseline, or to the absolute top<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * or bottom of a line.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * @return the alignment of this &lt;code&gt;GraphicAttribute&lt;/code&gt;.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     */<a name="line.191"></a>
+<span class="sourceLineNo">192</span>    public final int getAlignment() {<a name="line.192"></a>
+<span class="sourceLineNo">193</span><a name="line.193"></a>
+<span class="sourceLineNo">194</span>        return fAlignment;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    }<a name="line.195"></a>
+<span class="sourceLineNo">196</span><a name="line.196"></a>
+<span class="sourceLineNo">197</span>    /**<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * Returns the justification information for this<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * &lt;code&gt;GraphicAttribute&lt;/code&gt;.  Subclasses<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * can override this method to provide different justification<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * information.<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * @return a {@link GlyphJustificationInfo} object that contains the<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * justification information for this &lt;code&gt;GraphicAttribute&lt;/code&gt;.<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     */<a name="line.204"></a>
+<span class="sourceLineNo">205</span>    public GlyphJustificationInfo getJustificationInfo() {<a name="line.205"></a>
+<span class="sourceLineNo">206</span><a name="line.206"></a>
+<span class="sourceLineNo">207</span>        // should we cache this?<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        float advance = getAdvance();<a name="line.208"></a>
+<span class="sourceLineNo">209</span><a name="line.209"></a>
+<span class="sourceLineNo">210</span>        return new GlyphJustificationInfo(<a name="line.210"></a>
+<span class="sourceLineNo">211</span>                                     advance,   // weight<a name="line.211"></a>
+<span class="sourceLineNo">212</span>                                     false,     // growAbsorb<a name="line.212"></a>
+<span class="sourceLineNo">213</span>                                     2,         // growPriority<a name="line.213"></a>
+<span class="sourceLineNo">214</span>                                     advance/3, // growLeftLimit<a name="line.214"></a>
+<span class="sourceLineNo">215</span>                                     advance/3, // growRightLimit<a name="line.215"></a>
+<span class="sourceLineNo">216</span>                                     false,     // shrinkAbsorb<a name="line.216"></a>
+<span class="sourceLineNo">217</span>                                     1,         // shrinkPriority<a name="line.217"></a>
+<span class="sourceLineNo">218</span>                                     0,         // shrinkLeftLimit<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                                     0);        // shrinkRightLimit<a name="line.219"></a>
+<span class="sourceLineNo">220</span>    }<a name="line.220"></a>
+<span class="sourceLineNo">221</span>}<a name="line.221"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

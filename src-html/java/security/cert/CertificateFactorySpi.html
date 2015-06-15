@@ -1,0 +1,387 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.security.cert;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.InputStream;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.Collection;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.Iterator;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.List;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.security.Provider;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.security.NoSuchAlgorithmException;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.security.NoSuchProviderException;<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>/**<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * This class defines the &lt;i&gt;Service Provider Interface&lt;/i&gt; (&lt;b&gt;SPI&lt;/b&gt;)<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * for the &lt;code&gt;CertificateFactory&lt;/code&gt; class.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * All the abstract methods in this class must be implemented by each<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * cryptographic service provider who wishes to supply the implementation<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * of a certificate factory for a particular certificate type, e.g., X.509.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;p&gt;Certificate factories are used to generate certificate, certification path<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * (&lt;code&gt;CertPath&lt;/code&gt;) and certificate revocation list (CRL) objects from<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * their encodings.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;p&gt;A certificate factory for X.509 must return certificates that are an<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * instance of &lt;code&gt;java.security.cert.X509Certificate&lt;/code&gt;, and CRLs<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * that are an instance of &lt;code&gt;java.security.cert.X509CRL&lt;/code&gt;.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * @author Hemma Prafullchandra<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * @author Jan Luehe<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * @author Sean Mullan<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * @see CertificateFactory<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * @see Certificate<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * @see X509Certificate<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * @see CertPath<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * @see CRL<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * @see X509CRL<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * @since 1.2<a name="line.63"></a>
+<span class="sourceLineNo">064</span> */<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>public abstract class CertificateFactorySpi {<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>    /**<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * Generates a certificate object and initializes it with<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * the data read from the input stream &lt;code&gt;inStream&lt;/code&gt;.<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     *<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * &lt;p&gt;In order to take advantage of the specialized certificate format<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * supported by this certificate factory,<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * the returned certificate object can be typecast to the corresponding<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * certificate class. For example, if this certificate<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * factory implements X.509 certificates, the returned certificate object<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * can be typecast to the &lt;code&gt;X509Certificate&lt;/code&gt; class.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     *<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * &lt;p&gt;In the case of a certificate factory for X.509 certificates, the<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * certificate provided in &lt;code&gt;inStream&lt;/code&gt; must be DER-encoded and<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * may be supplied in binary or printable (Base64) encoding. If the<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * certificate is provided in Base64 encoding, it must be bounded at<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * the beginning by -----BEGIN CERTIFICATE-----, and must be bounded at<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * the end by -----END CERTIFICATE-----.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     *<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * &lt;p&gt;Note that if the given input stream does not support<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * {@link java.io.InputStream#mark(int) mark} and<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * {@link java.io.InputStream#reset() reset}, this method will<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * consume the entire input stream. Otherwise, each call to this<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * method consumes one certificate and the read position of the input stream<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * is positioned to the next available byte after the inherent<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * end-of-certificate marker. If the data in the<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * input stream does not contain an inherent end-of-certificate marker (other<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * than EOF) and there is trailing data after the certificate is parsed, a<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * &lt;code&gt;CertificateException&lt;/code&gt; is thrown.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @param inStream an input stream with the certificate data.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @return a certificate object initialized with the data<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * from the input stream.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @exception CertificateException on parsing errors.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    public abstract Certificate engineGenerateCertificate(InputStream inStream)<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        throws CertificateException;<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>    /**<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * Generates a &lt;code&gt;CertPath&lt;/code&gt; object and initializes it with<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * the data read from the &lt;code&gt;InputStream&lt;/code&gt; inStream. The data<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * is assumed to be in the default encoding.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * &lt;p&gt; This method was added to version 1.4 of the Java 2 Platform<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * Standard Edition. In order to maintain backwards compatibility with<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * existing service providers, this method cannot be &lt;code&gt;abstract&lt;/code&gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * and by default throws an &lt;code&gt;UnsupportedOperationException&lt;/code&gt;.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @param inStream an &lt;code&gt;InputStream&lt;/code&gt; containing the data<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * @return a &lt;code&gt;CertPath&lt;/code&gt; initialized with the data from the<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     *   &lt;code&gt;InputStream&lt;/code&gt;<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * @exception CertificateException if an exception occurs while decoding<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * @exception UnsupportedOperationException if the method is not supported<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @since 1.4<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    public CertPath engineGenerateCertPath(InputStream inStream)<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        throws CertificateException<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        throw new UnsupportedOperationException();<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    }<a name="line.128"></a>
+<span class="sourceLineNo">129</span><a name="line.129"></a>
+<span class="sourceLineNo">130</span>    /**<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * Generates a &lt;code&gt;CertPath&lt;/code&gt; object and initializes it with<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * the data read from the &lt;code&gt;InputStream&lt;/code&gt; inStream. The data<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * is assumed to be in the specified encoding.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * &lt;p&gt; This method was added to version 1.4 of the Java 2 Platform<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * Standard Edition. In order to maintain backwards compatibility with<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * existing service providers, this method cannot be &lt;code&gt;abstract&lt;/code&gt;<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * and by default throws an &lt;code&gt;UnsupportedOperationException&lt;/code&gt;.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * @param inStream an &lt;code&gt;InputStream&lt;/code&gt; containing the data<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @param encoding the encoding used for the data<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * @return a &lt;code&gt;CertPath&lt;/code&gt; initialized with the data from the<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *   &lt;code&gt;InputStream&lt;/code&gt;<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @exception CertificateException if an exception occurs while decoding or<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *   the encoding requested is not supported<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @exception UnsupportedOperationException if the method is not supported<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @since 1.4<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    public CertPath engineGenerateCertPath(InputStream inStream,<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        String encoding) throws CertificateException<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    {<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        throw new UnsupportedOperationException();<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    }<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    /**<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * Generates a &lt;code&gt;CertPath&lt;/code&gt; object and initializes it with<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * a &lt;code&gt;List&lt;/code&gt; of &lt;code&gt;Certificate&lt;/code&gt;s.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * &lt;p&gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * The certificates supplied must be of a type supported by the<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * &lt;code&gt;CertificateFactory&lt;/code&gt;. They will be copied out of the supplied<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * &lt;code&gt;List&lt;/code&gt; object.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * &lt;p&gt; This method was added to version 1.4 of the Java 2 Platform<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * Standard Edition. In order to maintain backwards compatibility with<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * existing service providers, this method cannot be &lt;code&gt;abstract&lt;/code&gt;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * and by default throws an &lt;code&gt;UnsupportedOperationException&lt;/code&gt;.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * @param certificates a &lt;code&gt;List&lt;/code&gt; of &lt;code&gt;Certificate&lt;/code&gt;s<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * @return a &lt;code&gt;CertPath&lt;/code&gt; initialized with the supplied list of<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *   certificates<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * @exception CertificateException if an exception occurs<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @exception UnsupportedOperationException if the method is not supported<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * @since 1.4<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     */<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    public CertPath<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        engineGenerateCertPath(List&lt;? extends Certificate&gt; certificates)<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        throws CertificateException<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        throw new UnsupportedOperationException();<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    }<a name="line.180"></a>
+<span class="sourceLineNo">181</span><a name="line.181"></a>
+<span class="sourceLineNo">182</span>    /**<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * Returns an iteration of the &lt;code&gt;CertPath&lt;/code&gt; encodings supported<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * by this certificate factory, with the default encoding first. See<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * the CertPath Encodings section in the &lt;a href=<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * "{@docRoot}/../technotes/guides/security/StandardNames.html#CertPathEncodings"&gt;<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * Java Cryptography Architecture Standard Algorithm Name Documentation&lt;/a&gt;<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * for information about standard encoding names.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * &lt;p&gt;<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * Attempts to modify the returned &lt;code&gt;Iterator&lt;/code&gt; via its<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * &lt;code&gt;remove&lt;/code&gt; method result in an<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * &lt;code&gt;UnsupportedOperationException&lt;/code&gt;.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     *<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * &lt;p&gt; This method was added to version 1.4 of the Java 2 Platform<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * Standard Edition. In order to maintain backwards compatibility with<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * existing service providers, this method cannot be &lt;code&gt;abstract&lt;/code&gt;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * and by default throws an &lt;code&gt;UnsupportedOperationException&lt;/code&gt;.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     *<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * @return an &lt;code&gt;Iterator&lt;/code&gt; over the names of the supported<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     *         &lt;code&gt;CertPath&lt;/code&gt; encodings (as &lt;code&gt;String&lt;/code&gt;s)<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * @exception UnsupportedOperationException if the method is not supported<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * @since 1.4<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     */<a name="line.203"></a>
+<span class="sourceLineNo">204</span>    public Iterator&lt;String&gt; engineGetCertPathEncodings() {<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        throw new UnsupportedOperationException();<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    }<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>    /**<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * Returns a (possibly empty) collection view of the certificates read<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * from the given input stream &lt;code&gt;inStream&lt;/code&gt;.<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     *<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * &lt;p&gt;In order to take advantage of the specialized certificate format<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * supported by this certificate factory, each element in<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * the returned collection view can be typecast to the corresponding<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * certificate class. For example, if this certificate<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * factory implements X.509 certificates, the elements in the returned<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * collection can be typecast to the &lt;code&gt;X509Certificate&lt;/code&gt; class.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * &lt;p&gt;In the case of a certificate factory for X.509 certificates,<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * &lt;code&gt;inStream&lt;/code&gt; may contain a single DER-encoded certificate<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * in the formats described for<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * {@link CertificateFactory#generateCertificate(java.io.InputStream)<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * generateCertificate}.<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * In addition, &lt;code&gt;inStream&lt;/code&gt; may contain a PKCS#7 certificate<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * chain. This is a PKCS#7 &lt;i&gt;SignedData&lt;/i&gt; object, with the only<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * significant field being &lt;i&gt;certificates&lt;/i&gt;. In particular, the<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * signature and the contents are ignored. This format allows multiple<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * certificates to be downloaded at once. If no certificates are present,<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * an empty collection is returned.<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     *<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * &lt;p&gt;Note that if the given input stream does not support<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * {@link java.io.InputStream#mark(int) mark} and<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * {@link java.io.InputStream#reset() reset}, this method will<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * consume the entire input stream.<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     *<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * @param inStream the input stream with the certificates.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     *<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * @return a (possibly empty) collection view of<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * java.security.cert.Certificate objects<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * initialized with the data from the input stream.<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     *<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * @exception CertificateException on parsing errors.<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     */<a name="line.243"></a>
+<span class="sourceLineNo">244</span>    public abstract Collection&lt;? extends Certificate&gt;<a name="line.244"></a>
+<span class="sourceLineNo">245</span>            engineGenerateCertificates(InputStream inStream)<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            throws CertificateException;<a name="line.246"></a>
+<span class="sourceLineNo">247</span><a name="line.247"></a>
+<span class="sourceLineNo">248</span>    /**<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * Generates a certificate revocation list (CRL) object and initializes it<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * with the data read from the input stream &lt;code&gt;inStream&lt;/code&gt;.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     *<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * &lt;p&gt;In order to take advantage of the specialized CRL format<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * supported by this certificate factory,<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * the returned CRL object can be typecast to the corresponding<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * CRL class. For example, if this certificate<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * factory implements X.509 CRLs, the returned CRL object<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * can be typecast to the &lt;code&gt;X509CRL&lt;/code&gt; class.<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     *<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * &lt;p&gt;Note that if the given input stream does not support<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * {@link java.io.InputStream#mark(int) mark} and<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * {@link java.io.InputStream#reset() reset}, this method will<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * consume the entire input stream. Otherwise, each call to this<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * method consumes one CRL and the read position of the input stream<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * is positioned to the next available byte after the inherent<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * end-of-CRL marker. If the data in the<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * input stream does not contain an inherent end-of-CRL marker (other<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * than EOF) and there is trailing data after the CRL is parsed, a<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * &lt;code&gt;CRLException&lt;/code&gt; is thrown.<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     *<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * @param inStream an input stream with the CRL data.<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     *<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @return a CRL object initialized with the data<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * from the input stream.<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     *<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * @exception CRLException on parsing errors.<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     */<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    public abstract CRL engineGenerateCRL(InputStream inStream)<a name="line.277"></a>
+<span class="sourceLineNo">278</span>        throws CRLException;<a name="line.278"></a>
+<span class="sourceLineNo">279</span><a name="line.279"></a>
+<span class="sourceLineNo">280</span>    /**<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * Returns a (possibly empty) collection view of the CRLs read<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * from the given input stream &lt;code&gt;inStream&lt;/code&gt;.<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     *<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * &lt;p&gt;In order to take advantage of the specialized CRL format<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * supported by this certificate factory, each element in<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * the returned collection view can be typecast to the corresponding<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * CRL class. For example, if this certificate<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * factory implements X.509 CRLs, the elements in the returned<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * collection can be typecast to the &lt;code&gt;X509CRL&lt;/code&gt; class.<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     *<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * &lt;p&gt;In the case of a certificate factory for X.509 CRLs,<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * &lt;code&gt;inStream&lt;/code&gt; may contain a single DER-encoded CRL.<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * In addition, &lt;code&gt;inStream&lt;/code&gt; may contain a PKCS#7 CRL<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * set. This is a PKCS#7 &lt;i&gt;SignedData&lt;/i&gt; object, with the only<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * significant field being &lt;i&gt;crls&lt;/i&gt;. In particular, the<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * signature and the contents are ignored. This format allows multiple<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * CRLs to be downloaded at once. If no CRLs are present,<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * an empty collection is returned.<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     *<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * &lt;p&gt;Note that if the given input stream does not support<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * {@link java.io.InputStream#mark(int) mark} and<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * {@link java.io.InputStream#reset() reset}, this method will<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * consume the entire input stream.<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     *<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * @param inStream the input stream with the CRLs.<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     *<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * @return a (possibly empty) collection view of<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * java.security.cert.CRL objects initialized with the data from the input<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * stream.<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     *<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @exception CRLException on parsing errors.<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     */<a name="line.312"></a>
+<span class="sourceLineNo">313</span>    public abstract Collection&lt;? extends CRL&gt; engineGenerateCRLs<a name="line.313"></a>
+<span class="sourceLineNo">314</span>            (InputStream inStream) throws CRLException;<a name="line.314"></a>
+<span class="sourceLineNo">315</span>}<a name="line.315"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.swing.undo;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.swing.event.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * An &lt;code&gt;UndoableEdit&lt;/code&gt; represents an edit.  The edit may<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * be undone, or if already undone the edit may be redone.<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * &lt;p&gt;<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * &lt;code&gt;UndoableEdit&lt;/code&gt; is designed to be used with the<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;code&gt;UndoManager&lt;/code&gt;.  As &lt;code&gt;UndoableEdit&lt;/code&gt;s are generated<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * by an &lt;code&gt;UndoableEditListener&lt;/code&gt; they are typically added to<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * the &lt;code&gt;UndoManager&lt;/code&gt;.  When an &lt;code&gt;UndoableEdit&lt;/code&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * is added to an &lt;code&gt;UndoManager&lt;/code&gt; the following occurs (assuming<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;code&gt;end&lt;/code&gt; has not been called on the &lt;code&gt;UndoManager&lt;/code&gt;):<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * &lt;ol&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;li&gt;If the &lt;code&gt;UndoManager&lt;/code&gt; contains edits it will call<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *     &lt;code&gt;addEdit&lt;/code&gt; on the current edit passing in the new edit<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *     as the argument.  If &lt;code&gt;addEdit&lt;/code&gt; returns true the<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *     new edit is assumed to have been incorporated into the current edit and<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *     the new edit will not be added to the list of current edits.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *     Edits can use &lt;code&gt;addEdit&lt;/code&gt; as a way for smaller edits to<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *     be incorporated into a larger edit and treated as a single edit.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;li&gt;If &lt;code&gt;addEdit&lt;/code&gt; returns false &lt;code&gt;replaceEdit&lt;/code&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *     is called on the new edit with the current edit passed in as the<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *     argument. This is the inverse of &lt;code&gt;addEdit&lt;/code&gt; &amp;#151;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *     if the new edit returns true from &lt;code&gt;replaceEdit&lt;/code&gt;, the new<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *     edit replaces the current edit.<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;/ol&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * The &lt;code&gt;UndoManager&lt;/code&gt; makes use of<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;code&gt;isSignificant&lt;/code&gt; to determine how many edits should be<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * undone or redone.  The &lt;code&gt;UndoManager&lt;/code&gt; will undo or redo<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * all insignificant edits (&lt;code&gt;isSignificant&lt;/code&gt; returns false)<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * between the current edit and the last or<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * next significant edit.   &lt;code&gt;addEdit&lt;/code&gt; and<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;code&gt;replaceEdit&lt;/code&gt; can be used to treat multiple edits as<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * a single edit, returning false from &lt;code&gt;isSignificant&lt;/code&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * allows for treating can be used to<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * have many smaller edits undone or redone at once.  Similar functionality<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * can also be done using the &lt;code&gt;addEdit&lt;/code&gt; method.<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * @author Ray Ryan<a name="line.66"></a>
+<span class="sourceLineNo">067</span> */<a name="line.67"></a>
+<span class="sourceLineNo">068</span>public interface UndoableEdit {<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    /**<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * Undo the edit.<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     *<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * @throws CannotUndoException if this edit can not be undone<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     */<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    public void undo() throws CannotUndoException;<a name="line.74"></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a>
+<span class="sourceLineNo">076</span>    /**<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * Returns true if this edit may be undone.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     *<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * @return true if this edit may be undone<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     */<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    public boolean canUndo();<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    /**<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * Re-applies the edit.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     *<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * @throws CannotRedoException if this edit can not be redone<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     */<a name="line.87"></a>
+<span class="sourceLineNo">088</span>    public void redo() throws CannotRedoException;<a name="line.88"></a>
+<span class="sourceLineNo">089</span><a name="line.89"></a>
+<span class="sourceLineNo">090</span>    /**<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * Returns true if this edit may be redone.<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @return true if this edit may be redone<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     */<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    public boolean canRedo();<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>    /**<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * Informs the edit that it should no longer be used. Once an<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * &lt;code&gt;UndoableEdit&lt;/code&gt; has been marked as dead it can no longer<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * be undone or redone.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * &lt;p&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * This is a useful hook for cleaning up state no longer<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * needed once undoing or redoing is impossible--for example,<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * deleting file resources used by objects that can no longer be<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * undeleted. &lt;code&gt;UndoManager&lt;/code&gt; calls this before it dequeues edits.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * &lt;p&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * Note that this is a one-way operation. There is no "un-die"<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * method.<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     *<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * @see CompoundEdit#die<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     */<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    public void die();<a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>    /**<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * Adds an &lt;code&gt;UndoableEdit&lt;/code&gt; to this &lt;code&gt;UndoableEdit&lt;/code&gt;.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * This method can be used to coalesce smaller edits into a larger<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * compound edit.  For example, text editors typically allow<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * undo operations to apply to words or sentences.  The text<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * editor may choose to generate edits on each key event, but allow<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * those edits to be coalesced into a more user-friendly unit, such as<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * a word. In this case, the &lt;code&gt;UndoableEdit&lt;/code&gt; would<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * override &lt;code&gt;addEdit&lt;/code&gt; to return true when the edits may<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * be coalesced.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * &lt;p&gt;<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * A return value of true indicates &lt;code&gt;anEdit&lt;/code&gt; was incorporated<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * into this edit.  A return value of false indicates &lt;code&gt;anEdit&lt;/code&gt;<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * may not be incorporated into this edit.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * &lt;p&gt;Typically the receiver is already in the queue of a<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * &lt;code&gt;UndoManager&lt;/code&gt; (or other &lt;code&gt;UndoableEditListener&lt;/code&gt;),<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * and is being given a chance to incorporate &lt;code&gt;anEdit&lt;/code&gt;<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * rather than letting it be added to the queue in turn.&lt;/p&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * &lt;p&gt;If true is returned, from now on &lt;code&gt;anEdit&lt;/code&gt; must return<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * false from &lt;code&gt;canUndo&lt;/code&gt; and &lt;code&gt;canRedo&lt;/code&gt;,<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * and must throw the appropriate exception on &lt;code&gt;undo&lt;/code&gt; or<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * &lt;code&gt;redo&lt;/code&gt;.&lt;/p&gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @param anEdit the edit to be added<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @return true if &lt;code&gt;anEdit&lt;/code&gt; may be incorporated into this<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *              edit<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     */<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    public boolean addEdit(UndoableEdit anEdit);<a name="line.142"></a>
+<span class="sourceLineNo">143</span><a name="line.143"></a>
+<span class="sourceLineNo">144</span>    /**<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * Returns true if this &lt;code&gt;UndoableEdit&lt;/code&gt; should replace<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * &lt;code&gt;anEdit&lt;/code&gt;. This method is used by &lt;code&gt;CompoundEdit&lt;/code&gt;<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * and the &lt;code&gt;UndoManager&lt;/code&gt;; it is called if<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * &lt;code&gt;anEdit&lt;/code&gt; could not be added to the current edit<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * (&lt;code&gt;addEdit&lt;/code&gt; returns false).<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * &lt;p&gt;<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * This method provides a way for an edit to replace an existing edit.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * &lt;p&gt;This message is the opposite of addEdit--anEdit has typically<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * already been queued in an &lt;code&gt;UndoManager&lt;/code&gt; (or other<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * UndoableEditListener), and the receiver is being given a chance<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * to take its place.&lt;/p&gt;<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * &lt;p&gt;If true is returned, from now on anEdit must return false from<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * canUndo() and canRedo(), and must throw the appropriate<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * exception on undo() or redo().&lt;/p&gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @param anEdit the edit that replaces the current edit<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @return true if this edit should replace &lt;code&gt;anEdit&lt;/code&gt;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     */<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    public boolean replaceEdit(UndoableEdit anEdit);<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>    /**<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * Returns true if this edit is considered significant.  A significant<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * edit is typically an edit that should be presented to the user, perhaps<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * on a menu item or tooltip.  The &lt;code&gt;UndoManager&lt;/code&gt; will undo,<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * or redo, all insignificant edits to the next significant edit.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @return true if this edit is significant<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     */<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    public boolean isSignificant();<a name="line.174"></a>
+<span class="sourceLineNo">175</span><a name="line.175"></a>
+<span class="sourceLineNo">176</span>    /**<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * Returns a localized, human-readable description of this edit, suitable<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * for use in a change log, for example.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @return description of this edit<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     */<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    public String getPresentationName();<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>    /**<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * Returns a localized, human-readable description of the undoable form of<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * this edit, suitable for use as an Undo menu item, for example.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * This is typically derived from &lt;code&gt;getPresentationName&lt;/code&gt;.<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     *<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * @return a description of the undoable form of this edit<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    public String getUndoPresentationName();<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>    /**<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * Returns a localized, human-readable description of the redoable form of<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * this edit, suitable for use as a Redo menu item, for example. This is<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * typically derived from &lt;code&gt;getPresentationName&lt;/code&gt;.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @return a description of the redoable form of this edit<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     */<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    public String getRedoPresentationName();<a name="line.200"></a>
+<span class="sourceLineNo">201</span>}<a name="line.201"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

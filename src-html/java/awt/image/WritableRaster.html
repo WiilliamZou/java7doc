@@ -1,0 +1,813 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>/* ****************************************************************<a name="line.26"></a>
+<span class="sourceLineNo">027</span> ******************************************************************<a name="line.27"></a>
+<span class="sourceLineNo">028</span> ******************************************************************<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *** COPYRIGHT (c) Eastman Kodak Company, 1997<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *** As  an unpublished  work pursuant to Title 17 of the United<a name="line.30"></a>
+<span class="sourceLineNo">031</span> *** States Code.  All rights reserved.<a name="line.31"></a>
+<span class="sourceLineNo">032</span> ******************************************************************<a name="line.32"></a>
+<span class="sourceLineNo">033</span> ******************************************************************<a name="line.33"></a>
+<span class="sourceLineNo">034</span> ******************************************************************/<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>package java.awt.image;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.awt.Rectangle;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.awt.Point;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>/**<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * This class extends Raster to provide pixel writing capabilities.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * Refer to the class comment for Raster for descriptions of how<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * a Raster stores pixels.<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;p&gt; The constructors of this class are protected.  To instantiate<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * a WritableRaster, use one of the createWritableRaster factory methods<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * in the Raster class.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> */<a name="line.48"></a>
+<span class="sourceLineNo">049</span>public class WritableRaster extends Raster {<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span>    /**<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     *  Constructs a WritableRaster with the given SampleModel.  The<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     *  WritableRaster's upper left corner is origin and it is the<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     *  same size as the  SampleModel.  A DataBuffer large enough to<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     *  describe the WritableRaster is automatically created.<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     *  @param sampleModel     The SampleModel that specifies the layout.<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     *  @param origin          The Point that specifies the origin.<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     *  @throws RasterFormatException if computing either<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     *          &lt;code&gt;origin.x + sampleModel.getWidth()&lt;/code&gt; or<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     *          &lt;code&gt;origin.y + sampleModel.getHeight()&lt;/code&gt; results<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     *          in integer overflow<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     */<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    protected WritableRaster(SampleModel sampleModel,<a name="line.63"></a>
+<span class="sourceLineNo">064</span>                             Point origin) {<a name="line.64"></a>
+<span class="sourceLineNo">065</span>        this(sampleModel,<a name="line.65"></a>
+<span class="sourceLineNo">066</span>             sampleModel.createDataBuffer(),<a name="line.66"></a>
+<span class="sourceLineNo">067</span>             new Rectangle(origin.x,<a name="line.67"></a>
+<span class="sourceLineNo">068</span>                           origin.y,<a name="line.68"></a>
+<span class="sourceLineNo">069</span>                           sampleModel.getWidth(),<a name="line.69"></a>
+<span class="sourceLineNo">070</span>                           sampleModel.getHeight()),<a name="line.70"></a>
+<span class="sourceLineNo">071</span>             origin,<a name="line.71"></a>
+<span class="sourceLineNo">072</span>             null);<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    }<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    /**<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     *  Constructs a WritableRaster with the given SampleModel and DataBuffer.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     *  The WritableRaster's upper left corner is origin and it is the same<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     *  size as the SampleModel.  The DataBuffer is not initialized and must<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     *  be compatible with SampleModel.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     *  @param sampleModel     The SampleModel that specifies the layout.<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     *  @param dataBuffer      The DataBuffer that contains the image data.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     *  @param origin          The Point that specifies the origin.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     *  @throws RasterFormatException if computing either<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     *          &lt;code&gt;origin.x + sampleModel.getWidth()&lt;/code&gt; or<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     *          &lt;code&gt;origin.y + sampleModel.getHeight()&lt;/code&gt; results<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     *          in integer overflow<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     */<a name="line.87"></a>
+<span class="sourceLineNo">088</span>    protected WritableRaster(SampleModel sampleModel,<a name="line.88"></a>
+<span class="sourceLineNo">089</span>                             DataBuffer dataBuffer,<a name="line.89"></a>
+<span class="sourceLineNo">090</span>                             Point origin) {<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        this(sampleModel,<a name="line.91"></a>
+<span class="sourceLineNo">092</span>             dataBuffer,<a name="line.92"></a>
+<span class="sourceLineNo">093</span>             new Rectangle(origin.x,<a name="line.93"></a>
+<span class="sourceLineNo">094</span>                           origin.y,<a name="line.94"></a>
+<span class="sourceLineNo">095</span>                           sampleModel.getWidth(),<a name="line.95"></a>
+<span class="sourceLineNo">096</span>                           sampleModel.getHeight()),<a name="line.96"></a>
+<span class="sourceLineNo">097</span>             origin,<a name="line.97"></a>
+<span class="sourceLineNo">098</span>             null);<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    }<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>    /**<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * Constructs a WritableRaster with the given SampleModel, DataBuffer,<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * and parent.  aRegion specifies the bounding rectangle of the new<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * Raster.  When translated into the base Raster's coordinate<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * system, aRegion must be contained by the base Raster.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * (The base Raster is the Raster's ancestor which has no parent.)<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * sampleModelTranslate specifies the sampleModelTranslateX and<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * sampleModelTranslateY values of the new Raster.<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     *<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * Note that this constructor should generally be called by other<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * constructors or create methods, it should not be used directly.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @param sampleModel     The SampleModel that specifies the layout.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * @param dataBuffer      The DataBuffer that contains the image data.<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @param aRegion         The Rectangle that specifies the image area.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @param sampleModelTranslate  The Point that specifies the translation<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *                        from SampleModel to Raster coordinates.<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @param parent          The parent (if any) of this raster.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * @throws RasterFormatException if &lt;code&gt;aRegion&lt;/code&gt; has width<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     *         or height less than or equal to zero, or computing either<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     *         &lt;code&gt;aRegion.x + aRegion.width&lt;/code&gt; or<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *         &lt;code&gt;aRegion.y + aRegion.height&lt;/code&gt; results in integer<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     *         overflow<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    protected WritableRaster(SampleModel sampleModel,<a name="line.124"></a>
+<span class="sourceLineNo">125</span>                             DataBuffer dataBuffer,<a name="line.125"></a>
+<span class="sourceLineNo">126</span>                             Rectangle aRegion,<a name="line.126"></a>
+<span class="sourceLineNo">127</span>                             Point sampleModelTranslate,<a name="line.127"></a>
+<span class="sourceLineNo">128</span>                             WritableRaster parent){<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        super(sampleModel,dataBuffer,aRegion,sampleModelTranslate,parent);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    }<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /** Returns the parent WritableRaster (if any) of this WritableRaster,<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *  or else null.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *  @return the parent of this &lt;code&gt;WritableRaster&lt;/code&gt;, or<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *          &lt;code&gt;null&lt;/code&gt;.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     */<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    public WritableRaster getWritableParent() {<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        return (WritableRaster)parent;<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    }<a name="line.139"></a>
+<span class="sourceLineNo">140</span><a name="line.140"></a>
+<span class="sourceLineNo">141</span>    /**<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * Create a WritableRaster with the same size, SampleModel and DataBuffer<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * as this one, but with a different location.  The new WritableRaster<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * will possess a reference to the current WritableRaster, accessible<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * through its getParent() and getWritableParent() methods.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     *<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @param childMinX X coord of the upper left corner of the new Raster.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * @param childMinY Y coord of the upper left corner of the new Raster.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * @return a &lt;code&gt;WritableRaster&lt;/code&gt; the same as this one except<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *         for the specified location.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @throws RasterFormatException if  computing either<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *         &lt;code&gt;childMinX + this.getWidth()&lt;/code&gt; or<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     *         &lt;code&gt;childMinY + this.getHeight()&lt;/code&gt; results in integer<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *         overflow<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     */<a name="line.155"></a>
+<span class="sourceLineNo">156</span>    public WritableRaster createWritableTranslatedChild(int childMinX,<a name="line.156"></a>
+<span class="sourceLineNo">157</span>                                                        int childMinY) {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>        return createWritableChild(minX,minY,width,height,<a name="line.158"></a>
+<span class="sourceLineNo">159</span>                                   childMinX,childMinY,null);<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    }<a name="line.160"></a>
+<span class="sourceLineNo">161</span><a name="line.161"></a>
+<span class="sourceLineNo">162</span>    /**<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * Returns a new WritableRaster which shares all or part of this<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * WritableRaster's DataBuffer.  The new WritableRaster will<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * possess a reference to the current WritableRaster, accessible<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * through its getParent() and getWritableParent() methods.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * &lt;p&gt; The parentX, parentY, width and height parameters form a<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * Rectangle in this WritableRaster's coordinate space, indicating<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * the area of pixels to be shared.  An error will be thrown if<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * this Rectangle is not contained with the bounds of the current<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * WritableRaster.<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     *<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * &lt;p&gt; The new WritableRaster may additionally be translated to a<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * different coordinate system for the plane than that used by the current<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * WritableRaster.  The childMinX and childMinY parameters give<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * the new (x, y) coordinate of the upper-left pixel of the<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * returned WritableRaster; the coordinate (childMinX, childMinY)<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * in the new WritableRaster will map to the same pixel as the<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * coordinate (parentX, parentY) in the current WritableRaster.<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     *<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * &lt;p&gt; The new WritableRaster may be defined to contain only a<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * subset of the bands of the current WritableRaster, possibly<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * reordered, by means of the bandList parameter.  If bandList is<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * null, it is taken to include all of the bands of the current<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * WritableRaster in their current order.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     *<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * &lt;p&gt; To create a new WritableRaster that contains a subregion of<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * the current WritableRaster, but shares its coordinate system<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * and bands, this method should be called with childMinX equal to<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * parentX, childMinY equal to parentY, and bandList equal to<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * null.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     *<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * @param parentX    X coordinate of the upper left corner in this<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     *                   WritableRaster's coordinates.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @param parentY    Y coordinate of the upper left corner in this<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *                   WritableRaster's coordinates.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @param w          Width of the region starting at (parentX, parentY).<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * @param h          Height of the region starting at (parentX, parentY).<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * @param childMinX  X coordinate of the upper left corner of<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     *                   the returned WritableRaster.<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * @param childMinY  Y coordinate of the upper left corner of<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     *                   the returned WritableRaster.<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * @param bandList   Array of band indices, or null to use all bands.<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * @return a &lt;code&gt;WritableRaster&lt;/code&gt; sharing all or part of the<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     *         &lt;code&gt;DataBuffer&lt;/code&gt; of this &lt;code&gt;WritableRaster&lt;/code&gt;.<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * @exception RasterFormatException if the subregion is outside of the<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     *                               raster bounds.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * @throws RasterFormatException if &lt;code&gt;w&lt;/code&gt; or<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *         &lt;code&gt;h&lt;/code&gt;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     *         is less than or equal to zero, or computing any of<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     *         &lt;code&gt;parentX + w&lt;/code&gt;, &lt;code&gt;parentY + h&lt;/code&gt;,<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     *         &lt;code&gt;childMinX + w&lt;/code&gt;, or<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     *         &lt;code&gt;childMinY + h&lt;/code&gt; results in integer<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *         overflow<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     */<a name="line.216"></a>
+<span class="sourceLineNo">217</span>    public WritableRaster createWritableChild(int parentX, int parentY,<a name="line.217"></a>
+<span class="sourceLineNo">218</span>                                              int w, int h,<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                                              int childMinX, int childMinY,<a name="line.219"></a>
+<span class="sourceLineNo">220</span>                                              int bandList[]) {<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        if (parentX &lt; this.minX) {<a name="line.221"></a>
+<span class="sourceLineNo">222</span>            throw new RasterFormatException("parentX lies outside raster");<a name="line.222"></a>
+<span class="sourceLineNo">223</span>        }<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        if (parentY &lt; this.minY) {<a name="line.224"></a>
+<span class="sourceLineNo">225</span>            throw new RasterFormatException("parentY lies outside raster");<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        }<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        if ((parentX+w &lt; parentX) || (parentX+w &gt; this.width + this.minX)) {<a name="line.227"></a>
+<span class="sourceLineNo">228</span>            throw new RasterFormatException("(parentX + width) is outside raster");<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        }<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        if ((parentY+h &lt; parentY) || (parentY+h &gt; this.height + this.minY)) {<a name="line.230"></a>
+<span class="sourceLineNo">231</span>            throw new RasterFormatException("(parentY + height) is outside raster");<a name="line.231"></a>
+<span class="sourceLineNo">232</span>        }<a name="line.232"></a>
+<span class="sourceLineNo">233</span><a name="line.233"></a>
+<span class="sourceLineNo">234</span>        SampleModel sm;<a name="line.234"></a>
+<span class="sourceLineNo">235</span>        // Note: the SampleModel for the child Raster should have the same<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        // width and height as that for the parent, since it represents<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        // the physical layout of the pixel data.  The child Raster's width<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        // and height represent a "virtual" view of the pixel data, so<a name="line.238"></a>
+<span class="sourceLineNo">239</span>        // they may be different than those of the SampleModel.<a name="line.239"></a>
+<span class="sourceLineNo">240</span>        if (bandList != null) {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>            sm = sampleModel.createSubsetSampleModel(bandList);<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        }<a name="line.242"></a>
+<span class="sourceLineNo">243</span>        else {<a name="line.243"></a>
+<span class="sourceLineNo">244</span>            sm = sampleModel;<a name="line.244"></a>
+<span class="sourceLineNo">245</span>        }<a name="line.245"></a>
+<span class="sourceLineNo">246</span><a name="line.246"></a>
+<span class="sourceLineNo">247</span>        int deltaX = childMinX - parentX;<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        int deltaY = childMinY - parentY;<a name="line.248"></a>
+<span class="sourceLineNo">249</span><a name="line.249"></a>
+<span class="sourceLineNo">250</span>        return new WritableRaster(sm,<a name="line.250"></a>
+<span class="sourceLineNo">251</span>                                  getDataBuffer(),<a name="line.251"></a>
+<span class="sourceLineNo">252</span>                                  new Rectangle(childMinX,childMinY,<a name="line.252"></a>
+<span class="sourceLineNo">253</span>                                                w, h),<a name="line.253"></a>
+<span class="sourceLineNo">254</span>                                  new Point(sampleModelTranslateX+deltaX,<a name="line.254"></a>
+<span class="sourceLineNo">255</span>                                            sampleModelTranslateY+deltaY),<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                                  this);<a name="line.256"></a>
+<span class="sourceLineNo">257</span>    }<a name="line.257"></a>
+<span class="sourceLineNo">258</span><a name="line.258"></a>
+<span class="sourceLineNo">259</span>    /**<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * Sets the data for a single pixel from a<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * primitive array of type TransferType.  For image data supported by<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * the Java 2D(tm) API, this will be one of DataBuffer.TYPE_BYTE,<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * DataBuffer.TYPE_USHORT, DataBuffer.TYPE_INT, DataBuffer.TYPE_SHORT,<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * DataBuffer.TYPE_FLOAT, or DataBuffer.TYPE_DOUBLE.  Data in the array<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * may be in a packed format, thus increasing efficiency for data<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * transfers.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * not in bounds, or if inData is not large enough to hold the pixel data.<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * However, explicit bounds checking is not guaranteed.<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * A ClassCastException will be thrown if the input object is not null<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * and references anything other than an array of TransferType.<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @see java.awt.image.SampleModel#setDataElements(int, int, Object, DataBuffer)<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * @param x        The X coordinate of the pixel location.<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * @param y        The Y coordinate of the pixel location.<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * @param inData   An object reference to an array of type defined by<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     *                 getTransferType() and length getNumDataElements()<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     *                 containing the pixel data to place at x,y.<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     *<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates are not<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * in bounds, or if inData is too small to hold the input.<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     */<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    public void setDataElements(int x, int y, Object inData) {<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        sampleModel.setDataElements(x-sampleModelTranslateX,<a name="line.283"></a>
+<span class="sourceLineNo">284</span>                                    y-sampleModelTranslateY,<a name="line.284"></a>
+<span class="sourceLineNo">285</span>                                    inData, dataBuffer);<a name="line.285"></a>
+<span class="sourceLineNo">286</span>    }<a name="line.286"></a>
+<span class="sourceLineNo">287</span><a name="line.287"></a>
+<span class="sourceLineNo">288</span>    /**<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * Sets the data for a rectangle of pixels from an input Raster.<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * The input Raster must be compatible with this WritableRaster<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * in that they must have the same number of bands, corresponding bands<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * must have the same number of bits per sample, the TransferTypes<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * and NumDataElements must be the same, and the packing used by<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * the getDataElements/setDataElements must be identical.<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * not in bounds.<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * However, explicit bounds checking is not guaranteed.<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * @param x        The X coordinate of the pixel location.<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * @param y        The Y coordinate of the pixel location.<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * @param inRaster Raster containing data to place at x,y.<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     *<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * @throws NullPointerException if inRaster is null.<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates are not<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * in bounds.<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     */<a name="line.305"></a>
+<span class="sourceLineNo">306</span>    public void setDataElements(int x, int y, Raster inRaster) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>        int dstOffX = x+inRaster.getMinX();<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        int dstOffY = y+inRaster.getMinY();<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        int width  = inRaster.getWidth();<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        int height = inRaster.getHeight();<a name="line.310"></a>
+<span class="sourceLineNo">311</span>        if ((dstOffX &lt; this.minX) || (dstOffY &lt; this.minY) ||<a name="line.311"></a>
+<span class="sourceLineNo">312</span>            (dstOffX + width &gt; this.minX + this.width) ||<a name="line.312"></a>
+<span class="sourceLineNo">313</span>            (dstOffY + height &gt; this.minY + this.height)) {<a name="line.313"></a>
+<span class="sourceLineNo">314</span>            throw new ArrayIndexOutOfBoundsException<a name="line.314"></a>
+<span class="sourceLineNo">315</span>                ("Coordinate out of bounds!");<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        }<a name="line.316"></a>
+<span class="sourceLineNo">317</span><a name="line.317"></a>
+<span class="sourceLineNo">318</span>        int srcOffX = inRaster.getMinX();<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        int srcOffY = inRaster.getMinY();<a name="line.319"></a>
+<span class="sourceLineNo">320</span>        Object tdata = null;<a name="line.320"></a>
+<span class="sourceLineNo">321</span><a name="line.321"></a>
+<span class="sourceLineNo">322</span>        for (int startY=0; startY &lt; height; startY++) {<a name="line.322"></a>
+<span class="sourceLineNo">323</span>            tdata = inRaster.getDataElements(srcOffX, srcOffY+startY,<a name="line.323"></a>
+<span class="sourceLineNo">324</span>                                             width, 1, tdata);<a name="line.324"></a>
+<span class="sourceLineNo">325</span>            setDataElements(dstOffX, dstOffY+startY,<a name="line.325"></a>
+<span class="sourceLineNo">326</span>                            width, 1, tdata);<a name="line.326"></a>
+<span class="sourceLineNo">327</span>        }<a name="line.327"></a>
+<span class="sourceLineNo">328</span>    }<a name="line.328"></a>
+<span class="sourceLineNo">329</span><a name="line.329"></a>
+<span class="sourceLineNo">330</span>    /**<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * Sets the data for a rectangle of pixels from a<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * primitive array of type TransferType.  For image data supported by<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * the Java 2D API, this will be one of DataBuffer.TYPE_BYTE,<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * DataBuffer.TYPE_USHORT, DataBuffer.TYPE_INT, DataBuffer.TYPE_SHORT,<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * DataBuffer.TYPE_FLOAT, or DataBuffer.TYPE_DOUBLE.  Data in the array<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * may be in a packed format, thus increasing efficiency for data<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * transfers.<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * not in bounds, or if inData is not large enough to hold the pixel data.<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * However, explicit bounds checking is not guaranteed.<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * A ClassCastException will be thrown if the input object is not null<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * and references anything other than an array of TransferType.<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * @see java.awt.image.SampleModel#setDataElements(int, int, int, int, Object, DataBuffer)<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * @param x        The X coordinate of the upper left pixel location.<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * @param y        The Y coordinate of the upper left pixel location.<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * @param w        Width of the pixel rectangle.<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * @param h        Height of the pixel rectangle.<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * @param inData   An object reference to an array of type defined by<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     *                 getTransferType() and length w*h*getNumDataElements()<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     *                 containing the pixel data to place between x,y and<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     *                 x+w-1, y+h-1.<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     *<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * @throws NullPointerException if inData is null.<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates are not<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * in bounds, or if inData is too small to hold the input.<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     */<a name="line.356"></a>
+<span class="sourceLineNo">357</span>    public void setDataElements(int x, int y, int w, int h, Object inData) {<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        sampleModel.setDataElements(x-sampleModelTranslateX,<a name="line.358"></a>
+<span class="sourceLineNo">359</span>                                    y-sampleModelTranslateY,<a name="line.359"></a>
+<span class="sourceLineNo">360</span>                                    w,h,inData,dataBuffer);<a name="line.360"></a>
+<span class="sourceLineNo">361</span>    }<a name="line.361"></a>
+<span class="sourceLineNo">362</span><a name="line.362"></a>
+<span class="sourceLineNo">363</span>    /**<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * Copies pixels from Raster srcRaster to this WritableRaster.  Each pixel<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * in srcRaster is copied to the same x,y address in this raster, unless<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * the address falls outside the bounds of this raster.  srcRaster<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     * must have the same number of bands as this WritableRaster.  The<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * copy is a simple copy of source samples to the corresponding destination<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * samples.<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * &lt;p&gt;<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * If all samples of both source and destination Rasters are of<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * integral type and less than or equal to 32 bits in size, then calling<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * this method is equivalent to executing the following code for all<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * &lt;code&gt;x,y&lt;/code&gt; addresses valid in both Rasters.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * &lt;pre&gt;<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     *       Raster srcRaster;<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     *       WritableRaster dstRaster;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     *       for (int b = 0; b &lt; srcRaster.getNumBands(); b++) {<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     *           dstRaster.setSample(x, y, b, srcRaster.getSample(x, y, b));<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     *       }<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * &lt;/pre&gt;<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     * Thus, when copying an integral type source to an integral type<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * destination, if the source sample size is greater than the destination<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     * sample size for a particular band, the high order bits of the source<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * sample are truncated.  If the source sample size is less than the<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * destination size for a particular band, the high order bits of the<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * destination are zero-extended or sign-extended depending on whether<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * srcRaster's SampleModel treats the sample as a signed or unsigned<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * quantity.<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * &lt;p&gt;<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * When copying a float or double source to an integral type destination,<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * each source sample is cast to the destination type.  When copying an<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * integral type source to a float or double destination, the source<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * is first converted to a 32-bit int (if necessary), using the above<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * rules for integral types, and then the int is cast to float or<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * double.<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * &lt;p&gt;<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * @param srcRaster  The  Raster from which to copy pixels.<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     *<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * @throws NullPointerException if srcRaster is null.<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     */<a name="line.401"></a>
+<span class="sourceLineNo">402</span>    public void setRect(Raster srcRaster) {<a name="line.402"></a>
+<span class="sourceLineNo">403</span>        setRect(0,0,srcRaster);<a name="line.403"></a>
+<span class="sourceLineNo">404</span>    }<a name="line.404"></a>
+<span class="sourceLineNo">405</span><a name="line.405"></a>
+<span class="sourceLineNo">406</span>    /**<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * Copies pixels from Raster srcRaster to this WritableRaster.<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * For each (x, y) address in srcRaster, the corresponding pixel<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * is copied to address (x+dx, y+dy) in this WritableRaster,<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * unless (x+dx, y+dy) falls outside the bounds of this raster.<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * srcRaster must have the same number of bands as this WritableRaster.<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * The copy is a simple copy of source samples to the corresponding<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     * destination samples.  For details, see<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     * {@link WritableRaster#setRect(Raster)}.<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     *<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     * @param dx        The X translation factor from src space to dst space<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     *                  of the copy.<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * @param dy        The Y translation factor from src space to dst space<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     *                  of the copy.<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * @param srcRaster The Raster from which to copy pixels.<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     *<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     * @throws NullPointerException if srcRaster is null.<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     */<a name="line.423"></a>
+<span class="sourceLineNo">424</span>    public void setRect(int dx, int dy, Raster srcRaster) {<a name="line.424"></a>
+<span class="sourceLineNo">425</span>        int width  = srcRaster.getWidth();<a name="line.425"></a>
+<span class="sourceLineNo">426</span>        int height = srcRaster.getHeight();<a name="line.426"></a>
+<span class="sourceLineNo">427</span>        int srcOffX = srcRaster.getMinX();<a name="line.427"></a>
+<span class="sourceLineNo">428</span>        int srcOffY = srcRaster.getMinY();<a name="line.428"></a>
+<span class="sourceLineNo">429</span>        int dstOffX = dx+srcOffX;<a name="line.429"></a>
+<span class="sourceLineNo">430</span>        int dstOffY = dy+srcOffY;<a name="line.430"></a>
+<span class="sourceLineNo">431</span><a name="line.431"></a>
+<span class="sourceLineNo">432</span>        // Clip to this raster<a name="line.432"></a>
+<span class="sourceLineNo">433</span>        if (dstOffX &lt; this.minX) {<a name="line.433"></a>
+<span class="sourceLineNo">434</span>            int skipX = this.minX - dstOffX;<a name="line.434"></a>
+<span class="sourceLineNo">435</span>            width -= skipX;<a name="line.435"></a>
+<span class="sourceLineNo">436</span>            srcOffX += skipX;<a name="line.436"></a>
+<span class="sourceLineNo">437</span>            dstOffX = this.minX;<a name="line.437"></a>
+<span class="sourceLineNo">438</span>        }<a name="line.438"></a>
+<span class="sourceLineNo">439</span>        if (dstOffY &lt; this.minY) {<a name="line.439"></a>
+<span class="sourceLineNo">440</span>            int skipY = this.minY - dstOffY;<a name="line.440"></a>
+<span class="sourceLineNo">441</span>            height -= skipY;<a name="line.441"></a>
+<span class="sourceLineNo">442</span>            srcOffY += skipY;<a name="line.442"></a>
+<span class="sourceLineNo">443</span>            dstOffY = this.minY;<a name="line.443"></a>
+<span class="sourceLineNo">444</span>        }<a name="line.444"></a>
+<span class="sourceLineNo">445</span>        if (dstOffX+width &gt; this.minX+this.width) {<a name="line.445"></a>
+<span class="sourceLineNo">446</span>            width = this.minX + this.width - dstOffX;<a name="line.446"></a>
+<span class="sourceLineNo">447</span>        }<a name="line.447"></a>
+<span class="sourceLineNo">448</span>        if (dstOffY+height &gt; this.minY+this.height) {<a name="line.448"></a>
+<span class="sourceLineNo">449</span>            height = this.minY + this.height - dstOffY;<a name="line.449"></a>
+<span class="sourceLineNo">450</span>        }<a name="line.450"></a>
+<span class="sourceLineNo">451</span><a name="line.451"></a>
+<span class="sourceLineNo">452</span>        if (width &lt;= 0 || height &lt;= 0) {<a name="line.452"></a>
+<span class="sourceLineNo">453</span>            return;<a name="line.453"></a>
+<span class="sourceLineNo">454</span>        }<a name="line.454"></a>
+<span class="sourceLineNo">455</span><a name="line.455"></a>
+<span class="sourceLineNo">456</span>        switch (srcRaster.getSampleModel().getDataType()) {<a name="line.456"></a>
+<span class="sourceLineNo">457</span>        case DataBuffer.TYPE_BYTE:<a name="line.457"></a>
+<span class="sourceLineNo">458</span>        case DataBuffer.TYPE_SHORT:<a name="line.458"></a>
+<span class="sourceLineNo">459</span>        case DataBuffer.TYPE_USHORT:<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        case DataBuffer.TYPE_INT:<a name="line.460"></a>
+<span class="sourceLineNo">461</span>            int[] iData = null;<a name="line.461"></a>
+<span class="sourceLineNo">462</span>            for (int startY=0; startY &lt; height; startY++) {<a name="line.462"></a>
+<span class="sourceLineNo">463</span>                // Grab one scanline at a time<a name="line.463"></a>
+<span class="sourceLineNo">464</span>                iData =<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                    srcRaster.getPixels(srcOffX, srcOffY+startY, width, 1,<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                                        iData);<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                setPixels(dstOffX, dstOffY+startY, width, 1, iData);<a name="line.467"></a>
+<span class="sourceLineNo">468</span>            }<a name="line.468"></a>
+<span class="sourceLineNo">469</span>            break;<a name="line.469"></a>
+<span class="sourceLineNo">470</span><a name="line.470"></a>
+<span class="sourceLineNo">471</span>        case DataBuffer.TYPE_FLOAT:<a name="line.471"></a>
+<span class="sourceLineNo">472</span>            float[] fData = null;<a name="line.472"></a>
+<span class="sourceLineNo">473</span>            for (int startY=0; startY &lt; height; startY++) {<a name="line.473"></a>
+<span class="sourceLineNo">474</span>                fData =<a name="line.474"></a>
+<span class="sourceLineNo">475</span>                    srcRaster.getPixels(srcOffX, srcOffY+startY, width, 1,<a name="line.475"></a>
+<span class="sourceLineNo">476</span>                                        fData);<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                setPixels(dstOffX, dstOffY+startY, width, 1, fData);<a name="line.477"></a>
+<span class="sourceLineNo">478</span>            }<a name="line.478"></a>
+<span class="sourceLineNo">479</span>            break;<a name="line.479"></a>
+<span class="sourceLineNo">480</span><a name="line.480"></a>
+<span class="sourceLineNo">481</span>        case DataBuffer.TYPE_DOUBLE:<a name="line.481"></a>
+<span class="sourceLineNo">482</span>            double[] dData = null;<a name="line.482"></a>
+<span class="sourceLineNo">483</span>            for (int startY=0; startY &lt; height; startY++) {<a name="line.483"></a>
+<span class="sourceLineNo">484</span>                // Grab one scanline at a time<a name="line.484"></a>
+<span class="sourceLineNo">485</span>                dData =<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                    srcRaster.getPixels(srcOffX, srcOffY+startY, width, 1,<a name="line.486"></a>
+<span class="sourceLineNo">487</span>                                        dData);<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                setPixels(dstOffX, dstOffY+startY, width, 1, dData);<a name="line.488"></a>
+<span class="sourceLineNo">489</span>            }<a name="line.489"></a>
+<span class="sourceLineNo">490</span>            break;<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        }<a name="line.491"></a>
+<span class="sourceLineNo">492</span>    }<a name="line.492"></a>
+<span class="sourceLineNo">493</span><a name="line.493"></a>
+<span class="sourceLineNo">494</span>    /**<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     * Sets a pixel in the DataBuffer using an int array of samples for input.<a name="line.495"></a>
+<span class="sourceLineNo">496</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.496"></a>
+<span class="sourceLineNo">497</span>     * not in bounds.<a name="line.497"></a>
+<span class="sourceLineNo">498</span>     * However, explicit bounds checking is not guaranteed.<a name="line.498"></a>
+<span class="sourceLineNo">499</span>     * @param x      The X coordinate of the pixel location.<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     * @param y      The Y coordinate of the pixel location.<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * @param iArray The input samples in a int array.<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     *<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * @throws NullPointerException if iArray is null.<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates are not<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     * in bounds, or if iArray is too small to hold the input.<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     */<a name="line.506"></a>
+<span class="sourceLineNo">507</span>    public void setPixel(int x, int y, int iArray[]) {<a name="line.507"></a>
+<span class="sourceLineNo">508</span>        sampleModel.setPixel(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.508"></a>
+<span class="sourceLineNo">509</span>                             iArray,dataBuffer);<a name="line.509"></a>
+<span class="sourceLineNo">510</span>    }<a name="line.510"></a>
+<span class="sourceLineNo">511</span><a name="line.511"></a>
+<span class="sourceLineNo">512</span>    /**<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     * Sets a pixel in the DataBuffer using a float array of samples for input.<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     * not in bounds.<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     * However, explicit bounds checking is not guaranteed.<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * @param x      The X coordinate of the pixel location.<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     * @param y      The Y coordinate of the pixel location.<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     * @param fArray The input samples in a float array.<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     *<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * @throws NullPointerException if fArray is null.<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates are not<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     * in bounds, or if fArray is too small to hold the input.<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     */<a name="line.524"></a>
+<span class="sourceLineNo">525</span>    public void setPixel(int x, int y, float fArray[]) {<a name="line.525"></a>
+<span class="sourceLineNo">526</span>        sampleModel.setPixel(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.526"></a>
+<span class="sourceLineNo">527</span>                             fArray,dataBuffer);<a name="line.527"></a>
+<span class="sourceLineNo">528</span>    }<a name="line.528"></a>
+<span class="sourceLineNo">529</span><a name="line.529"></a>
+<span class="sourceLineNo">530</span>    /**<a name="line.530"></a>
+<span class="sourceLineNo">531</span>     * Sets a pixel in the DataBuffer using a double array of samples for input.<a name="line.531"></a>
+<span class="sourceLineNo">532</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.532"></a>
+<span class="sourceLineNo">533</span>     * not in bounds.<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * However, explicit bounds checking is not guaranteed.<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     * @param x      The X coordinate of the pixel location.<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * @param y      The Y coordinate of the pixel location.<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * @param dArray The input samples in a double array.<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     *<a name="line.538"></a>
+<span class="sourceLineNo">539</span>     * @throws NullPointerException if dArray is null.<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates are not<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     * in bounds, or if dArray is too small to hold the input.<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     */<a name="line.542"></a>
+<span class="sourceLineNo">543</span>    public void setPixel(int x, int y, double dArray[]) {<a name="line.543"></a>
+<span class="sourceLineNo">544</span>        sampleModel.setPixel(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.544"></a>
+<span class="sourceLineNo">545</span>                             dArray,dataBuffer);<a name="line.545"></a>
+<span class="sourceLineNo">546</span>    }<a name="line.546"></a>
+<span class="sourceLineNo">547</span><a name="line.547"></a>
+<span class="sourceLineNo">548</span>    /**<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     * Sets all samples for a rectangle of pixels from an int array containing<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     * one sample per array element.<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.551"></a>
+<span class="sourceLineNo">552</span>     * not in bounds.<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     * However, explicit bounds checking is not guaranteed.<a name="line.553"></a>
+<span class="sourceLineNo">554</span>     * @param x        The X coordinate of the upper left pixel location.<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     * @param y        The Y coordinate of the upper left pixel location.<a name="line.555"></a>
+<span class="sourceLineNo">556</span>     * @param w        Width of the pixel rectangle.<a name="line.556"></a>
+<span class="sourceLineNo">557</span>     * @param h        Height of the pixel rectangle.<a name="line.557"></a>
+<span class="sourceLineNo">558</span>     * @param iArray   The input int pixel array.<a name="line.558"></a>
+<span class="sourceLineNo">559</span>     *<a name="line.559"></a>
+<span class="sourceLineNo">560</span>     * @throws NullPointerException if iArray is null.<a name="line.560"></a>
+<span class="sourceLineNo">561</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates are not<a name="line.561"></a>
+<span class="sourceLineNo">562</span>     * in bounds, or if iArray is too small to hold the input.<a name="line.562"></a>
+<span class="sourceLineNo">563</span>     */<a name="line.563"></a>
+<span class="sourceLineNo">564</span>    public void setPixels(int x, int y, int w, int h, int iArray[]) {<a name="line.564"></a>
+<span class="sourceLineNo">565</span>        sampleModel.setPixels(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.565"></a>
+<span class="sourceLineNo">566</span>                              w,h,iArray,dataBuffer);<a name="line.566"></a>
+<span class="sourceLineNo">567</span>    }<a name="line.567"></a>
+<span class="sourceLineNo">568</span><a name="line.568"></a>
+<span class="sourceLineNo">569</span>    /**<a name="line.569"></a>
+<span class="sourceLineNo">570</span>     * Sets all samples for a rectangle of pixels from a float array containing<a name="line.570"></a>
+<span class="sourceLineNo">571</span>     * one sample per array element.<a name="line.571"></a>
+<span class="sourceLineNo">572</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.572"></a>
+<span class="sourceLineNo">573</span>     * not in bounds.<a name="line.573"></a>
+<span class="sourceLineNo">574</span>     * However, explicit bounds checking is not guaranteed.<a name="line.574"></a>
+<span class="sourceLineNo">575</span>     * @param x        The X coordinate of the upper left pixel location.<a name="line.575"></a>
+<span class="sourceLineNo">576</span>     * @param y        The Y coordinate of the upper left pixel location.<a name="line.576"></a>
+<span class="sourceLineNo">577</span>     * @param w        Width of the pixel rectangle.<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     * @param h        Height of the pixel rectangle.<a name="line.578"></a>
+<span class="sourceLineNo">579</span>     * @param fArray   The input float pixel array.<a name="line.579"></a>
+<span class="sourceLineNo">580</span>     *<a name="line.580"></a>
+<span class="sourceLineNo">581</span>     * @throws NullPointerException if fArray is null.<a name="line.581"></a>
+<span class="sourceLineNo">582</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates are not<a name="line.582"></a>
+<span class="sourceLineNo">583</span>     * in bounds, or if fArray is too small to hold the input.<a name="line.583"></a>
+<span class="sourceLineNo">584</span>     */<a name="line.584"></a>
+<span class="sourceLineNo">585</span>    public void setPixels(int x, int y, int w, int h, float fArray[]) {<a name="line.585"></a>
+<span class="sourceLineNo">586</span>        sampleModel.setPixels(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.586"></a>
+<span class="sourceLineNo">587</span>                              w,h,fArray,dataBuffer);<a name="line.587"></a>
+<span class="sourceLineNo">588</span>    }<a name="line.588"></a>
+<span class="sourceLineNo">589</span><a name="line.589"></a>
+<span class="sourceLineNo">590</span>    /**<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * Sets all samples for a rectangle of pixels from a double array containing<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * one sample per array element.<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * not in bounds.<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     * However, explicit bounds checking is not guaranteed.<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     * @param x        The X coordinate of the upper left pixel location.<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     * @param y        The Y coordinate of the upper left pixel location.<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * @param w        Width of the pixel rectangle.<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * @param h        Height of the pixel rectangle.<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     * @param dArray   The input double pixel array.<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     *<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     * @throws NullPointerException if dArray is null.<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates are not<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * in bounds, or if dArray is too small to hold the input.<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     */<a name="line.605"></a>
+<span class="sourceLineNo">606</span>    public void setPixels(int x, int y, int w, int h, double dArray[]) {<a name="line.606"></a>
+<span class="sourceLineNo">607</span>        sampleModel.setPixels(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.607"></a>
+<span class="sourceLineNo">608</span>                              w,h,dArray,dataBuffer);<a name="line.608"></a>
+<span class="sourceLineNo">609</span>    }<a name="line.609"></a>
+<span class="sourceLineNo">610</span><a name="line.610"></a>
+<span class="sourceLineNo">611</span>    /**<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     * Sets a sample in the specified band for the pixel located at (x,y)<a name="line.612"></a>
+<span class="sourceLineNo">613</span>     * in the DataBuffer using an int for input.<a name="line.613"></a>
+<span class="sourceLineNo">614</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     * not in bounds.<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     * However, explicit bounds checking is not guaranteed.<a name="line.616"></a>
+<span class="sourceLineNo">617</span>     * @param x        The X coordinate of the pixel location.<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     * @param y        The Y coordinate of the pixel location.<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     * @param b        The band to set.<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     * @param s        The input sample.<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     *<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates or<a name="line.622"></a>
+<span class="sourceLineNo">623</span>     * the band index are not in bounds.<a name="line.623"></a>
+<span class="sourceLineNo">624</span>     */<a name="line.624"></a>
+<span class="sourceLineNo">625</span>    public void setSample(int x, int y, int b, int s) {<a name="line.625"></a>
+<span class="sourceLineNo">626</span>        sampleModel.setSample(x-sampleModelTranslateX,<a name="line.626"></a>
+<span class="sourceLineNo">627</span>                              y-sampleModelTranslateY, b, s,<a name="line.627"></a>
+<span class="sourceLineNo">628</span>                              dataBuffer);<a name="line.628"></a>
+<span class="sourceLineNo">629</span>    }<a name="line.629"></a>
+<span class="sourceLineNo">630</span><a name="line.630"></a>
+<span class="sourceLineNo">631</span>    /**<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * Sets a sample in the specified band for the pixel located at (x,y)<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     * in the DataBuffer using a float for input.<a name="line.633"></a>
+<span class="sourceLineNo">634</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.634"></a>
+<span class="sourceLineNo">635</span>     * not in bounds.<a name="line.635"></a>
+<span class="sourceLineNo">636</span>     * However, explicit bounds checking is not guaranteed.<a name="line.636"></a>
+<span class="sourceLineNo">637</span>     * @param x        The X coordinate of the pixel location.<a name="line.637"></a>
+<span class="sourceLineNo">638</span>     * @param y        The Y coordinate of the pixel location.<a name="line.638"></a>
+<span class="sourceLineNo">639</span>     * @param b        The band to set.<a name="line.639"></a>
+<span class="sourceLineNo">640</span>     * @param s        The input sample as a float.<a name="line.640"></a>
+<span class="sourceLineNo">641</span>     *<a name="line.641"></a>
+<span class="sourceLineNo">642</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates or<a name="line.642"></a>
+<span class="sourceLineNo">643</span>     * the band index are not in bounds.<a name="line.643"></a>
+<span class="sourceLineNo">644</span>     */<a name="line.644"></a>
+<span class="sourceLineNo">645</span>    public void setSample(int x, int y, int b, float s){<a name="line.645"></a>
+<span class="sourceLineNo">646</span>        sampleModel.setSample(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.646"></a>
+<span class="sourceLineNo">647</span>                              b,s,dataBuffer);<a name="line.647"></a>
+<span class="sourceLineNo">648</span>    }<a name="line.648"></a>
+<span class="sourceLineNo">649</span><a name="line.649"></a>
+<span class="sourceLineNo">650</span>    /**<a name="line.650"></a>
+<span class="sourceLineNo">651</span>     * Sets a sample in the specified band for the pixel located at (x,y)<a name="line.651"></a>
+<span class="sourceLineNo">652</span>     * in the DataBuffer using a double for input.<a name="line.652"></a>
+<span class="sourceLineNo">653</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.653"></a>
+<span class="sourceLineNo">654</span>     * not in bounds.<a name="line.654"></a>
+<span class="sourceLineNo">655</span>     * However, explicit bounds checking is not guaranteed.<a name="line.655"></a>
+<span class="sourceLineNo">656</span>     * @param x        The X coordinate of the pixel location.<a name="line.656"></a>
+<span class="sourceLineNo">657</span>     * @param y        The Y coordinate of the pixel location.<a name="line.657"></a>
+<span class="sourceLineNo">658</span>     * @param b        The band to set.<a name="line.658"></a>
+<span class="sourceLineNo">659</span>     * @param s        The input sample as a double.<a name="line.659"></a>
+<span class="sourceLineNo">660</span>     *<a name="line.660"></a>
+<span class="sourceLineNo">661</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates or<a name="line.661"></a>
+<span class="sourceLineNo">662</span>     * the band index are not in bounds.<a name="line.662"></a>
+<span class="sourceLineNo">663</span>     */<a name="line.663"></a>
+<span class="sourceLineNo">664</span>    public void setSample(int x, int y, int b, double s){<a name="line.664"></a>
+<span class="sourceLineNo">665</span>        sampleModel.setSample(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.665"></a>
+<span class="sourceLineNo">666</span>                                    b,s,dataBuffer);<a name="line.666"></a>
+<span class="sourceLineNo">667</span>    }<a name="line.667"></a>
+<span class="sourceLineNo">668</span><a name="line.668"></a>
+<span class="sourceLineNo">669</span>    /**<a name="line.669"></a>
+<span class="sourceLineNo">670</span>     * Sets the samples in the specified band for the specified rectangle<a name="line.670"></a>
+<span class="sourceLineNo">671</span>     * of pixels from an int array containing one sample per array element.<a name="line.671"></a>
+<span class="sourceLineNo">672</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.672"></a>
+<span class="sourceLineNo">673</span>     * not in bounds.<a name="line.673"></a>
+<span class="sourceLineNo">674</span>     * However, explicit bounds checking is not guaranteed.<a name="line.674"></a>
+<span class="sourceLineNo">675</span>     * @param x        The X coordinate of the upper left pixel location.<a name="line.675"></a>
+<span class="sourceLineNo">676</span>     * @param y        The Y coordinate of the upper left pixel location.<a name="line.676"></a>
+<span class="sourceLineNo">677</span>     * @param w        Width of the pixel rectangle.<a name="line.677"></a>
+<span class="sourceLineNo">678</span>     * @param h        Height of the pixel rectangle.<a name="line.678"></a>
+<span class="sourceLineNo">679</span>     * @param b        The band to set.<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     * @param iArray   The input int sample array.<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     *<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     * @throws NullPointerException if iArray is null.<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates or<a name="line.683"></a>
+<span class="sourceLineNo">684</span>     * the band index are not in bounds, or if iArray is too small to<a name="line.684"></a>
+<span class="sourceLineNo">685</span>     * hold the input.<a name="line.685"></a>
+<span class="sourceLineNo">686</span>     */<a name="line.686"></a>
+<span class="sourceLineNo">687</span>    public void setSamples(int x, int y, int w, int h, int b,<a name="line.687"></a>
+<span class="sourceLineNo">688</span>                           int iArray[]) {<a name="line.688"></a>
+<span class="sourceLineNo">689</span>        sampleModel.setSamples(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.689"></a>
+<span class="sourceLineNo">690</span>                               w,h,b,iArray,dataBuffer);<a name="line.690"></a>
+<span class="sourceLineNo">691</span>    }<a name="line.691"></a>
+<span class="sourceLineNo">692</span><a name="line.692"></a>
+<span class="sourceLineNo">693</span>    /**<a name="line.693"></a>
+<span class="sourceLineNo">694</span>     * Sets the samples in the specified band for the specified rectangle<a name="line.694"></a>
+<span class="sourceLineNo">695</span>     * of pixels from a float array containing one sample per array element.<a name="line.695"></a>
+<span class="sourceLineNo">696</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.696"></a>
+<span class="sourceLineNo">697</span>     * not in bounds.<a name="line.697"></a>
+<span class="sourceLineNo">698</span>     * However, explicit bounds checking is not guaranteed.<a name="line.698"></a>
+<span class="sourceLineNo">699</span>     * @param x        The X coordinate of the upper left pixel location.<a name="line.699"></a>
+<span class="sourceLineNo">700</span>     * @param y        The Y coordinate of the upper left pixel location.<a name="line.700"></a>
+<span class="sourceLineNo">701</span>     * @param w        Width of the pixel rectangle.<a name="line.701"></a>
+<span class="sourceLineNo">702</span>     * @param h        Height of the pixel rectangle.<a name="line.702"></a>
+<span class="sourceLineNo">703</span>     * @param b        The band to set.<a name="line.703"></a>
+<span class="sourceLineNo">704</span>     * @param fArray   The input float sample array.<a name="line.704"></a>
+<span class="sourceLineNo">705</span>     *<a name="line.705"></a>
+<span class="sourceLineNo">706</span>     * @throws NullPointerException if fArray is null.<a name="line.706"></a>
+<span class="sourceLineNo">707</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates or<a name="line.707"></a>
+<span class="sourceLineNo">708</span>     * the band index are not in bounds, or if fArray is too small to<a name="line.708"></a>
+<span class="sourceLineNo">709</span>     * hold the input.<a name="line.709"></a>
+<span class="sourceLineNo">710</span>     */<a name="line.710"></a>
+<span class="sourceLineNo">711</span>    public void setSamples(int x, int y, int w, int h, int b,<a name="line.711"></a>
+<span class="sourceLineNo">712</span>                           float fArray[]) {<a name="line.712"></a>
+<span class="sourceLineNo">713</span>        sampleModel.setSamples(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.713"></a>
+<span class="sourceLineNo">714</span>                               w,h,b,fArray,dataBuffer);<a name="line.714"></a>
+<span class="sourceLineNo">715</span>    }<a name="line.715"></a>
+<span class="sourceLineNo">716</span><a name="line.716"></a>
+<span class="sourceLineNo">717</span>    /**<a name="line.717"></a>
+<span class="sourceLineNo">718</span>     * Sets the samples in the specified band for the specified rectangle<a name="line.718"></a>
+<span class="sourceLineNo">719</span>     * of pixels from a double array containing one sample per array element.<a name="line.719"></a>
+<span class="sourceLineNo">720</span>     * An ArrayIndexOutOfBoundsException may be thrown if the coordinates are<a name="line.720"></a>
+<span class="sourceLineNo">721</span>     * not in bounds.<a name="line.721"></a>
+<span class="sourceLineNo">722</span>     * However, explicit bounds checking is not guaranteed.<a name="line.722"></a>
+<span class="sourceLineNo">723</span>     * @param x        The X coordinate of the upper left pixel location.<a name="line.723"></a>
+<span class="sourceLineNo">724</span>     * @param y        The Y coordinate of the upper left pixel location.<a name="line.724"></a>
+<span class="sourceLineNo">725</span>     * @param w        Width of the pixel rectangle.<a name="line.725"></a>
+<span class="sourceLineNo">726</span>     * @param h        Height of the pixel rectangle.<a name="line.726"></a>
+<span class="sourceLineNo">727</span>     * @param b        The band to set.<a name="line.727"></a>
+<span class="sourceLineNo">728</span>     * @param dArray   The input double sample array.<a name="line.728"></a>
+<span class="sourceLineNo">729</span>     *<a name="line.729"></a>
+<span class="sourceLineNo">730</span>     * @throws NullPointerException if dArray is null.<a name="line.730"></a>
+<span class="sourceLineNo">731</span>     * @throws ArrayIndexOutOfBoundsException if the coordinates or<a name="line.731"></a>
+<span class="sourceLineNo">732</span>     * the band index are not in bounds, or if dArray is too small to<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     * hold the input.<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     */<a name="line.734"></a>
+<span class="sourceLineNo">735</span>    public void setSamples(int x, int y, int w, int h, int b,<a name="line.735"></a>
+<span class="sourceLineNo">736</span>                           double dArray[]) {<a name="line.736"></a>
+<span class="sourceLineNo">737</span>        sampleModel.setSamples(x-sampleModelTranslateX,y-sampleModelTranslateY,<a name="line.737"></a>
+<span class="sourceLineNo">738</span>                              w,h,b,dArray,dataBuffer);<a name="line.738"></a>
+<span class="sourceLineNo">739</span>    }<a name="line.739"></a>
+<span class="sourceLineNo">740</span><a name="line.740"></a>
+<span class="sourceLineNo">741</span>}<a name="line.741"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

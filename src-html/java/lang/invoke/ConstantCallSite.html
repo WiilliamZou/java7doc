@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang.invoke;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * A {@code ConstantCallSite} is a {@link CallSite} whose target is permanent, and can never be changed.<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * An {@code invokedynamic} instruction linked to a {@code ConstantCallSite} is permanently<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * bound to the call site's target.<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * @author John Rose, JSR 292 EG<a name="line.32"></a>
+<span class="sourceLineNo">033</span> */<a name="line.33"></a>
+<span class="sourceLineNo">034</span>public class ConstantCallSite extends CallSite {<a name="line.34"></a>
+<span class="sourceLineNo">035</span>    private final boolean isFrozen;<a name="line.35"></a>
+<span class="sourceLineNo">036</span><a name="line.36"></a>
+<span class="sourceLineNo">037</span>    /**<a name="line.37"></a>
+<span class="sourceLineNo">038</span>     * Creates a call site with a permanent target.<a name="line.38"></a>
+<span class="sourceLineNo">039</span>     * @param target the target to be permanently associated with this call site<a name="line.39"></a>
+<span class="sourceLineNo">040</span>     * @throws NullPointerException if the proposed target is null<a name="line.40"></a>
+<span class="sourceLineNo">041</span>     */<a name="line.41"></a>
+<span class="sourceLineNo">042</span>    public ConstantCallSite(MethodHandle target) {<a name="line.42"></a>
+<span class="sourceLineNo">043</span>        super(target);<a name="line.43"></a>
+<span class="sourceLineNo">044</span>        isFrozen = true;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>    }<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>    /**<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * Creates a call site with a permanent target, possibly bound to the call site itself.<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * &lt;p&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * During construction of the call site, the {@code createTargetHook} is invoked to<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     * produce the actual target, as if by a call of the form<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     * {@code (MethodHandle) createTargetHook.invoke(this)}.<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     * &lt;p&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * Note that user code cannot perform such an action directly in a subclass constructor,<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * since the target must be fixed before the {@code ConstantCallSite} constructor returns.<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * &lt;p&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * The hook is said to bind the call site to a target method handle,<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * and a typical action would be {@code someTarget.bindTo(this)}.<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * However, the hook is free to take any action whatever,<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * including ignoring the call site and returning a constant target.<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * &lt;p&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * The result returned by the hook must be a method handle of exactly<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * the same type as the call site.<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * &lt;p&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * While the hook is being called, the new {@code ConstantCallSite}<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * object is in a partially constructed state.<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * In this state,<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * a call to {@code getTarget}, or any other attempt to use the target,<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * will result in an {@code IllegalStateException}.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * It is legal at all times to obtain the call site's type using the {@code type} method.<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     *<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * @param targetType the type of the method handle to be permanently associated with this call site<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * @param createTargetHook a method handle to invoke (on the call site) to produce the call site's target<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * @throws WrongMethodTypeException if the hook cannot be invoked on the required arguments,<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     *         or if the target returned by the hook is not of the given {@code targetType}<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * @throws NullPointerException if the hook returns a null value<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * @throws ClassCastException if the hook returns something other than a {@code MethodHandle}<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * @throws Throwable anything else thrown by the the hook function<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     */<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    protected ConstantCallSite(MethodType targetType, MethodHandle createTargetHook) throws Throwable {<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        super(targetType, createTargetHook);<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        isFrozen = true;<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    }<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>    /**<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * Returns the target method of the call site, which behaves<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * like a {@code final} field of the {@code ConstantCallSite}.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * That is, the the target is always the original value passed<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * to the constructor call which created this instance.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @return the immutable linkage state of this call site, a constant method handle<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @throws IllegalStateException if the {@code ConstantCallSite} constructor has not completed<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     */<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    @Override public final MethodHandle getTarget() {<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        if (!isFrozen)  throw new IllegalStateException();<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        return target;<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    }<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * Always throws an {@link UnsupportedOperationException}.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * This kind of call site cannot change its target.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @param ignore a new target proposed for the call site, which is ignored<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * @throws UnsupportedOperationException because this kind of call site cannot change its target<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     */<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    @Override public final void setTarget(MethodHandle ignore) {<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        throw new UnsupportedOperationException();<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    }<a name="line.107"></a>
+<span class="sourceLineNo">108</span><a name="line.108"></a>
+<span class="sourceLineNo">109</span>    /**<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * Returns this call site's permanent target.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * Since that target will never change, this is a correct implementation<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * of {@link CallSite#dynamicInvoker CallSite.dynamicInvoker}.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * @return the immutable linkage state of this call site, a constant method handle<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @throws IllegalStateException if the {@code ConstantCallSite} constructor has not completed<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     */<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    @Override<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    public final MethodHandle dynamicInvoker() {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        return getTarget();<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    }<a name="line.119"></a>
+<span class="sourceLineNo">120</span>}<a name="line.120"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

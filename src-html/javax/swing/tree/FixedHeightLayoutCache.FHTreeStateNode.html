@@ -1,0 +1,1673 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.swing.tree;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.swing.event.TreeModelEvent;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.Dimension;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.Rectangle;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Enumeration;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.Hashtable;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.NoSuchElementException;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.util.Stack;<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>/**<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * NOTE: This will become more open in a future release.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;p&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;strong&gt;Warning:&lt;/strong&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * Serialized objects of this class will not be compatible with<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * future Swing releases. The current serialization support is<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * appropriate for short term storage or RMI between applications running<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * the same version of Swing.  As of 1.4, support for long term storage<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * of all JavaBeans&lt;sup&gt;&lt;font size="-2"&gt;TM&lt;/font&gt;&lt;/sup&gt;<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * has been added to the &lt;code&gt;java.beans&lt;/code&gt; package.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * Please see {@link java.beans.XMLEncoder}.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * @author Scott Violet<a name="line.48"></a>
+<span class="sourceLineNo">049</span> */<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span>public class FixedHeightLayoutCache extends AbstractLayoutCache {<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    /** Root node. */<a name="line.52"></a>
+<span class="sourceLineNo">053</span>    private FHTreeStateNode    root;<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>    /** Number of rows currently visible. */<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    private int                rowCount;<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    /**<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * Used in getting sizes for nodes to avoid creating a new Rectangle<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * every time a size is needed.<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     */<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    private Rectangle          boundsBuffer;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>    /**<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * Maps from TreePath to a FHTreeStateNode.<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     */<a name="line.66"></a>
+<span class="sourceLineNo">067</span>    private Hashtable&lt;TreePath, FHTreeStateNode&gt; treePathMapping;<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>    /**<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * Used for getting path/row information.<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     */<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    private SearchInfo         info;<a name="line.72"></a>
+<span class="sourceLineNo">073</span><a name="line.73"></a>
+<span class="sourceLineNo">074</span>    private Stack&lt;Stack&lt;TreePath&gt;&gt; tempStacks;<a name="line.74"></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a>
+<span class="sourceLineNo">076</span><a name="line.76"></a>
+<span class="sourceLineNo">077</span>    public FixedHeightLayoutCache() {<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        super();<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        tempStacks = new Stack&lt;Stack&lt;TreePath&gt;&gt;();<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        boundsBuffer = new Rectangle();<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        treePathMapping = new Hashtable&lt;TreePath, FHTreeStateNode&gt;();<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        info = new SearchInfo();<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        setRowHeight(1);<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    }<a name="line.84"></a>
+<span class="sourceLineNo">085</span><a name="line.85"></a>
+<span class="sourceLineNo">086</span>    /**<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * Sets the TreeModel that will provide the data.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @param newModel the TreeModel that is to provide the data<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     */<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    public void setModel(TreeModel newModel) {<a name="line.91"></a>
+<span class="sourceLineNo">092</span>        super.setModel(newModel);<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        rebuild(false);<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    }<a name="line.94"></a>
+<span class="sourceLineNo">095</span><a name="line.95"></a>
+<span class="sourceLineNo">096</span>    /**<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * Determines whether or not the root node from<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * the TreeModel is visible.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     *<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * @param rootVisible true if the root node of the tree is to be displayed<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * @see #rootVisible<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     */<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    public void setRootVisible(boolean rootVisible) {<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        if(isRootVisible() != rootVisible) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>            super.setRootVisible(rootVisible);<a name="line.105"></a>
+<span class="sourceLineNo">106</span>            if(root != null) {<a name="line.106"></a>
+<span class="sourceLineNo">107</span>                if(rootVisible) {<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                    rowCount++;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>                    root.adjustRowBy(1);<a name="line.109"></a>
+<span class="sourceLineNo">110</span>                }<a name="line.110"></a>
+<span class="sourceLineNo">111</span>                else {<a name="line.111"></a>
+<span class="sourceLineNo">112</span>                    rowCount--;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>                    root.adjustRowBy(-1);<a name="line.113"></a>
+<span class="sourceLineNo">114</span>                }<a name="line.114"></a>
+<span class="sourceLineNo">115</span>                visibleNodesChanged();<a name="line.115"></a>
+<span class="sourceLineNo">116</span>            }<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        }<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    }<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    /**<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * Sets the height of each cell. If rowHeight is less than or equal to<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * 0 this will throw an IllegalArgumentException.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @param rowHeight the height of each cell, in pixels<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     */<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    public void setRowHeight(int rowHeight) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        if(rowHeight &lt;= 0)<a name="line.127"></a>
+<span class="sourceLineNo">128</span>            throw new IllegalArgumentException("FixedHeightLayoutCache only supports row heights greater than 0");<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        if(getRowHeight() != rowHeight) {<a name="line.129"></a>
+<span class="sourceLineNo">130</span>            super.setRowHeight(rowHeight);<a name="line.130"></a>
+<span class="sourceLineNo">131</span>            visibleNodesChanged();<a name="line.131"></a>
+<span class="sourceLineNo">132</span>        }<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    }<a name="line.133"></a>
+<span class="sourceLineNo">134</span><a name="line.134"></a>
+<span class="sourceLineNo">135</span>    /**<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * Returns the number of visible rows.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     */<a name="line.137"></a>
+<span class="sourceLineNo">138</span>    public int getRowCount() {<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        return rowCount;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>    }<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>    /**<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * Does nothing, FixedHeightLayoutCache doesn't cache width, and that<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * is all that could change.<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     */<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    public void invalidatePathBounds(TreePath path) {<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    }<a name="line.147"></a>
+<span class="sourceLineNo">148</span><a name="line.148"></a>
+<span class="sourceLineNo">149</span><a name="line.149"></a>
+<span class="sourceLineNo">150</span>    /**<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * Informs the TreeState that it needs to recalculate all the sizes<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * it is referencing.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     */<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    public void invalidateSizes() {<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        // Nothing to do here, rowHeight still same, which is all<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        // this is interested in, visible region may have changed though.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        visibleNodesChanged();<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    }<a name="line.158"></a>
+<span class="sourceLineNo">159</span><a name="line.159"></a>
+<span class="sourceLineNo">160</span>    /**<a name="line.160"></a>
+<span class="sourceLineNo">161</span>      * Returns true if the value identified by row is currently expanded.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>      */<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    public boolean isExpanded(TreePath path) {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        if(path != null) {<a name="line.164"></a>
+<span class="sourceLineNo">165</span>            FHTreeStateNode     lastNode = getNodeForPath(path, true, false);<a name="line.165"></a>
+<span class="sourceLineNo">166</span><a name="line.166"></a>
+<span class="sourceLineNo">167</span>            return (lastNode != null &amp;&amp; lastNode.isExpanded());<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        }<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        return false;<a name="line.169"></a>
+<span class="sourceLineNo">170</span>    }<a name="line.170"></a>
+<span class="sourceLineNo">171</span><a name="line.171"></a>
+<span class="sourceLineNo">172</span>    /**<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * Returns a rectangle giving the bounds needed to draw path.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @param path     a TreePath specifying a node<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @param placeIn  a Rectangle object giving the available space<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @return a Rectangle object specifying the space to be used<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     */<a name="line.178"></a>
+<span class="sourceLineNo">179</span>    public Rectangle getBounds(TreePath path, Rectangle placeIn) {<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        if(path == null)<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            return null;<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>        FHTreeStateNode      node = getNodeForPath(path, true, false);<a name="line.183"></a>
+<span class="sourceLineNo">184</span><a name="line.184"></a>
+<span class="sourceLineNo">185</span>        if(node != null)<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            return getBounds(node, -1, placeIn);<a name="line.186"></a>
+<span class="sourceLineNo">187</span><a name="line.187"></a>
+<span class="sourceLineNo">188</span>        // node hasn't been created yet.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        TreePath       parentPath = path.getParentPath();<a name="line.189"></a>
+<span class="sourceLineNo">190</span><a name="line.190"></a>
+<span class="sourceLineNo">191</span>        node = getNodeForPath(parentPath, true, false);<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        if (node != null &amp;&amp; node.isExpanded()) {<a name="line.192"></a>
+<span class="sourceLineNo">193</span>            int              childIndex = treeModel.getIndexOfChild<a name="line.193"></a>
+<span class="sourceLineNo">194</span>                                 (parentPath.getLastPathComponent(),<a name="line.194"></a>
+<span class="sourceLineNo">195</span>                                  path.getLastPathComponent());<a name="line.195"></a>
+<span class="sourceLineNo">196</span><a name="line.196"></a>
+<span class="sourceLineNo">197</span>            if(childIndex != -1)<a name="line.197"></a>
+<span class="sourceLineNo">198</span>                return getBounds(node, childIndex, placeIn);<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        }<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        return null;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>    }<a name="line.201"></a>
+<span class="sourceLineNo">202</span><a name="line.202"></a>
+<span class="sourceLineNo">203</span>    /**<a name="line.203"></a>
+<span class="sourceLineNo">204</span>      * Returns the path for passed in row.  If row is not visible<a name="line.204"></a>
+<span class="sourceLineNo">205</span>      * null is returned.<a name="line.205"></a>
+<span class="sourceLineNo">206</span>      */<a name="line.206"></a>
+<span class="sourceLineNo">207</span>    public TreePath getPathForRow(int row) {<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        if(row &gt;= 0 &amp;&amp; row &lt; getRowCount()) {<a name="line.208"></a>
+<span class="sourceLineNo">209</span>            if(root.getPathForRow(row, getRowCount(), info)) {<a name="line.209"></a>
+<span class="sourceLineNo">210</span>                return info.getPath();<a name="line.210"></a>
+<span class="sourceLineNo">211</span>            }<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        }<a name="line.212"></a>
+<span class="sourceLineNo">213</span>        return null;<a name="line.213"></a>
+<span class="sourceLineNo">214</span>    }<a name="line.214"></a>
+<span class="sourceLineNo">215</span><a name="line.215"></a>
+<span class="sourceLineNo">216</span>    /**<a name="line.216"></a>
+<span class="sourceLineNo">217</span>      * Returns the row that the last item identified in path is visible<a name="line.217"></a>
+<span class="sourceLineNo">218</span>      * at.  Will return -1 if any of the elements in path are not<a name="line.218"></a>
+<span class="sourceLineNo">219</span>      * currently visible.<a name="line.219"></a>
+<span class="sourceLineNo">220</span>      */<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    public int getRowForPath(TreePath path) {<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        if(path == null || root == null)<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            return -1;<a name="line.223"></a>
+<span class="sourceLineNo">224</span><a name="line.224"></a>
+<span class="sourceLineNo">225</span>        FHTreeStateNode         node = getNodeForPath(path, true, false);<a name="line.225"></a>
+<span class="sourceLineNo">226</span><a name="line.226"></a>
+<span class="sourceLineNo">227</span>        if(node != null)<a name="line.227"></a>
+<span class="sourceLineNo">228</span>            return node.getRow();<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span>        TreePath       parentPath = path.getParentPath();<a name="line.230"></a>
+<span class="sourceLineNo">231</span><a name="line.231"></a>
+<span class="sourceLineNo">232</span>        node = getNodeForPath(parentPath, true, false);<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        if(node != null &amp;&amp; node.isExpanded()) {<a name="line.233"></a>
+<span class="sourceLineNo">234</span>            return node.getRowToModelIndex(treeModel.getIndexOfChild<a name="line.234"></a>
+<span class="sourceLineNo">235</span>                                           (parentPath.getLastPathComponent(),<a name="line.235"></a>
+<span class="sourceLineNo">236</span>                                            path.getLastPathComponent()));<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        }<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        return -1;<a name="line.238"></a>
+<span class="sourceLineNo">239</span>    }<a name="line.239"></a>
+<span class="sourceLineNo">240</span><a name="line.240"></a>
+<span class="sourceLineNo">241</span>    /**<a name="line.241"></a>
+<span class="sourceLineNo">242</span>      * Returns the path to the node that is closest to x,y.  If<a name="line.242"></a>
+<span class="sourceLineNo">243</span>      * there is nothing currently visible this will return null, otherwise<a name="line.243"></a>
+<span class="sourceLineNo">244</span>      * it'll always return a valid path.  If you need to test if the<a name="line.244"></a>
+<span class="sourceLineNo">245</span>      * returned object is exactly at x, y you should get the bounds for<a name="line.245"></a>
+<span class="sourceLineNo">246</span>      * the returned path and test x, y against that.<a name="line.246"></a>
+<span class="sourceLineNo">247</span>      */<a name="line.247"></a>
+<span class="sourceLineNo">248</span>    public TreePath getPathClosestTo(int x, int y) {<a name="line.248"></a>
+<span class="sourceLineNo">249</span>        if(getRowCount() == 0)<a name="line.249"></a>
+<span class="sourceLineNo">250</span>            return null;<a name="line.250"></a>
+<span class="sourceLineNo">251</span><a name="line.251"></a>
+<span class="sourceLineNo">252</span>        int                row = getRowContainingYLocation(y);<a name="line.252"></a>
+<span class="sourceLineNo">253</span><a name="line.253"></a>
+<span class="sourceLineNo">254</span>        return getPathForRow(row);<a name="line.254"></a>
+<span class="sourceLineNo">255</span>    }<a name="line.255"></a>
+<span class="sourceLineNo">256</span><a name="line.256"></a>
+<span class="sourceLineNo">257</span>    /**<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * Returns the number of visible children for row.<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     */<a name="line.259"></a>
+<span class="sourceLineNo">260</span>    public int getVisibleChildCount(TreePath path) {<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        FHTreeStateNode         node = getNodeForPath(path, true, false);<a name="line.261"></a>
+<span class="sourceLineNo">262</span><a name="line.262"></a>
+<span class="sourceLineNo">263</span>        if(node == null)<a name="line.263"></a>
+<span class="sourceLineNo">264</span>            return 0;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>        return node.getTotalChildCount();<a name="line.265"></a>
+<span class="sourceLineNo">266</span>    }<a name="line.266"></a>
+<span class="sourceLineNo">267</span><a name="line.267"></a>
+<span class="sourceLineNo">268</span>    /**<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * Returns an Enumerator that increments over the visible paths<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * starting at the passed in location. The ordering of the enumeration<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * is based on how the paths are displayed.<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     */<a name="line.272"></a>
+<span class="sourceLineNo">273</span>    public Enumeration&lt;TreePath&gt; getVisiblePathsFrom(TreePath path) {<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        if(path == null)<a name="line.274"></a>
+<span class="sourceLineNo">275</span>            return null;<a name="line.275"></a>
+<span class="sourceLineNo">276</span><a name="line.276"></a>
+<span class="sourceLineNo">277</span>        FHTreeStateNode         node = getNodeForPath(path, true, false);<a name="line.277"></a>
+<span class="sourceLineNo">278</span><a name="line.278"></a>
+<span class="sourceLineNo">279</span>        if(node != null) {<a name="line.279"></a>
+<span class="sourceLineNo">280</span>            return new VisibleFHTreeStateNodeEnumeration(node);<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        }<a name="line.281"></a>
+<span class="sourceLineNo">282</span>        TreePath            parentPath = path.getParentPath();<a name="line.282"></a>
+<span class="sourceLineNo">283</span><a name="line.283"></a>
+<span class="sourceLineNo">284</span>        node = getNodeForPath(parentPath, true, false);<a name="line.284"></a>
+<span class="sourceLineNo">285</span>        if(node != null &amp;&amp; node.isExpanded()) {<a name="line.285"></a>
+<span class="sourceLineNo">286</span>            return new VisibleFHTreeStateNodeEnumeration(node,<a name="line.286"></a>
+<span class="sourceLineNo">287</span>                  treeModel.getIndexOfChild(parentPath.getLastPathComponent(),<a name="line.287"></a>
+<span class="sourceLineNo">288</span>                                            path.getLastPathComponent()));<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        }<a name="line.289"></a>
+<span class="sourceLineNo">290</span>        return null;<a name="line.290"></a>
+<span class="sourceLineNo">291</span>    }<a name="line.291"></a>
+<span class="sourceLineNo">292</span><a name="line.292"></a>
+<span class="sourceLineNo">293</span>    /**<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * Marks the path &lt;code&gt;path&lt;/code&gt; expanded state to<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * &lt;code&gt;isExpanded&lt;/code&gt;.<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     */<a name="line.296"></a>
+<span class="sourceLineNo">297</span>    public void setExpandedState(TreePath path, boolean isExpanded) {<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        if(isExpanded)<a name="line.298"></a>
+<span class="sourceLineNo">299</span>            ensurePathIsExpanded(path, true);<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        else if(path != null) {<a name="line.300"></a>
+<span class="sourceLineNo">301</span>            TreePath              parentPath = path.getParentPath();<a name="line.301"></a>
+<span class="sourceLineNo">302</span><a name="line.302"></a>
+<span class="sourceLineNo">303</span>            // YECK! Make the parent expanded.<a name="line.303"></a>
+<span class="sourceLineNo">304</span>            if(parentPath != null) {<a name="line.304"></a>
+<span class="sourceLineNo">305</span>                FHTreeStateNode     parentNode = getNodeForPath(parentPath,<a name="line.305"></a>
+<span class="sourceLineNo">306</span>                                                                false, true);<a name="line.306"></a>
+<span class="sourceLineNo">307</span>                if(parentNode != null)<a name="line.307"></a>
+<span class="sourceLineNo">308</span>                    parentNode.makeVisible();<a name="line.308"></a>
+<span class="sourceLineNo">309</span>            }<a name="line.309"></a>
+<span class="sourceLineNo">310</span>            // And collapse the child.<a name="line.310"></a>
+<span class="sourceLineNo">311</span>            FHTreeStateNode         childNode = getNodeForPath(path, true,<a name="line.311"></a>
+<span class="sourceLineNo">312</span>                                                               false);<a name="line.312"></a>
+<span class="sourceLineNo">313</span><a name="line.313"></a>
+<span class="sourceLineNo">314</span>            if(childNode != null)<a name="line.314"></a>
+<span class="sourceLineNo">315</span>                childNode.collapse(true);<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        }<a name="line.316"></a>
+<span class="sourceLineNo">317</span>    }<a name="line.317"></a>
+<span class="sourceLineNo">318</span><a name="line.318"></a>
+<span class="sourceLineNo">319</span>    /**<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * Returns true if the path is expanded, and visible.<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     */<a name="line.321"></a>
+<span class="sourceLineNo">322</span>    public boolean getExpandedState(TreePath path) {<a name="line.322"></a>
+<span class="sourceLineNo">323</span>        FHTreeStateNode       node = getNodeForPath(path, true, false);<a name="line.323"></a>
+<span class="sourceLineNo">324</span><a name="line.324"></a>
+<span class="sourceLineNo">325</span>        return (node != null) ? (node.isVisible() &amp;&amp; node.isExpanded()) :<a name="line.325"></a>
+<span class="sourceLineNo">326</span>                                 false;<a name="line.326"></a>
+<span class="sourceLineNo">327</span>    }<a name="line.327"></a>
+<span class="sourceLineNo">328</span><a name="line.328"></a>
+<span class="sourceLineNo">329</span>    //<a name="line.329"></a>
+<span class="sourceLineNo">330</span>    // TreeModelListener methods<a name="line.330"></a>
+<span class="sourceLineNo">331</span>    //<a name="line.331"></a>
+<span class="sourceLineNo">332</span><a name="line.332"></a>
+<span class="sourceLineNo">333</span>    /**<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * &lt;p&gt;Invoked after a node (or a set of siblings) has changed in some<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * way. The node(s) have not changed locations in the tree or<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * altered their children arrays, but other attributes have<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * changed and may affect presentation. Example: the name of a<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * file has changed, but it is in the same location in the file<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * system.&lt;/p&gt;<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     *<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * &lt;p&gt;e.path() returns the path the parent of the changed node(s).&lt;/p&gt;<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     *<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * &lt;p&gt;e.childIndices() returns the index(es) of the changed node(s).&lt;/p&gt;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     */<a name="line.344"></a>
+<span class="sourceLineNo">345</span>    public void treeNodesChanged(TreeModelEvent e) {<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        if(e != null) {<a name="line.346"></a>
+<span class="sourceLineNo">347</span>            int                 changedIndexs[];<a name="line.347"></a>
+<span class="sourceLineNo">348</span>            FHTreeStateNode     changedParent = getNodeForPath<a name="line.348"></a>
+<span class="sourceLineNo">349</span>                                  (e.getTreePath(), false, false);<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            int                 maxCounter;<a name="line.350"></a>
+<span class="sourceLineNo">351</span><a name="line.351"></a>
+<span class="sourceLineNo">352</span>            changedIndexs = e.getChildIndices();<a name="line.352"></a>
+<span class="sourceLineNo">353</span>            /* Only need to update the children if the node has been<a name="line.353"></a>
+<span class="sourceLineNo">354</span>               expanded once. */<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            // PENDING(scott): make sure childIndexs is sorted!<a name="line.355"></a>
+<span class="sourceLineNo">356</span>            if (changedParent != null) {<a name="line.356"></a>
+<span class="sourceLineNo">357</span>                if (changedIndexs != null &amp;&amp;<a name="line.357"></a>
+<span class="sourceLineNo">358</span>                    (maxCounter = changedIndexs.length) &gt; 0) {<a name="line.358"></a>
+<span class="sourceLineNo">359</span>                    Object       parentValue = changedParent.getUserObject();<a name="line.359"></a>
+<span class="sourceLineNo">360</span><a name="line.360"></a>
+<span class="sourceLineNo">361</span>                    for(int counter = 0; counter &lt; maxCounter; counter++) {<a name="line.361"></a>
+<span class="sourceLineNo">362</span>                        FHTreeStateNode    child = changedParent.<a name="line.362"></a>
+<span class="sourceLineNo">363</span>                                 getChildAtModelIndex(changedIndexs[counter]);<a name="line.363"></a>
+<span class="sourceLineNo">364</span><a name="line.364"></a>
+<span class="sourceLineNo">365</span>                        if(child != null) {<a name="line.365"></a>
+<span class="sourceLineNo">366</span>                            child.setUserObject(treeModel.getChild(parentValue,<a name="line.366"></a>
+<span class="sourceLineNo">367</span>                                                     changedIndexs[counter]));<a name="line.367"></a>
+<span class="sourceLineNo">368</span>                        }<a name="line.368"></a>
+<span class="sourceLineNo">369</span>                    }<a name="line.369"></a>
+<span class="sourceLineNo">370</span>                    if(changedParent.isVisible() &amp;&amp; changedParent.isExpanded())<a name="line.370"></a>
+<span class="sourceLineNo">371</span>                        visibleNodesChanged();<a name="line.371"></a>
+<span class="sourceLineNo">372</span>                }<a name="line.372"></a>
+<span class="sourceLineNo">373</span>                // Null for root indicates it changed.<a name="line.373"></a>
+<span class="sourceLineNo">374</span>                else if (changedParent == root &amp;&amp; changedParent.isVisible() &amp;&amp;<a name="line.374"></a>
+<span class="sourceLineNo">375</span>                         changedParent.isExpanded()) {<a name="line.375"></a>
+<span class="sourceLineNo">376</span>                    visibleNodesChanged();<a name="line.376"></a>
+<span class="sourceLineNo">377</span>                }<a name="line.377"></a>
+<span class="sourceLineNo">378</span>            }<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        }<a name="line.379"></a>
+<span class="sourceLineNo">380</span>    }<a name="line.380"></a>
+<span class="sourceLineNo">381</span><a name="line.381"></a>
+<span class="sourceLineNo">382</span>    /**<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * &lt;p&gt;Invoked after nodes have been inserted into the tree.&lt;/p&gt;<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     *<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * &lt;p&gt;e.path() returns the parent of the new nodes<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * &lt;p&gt;e.childIndices() returns the indices of the new nodes in<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * ascending order.<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     */<a name="line.388"></a>
+<span class="sourceLineNo">389</span>    public void treeNodesInserted(TreeModelEvent e) {<a name="line.389"></a>
+<span class="sourceLineNo">390</span>        if(e != null) {<a name="line.390"></a>
+<span class="sourceLineNo">391</span>            int                 changedIndexs[];<a name="line.391"></a>
+<span class="sourceLineNo">392</span>            FHTreeStateNode     changedParent = getNodeForPath<a name="line.392"></a>
+<span class="sourceLineNo">393</span>                                  (e.getTreePath(), false, false);<a name="line.393"></a>
+<span class="sourceLineNo">394</span>            int                 maxCounter;<a name="line.394"></a>
+<span class="sourceLineNo">395</span><a name="line.395"></a>
+<span class="sourceLineNo">396</span>            changedIndexs = e.getChildIndices();<a name="line.396"></a>
+<span class="sourceLineNo">397</span>            /* Only need to update the children if the node has been<a name="line.397"></a>
+<span class="sourceLineNo">398</span>               expanded once. */<a name="line.398"></a>
+<span class="sourceLineNo">399</span>            // PENDING(scott): make sure childIndexs is sorted!<a name="line.399"></a>
+<span class="sourceLineNo">400</span>            if(changedParent != null &amp;&amp; changedIndexs != null &amp;&amp;<a name="line.400"></a>
+<span class="sourceLineNo">401</span>               (maxCounter = changedIndexs.length) &gt; 0) {<a name="line.401"></a>
+<span class="sourceLineNo">402</span>                boolean          isVisible =<a name="line.402"></a>
+<span class="sourceLineNo">403</span>                    (changedParent.isVisible() &amp;&amp;<a name="line.403"></a>
+<span class="sourceLineNo">404</span>                     changedParent.isExpanded());<a name="line.404"></a>
+<span class="sourceLineNo">405</span><a name="line.405"></a>
+<span class="sourceLineNo">406</span>                for(int counter = 0; counter &lt; maxCounter; counter++) {<a name="line.406"></a>
+<span class="sourceLineNo">407</span>                    changedParent.childInsertedAtModelIndex<a name="line.407"></a>
+<span class="sourceLineNo">408</span>                        (changedIndexs[counter], isVisible);<a name="line.408"></a>
+<span class="sourceLineNo">409</span>                }<a name="line.409"></a>
+<span class="sourceLineNo">410</span>                if(isVisible &amp;&amp; treeSelectionModel != null)<a name="line.410"></a>
+<span class="sourceLineNo">411</span>                    treeSelectionModel.resetRowSelection();<a name="line.411"></a>
+<span class="sourceLineNo">412</span>                if(changedParent.isVisible())<a name="line.412"></a>
+<span class="sourceLineNo">413</span>                    this.visibleNodesChanged();<a name="line.413"></a>
+<span class="sourceLineNo">414</span>            }<a name="line.414"></a>
+<span class="sourceLineNo">415</span>        }<a name="line.415"></a>
+<span class="sourceLineNo">416</span>    }<a name="line.416"></a>
+<span class="sourceLineNo">417</span><a name="line.417"></a>
+<span class="sourceLineNo">418</span>    /**<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * &lt;p&gt;Invoked after nodes have been removed from the tree.  Note that<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * if a subtree is removed from the tree, this method may only be<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * invoked once for the root of the removed subtree, not once for<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     * each individual set of siblings removed.&lt;/p&gt;<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     *<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * &lt;p&gt;e.path() returns the former parent of the deleted nodes.&lt;/p&gt;<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     *<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     * &lt;p&gt;e.childIndices() returns the indices the nodes had before they were deleted in ascending order.&lt;/p&gt;<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     */<a name="line.427"></a>
+<span class="sourceLineNo">428</span>    public void treeNodesRemoved(TreeModelEvent e) {<a name="line.428"></a>
+<span class="sourceLineNo">429</span>        if(e != null) {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>            int                  changedIndexs[];<a name="line.430"></a>
+<span class="sourceLineNo">431</span>            int                  maxCounter;<a name="line.431"></a>
+<span class="sourceLineNo">432</span>            TreePath             parentPath = e.getTreePath();<a name="line.432"></a>
+<span class="sourceLineNo">433</span>            FHTreeStateNode      changedParentNode = getNodeForPath<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                                       (parentPath, false, false);<a name="line.434"></a>
+<span class="sourceLineNo">435</span><a name="line.435"></a>
+<span class="sourceLineNo">436</span>            changedIndexs = e.getChildIndices();<a name="line.436"></a>
+<span class="sourceLineNo">437</span>            // PENDING(scott): make sure that changedIndexs are sorted in<a name="line.437"></a>
+<span class="sourceLineNo">438</span>            // ascending order.<a name="line.438"></a>
+<span class="sourceLineNo">439</span>            if(changedParentNode != null &amp;&amp; changedIndexs != null &amp;&amp;<a name="line.439"></a>
+<span class="sourceLineNo">440</span>               (maxCounter = changedIndexs.length) &gt; 0) {<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                Object[]           children = e.getChildren();<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                boolean            isVisible =<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                    (changedParentNode.isVisible() &amp;&amp;<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                     changedParentNode.isExpanded());<a name="line.444"></a>
+<span class="sourceLineNo">445</span><a name="line.445"></a>
+<span class="sourceLineNo">446</span>                for(int counter = maxCounter - 1; counter &gt;= 0; counter--) {<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                    changedParentNode.removeChildAtModelIndex<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                                     (changedIndexs[counter], isVisible);<a name="line.448"></a>
+<span class="sourceLineNo">449</span>                }<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                if(isVisible) {<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                    if(treeSelectionModel != null)<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                        treeSelectionModel.resetRowSelection();<a name="line.452"></a>
+<span class="sourceLineNo">453</span>                    if (treeModel.getChildCount(changedParentNode.<a name="line.453"></a>
+<span class="sourceLineNo">454</span>                                                getUserObject()) == 0 &amp;&amp;<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                                  changedParentNode.isLeaf()) {<a name="line.455"></a>
+<span class="sourceLineNo">456</span>                        // Node has become a leaf, collapse it.<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                        changedParentNode.collapse(false);<a name="line.457"></a>
+<span class="sourceLineNo">458</span>                    }<a name="line.458"></a>
+<span class="sourceLineNo">459</span>                    visibleNodesChanged();<a name="line.459"></a>
+<span class="sourceLineNo">460</span>                }<a name="line.460"></a>
+<span class="sourceLineNo">461</span>                else if(changedParentNode.isVisible())<a name="line.461"></a>
+<span class="sourceLineNo">462</span>                    visibleNodesChanged();<a name="line.462"></a>
+<span class="sourceLineNo">463</span>            }<a name="line.463"></a>
+<span class="sourceLineNo">464</span>        }<a name="line.464"></a>
+<span class="sourceLineNo">465</span>    }<a name="line.465"></a>
+<span class="sourceLineNo">466</span><a name="line.466"></a>
+<span class="sourceLineNo">467</span>    /**<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     * &lt;p&gt;Invoked after the tree has drastically changed structure from a<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     * given node down.  If the path returned by e.getPath() is of length<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     * one and the first element does not identify the current root node<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     * the first element should become the new root of the tree.&lt;p&gt;<a name="line.471"></a>
+<span class="sourceLineNo">472</span>     *<a name="line.472"></a>
+<span class="sourceLineNo">473</span>     * &lt;p&gt;e.path() holds the path to the node.&lt;/p&gt;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>     * &lt;p&gt;e.childIndices() returns null.&lt;/p&gt;<a name="line.474"></a>
+<span class="sourceLineNo">475</span>     */<a name="line.475"></a>
+<span class="sourceLineNo">476</span>    public void treeStructureChanged(TreeModelEvent e) {<a name="line.476"></a>
+<span class="sourceLineNo">477</span>        if(e != null) {<a name="line.477"></a>
+<span class="sourceLineNo">478</span>            TreePath          changedPath = e.getTreePath();<a name="line.478"></a>
+<span class="sourceLineNo">479</span>            FHTreeStateNode   changedNode = getNodeForPath<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                                                (changedPath, false, false);<a name="line.480"></a>
+<span class="sourceLineNo">481</span><a name="line.481"></a>
+<span class="sourceLineNo">482</span>            // Check if root has changed, either to a null root, or<a name="line.482"></a>
+<span class="sourceLineNo">483</span>            // to an entirely new root.<a name="line.483"></a>
+<span class="sourceLineNo">484</span>            if (changedNode == root ||<a name="line.484"></a>
+<span class="sourceLineNo">485</span>                (changedNode == null &amp;&amp;<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                 ((changedPath == null &amp;&amp; treeModel != null &amp;&amp;<a name="line.486"></a>
+<span class="sourceLineNo">487</span>                   treeModel.getRoot() == null) ||<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                  (changedPath != null &amp;&amp; changedPath.getPathCount() &lt;= 1)))) {<a name="line.488"></a>
+<span class="sourceLineNo">489</span>                rebuild(true);<a name="line.489"></a>
+<span class="sourceLineNo">490</span>            }<a name="line.490"></a>
+<span class="sourceLineNo">491</span>            else if(changedNode != null) {<a name="line.491"></a>
+<span class="sourceLineNo">492</span>                boolean             wasExpanded, wasVisible;<a name="line.492"></a>
+<span class="sourceLineNo">493</span>                FHTreeStateNode     parent = (FHTreeStateNode)<a name="line.493"></a>
+<span class="sourceLineNo">494</span>                                              changedNode.getParent();<a name="line.494"></a>
+<span class="sourceLineNo">495</span><a name="line.495"></a>
+<span class="sourceLineNo">496</span>                wasExpanded = changedNode.isExpanded();<a name="line.496"></a>
+<span class="sourceLineNo">497</span>                wasVisible = changedNode.isVisible();<a name="line.497"></a>
+<span class="sourceLineNo">498</span><a name="line.498"></a>
+<span class="sourceLineNo">499</span>                int index = parent.getIndex(changedNode);<a name="line.499"></a>
+<span class="sourceLineNo">500</span>                changedNode.collapse(false);<a name="line.500"></a>
+<span class="sourceLineNo">501</span>                parent.remove(index);<a name="line.501"></a>
+<span class="sourceLineNo">502</span><a name="line.502"></a>
+<span class="sourceLineNo">503</span>                if(wasVisible &amp;&amp; wasExpanded) {<a name="line.503"></a>
+<span class="sourceLineNo">504</span>                    int row = changedNode.getRow();<a name="line.504"></a>
+<span class="sourceLineNo">505</span>                    parent.resetChildrenRowsFrom(row, index,<a name="line.505"></a>
+<span class="sourceLineNo">506</span>                                                 changedNode.getChildIndex());<a name="line.506"></a>
+<span class="sourceLineNo">507</span>                    changedNode = getNodeForPath(changedPath, false, true);<a name="line.507"></a>
+<span class="sourceLineNo">508</span>                    changedNode.expand();<a name="line.508"></a>
+<span class="sourceLineNo">509</span>                }<a name="line.509"></a>
+<span class="sourceLineNo">510</span>                if(treeSelectionModel != null &amp;&amp; wasVisible &amp;&amp; wasExpanded)<a name="line.510"></a>
+<span class="sourceLineNo">511</span>                    treeSelectionModel.resetRowSelection();<a name="line.511"></a>
+<span class="sourceLineNo">512</span>                if(wasVisible)<a name="line.512"></a>
+<span class="sourceLineNo">513</span>                    this.visibleNodesChanged();<a name="line.513"></a>
+<span class="sourceLineNo">514</span>            }<a name="line.514"></a>
+<span class="sourceLineNo">515</span>        }<a name="line.515"></a>
+<span class="sourceLineNo">516</span>    }<a name="line.516"></a>
+<span class="sourceLineNo">517</span><a name="line.517"></a>
+<span class="sourceLineNo">518</span><a name="line.518"></a>
+<span class="sourceLineNo">519</span>    //<a name="line.519"></a>
+<span class="sourceLineNo">520</span>    // Local methods<a name="line.520"></a>
+<span class="sourceLineNo">521</span>    //<a name="line.521"></a>
+<span class="sourceLineNo">522</span><a name="line.522"></a>
+<span class="sourceLineNo">523</span>    private void visibleNodesChanged() {<a name="line.523"></a>
+<span class="sourceLineNo">524</span>    }<a name="line.524"></a>
+<span class="sourceLineNo">525</span><a name="line.525"></a>
+<span class="sourceLineNo">526</span>    /**<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     * Returns the bounds for the given node. If &lt;code&gt;childIndex&lt;/code&gt;<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     * is -1, the bounds of &lt;code&gt;parent&lt;/code&gt; are returned, otherwise<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     * the bounds of the node at &lt;code&gt;childIndex&lt;/code&gt; are returned.<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     */<a name="line.530"></a>
+<span class="sourceLineNo">531</span>    private Rectangle getBounds(FHTreeStateNode parent, int childIndex,<a name="line.531"></a>
+<span class="sourceLineNo">532</span>                                  Rectangle placeIn) {<a name="line.532"></a>
+<span class="sourceLineNo">533</span>        boolean              expanded;<a name="line.533"></a>
+<span class="sourceLineNo">534</span>        int                  level;<a name="line.534"></a>
+<span class="sourceLineNo">535</span>        int                  row;<a name="line.535"></a>
+<span class="sourceLineNo">536</span>        Object               value;<a name="line.536"></a>
+<span class="sourceLineNo">537</span><a name="line.537"></a>
+<span class="sourceLineNo">538</span>        if(childIndex == -1) {<a name="line.538"></a>
+<span class="sourceLineNo">539</span>            // Getting bounds for parent<a name="line.539"></a>
+<span class="sourceLineNo">540</span>            row = parent.getRow();<a name="line.540"></a>
+<span class="sourceLineNo">541</span>            value = parent.getUserObject();<a name="line.541"></a>
+<span class="sourceLineNo">542</span>            expanded = parent.isExpanded();<a name="line.542"></a>
+<span class="sourceLineNo">543</span>            level = parent.getLevel();<a name="line.543"></a>
+<span class="sourceLineNo">544</span>        }<a name="line.544"></a>
+<span class="sourceLineNo">545</span>        else {<a name="line.545"></a>
+<span class="sourceLineNo">546</span>            row = parent.getRowToModelIndex(childIndex);<a name="line.546"></a>
+<span class="sourceLineNo">547</span>            value = treeModel.getChild(parent.getUserObject(), childIndex);<a name="line.547"></a>
+<span class="sourceLineNo">548</span>            expanded = false;<a name="line.548"></a>
+<span class="sourceLineNo">549</span>            level = parent.getLevel() + 1;<a name="line.549"></a>
+<span class="sourceLineNo">550</span>        }<a name="line.550"></a>
+<span class="sourceLineNo">551</span><a name="line.551"></a>
+<span class="sourceLineNo">552</span>        Rectangle      bounds = getNodeDimensions(value, row, level,<a name="line.552"></a>
+<span class="sourceLineNo">553</span>                                                  expanded, boundsBuffer);<a name="line.553"></a>
+<span class="sourceLineNo">554</span>        // No node dimensions, bail.<a name="line.554"></a>
+<span class="sourceLineNo">555</span>        if(bounds == null)<a name="line.555"></a>
+<span class="sourceLineNo">556</span>            return null;<a name="line.556"></a>
+<span class="sourceLineNo">557</span><a name="line.557"></a>
+<span class="sourceLineNo">558</span>        if(placeIn == null)<a name="line.558"></a>
+<span class="sourceLineNo">559</span>            placeIn = new Rectangle();<a name="line.559"></a>
+<span class="sourceLineNo">560</span><a name="line.560"></a>
+<span class="sourceLineNo">561</span>        placeIn.x = bounds.x;<a name="line.561"></a>
+<span class="sourceLineNo">562</span>        placeIn.height = getRowHeight();<a name="line.562"></a>
+<span class="sourceLineNo">563</span>        placeIn.y = row * placeIn.height;<a name="line.563"></a>
+<span class="sourceLineNo">564</span>        placeIn.width = bounds.width;<a name="line.564"></a>
+<span class="sourceLineNo">565</span>        return placeIn;<a name="line.565"></a>
+<span class="sourceLineNo">566</span>    }<a name="line.566"></a>
+<span class="sourceLineNo">567</span><a name="line.567"></a>
+<span class="sourceLineNo">568</span>    /**<a name="line.568"></a>
+<span class="sourceLineNo">569</span>     * Adjust the large row count of the AbstractTreeUI the receiver was<a name="line.569"></a>
+<span class="sourceLineNo">570</span>     * created with.<a name="line.570"></a>
+<span class="sourceLineNo">571</span>     */<a name="line.571"></a>
+<span class="sourceLineNo">572</span>    private void adjustRowCountBy(int changeAmount) {<a name="line.572"></a>
+<span class="sourceLineNo">573</span>        rowCount += changeAmount;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>    }<a name="line.574"></a>
+<span class="sourceLineNo">575</span><a name="line.575"></a>
+<span class="sourceLineNo">576</span>    /**<a name="line.576"></a>
+<span class="sourceLineNo">577</span>     * Adds a mapping for node.<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     */<a name="line.578"></a>
+<span class="sourceLineNo">579</span>    private void addMapping(FHTreeStateNode node) {<a name="line.579"></a>
+<span class="sourceLineNo">580</span>        treePathMapping.put(node.getTreePath(), node);<a name="line.580"></a>
+<span class="sourceLineNo">581</span>    }<a name="line.581"></a>
+<span class="sourceLineNo">582</span><a name="line.582"></a>
+<span class="sourceLineNo">583</span>    /**<a name="line.583"></a>
+<span class="sourceLineNo">584</span>     * Removes the mapping for a previously added node.<a name="line.584"></a>
+<span class="sourceLineNo">585</span>     */<a name="line.585"></a>
+<span class="sourceLineNo">586</span>    private void removeMapping(FHTreeStateNode node) {<a name="line.586"></a>
+<span class="sourceLineNo">587</span>        treePathMapping.remove(node.getTreePath());<a name="line.587"></a>
+<span class="sourceLineNo">588</span>    }<a name="line.588"></a>
+<span class="sourceLineNo">589</span><a name="line.589"></a>
+<span class="sourceLineNo">590</span>    /**<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * Returns the node previously added for &lt;code&gt;path&lt;/code&gt;. This may<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * return null, if you to create a node use getNodeForPath.<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     */<a name="line.593"></a>
+<span class="sourceLineNo">594</span>    private FHTreeStateNode getMapping(TreePath path) {<a name="line.594"></a>
+<span class="sourceLineNo">595</span>        return treePathMapping.get(path);<a name="line.595"></a>
+<span class="sourceLineNo">596</span>    }<a name="line.596"></a>
+<span class="sourceLineNo">597</span><a name="line.597"></a>
+<span class="sourceLineNo">598</span>    /**<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * Sent to completely rebuild the visible tree. All nodes are collapsed.<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     */<a name="line.600"></a>
+<span class="sourceLineNo">601</span>    private void rebuild(boolean clearSelection) {<a name="line.601"></a>
+<span class="sourceLineNo">602</span>        Object            rootUO;<a name="line.602"></a>
+<span class="sourceLineNo">603</span><a name="line.603"></a>
+<span class="sourceLineNo">604</span>        treePathMapping.clear();<a name="line.604"></a>
+<span class="sourceLineNo">605</span>        if(treeModel != null &amp;&amp; (rootUO = treeModel.getRoot()) != null) {<a name="line.605"></a>
+<span class="sourceLineNo">606</span>            root = createNodeForValue(rootUO, 0);<a name="line.606"></a>
+<span class="sourceLineNo">607</span>            root.path = new TreePath(rootUO);<a name="line.607"></a>
+<span class="sourceLineNo">608</span>            addMapping(root);<a name="line.608"></a>
+<span class="sourceLineNo">609</span>            if(isRootVisible()) {<a name="line.609"></a>
+<span class="sourceLineNo">610</span>                rowCount = 1;<a name="line.610"></a>
+<span class="sourceLineNo">611</span>                root.row = 0;<a name="line.611"></a>
+<span class="sourceLineNo">612</span>            }<a name="line.612"></a>
+<span class="sourceLineNo">613</span>            else {<a name="line.613"></a>
+<span class="sourceLineNo">614</span>                rowCount = 0;<a name="line.614"></a>
+<span class="sourceLineNo">615</span>                root.row = -1;<a name="line.615"></a>
+<span class="sourceLineNo">616</span>            }<a name="line.616"></a>
+<span class="sourceLineNo">617</span>            root.expand();<a name="line.617"></a>
+<span class="sourceLineNo">618</span>        }<a name="line.618"></a>
+<span class="sourceLineNo">619</span>        else {<a name="line.619"></a>
+<span class="sourceLineNo">620</span>            root = null;<a name="line.620"></a>
+<span class="sourceLineNo">621</span>            rowCount = 0;<a name="line.621"></a>
+<span class="sourceLineNo">622</span>        }<a name="line.622"></a>
+<span class="sourceLineNo">623</span>        if(clearSelection &amp;&amp; treeSelectionModel != null) {<a name="line.623"></a>
+<span class="sourceLineNo">624</span>            treeSelectionModel.clearSelection();<a name="line.624"></a>
+<span class="sourceLineNo">625</span>        }<a name="line.625"></a>
+<span class="sourceLineNo">626</span>        this.visibleNodesChanged();<a name="line.626"></a>
+<span class="sourceLineNo">627</span>    }<a name="line.627"></a>
+<span class="sourceLineNo">628</span><a name="line.628"></a>
+<span class="sourceLineNo">629</span>    /**<a name="line.629"></a>
+<span class="sourceLineNo">630</span>      * Returns the index of the row containing location.  If there<a name="line.630"></a>
+<span class="sourceLineNo">631</span>      * are no rows, -1 is returned.  If location is beyond the last<a name="line.631"></a>
+<span class="sourceLineNo">632</span>      * row index, the last row index is returned.<a name="line.632"></a>
+<span class="sourceLineNo">633</span>      */<a name="line.633"></a>
+<span class="sourceLineNo">634</span>    private int getRowContainingYLocation(int location) {<a name="line.634"></a>
+<span class="sourceLineNo">635</span>        if(getRowCount() == 0)<a name="line.635"></a>
+<span class="sourceLineNo">636</span>            return -1;<a name="line.636"></a>
+<span class="sourceLineNo">637</span>        return Math.max(0, Math.min(getRowCount() - 1,<a name="line.637"></a>
+<span class="sourceLineNo">638</span>                                    location / getRowHeight()));<a name="line.638"></a>
+<span class="sourceLineNo">639</span>    }<a name="line.639"></a>
+<span class="sourceLineNo">640</span><a name="line.640"></a>
+<span class="sourceLineNo">641</span>    /**<a name="line.641"></a>
+<span class="sourceLineNo">642</span>     * Ensures that all the path components in path are expanded, accept<a name="line.642"></a>
+<span class="sourceLineNo">643</span>     * for the last component which will only be expanded if expandLast<a name="line.643"></a>
+<span class="sourceLineNo">644</span>     * is true.<a name="line.644"></a>
+<span class="sourceLineNo">645</span>     * Returns true if succesful in finding the path.<a name="line.645"></a>
+<span class="sourceLineNo">646</span>     */<a name="line.646"></a>
+<span class="sourceLineNo">647</span>    private boolean ensurePathIsExpanded(TreePath aPath,<a name="line.647"></a>
+<span class="sourceLineNo">648</span>                                           boolean expandLast) {<a name="line.648"></a>
+<span class="sourceLineNo">649</span>        if(aPath != null) {<a name="line.649"></a>
+<span class="sourceLineNo">650</span>            // Make sure the last entry isn't a leaf.<a name="line.650"></a>
+<span class="sourceLineNo">651</span>            if(treeModel.isLeaf(aPath.getLastPathComponent())) {<a name="line.651"></a>
+<span class="sourceLineNo">652</span>                aPath = aPath.getParentPath();<a name="line.652"></a>
+<span class="sourceLineNo">653</span>                expandLast = true;<a name="line.653"></a>
+<span class="sourceLineNo">654</span>            }<a name="line.654"></a>
+<span class="sourceLineNo">655</span>            if(aPath != null) {<a name="line.655"></a>
+<span class="sourceLineNo">656</span>                FHTreeStateNode     lastNode = getNodeForPath(aPath, false,<a name="line.656"></a>
+<span class="sourceLineNo">657</span>                                                              true);<a name="line.657"></a>
+<span class="sourceLineNo">658</span><a name="line.658"></a>
+<span class="sourceLineNo">659</span>                if(lastNode != null) {<a name="line.659"></a>
+<span class="sourceLineNo">660</span>                    lastNode.makeVisible();<a name="line.660"></a>
+<span class="sourceLineNo">661</span>                    if(expandLast)<a name="line.661"></a>
+<span class="sourceLineNo">662</span>                        lastNode.expand();<a name="line.662"></a>
+<span class="sourceLineNo">663</span>                    return true;<a name="line.663"></a>
+<span class="sourceLineNo">664</span>                }<a name="line.664"></a>
+<span class="sourceLineNo">665</span>            }<a name="line.665"></a>
+<span class="sourceLineNo">666</span>        }<a name="line.666"></a>
+<span class="sourceLineNo">667</span>        return false;<a name="line.667"></a>
+<span class="sourceLineNo">668</span>    }<a name="line.668"></a>
+<span class="sourceLineNo">669</span><a name="line.669"></a>
+<span class="sourceLineNo">670</span>    /**<a name="line.670"></a>
+<span class="sourceLineNo">671</span>     * Creates and returns an instance of FHTreeStateNode.<a name="line.671"></a>
+<span class="sourceLineNo">672</span>     */<a name="line.672"></a>
+<span class="sourceLineNo">673</span>    private FHTreeStateNode createNodeForValue(Object value,int childIndex) {<a name="line.673"></a>
+<span class="sourceLineNo">674</span>        return new FHTreeStateNode(value, childIndex, -1);<a name="line.674"></a>
+<span class="sourceLineNo">675</span>    }<a name="line.675"></a>
+<span class="sourceLineNo">676</span><a name="line.676"></a>
+<span class="sourceLineNo">677</span>    /**<a name="line.677"></a>
+<span class="sourceLineNo">678</span>     * Messages getTreeNodeForPage(path, onlyIfVisible, shouldCreate,<a name="line.678"></a>
+<span class="sourceLineNo">679</span>     * path.length) as long as path is non-null and the length is &gt; 0.<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     * Otherwise returns null.<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     */<a name="line.681"></a>
+<span class="sourceLineNo">682</span>    private FHTreeStateNode getNodeForPath(TreePath path,<a name="line.682"></a>
+<span class="sourceLineNo">683</span>                                             boolean onlyIfVisible,<a name="line.683"></a>
+<span class="sourceLineNo">684</span>                                             boolean shouldCreate) {<a name="line.684"></a>
+<span class="sourceLineNo">685</span>        if(path != null) {<a name="line.685"></a>
+<span class="sourceLineNo">686</span>            FHTreeStateNode      node;<a name="line.686"></a>
+<span class="sourceLineNo">687</span><a name="line.687"></a>
+<span class="sourceLineNo">688</span>            node = getMapping(path);<a name="line.688"></a>
+<span class="sourceLineNo">689</span>            if(node != null) {<a name="line.689"></a>
+<span class="sourceLineNo">690</span>                if(onlyIfVisible &amp;&amp; !node.isVisible())<a name="line.690"></a>
+<span class="sourceLineNo">691</span>                    return null;<a name="line.691"></a>
+<span class="sourceLineNo">692</span>                return node;<a name="line.692"></a>
+<span class="sourceLineNo">693</span>            }<a name="line.693"></a>
+<span class="sourceLineNo">694</span>            if(onlyIfVisible)<a name="line.694"></a>
+<span class="sourceLineNo">695</span>                return null;<a name="line.695"></a>
+<span class="sourceLineNo">696</span><a name="line.696"></a>
+<span class="sourceLineNo">697</span>            // Check all the parent paths, until a match is found.<a name="line.697"></a>
+<span class="sourceLineNo">698</span>            Stack&lt;TreePath&gt; paths;<a name="line.698"></a>
+<span class="sourceLineNo">699</span><a name="line.699"></a>
+<span class="sourceLineNo">700</span>            if(tempStacks.size() == 0) {<a name="line.700"></a>
+<span class="sourceLineNo">701</span>                paths = new Stack&lt;TreePath&gt;();<a name="line.701"></a>
+<span class="sourceLineNo">702</span>            }<a name="line.702"></a>
+<span class="sourceLineNo">703</span>            else {<a name="line.703"></a>
+<span class="sourceLineNo">704</span>                paths = tempStacks.pop();<a name="line.704"></a>
+<span class="sourceLineNo">705</span>            }<a name="line.705"></a>
+<span class="sourceLineNo">706</span><a name="line.706"></a>
+<span class="sourceLineNo">707</span>            try {<a name="line.707"></a>
+<span class="sourceLineNo">708</span>                paths.push(path);<a name="line.708"></a>
+<span class="sourceLineNo">709</span>                path = path.getParentPath();<a name="line.709"></a>
+<span class="sourceLineNo">710</span>                node = null;<a name="line.710"></a>
+<span class="sourceLineNo">711</span>                while(path != null) {<a name="line.711"></a>
+<span class="sourceLineNo">712</span>                    node = getMapping(path);<a name="line.712"></a>
+<span class="sourceLineNo">713</span>                    if(node != null) {<a name="line.713"></a>
+<span class="sourceLineNo">714</span>                        // Found a match, create entries for all paths in<a name="line.714"></a>
+<span class="sourceLineNo">715</span>                        // paths.<a name="line.715"></a>
+<span class="sourceLineNo">716</span>                        while(node != null &amp;&amp; paths.size() &gt; 0) {<a name="line.716"></a>
+<span class="sourceLineNo">717</span>                            path = paths.pop();<a name="line.717"></a>
+<span class="sourceLineNo">718</span>                            node = node.createChildFor(path.<a name="line.718"></a>
+<span class="sourceLineNo">719</span>                                                       getLastPathComponent());<a name="line.719"></a>
+<span class="sourceLineNo">720</span>                        }<a name="line.720"></a>
+<span class="sourceLineNo">721</span>                        return node;<a name="line.721"></a>
+<span class="sourceLineNo">722</span>                    }<a name="line.722"></a>
+<span class="sourceLineNo">723</span>                    paths.push(path);<a name="line.723"></a>
+<span class="sourceLineNo">724</span>                    path = path.getParentPath();<a name="line.724"></a>
+<span class="sourceLineNo">725</span>                }<a name="line.725"></a>
+<span class="sourceLineNo">726</span>            }<a name="line.726"></a>
+<span class="sourceLineNo">727</span>            finally {<a name="line.727"></a>
+<span class="sourceLineNo">728</span>                paths.removeAllElements();<a name="line.728"></a>
+<span class="sourceLineNo">729</span>                tempStacks.push(paths);<a name="line.729"></a>
+<span class="sourceLineNo">730</span>            }<a name="line.730"></a>
+<span class="sourceLineNo">731</span>            // If we get here it means they share a different root!<a name="line.731"></a>
+<span class="sourceLineNo">732</span>            return null;<a name="line.732"></a>
+<span class="sourceLineNo">733</span>        }<a name="line.733"></a>
+<span class="sourceLineNo">734</span>        return null;<a name="line.734"></a>
+<span class="sourceLineNo">735</span>    }<a name="line.735"></a>
+<span class="sourceLineNo">736</span><a name="line.736"></a>
+<span class="sourceLineNo">737</span>    /**<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * FHTreeStateNode is used to track what has been expanded.<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     * FHTreeStateNode differs from VariableHeightTreeState.TreeStateNode<a name="line.739"></a>
+<span class="sourceLineNo">740</span>     * in that it is highly model intensive. That is almost all queries to a<a name="line.740"></a>
+<span class="sourceLineNo">741</span>     * FHTreeStateNode result in the TreeModel being queried. And it<a name="line.741"></a>
+<span class="sourceLineNo">742</span>     * obviously does not support variable sized row heights.<a name="line.742"></a>
+<span class="sourceLineNo">743</span>     */<a name="line.743"></a>
+<span class="sourceLineNo">744</span>    private class FHTreeStateNode extends DefaultMutableTreeNode {<a name="line.744"></a>
+<span class="sourceLineNo">745</span>        /** Is this node expanded? */<a name="line.745"></a>
+<span class="sourceLineNo">746</span>        protected boolean         isExpanded;<a name="line.746"></a>
+<span class="sourceLineNo">747</span><a name="line.747"></a>
+<span class="sourceLineNo">748</span>        /** Index of this node from the model. */<a name="line.748"></a>
+<span class="sourceLineNo">749</span>        protected int             childIndex;<a name="line.749"></a>
+<span class="sourceLineNo">750</span><a name="line.750"></a>
+<span class="sourceLineNo">751</span>        /** Child count of the receiver. */<a name="line.751"></a>
+<span class="sourceLineNo">752</span>        protected int             childCount;<a name="line.752"></a>
+<span class="sourceLineNo">753</span><a name="line.753"></a>
+<span class="sourceLineNo">754</span>        /** Row of the receiver. This is only valid if the row is expanded.<a name="line.754"></a>
+<span class="sourceLineNo">755</span>         */<a name="line.755"></a>
+<span class="sourceLineNo">756</span>        protected int             row;<a name="line.756"></a>
+<span class="sourceLineNo">757</span><a name="line.757"></a>
+<span class="sourceLineNo">758</span>        /** Path of this node. */<a name="line.758"></a>
+<span class="sourceLineNo">759</span>        protected TreePath        path;<a name="line.759"></a>
+<span class="sourceLineNo">760</span><a name="line.760"></a>
+<span class="sourceLineNo">761</span><a name="line.761"></a>
+<span class="sourceLineNo">762</span>        public FHTreeStateNode(Object userObject, int childIndex, int row) {<a name="line.762"></a>
+<span class="sourceLineNo">763</span>            super(userObject);<a name="line.763"></a>
+<span class="sourceLineNo">764</span>            this.childIndex = childIndex;<a name="line.764"></a>
+<span class="sourceLineNo">765</span>            this.row = row;<a name="line.765"></a>
+<span class="sourceLineNo">766</span>        }<a name="line.766"></a>
+<span class="sourceLineNo">767</span><a name="line.767"></a>
+<span class="sourceLineNo">768</span>        //<a name="line.768"></a>
+<span class="sourceLineNo">769</span>        // Overriden DefaultMutableTreeNode methods<a name="line.769"></a>
+<span class="sourceLineNo">770</span>        //<a name="line.770"></a>
+<span class="sourceLineNo">771</span><a name="line.771"></a>
+<span class="sourceLineNo">772</span>        /**<a name="line.772"></a>
+<span class="sourceLineNo">773</span>         * Messaged when this node is added somewhere, resets the path<a name="line.773"></a>
+<span class="sourceLineNo">774</span>         * and adds a mapping from path to this node.<a name="line.774"></a>
+<span class="sourceLineNo">775</span>         */<a name="line.775"></a>
+<span class="sourceLineNo">776</span>        public void setParent(MutableTreeNode parent) {<a name="line.776"></a>
+<span class="sourceLineNo">777</span>            super.setParent(parent);<a name="line.777"></a>
+<span class="sourceLineNo">778</span>            if(parent != null) {<a name="line.778"></a>
+<span class="sourceLineNo">779</span>                path = ((FHTreeStateNode)parent).getTreePath().<a name="line.779"></a>
+<span class="sourceLineNo">780</span>                            pathByAddingChild(getUserObject());<a name="line.780"></a>
+<span class="sourceLineNo">781</span>                addMapping(this);<a name="line.781"></a>
+<span class="sourceLineNo">782</span>            }<a name="line.782"></a>
+<span class="sourceLineNo">783</span>        }<a name="line.783"></a>
+<span class="sourceLineNo">784</span><a name="line.784"></a>
+<span class="sourceLineNo">785</span>        /**<a name="line.785"></a>
+<span class="sourceLineNo">786</span>         * Messaged when this node is removed from its parent, this messages<a name="line.786"></a>
+<span class="sourceLineNo">787</span>         * &lt;code&gt;removedFromMapping&lt;/code&gt; to remove all the children.<a name="line.787"></a>
+<span class="sourceLineNo">788</span>         */<a name="line.788"></a>
+<span class="sourceLineNo">789</span>        public void remove(int childIndex) {<a name="line.789"></a>
+<span class="sourceLineNo">790</span>            FHTreeStateNode     node = (FHTreeStateNode)getChildAt(childIndex);<a name="line.790"></a>
+<span class="sourceLineNo">791</span><a name="line.791"></a>
+<span class="sourceLineNo">792</span>            node.removeFromMapping();<a name="line.792"></a>
+<span class="sourceLineNo">793</span>            super.remove(childIndex);<a name="line.793"></a>
+<span class="sourceLineNo">794</span>        }<a name="line.794"></a>
+<span class="sourceLineNo">795</span><a name="line.795"></a>
+<span class="sourceLineNo">796</span>        /**<a name="line.796"></a>
+<span class="sourceLineNo">797</span>         * Messaged to set the user object. This resets the path.<a name="line.797"></a>
+<span class="sourceLineNo">798</span>         */<a name="line.798"></a>
+<span class="sourceLineNo">799</span>        public void setUserObject(Object o) {<a name="line.799"></a>
+<span class="sourceLineNo">800</span>            super.setUserObject(o);<a name="line.800"></a>
+<span class="sourceLineNo">801</span>            if(path != null) {<a name="line.801"></a>
+<span class="sourceLineNo">802</span>                FHTreeStateNode      parent = (FHTreeStateNode)getParent();<a name="line.802"></a>
+<span class="sourceLineNo">803</span><a name="line.803"></a>
+<span class="sourceLineNo">804</span>                if(parent != null)<a name="line.804"></a>
+<span class="sourceLineNo">805</span>                    resetChildrenPaths(parent.getTreePath());<a name="line.805"></a>
+<span class="sourceLineNo">806</span>                else<a name="line.806"></a>
+<span class="sourceLineNo">807</span>                    resetChildrenPaths(null);<a name="line.807"></a>
+<span class="sourceLineNo">808</span>            }<a name="line.808"></a>
+<span class="sourceLineNo">809</span>        }<a name="line.809"></a>
+<span class="sourceLineNo">810</span><a name="line.810"></a>
+<span class="sourceLineNo">811</span>        //<a name="line.811"></a>
+<span class="sourceLineNo">812</span>        //<a name="line.812"></a>
+<span class="sourceLineNo">813</span><a name="line.813"></a>
+<span class="sourceLineNo">814</span>        /**<a name="line.814"></a>
+<span class="sourceLineNo">815</span>         * Returns the index of the receiver in the model.<a name="line.815"></a>
+<span class="sourceLineNo">816</span>         */<a name="line.816"></a>
+<span class="sourceLineNo">817</span>        public int getChildIndex() {<a name="line.817"></a>
+<span class="sourceLineNo">818</span>            return childIndex;<a name="line.818"></a>
+<span class="sourceLineNo">819</span>        }<a name="line.819"></a>
+<span class="sourceLineNo">820</span><a name="line.820"></a>
+<span class="sourceLineNo">821</span>        /**<a name="line.821"></a>
+<span class="sourceLineNo">822</span>         * Returns the &lt;code&gt;TreePath&lt;/code&gt; of the receiver.<a name="line.822"></a>
+<span class="sourceLineNo">823</span>         */<a name="line.823"></a>
+<span class="sourceLineNo">824</span>        public TreePath getTreePath() {<a name="line.824"></a>
+<span class="sourceLineNo">825</span>            return path;<a name="line.825"></a>
+<span class="sourceLineNo">826</span>        }<a name="line.826"></a>
+<span class="sourceLineNo">827</span><a name="line.827"></a>
+<span class="sourceLineNo">828</span>        /**<a name="line.828"></a>
+<span class="sourceLineNo">829</span>         * Returns the child for the passed in model index, this will<a name="line.829"></a>
+<span class="sourceLineNo">830</span>         * return &lt;code&gt;null&lt;/code&gt; if the child for &lt;code&gt;index&lt;/code&gt;<a name="line.830"></a>
+<span class="sourceLineNo">831</span>         * has not yet been created (expanded).<a name="line.831"></a>
+<span class="sourceLineNo">832</span>         */<a name="line.832"></a>
+<span class="sourceLineNo">833</span>        public FHTreeStateNode getChildAtModelIndex(int index) {<a name="line.833"></a>
+<span class="sourceLineNo">834</span>            // PENDING: Make this a binary search!<a name="line.834"></a>
+<span class="sourceLineNo">835</span>            for(int counter = getChildCount() - 1; counter &gt;= 0; counter--)<a name="line.835"></a>
+<span class="sourceLineNo">836</span>                if(((FHTreeStateNode)getChildAt(counter)).childIndex == index)<a name="line.836"></a>
+<span class="sourceLineNo">837</span>                    return (FHTreeStateNode)getChildAt(counter);<a name="line.837"></a>
+<span class="sourceLineNo">838</span>            return null;<a name="line.838"></a>
+<span class="sourceLineNo">839</span>        }<a name="line.839"></a>
+<span class="sourceLineNo">840</span><a name="line.840"></a>
+<span class="sourceLineNo">841</span>        /**<a name="line.841"></a>
+<span class="sourceLineNo">842</span>         * Returns true if this node is visible. This is determined by<a name="line.842"></a>
+<span class="sourceLineNo">843</span>         * asking all the parents if they are expanded.<a name="line.843"></a>
+<span class="sourceLineNo">844</span>         */<a name="line.844"></a>
+<span class="sourceLineNo">845</span>        public boolean isVisible() {<a name="line.845"></a>
+<span class="sourceLineNo">846</span>            FHTreeStateNode         parent = (FHTreeStateNode)getParent();<a name="line.846"></a>
+<span class="sourceLineNo">847</span><a name="line.847"></a>
+<span class="sourceLineNo">848</span>            if(parent == null)<a name="line.848"></a>
+<span class="sourceLineNo">849</span>                return true;<a name="line.849"></a>
+<span class="sourceLineNo">850</span>            return (parent.isExpanded() &amp;&amp; parent.isVisible());<a name="line.850"></a>
+<span class="sourceLineNo">851</span>        }<a name="line.851"></a>
+<span class="sourceLineNo">852</span><a name="line.852"></a>
+<span class="sourceLineNo">853</span>        /**<a name="line.853"></a>
+<span class="sourceLineNo">854</span>         * Returns the row of the receiver.<a name="line.854"></a>
+<span class="sourceLineNo">855</span>         */<a name="line.855"></a>
+<span class="sourceLineNo">856</span>        public int getRow() {<a name="line.856"></a>
+<span class="sourceLineNo">857</span>            return row;<a name="line.857"></a>
+<span class="sourceLineNo">858</span>        }<a name="line.858"></a>
+<span class="sourceLineNo">859</span><a name="line.859"></a>
+<span class="sourceLineNo">860</span>        /**<a name="line.860"></a>
+<span class="sourceLineNo">861</span>         * Returns the row of the child with a model index of<a name="line.861"></a>
+<span class="sourceLineNo">862</span>         * &lt;code&gt;index&lt;/code&gt;.<a name="line.862"></a>
+<span class="sourceLineNo">863</span>         */<a name="line.863"></a>
+<span class="sourceLineNo">864</span>        public int getRowToModelIndex(int index) {<a name="line.864"></a>
+<span class="sourceLineNo">865</span>            FHTreeStateNode      child;<a name="line.865"></a>
+<span class="sourceLineNo">866</span>            int                  lastRow = getRow() + 1;<a name="line.866"></a>
+<span class="sourceLineNo">867</span>            int                  retValue = lastRow;<a name="line.867"></a>
+<span class="sourceLineNo">868</span><a name="line.868"></a>
+<span class="sourceLineNo">869</span>            // This too could be a binary search!<a name="line.869"></a>
+<span class="sourceLineNo">870</span>            for(int counter = 0, maxCounter = getChildCount();<a name="line.870"></a>
+<span class="sourceLineNo">871</span>                counter &lt; maxCounter; counter++) {<a name="line.871"></a>
+<span class="sourceLineNo">872</span>                child = (FHTreeStateNode)getChildAt(counter);<a name="line.872"></a>
+<span class="sourceLineNo">873</span>                if(child.childIndex &gt;= index) {<a name="line.873"></a>
+<span class="sourceLineNo">874</span>                    if(child.childIndex == index)<a name="line.874"></a>
+<span class="sourceLineNo">875</span>                        return child.row;<a name="line.875"></a>
+<span class="sourceLineNo">876</span>                    if(counter == 0)<a name="line.876"></a>
+<span class="sourceLineNo">877</span>                        return getRow() + 1 + index;<a name="line.877"></a>
+<span class="sourceLineNo">878</span>                    return child.row - (child.childIndex - index);<a name="line.878"></a>
+<span class="sourceLineNo">879</span>                }<a name="line.879"></a>
+<span class="sourceLineNo">880</span>            }<a name="line.880"></a>
+<span class="sourceLineNo">881</span>            // YECK!<a name="line.881"></a>
+<span class="sourceLineNo">882</span>            return getRow() + 1 + getTotalChildCount() -<a name="line.882"></a>
+<span class="sourceLineNo">883</span>                             (childCount - index);<a name="line.883"></a>
+<span class="sourceLineNo">884</span>        }<a name="line.884"></a>
+<span class="sourceLineNo">885</span><a name="line.885"></a>
+<span class="sourceLineNo">886</span>        /**<a name="line.886"></a>
+<span class="sourceLineNo">887</span>         * Returns the number of children in the receiver by descending all<a name="line.887"></a>
+<span class="sourceLineNo">888</span>         * expanded nodes and messaging them with getTotalChildCount.<a name="line.888"></a>
+<span class="sourceLineNo">889</span>         */<a name="line.889"></a>
+<span class="sourceLineNo">890</span>        public int getTotalChildCount() {<a name="line.890"></a>
+<span class="sourceLineNo">891</span>            if(isExpanded()) {<a name="line.891"></a>
+<span class="sourceLineNo">892</span>                FHTreeStateNode      parent = (FHTreeStateNode)getParent();<a name="line.892"></a>
+<span class="sourceLineNo">893</span>                int                  pIndex;<a name="line.893"></a>
+<span class="sourceLineNo">894</span><a name="line.894"></a>
+<span class="sourceLineNo">895</span>                if(parent != null &amp;&amp; (pIndex = parent.getIndex(this)) + 1 &lt;<a name="line.895"></a>
+<span class="sourceLineNo">896</span>                   parent.getChildCount()) {<a name="line.896"></a>
+<span class="sourceLineNo">897</span>                    // This node has a created sibling, to calc total<a name="line.897"></a>
+<span class="sourceLineNo">898</span>                    // child count directly from that!<a name="line.898"></a>
+<span class="sourceLineNo">899</span>                    FHTreeStateNode  nextSibling = (FHTreeStateNode)parent.<a name="line.899"></a>
+<span class="sourceLineNo">900</span>                                           getChildAt(pIndex + 1);<a name="line.900"></a>
+<span class="sourceLineNo">901</span><a name="line.901"></a>
+<span class="sourceLineNo">902</span>                    return nextSibling.row - row -<a name="line.902"></a>
+<span class="sourceLineNo">903</span>                           (nextSibling.childIndex - childIndex);<a name="line.903"></a>
+<span class="sourceLineNo">904</span>                }<a name="line.904"></a>
+<span class="sourceLineNo">905</span>                else {<a name="line.905"></a>
+<span class="sourceLineNo">906</span>                    int retCount = childCount;<a name="line.906"></a>
+<span class="sourceLineNo">907</span><a name="line.907"></a>
+<span class="sourceLineNo">908</span>                    for(int counter = getChildCount() - 1; counter &gt;= 0;<a name="line.908"></a>
+<span class="sourceLineNo">909</span>                        counter--) {<a name="line.909"></a>
+<span class="sourceLineNo">910</span>                        retCount += ((FHTreeStateNode)getChildAt(counter))<a name="line.910"></a>
+<span class="sourceLineNo">911</span>                                                  .getTotalChildCount();<a name="line.911"></a>
+<span class="sourceLineNo">912</span>                    }<a name="line.912"></a>
+<span class="sourceLineNo">913</span>                    return retCount;<a name="line.913"></a>
+<span class="sourceLineNo">914</span>                }<a name="line.914"></a>
+<span class="sourceLineNo">915</span>            }<a name="line.915"></a>
+<span class="sourceLineNo">916</span>            return 0;<a name="line.916"></a>
+<span class="sourceLineNo">917</span>        }<a name="line.917"></a>
+<span class="sourceLineNo">918</span><a name="line.918"></a>
+<span class="sourceLineNo">919</span>        /**<a name="line.919"></a>
+<span class="sourceLineNo">920</span>         * Returns true if this node is expanded.<a name="line.920"></a>
+<span class="sourceLineNo">921</span>         */<a name="line.921"></a>
+<span class="sourceLineNo">922</span>        public boolean isExpanded() {<a name="line.922"></a>
+<span class="sourceLineNo">923</span>            return isExpanded;<a name="line.923"></a>
+<span class="sourceLineNo">924</span>        }<a name="line.924"></a>
+<span class="sourceLineNo">925</span><a name="line.925"></a>
+<span class="sourceLineNo">926</span>        /**<a name="line.926"></a>
+<span class="sourceLineNo">927</span>         * The highest visible nodes have a depth of 0.<a name="line.927"></a>
+<span class="sourceLineNo">928</span>         */<a name="line.928"></a>
+<span class="sourceLineNo">929</span>        public int getVisibleLevel() {<a name="line.929"></a>
+<span class="sourceLineNo">930</span>            if (isRootVisible()) {<a name="line.930"></a>
+<span class="sourceLineNo">931</span>                return getLevel();<a name="line.931"></a>
+<span class="sourceLineNo">932</span>            } else {<a name="line.932"></a>
+<span class="sourceLineNo">933</span>                return getLevel() - 1;<a name="line.933"></a>
+<span class="sourceLineNo">934</span>            }<a name="line.934"></a>
+<span class="sourceLineNo">935</span>        }<a name="line.935"></a>
+<span class="sourceLineNo">936</span><a name="line.936"></a>
+<span class="sourceLineNo">937</span>        /**<a name="line.937"></a>
+<span class="sourceLineNo">938</span>         * Recreates the receivers path, and all its childrens paths.<a name="line.938"></a>
+<span class="sourceLineNo">939</span>         */<a name="line.939"></a>
+<span class="sourceLineNo">940</span>        protected void resetChildrenPaths(TreePath parentPath) {<a name="line.940"></a>
+<span class="sourceLineNo">941</span>            removeMapping(this);<a name="line.941"></a>
+<span class="sourceLineNo">942</span>            if(parentPath == null)<a name="line.942"></a>
+<span class="sourceLineNo">943</span>                path = new TreePath(getUserObject());<a name="line.943"></a>
+<span class="sourceLineNo">944</span>            else<a name="line.944"></a>
+<span class="sourceLineNo">945</span>                path = parentPath.pathByAddingChild(getUserObject());<a name="line.945"></a>
+<span class="sourceLineNo">946</span>            addMapping(this);<a name="line.946"></a>
+<span class="sourceLineNo">947</span>            for(int counter = getChildCount() - 1; counter &gt;= 0; counter--)<a name="line.947"></a>
+<span class="sourceLineNo">948</span>                ((FHTreeStateNode)getChildAt(counter)).<a name="line.948"></a>
+<span class="sourceLineNo">949</span>                               resetChildrenPaths(path);<a name="line.949"></a>
+<span class="sourceLineNo">950</span>        }<a name="line.950"></a>
+<span class="sourceLineNo">951</span><a name="line.951"></a>
+<span class="sourceLineNo">952</span>        /**<a name="line.952"></a>
+<span class="sourceLineNo">953</span>         * Removes the receiver, and all its children, from the mapping<a name="line.953"></a>
+<span class="sourceLineNo">954</span>         * table.<a name="line.954"></a>
+<span class="sourceLineNo">955</span>         */<a name="line.955"></a>
+<span class="sourceLineNo">956</span>        protected void removeFromMapping() {<a name="line.956"></a>
+<span class="sourceLineNo">957</span>            if(path != null) {<a name="line.957"></a>
+<span class="sourceLineNo">958</span>                removeMapping(this);<a name="line.958"></a>
+<span class="sourceLineNo">959</span>                for(int counter = getChildCount() - 1; counter &gt;= 0; counter--)<a name="line.959"></a>
+<span class="sourceLineNo">960</span>                    ((FHTreeStateNode)getChildAt(counter)).removeFromMapping();<a name="line.960"></a>
+<span class="sourceLineNo">961</span>            }<a name="line.961"></a>
+<span class="sourceLineNo">962</span>        }<a name="line.962"></a>
+<span class="sourceLineNo">963</span><a name="line.963"></a>
+<span class="sourceLineNo">964</span>        /**<a name="line.964"></a>
+<span class="sourceLineNo">965</span>         * Creates a new node to represent &lt;code&gt;userObject&lt;/code&gt;.<a name="line.965"></a>
+<span class="sourceLineNo">966</span>         * This does NOT check to ensure there isn't already a child node<a name="line.966"></a>
+<span class="sourceLineNo">967</span>         * to manage &lt;code&gt;userObject&lt;/code&gt;.<a name="line.967"></a>
+<span class="sourceLineNo">968</span>         */<a name="line.968"></a>
+<span class="sourceLineNo">969</span>        protected FHTreeStateNode createChildFor(Object userObject) {<a name="line.969"></a>
+<span class="sourceLineNo">970</span>            int      newChildIndex = treeModel.getIndexOfChild<a name="line.970"></a>
+<span class="sourceLineNo">971</span>                                     (getUserObject(), userObject);<a name="line.971"></a>
+<span class="sourceLineNo">972</span><a name="line.972"></a>
+<span class="sourceLineNo">973</span>            if(newChildIndex &lt; 0)<a name="line.973"></a>
+<span class="sourceLineNo">974</span>                return null;<a name="line.974"></a>
+<span class="sourceLineNo">975</span><a name="line.975"></a>
+<span class="sourceLineNo">976</span>            FHTreeStateNode     aNode;<a name="line.976"></a>
+<span class="sourceLineNo">977</span>            FHTreeStateNode     child = createNodeForValue(userObject,<a name="line.977"></a>
+<span class="sourceLineNo">978</span>                                                           newChildIndex);<a name="line.978"></a>
+<span class="sourceLineNo">979</span>            int                 childRow;<a name="line.979"></a>
+<span class="sourceLineNo">980</span><a name="line.980"></a>
+<span class="sourceLineNo">981</span>            if(isVisible()) {<a name="line.981"></a>
+<span class="sourceLineNo">982</span>                childRow = getRowToModelIndex(newChildIndex);<a name="line.982"></a>
+<span class="sourceLineNo">983</span>            }<a name="line.983"></a>
+<span class="sourceLineNo">984</span>            else {<a name="line.984"></a>
+<span class="sourceLineNo">985</span>                childRow = -1;<a name="line.985"></a>
+<span class="sourceLineNo">986</span>            }<a name="line.986"></a>
+<span class="sourceLineNo">987</span>            child.row = childRow;<a name="line.987"></a>
+<span class="sourceLineNo">988</span>            for(int counter = 0, maxCounter = getChildCount();<a name="line.988"></a>
+<span class="sourceLineNo">989</span>                counter &lt; maxCounter; counter++) {<a name="line.989"></a>
+<span class="sourceLineNo">990</span>                aNode = (FHTreeStateNode)getChildAt(counter);<a name="line.990"></a>
+<span class="sourceLineNo">991</span>                if(aNode.childIndex &gt; newChildIndex) {<a name="line.991"></a>
+<span class="sourceLineNo">992</span>                    insert(child, counter);<a name="line.992"></a>
+<span class="sourceLineNo">993</span>                    return child;<a name="line.993"></a>
+<span class="sourceLineNo">994</span>                }<a name="line.994"></a>
+<span class="sourceLineNo">995</span>            }<a name="line.995"></a>
+<span class="sourceLineNo">996</span>            add(child);<a name="line.996"></a>
+<span class="sourceLineNo">997</span>            return child;<a name="line.997"></a>
+<span class="sourceLineNo">998</span>        }<a name="line.998"></a>
+<span class="sourceLineNo">999</span><a name="line.999"></a>
+<span class="sourceLineNo">1000</span>        /**<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>         * Adjusts the receiver, and all its children rows by<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>         * &lt;code&gt;amount&lt;/code&gt;.<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>         */<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>        protected void adjustRowBy(int amount) {<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>            row += amount;<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>            if(isExpanded) {<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>                for(int counter = getChildCount() - 1; counter &gt;= 0;<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>                    counter--)<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>                    ((FHTreeStateNode)getChildAt(counter)).adjustRowBy(amount);<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>            }<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>        }<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span><a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>        /**<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>         * Adjusts this node, its child, and its parent starting at<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>         * an index of &lt;code&gt;index&lt;/code&gt; index is the index of the child<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>         * to start adjusting from, which is not necessarily the model<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>         * index.<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>         */<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>        protected void adjustRowBy(int amount, int startIndex) {<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>            // Could check isVisible, but probably isn't worth it.<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>            if(isExpanded) {<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>                // children following startIndex.<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>                for(int counter = getChildCount() - 1; counter &gt;= startIndex;<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>                    counter--)<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>                    ((FHTreeStateNode)getChildAt(counter)).adjustRowBy(amount);<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>            }<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>            // Parent<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>            FHTreeStateNode        parent = (FHTreeStateNode)getParent();<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span><a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>            if(parent != null) {<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>                parent.adjustRowBy(amount, parent.getIndex(this) + 1);<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>            }<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>        }<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span><a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>        /**<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>         * Messaged when the node has expanded. This updates all of<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>         * the receivers children rows, as well as the total row count.<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>         */<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>        protected void didExpand() {<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>            int               nextRow = setRowAndChildren(row);<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>            FHTreeStateNode   parent = (FHTreeStateNode)getParent();<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>            int               childRowCount = nextRow - row - 1;<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span><a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>            if(parent != null) {<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>                parent.adjustRowBy(childRowCount, parent.getIndex(this) + 1);<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>            }<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>            adjustRowCountBy(childRowCount);<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>        }<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span><a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>        /**<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>         * Sets the receivers row to &lt;code&gt;nextRow&lt;/code&gt; and recursively<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>         * updates all the children of the receivers rows. The index the<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>         * next row is to be placed as is returned.<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>         */<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>        protected int setRowAndChildren(int nextRow) {<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>            row = nextRow;<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span><a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>            if(!isExpanded())<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>                return row + 1;<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span><a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>            int              lastRow = row + 1;<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>            int              lastModelIndex = 0;<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>            FHTreeStateNode  child;<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>            int              maxCounter = getChildCount();<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span><a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>            for(int counter = 0; counter &lt; maxCounter; counter++) {<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>                child = (FHTreeStateNode)getChildAt(counter);<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>                lastRow += (child.childIndex - lastModelIndex);<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>                lastModelIndex = child.childIndex + 1;<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>                if(child.isExpanded) {<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>                    lastRow = child.setRowAndChildren(lastRow);<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>                }<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>                else {<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>                    child.row = lastRow++;<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>                }<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>            }<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>            return lastRow + childCount - lastModelIndex;<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>        }<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span><a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>        /**<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>         * Resets the receivers childrens rows. Starting with the child<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>         * at &lt;code&gt;childIndex&lt;/code&gt; (and &lt;code&gt;modelIndex&lt;/code&gt;) to<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>         * &lt;code&gt;newRow&lt;/code&gt;. This uses &lt;code&gt;setRowAndChildren&lt;/code&gt;<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>         * to recursively descend children, and uses<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>         * &lt;code&gt;resetRowSelection&lt;/code&gt; to ascend parents.<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>         */<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>        // This can be rather expensive, but is needed for the collapse<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>        // case this is resulting from a remove (although I could fix<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>        // that by having instances of FHTreeStateNode hold a ref to<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>        // the number of children). I prefer this though, making determing<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>        // the row of a particular node fast is very nice!<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>        protected void resetChildrenRowsFrom(int newRow, int childIndex,<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>                                            int modelIndex) {<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>            int              lastRow = newRow;<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>            int              lastModelIndex = modelIndex;<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>            FHTreeStateNode  node;<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>            int              maxCounter = getChildCount();<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span><a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>            for(int counter = childIndex; counter &lt; maxCounter; counter++) {<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>                node = (FHTreeStateNode)getChildAt(counter);<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>                lastRow += (node.childIndex - lastModelIndex);<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>                lastModelIndex = node.childIndex + 1;<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>                if(node.isExpanded) {<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>                    lastRow = node.setRowAndChildren(lastRow);<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>                }<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>                else {<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>                    node.row = lastRow++;<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>                }<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>            }<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>            lastRow += childCount - lastModelIndex;<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>            node = (FHTreeStateNode)getParent();<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>            if(node != null) {<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>                node.resetChildrenRowsFrom(lastRow, node.getIndex(this) + 1,<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>                                           this.childIndex + 1);<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>            }<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>            else { // This is the root, reset total ROWCOUNT!<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>                rowCount = lastRow;<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>            }<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>        }<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span><a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>        /**<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>         * Makes the receiver visible, but invoking<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>         * &lt;code&gt;expandParentAndReceiver&lt;/code&gt; on the superclass.<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>         */<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>        protected void makeVisible() {<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>            FHTreeStateNode       parent = (FHTreeStateNode)getParent();<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span><a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>            if(parent != null)<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>                parent.expandParentAndReceiver();<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>        }<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span><a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>        /**<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>         * Invokes &lt;code&gt;expandParentAndReceiver&lt;/code&gt; on the parent,<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>         * and expands the receiver.<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>         */<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>        protected void expandParentAndReceiver() {<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>            FHTreeStateNode       parent = (FHTreeStateNode)getParent();<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span><a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>            if(parent != null)<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>                parent.expandParentAndReceiver();<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>            expand();<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>        }<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span><a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>        /**<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>         * Expands the receiver.<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>         */<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>        protected void expand() {<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>            if(!isExpanded &amp;&amp; !isLeaf()) {<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>                boolean            visible = isVisible();<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span><a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>                isExpanded = true;<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>                childCount = treeModel.getChildCount(getUserObject());<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span><a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>                if(visible) {<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>                    didExpand();<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>                }<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span><a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>                // Update the selection model.<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>                if(visible &amp;&amp; treeSelectionModel != null) {<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>                    treeSelectionModel.resetRowSelection();<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>                }<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>            }<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>        }<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span><a name="line.1164"></a>
+<span class="sourceLineNo">1165</span>        /**<a name="line.1165"></a>
+<span class="sourceLineNo">1166</span>         * Collapses the receiver. If &lt;code&gt;adjustRows&lt;/code&gt; is true,<a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>         * the rows of nodes after the receiver are adjusted.<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>         */<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>        protected void collapse(boolean adjustRows) {<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>            if(isExpanded) {<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>                if(isVisible() &amp;&amp; adjustRows) {<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>                    int              childCount = getTotalChildCount();<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span><a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>                    isExpanded = false;<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>                    adjustRowCountBy(-childCount);<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>                    // We can do this because adjustRowBy won't descend<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>                    // the children.<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>                    adjustRowBy(-childCount, 0);<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span>                }<a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>                else<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>                    isExpanded = false;<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span><a name="line.1182"></a>
+<span class="sourceLineNo">1183</span>                if(adjustRows &amp;&amp; isVisible() &amp;&amp; treeSelectionModel != null)<a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>                    treeSelectionModel.resetRowSelection();<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>            }<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>        }<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span><a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>        /**<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span>         * Returns true if the receiver is a leaf.<a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>         */<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>        public boolean isLeaf() {<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>            TreeModel model = getModel();<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span><a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>            return (model != null) ? model.isLeaf(this.getUserObject()) :<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>                   true;<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>        }<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span><a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>        /**<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>         * Adds newChild to this nodes children at the appropriate location.<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>         * The location is determined from the childIndex of newChild.<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>         */<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span>        protected void addNode(FHTreeStateNode newChild) {<a name="line.1202"></a>
+<span class="sourceLineNo">1203</span>            boolean         added = false;<a name="line.1203"></a>
+<span class="sourceLineNo">1204</span>            int             childIndex = newChild.getChildIndex();<a name="line.1204"></a>
+<span class="sourceLineNo">1205</span><a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>            for(int counter = 0, maxCounter = getChildCount();<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span>                counter &lt; maxCounter; counter++) {<a name="line.1207"></a>
+<span class="sourceLineNo">1208</span>                if(((FHTreeStateNode)getChildAt(counter)).getChildIndex() &gt;<a name="line.1208"></a>
+<span class="sourceLineNo">1209</span>                   childIndex) {<a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>                    added = true;<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span>                    insert(newChild, counter);<a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>                    counter = maxCounter;<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span>                }<a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>            }<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>            if(!added)<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>                add(newChild);<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>        }<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span><a name="line.1218"></a>
+<span class="sourceLineNo">1219</span>        /**<a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>         * Removes the child at &lt;code&gt;modelIndex&lt;/code&gt;.<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span>         * &lt;code&gt;isChildVisible&lt;/code&gt; should be true if the receiver<a name="line.1221"></a>
+<span class="sourceLineNo">1222</span>         * is visible and expanded.<a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>         */<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>        protected void removeChildAtModelIndex(int modelIndex,<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span>                                               boolean isChildVisible) {<a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>            FHTreeStateNode     childNode = getChildAtModelIndex(modelIndex);<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span><a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>            if(childNode != null) {<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span>                int          row = childNode.getRow();<a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>                int          index = getIndex(childNode);<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span><a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>                childNode.collapse(false);<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>                remove(index);<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>                adjustChildIndexs(index, -1);<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span>                childCount--;<a name="line.1235"></a>
+<span class="sourceLineNo">1236</span>                if(isChildVisible) {<a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>                    // Adjust the rows.<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span>                    resetChildrenRowsFrom(row, index, modelIndex);<a name="line.1238"></a>
+<span class="sourceLineNo">1239</span>                }<a name="line.1239"></a>
+<span class="sourceLineNo">1240</span>            }<a name="line.1240"></a>
+<span class="sourceLineNo">1241</span>            else {<a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>                int                  maxCounter = getChildCount();<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>                FHTreeStateNode      aChild;<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span><a name="line.1244"></a>
+<span class="sourceLineNo">1245</span>                for(int counter = 0; counter &lt; maxCounter; counter++) {<a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>                    aChild = (FHTreeStateNode)getChildAt(counter);<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span>                    if(aChild.childIndex &gt;= modelIndex) {<a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>                        if(isChildVisible) {<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>                            adjustRowBy(-1, counter);<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>                            adjustRowCountBy(-1);<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span>                        }<a name="line.1251"></a>
+<span class="sourceLineNo">1252</span>                        // Since matched and children are always sorted by<a name="line.1252"></a>
+<span class="sourceLineNo">1253</span>                        // index, no need to continue testing with the<a name="line.1253"></a>
+<span class="sourceLineNo">1254</span>                        // above.<a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>                        for(; counter &lt; maxCounter; counter++)<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span>                            ((FHTreeStateNode)getChildAt(counter)).<a name="line.1256"></a>
+<span class="sourceLineNo">1257</span>                                              childIndex--;<a name="line.1257"></a>
+<span class="sourceLineNo">1258</span>                        childCount--;<a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>                        return;<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span>                    }<a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>                }<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>                // No children to adjust, but it was a child, so we still need<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>                // to adjust nodes after this one.<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>                if(isChildVisible) {<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span>                    adjustRowBy(-1, maxCounter);<a name="line.1265"></a>
+<span class="sourceLineNo">1266</span>                    adjustRowCountBy(-1);<a name="line.1266"></a>
+<span class="sourceLineNo">1267</span>                }<a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>                childCount--;<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span>            }<a name="line.1269"></a>
+<span class="sourceLineNo">1270</span>        }<a name="line.1270"></a>
+<span class="sourceLineNo">1271</span><a name="line.1271"></a>
+<span class="sourceLineNo">1272</span>        /**<a name="line.1272"></a>
+<span class="sourceLineNo">1273</span>         * Adjusts the child indexs of the receivers children by<a name="line.1273"></a>
+<span class="sourceLineNo">1274</span>         * &lt;code&gt;amount&lt;/code&gt;, starting at &lt;code&gt;index&lt;/code&gt;.<a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>         */<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span>        protected void adjustChildIndexs(int index, int amount) {<a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>            for(int counter = index, maxCounter = getChildCount();<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span>                counter &lt; maxCounter; counter++) {<a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>                ((FHTreeStateNode)getChildAt(counter)).childIndex += amount;<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span>            }<a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>        }<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span><a name="line.1282"></a>
+<span class="sourceLineNo">1283</span>        /**<a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>         * Messaged when a child has been inserted at index. For all the<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span>         * children that have a childIndex &gt;= index their index is incremented<a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>         * by one.<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span>         */<a name="line.1287"></a>
+<span class="sourceLineNo">1288</span>        protected void childInsertedAtModelIndex(int index,<a name="line.1288"></a>
+<span class="sourceLineNo">1289</span>                                               boolean isExpandedAndVisible) {<a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>            FHTreeStateNode                aChild;<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span>            int                            maxCounter = getChildCount();<a name="line.1291"></a>
+<span class="sourceLineNo">1292</span><a name="line.1292"></a>
+<span class="sourceLineNo">1293</span>            for(int counter = 0; counter &lt; maxCounter; counter++) {<a name="line.1293"></a>
+<span class="sourceLineNo">1294</span>                aChild = (FHTreeStateNode)getChildAt(counter);<a name="line.1294"></a>
+<span class="sourceLineNo">1295</span>                if(aChild.childIndex &gt;= index) {<a name="line.1295"></a>
+<span class="sourceLineNo">1296</span>                    if(isExpandedAndVisible) {<a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>                        adjustRowBy(1, counter);<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span>                        adjustRowCountBy(1);<a name="line.1298"></a>
+<span class="sourceLineNo">1299</span>                    }<a name="line.1299"></a>
+<span class="sourceLineNo">1300</span>                    /* Since matched and children are always sorted by<a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>                       index, no need to continue testing with the above. */<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>                    for(; counter &lt; maxCounter; counter++)<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>                        ((FHTreeStateNode)getChildAt(counter)).childIndex++;<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span>                    childCount++;<a name="line.1304"></a>
+<span class="sourceLineNo">1305</span>                    return;<a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>                }<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span>            }<a name="line.1307"></a>
+<span class="sourceLineNo">1308</span>            // No children to adjust, but it was a child, so we still need<a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>            // to adjust nodes after this one.<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span>            if(isExpandedAndVisible) {<a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>                adjustRowBy(1, maxCounter);<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>                adjustRowCountBy(1);<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span>            }<a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>            childCount++;<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span>        }<a name="line.1315"></a>
+<span class="sourceLineNo">1316</span><a name="line.1316"></a>
+<span class="sourceLineNo">1317</span>        /**<a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>         * Returns true if there is a row for &lt;code&gt;row&lt;/code&gt;.<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span>         * &lt;code&gt;nextRow&lt;/code&gt; gives the bounds of the receiver.<a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>         * Information about the found row is returned in &lt;code&gt;info&lt;/code&gt;.<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span>         * This should be invoked on root with &lt;code&gt;nextRow&lt;/code&gt; set<a name="line.1321"></a>
+<span class="sourceLineNo">1322</span>         * to &lt;code&gt;getRowCount&lt;/code&gt;().<a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>         */<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>        protected boolean getPathForRow(int row, int nextRow,<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>                                        SearchInfo info) {<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span>            if(this.row == row) {<a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>                info.node = this;<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span>                info.isNodeParentNode = false;<a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>                info.childIndex = childIndex;<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>                return true;<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>            }<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span><a name="line.1332"></a>
+<span class="sourceLineNo">1333</span>            FHTreeStateNode            child;<a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>            FHTreeStateNode            lastChild = null;<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span><a name="line.1335"></a>
+<span class="sourceLineNo">1336</span>            for(int counter = 0, maxCounter = getChildCount();<a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>                counter &lt; maxCounter; counter++) {<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span>                child = (FHTreeStateNode)getChildAt(counter);<a name="line.1338"></a>
+<span class="sourceLineNo">1339</span>                if(child.row &gt; row) {<a name="line.1339"></a>
+<span class="sourceLineNo">1340</span>                    if(counter == 0) {<a name="line.1340"></a>
+<span class="sourceLineNo">1341</span>                        // No node exists for it, and is first.<a name="line.1341"></a>
+<span class="sourceLineNo">1342</span>                        info.node = this;<a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>                        info.isNodeParentNode = true;<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span>                        info.childIndex = row - this.row - 1;<a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>                        return true;<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>                    }<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>                    else {<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span>                        // May have been in last childs bounds.<a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>                        int          lastChildEndRow = 1 + child.row -<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>                                     (child.childIndex - lastChild.childIndex);<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span><a name="line.1351"></a>
+<span class="sourceLineNo">1352</span>                        if(row &lt; lastChildEndRow) {<a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>                            return lastChild.getPathForRow(row,<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span>                                                       lastChildEndRow, info);<a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>                        }<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span>                        // Between last child and child, but not in last child<a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>                        info.node = this;<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span>                        info.isNodeParentNode = true;<a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>                        info.childIndex = row - lastChildEndRow +<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span>                                                lastChild.childIndex + 1;<a name="line.1360"></a>
+<span class="sourceLineNo">1361</span>                        return true;<a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>                    }<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span>                }<a name="line.1363"></a>
+<span class="sourceLineNo">1364</span>                lastChild = child;<a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>            }<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span><a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>            // Not in children, but we should have it, offset from<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span>            // nextRow.<a name="line.1368"></a>
+<span class="sourceLineNo">1369</span>            if(lastChild != null) {<a name="line.1369"></a>
+<span class="sourceLineNo">1370</span>                int        lastChildEndRow = nextRow -<a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>                                  (childCount - lastChild.childIndex) + 1;<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span><a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>                if(row &lt; lastChildEndRow) {<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>                    return lastChild.getPathForRow(row, lastChildEndRow, info);<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span>                }<a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>                // Between last child and child, but not in last child<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>                info.node = this;<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>                info.isNodeParentNode = true;<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span>                info.childIndex = row - lastChildEndRow +<a name="line.1379"></a>
+<span class="sourceLineNo">1380</span>                                             lastChild.childIndex + 1;<a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>                return true;<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span>            }<a name="line.1382"></a>
+<span class="sourceLineNo">1383</span>            else {<a name="line.1383"></a>
+<span class="sourceLineNo">1384</span>                // No children.<a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>                int         retChildIndex = row - this.row - 1;<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span><a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>                if(retChildIndex &gt;= childCount) {<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span>                    return false;<a name="line.1388"></a>
+<span class="sourceLineNo">1389</span>                }<a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>                info.node = this;<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>                info.isNodeParentNode = true;<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span>                info.childIndex = retChildIndex;<a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>                return true;<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span>            }<a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>        }<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span><a name="line.1396"></a>
+<span class="sourceLineNo">1397</span>        /**<a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>         * Asks all the children of the receiver for their totalChildCount<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span>         * and returns this value (plus stopIndex).<a name="line.1399"></a>
+<span class="sourceLineNo">1400</span>         */<a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>        protected int getCountTo(int stopIndex) {<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span>            FHTreeStateNode    aChild;<a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>            int                retCount = stopIndex + 1;<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span><a name="line.1404"></a>
+<span class="sourceLineNo">1405</span>            for(int counter = 0, maxCounter = getChildCount();<a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>                counter &lt; maxCounter; counter++) {<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>                aChild = (FHTreeStateNode)getChildAt(counter);<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span>                if(aChild.childIndex &gt;= stopIndex)<a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>                    counter = maxCounter;<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span>                else<a name="line.1410"></a>
+<span class="sourceLineNo">1411</span>                    retCount += aChild.getTotalChildCount();<a name="line.1411"></a>
+<span class="sourceLineNo">1412</span>            }<a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>            if(parent != null)<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span>                return retCount + ((FHTreeStateNode)getParent())<a name="line.1414"></a>
+<span class="sourceLineNo">1415</span>                                   .getCountTo(childIndex);<a name="line.1415"></a>
+<span class="sourceLineNo">1416</span>            if(!isRootVisible())<a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>                return (retCount - 1);<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span>            return retCount;<a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>        }<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span><a name="line.1420"></a>
+<span class="sourceLineNo">1421</span>        /**<a name="line.1421"></a>
+<span class="sourceLineNo">1422</span>         * Returns the number of children that are expanded to<a name="line.1422"></a>
+<span class="sourceLineNo">1423</span>         * &lt;code&gt;stopIndex&lt;/code&gt;. This does not include the number<a name="line.1423"></a>
+<span class="sourceLineNo">1424</span>         * of children that the child at &lt;code&gt;stopIndex&lt;/code&gt; might<a name="line.1424"></a>
+<span class="sourceLineNo">1425</span>         * have.<a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>         */<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span>        protected int getNumExpandedChildrenTo(int stopIndex) {<a name="line.1427"></a>
+<span class="sourceLineNo">1428</span>            FHTreeStateNode    aChild;<a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>            int                retCount = stopIndex;<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span><a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>            for(int counter = 0, maxCounter = getChildCount();<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span>                counter &lt; maxCounter; counter++) {<a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>                aChild = (FHTreeStateNode)getChildAt(counter);<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span>                if(aChild.childIndex &gt;= stopIndex)<a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>                    return retCount;<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span>                else {<a name="line.1436"></a>
+<span class="sourceLineNo">1437</span>                    retCount += aChild.getTotalChildCount();<a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>                }<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>            }<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>            return retCount;<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>        }<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span><a name="line.1442"></a>
+<span class="sourceLineNo">1443</span>        /**<a name="line.1443"></a>
+<span class="sourceLineNo">1444</span>         * Messaged when this node either expands or collapses.<a name="line.1444"></a>
+<span class="sourceLineNo">1445</span>         */<a name="line.1445"></a>
+<span class="sourceLineNo">1446</span>        protected void didAdjustTree() {<a name="line.1446"></a>
+<span class="sourceLineNo">1447</span>        }<a name="line.1447"></a>
+<span class="sourceLineNo">1448</span><a name="line.1448"></a>
+<span class="sourceLineNo">1449</span>    } // FixedHeightLayoutCache.FHTreeStateNode<a name="line.1449"></a>
+<span class="sourceLineNo">1450</span><a name="line.1450"></a>
+<span class="sourceLineNo">1451</span><a name="line.1451"></a>
+<span class="sourceLineNo">1452</span>    /**<a name="line.1452"></a>
+<span class="sourceLineNo">1453</span>     * Used as a placeholder when getting the path in FHTreeStateNodes.<a name="line.1453"></a>
+<span class="sourceLineNo">1454</span>     */<a name="line.1454"></a>
+<span class="sourceLineNo">1455</span>    private class SearchInfo {<a name="line.1455"></a>
+<span class="sourceLineNo">1456</span>        protected FHTreeStateNode   node;<a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>        protected boolean           isNodeParentNode;<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span>        protected int               childIndex;<a name="line.1458"></a>
+<span class="sourceLineNo">1459</span><a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>        protected TreePath getPath() {<a name="line.1460"></a>
+<span class="sourceLineNo">1461</span>            if(node == null)<a name="line.1461"></a>
+<span class="sourceLineNo">1462</span>                return null;<a name="line.1462"></a>
+<span class="sourceLineNo">1463</span><a name="line.1463"></a>
+<span class="sourceLineNo">1464</span>            if(isNodeParentNode)<a name="line.1464"></a>
+<span class="sourceLineNo">1465</span>                return node.getTreePath().pathByAddingChild(treeModel.getChild<a name="line.1465"></a>
+<span class="sourceLineNo">1466</span>                                            (node.getUserObject(),<a name="line.1466"></a>
+<span class="sourceLineNo">1467</span>                                             childIndex));<a name="line.1467"></a>
+<span class="sourceLineNo">1468</span>            return node.path;<a name="line.1468"></a>
+<span class="sourceLineNo">1469</span>        }<a name="line.1469"></a>
+<span class="sourceLineNo">1470</span>    } // FixedHeightLayoutCache.SearchInfo<a name="line.1470"></a>
+<span class="sourceLineNo">1471</span><a name="line.1471"></a>
+<span class="sourceLineNo">1472</span><a name="line.1472"></a>
+<span class="sourceLineNo">1473</span>    /**<a name="line.1473"></a>
+<span class="sourceLineNo">1474</span>     * An enumerator to iterate through visible nodes.<a name="line.1474"></a>
+<span class="sourceLineNo">1475</span>     */<a name="line.1475"></a>
+<span class="sourceLineNo">1476</span>    // This is very similiar to<a name="line.1476"></a>
+<span class="sourceLineNo">1477</span>    // VariableHeightTreeState.VisibleTreeStateNodeEnumeration<a name="line.1477"></a>
+<span class="sourceLineNo">1478</span>    private class VisibleFHTreeStateNodeEnumeration<a name="line.1478"></a>
+<span class="sourceLineNo">1479</span>        implements Enumeration&lt;TreePath&gt;<a name="line.1479"></a>
+<span class="sourceLineNo">1480</span>    {<a name="line.1480"></a>
+<span class="sourceLineNo">1481</span>        /** Parent thats children are being enumerated. */<a name="line.1481"></a>
+<span class="sourceLineNo">1482</span>        protected FHTreeStateNode     parent;<a name="line.1482"></a>
+<span class="sourceLineNo">1483</span>        /** Index of next child. An index of -1 signifies parent should be<a name="line.1483"></a>
+<span class="sourceLineNo">1484</span>         * visibled next. */<a name="line.1484"></a>
+<span class="sourceLineNo">1485</span>        protected int                 nextIndex;<a name="line.1485"></a>
+<span class="sourceLineNo">1486</span>        /** Number of children in parent. */<a name="line.1486"></a>
+<span class="sourceLineNo">1487</span>        protected int                 childCount;<a name="line.1487"></a>
+<span class="sourceLineNo">1488</span><a name="line.1488"></a>
+<span class="sourceLineNo">1489</span>        protected VisibleFHTreeStateNodeEnumeration(FHTreeStateNode node) {<a name="line.1489"></a>
+<span class="sourceLineNo">1490</span>            this(node, -1);<a name="line.1490"></a>
+<span class="sourceLineNo">1491</span>        }<a name="line.1491"></a>
+<span class="sourceLineNo">1492</span><a name="line.1492"></a>
+<span class="sourceLineNo">1493</span>        protected VisibleFHTreeStateNodeEnumeration(FHTreeStateNode parent,<a name="line.1493"></a>
+<span class="sourceLineNo">1494</span>                                                    int startIndex) {<a name="line.1494"></a>
+<span class="sourceLineNo">1495</span>            this.parent = parent;<a name="line.1495"></a>
+<span class="sourceLineNo">1496</span>            this.nextIndex = startIndex;<a name="line.1496"></a>
+<span class="sourceLineNo">1497</span>            this.childCount = treeModel.getChildCount(this.parent.<a name="line.1497"></a>
+<span class="sourceLineNo">1498</span>                                                      getUserObject());<a name="line.1498"></a>
+<span class="sourceLineNo">1499</span>        }<a name="line.1499"></a>
+<span class="sourceLineNo">1500</span><a name="line.1500"></a>
+<span class="sourceLineNo">1501</span>        /**<a name="line.1501"></a>
+<span class="sourceLineNo">1502</span>         * @return true if more visible nodes.<a name="line.1502"></a>
+<span class="sourceLineNo">1503</span>         */<a name="line.1503"></a>
+<span class="sourceLineNo">1504</span>        public boolean hasMoreElements() {<a name="line.1504"></a>
+<span class="sourceLineNo">1505</span>            return (parent != null);<a name="line.1505"></a>
+<span class="sourceLineNo">1506</span>        }<a name="line.1506"></a>
+<span class="sourceLineNo">1507</span><a name="line.1507"></a>
+<span class="sourceLineNo">1508</span>        /**<a name="line.1508"></a>
+<span class="sourceLineNo">1509</span>         * @return next visible TreePath.<a name="line.1509"></a>
+<span class="sourceLineNo">1510</span>         */<a name="line.1510"></a>
+<span class="sourceLineNo">1511</span>        public TreePath nextElement() {<a name="line.1511"></a>
+<span class="sourceLineNo">1512</span>            if(!hasMoreElements())<a name="line.1512"></a>
+<span class="sourceLineNo">1513</span>                throw new NoSuchElementException("No more visible paths");<a name="line.1513"></a>
+<span class="sourceLineNo">1514</span><a name="line.1514"></a>
+<span class="sourceLineNo">1515</span>            TreePath                retObject;<a name="line.1515"></a>
+<span class="sourceLineNo">1516</span><a name="line.1516"></a>
+<span class="sourceLineNo">1517</span>            if(nextIndex == -1)<a name="line.1517"></a>
+<span class="sourceLineNo">1518</span>                retObject = parent.getTreePath();<a name="line.1518"></a>
+<span class="sourceLineNo">1519</span>            else {<a name="line.1519"></a>
+<span class="sourceLineNo">1520</span>                FHTreeStateNode  node = parent.getChildAtModelIndex(nextIndex);<a name="line.1520"></a>
+<span class="sourceLineNo">1521</span><a name="line.1521"></a>
+<span class="sourceLineNo">1522</span>                if(node == null)<a name="line.1522"></a>
+<span class="sourceLineNo">1523</span>                    retObject = parent.getTreePath().pathByAddingChild<a name="line.1523"></a>
+<span class="sourceLineNo">1524</span>                                  (treeModel.getChild(parent.getUserObject(),<a name="line.1524"></a>
+<span class="sourceLineNo">1525</span>                                                      nextIndex));<a name="line.1525"></a>
+<span class="sourceLineNo">1526</span>                else<a name="line.1526"></a>
+<span class="sourceLineNo">1527</span>                    retObject = node.getTreePath();<a name="line.1527"></a>
+<span class="sourceLineNo">1528</span>            }<a name="line.1528"></a>
+<span class="sourceLineNo">1529</span>            updateNextObject();<a name="line.1529"></a>
+<span class="sourceLineNo">1530</span>            return retObject;<a name="line.1530"></a>
+<span class="sourceLineNo">1531</span>        }<a name="line.1531"></a>
+<span class="sourceLineNo">1532</span><a name="line.1532"></a>
+<span class="sourceLineNo">1533</span>        /**<a name="line.1533"></a>
+<span class="sourceLineNo">1534</span>         * Determines the next object by invoking &lt;code&gt;updateNextIndex&lt;/code&gt;<a name="line.1534"></a>
+<span class="sourceLineNo">1535</span>         * and if not succesful &lt;code&gt;findNextValidParent&lt;/code&gt;.<a name="line.1535"></a>
+<span class="sourceLineNo">1536</span>         */<a name="line.1536"></a>
+<span class="sourceLineNo">1537</span>        protected void updateNextObject() {<a name="line.1537"></a>
+<span class="sourceLineNo">1538</span>            if(!updateNextIndex()) {<a name="line.1538"></a>
+<span class="sourceLineNo">1539</span>                findNextValidParent();<a name="line.1539"></a>
+<span class="sourceLineNo">1540</span>            }<a name="line.1540"></a>
+<span class="sourceLineNo">1541</span>        }<a name="line.1541"></a>
+<span class="sourceLineNo">1542</span><a name="line.1542"></a>
+<span class="sourceLineNo">1543</span>        /**<a name="line.1543"></a>
+<span class="sourceLineNo">1544</span>         * Finds the next valid parent, this should be called when nextIndex<a name="line.1544"></a>
+<span class="sourceLineNo">1545</span>         * is beyond the number of children of the current parent.<a name="line.1545"></a>
+<span class="sourceLineNo">1546</span>         */<a name="line.1546"></a>
+<span class="sourceLineNo">1547</span>        protected boolean findNextValidParent() {<a name="line.1547"></a>
+<span class="sourceLineNo">1548</span>            if(parent == root) {<a name="line.1548"></a>
+<span class="sourceLineNo">1549</span>                // mark as invalid!<a name="line.1549"></a>
+<span class="sourceLineNo">1550</span>                parent = null;<a name="line.1550"></a>
+<span class="sourceLineNo">1551</span>                return false;<a name="line.1551"></a>
+<span class="sourceLineNo">1552</span>            }<a name="line.1552"></a>
+<span class="sourceLineNo">1553</span>            while(parent != null) {<a name="line.1553"></a>
+<span class="sourceLineNo">1554</span>                FHTreeStateNode      newParent = (FHTreeStateNode)parent.<a name="line.1554"></a>
+<span class="sourceLineNo">1555</span>                                                  getParent();<a name="line.1555"></a>
+<span class="sourceLineNo">1556</span><a name="line.1556"></a>
+<span class="sourceLineNo">1557</span>                if(newParent != null) {<a name="line.1557"></a>
+<span class="sourceLineNo">1558</span>                    nextIndex = parent.childIndex;<a name="line.1558"></a>
+<span class="sourceLineNo">1559</span>                    parent = newParent;<a name="line.1559"></a>
+<span class="sourceLineNo">1560</span>                    childCount = treeModel.getChildCount<a name="line.1560"></a>
+<span class="sourceLineNo">1561</span>                                            (parent.getUserObject());<a name="line.1561"></a>
+<span class="sourceLineNo">1562</span>                    if(updateNextIndex())<a name="line.1562"></a>
+<span class="sourceLineNo">1563</span>                        return true;<a name="line.1563"></a>
+<span class="sourceLineNo">1564</span>                }<a name="line.1564"></a>
+<span class="sourceLineNo">1565</span>                else<a name="line.1565"></a>
+<span class="sourceLineNo">1566</span>                    parent = null;<a name="line.1566"></a>
+<span class="sourceLineNo">1567</span>            }<a name="line.1567"></a>
+<span class="sourceLineNo">1568</span>            return false;<a name="line.1568"></a>
+<span class="sourceLineNo">1569</span>        }<a name="line.1569"></a>
+<span class="sourceLineNo">1570</span><a name="line.1570"></a>
+<span class="sourceLineNo">1571</span>        /**<a name="line.1571"></a>
+<span class="sourceLineNo">1572</span>         * Updates &lt;code&gt;nextIndex&lt;/code&gt; returning false if it is beyond<a name="line.1572"></a>
+<span class="sourceLineNo">1573</span>         * the number of children of parent.<a name="line.1573"></a>
+<span class="sourceLineNo">1574</span>         */<a name="line.1574"></a>
+<span class="sourceLineNo">1575</span>        protected boolean updateNextIndex() {<a name="line.1575"></a>
+<span class="sourceLineNo">1576</span>            // nextIndex == -1 identifies receiver, make sure is expanded<a name="line.1576"></a>
+<span class="sourceLineNo">1577</span>            // before descend.<a name="line.1577"></a>
+<span class="sourceLineNo">1578</span>            if(nextIndex == -1 &amp;&amp; !parent.isExpanded()) {<a name="line.1578"></a>
+<span class="sourceLineNo">1579</span>                return false;<a name="line.1579"></a>
+<span class="sourceLineNo">1580</span>            }<a name="line.1580"></a>
+<span class="sourceLineNo">1581</span><a name="line.1581"></a>
+<span class="sourceLineNo">1582</span>            // Check that it can have kids<a name="line.1582"></a>
+<span class="sourceLineNo">1583</span>            if(childCount == 0) {<a name="line.1583"></a>
+<span class="sourceLineNo">1584</span>                return false;<a name="line.1584"></a>
+<span class="sourceLineNo">1585</span>            }<a name="line.1585"></a>
+<span class="sourceLineNo">1586</span>            // Make sure next index not beyond child count.<a name="line.1586"></a>
+<span class="sourceLineNo">1587</span>            else if(++nextIndex &gt;= childCount) {<a name="line.1587"></a>
+<span class="sourceLineNo">1588</span>                return false;<a name="line.1588"></a>
+<span class="sourceLineNo">1589</span>            }<a name="line.1589"></a>
+<span class="sourceLineNo">1590</span><a name="line.1590"></a>
+<span class="sourceLineNo">1591</span>            FHTreeStateNode    child = parent.getChildAtModelIndex(nextIndex);<a name="line.1591"></a>
+<span class="sourceLineNo">1592</span><a name="line.1592"></a>
+<span class="sourceLineNo">1593</span>            if(child != null &amp;&amp; child.isExpanded()) {<a name="line.1593"></a>
+<span class="sourceLineNo">1594</span>                parent = child;<a name="line.1594"></a>
+<span class="sourceLineNo">1595</span>                nextIndex = -1;<a name="line.1595"></a>
+<span class="sourceLineNo">1596</span>                childCount = treeModel.getChildCount(child.getUserObject());<a name="line.1596"></a>
+<span class="sourceLineNo">1597</span>            }<a name="line.1597"></a>
+<span class="sourceLineNo">1598</span>            return true;<a name="line.1598"></a>
+<span class="sourceLineNo">1599</span>        }<a name="line.1599"></a>
+<span class="sourceLineNo">1600</span>    } // FixedHeightLayoutCache.VisibleFHTreeStateNodeEnumeration<a name="line.1600"></a>
+<span class="sourceLineNo">1601</span>}<a name="line.1601"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

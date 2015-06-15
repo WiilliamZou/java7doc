@@ -1,0 +1,452 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>package javax.management.openmbean;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>// java import<a name="line.30"></a>
+<span class="sourceLineNo">031</span>//<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.ArrayList;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.Collections;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.util.Iterator;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.util.List;<a name="line.35"></a>
+<span class="sourceLineNo">036</span><a name="line.36"></a>
+<span class="sourceLineNo">037</span>// jmx import<a name="line.37"></a>
+<span class="sourceLineNo">038</span>//<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>/**<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * The &lt;code&gt;TabularType&lt;/code&gt; class is the &lt;i&gt; open type&lt;/i&gt; class<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * whose instances describe the types of {@link TabularData &lt;code&gt;TabularData&lt;/code&gt;} values.<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * @since 1.5<a name="line.45"></a>
+<span class="sourceLineNo">046</span> */<a name="line.46"></a>
+<span class="sourceLineNo">047</span>public class TabularType extends OpenType&lt;TabularData&gt; {<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>    /* Serial version */<a name="line.49"></a>
+<span class="sourceLineNo">050</span>    static final long serialVersionUID = 6554071860220659261L;<a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /**<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * @serial The composite type of rows<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     */<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    private CompositeType  rowType;<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    /**<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * @serial The items used to index each row element, kept in the order the user gave<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     *         This is an unmodifiable {@link ArrayList}<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     */<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    private List&lt;String&gt; indexNames;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>    private transient Integer myHashCode = null; // As this instance is immutable, these two values<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    private transient String  myToString = null; // need only be calculated once.<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>    /* *** Constructor *** */<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    /**<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * Constructs a &lt;code&gt;TabularType&lt;/code&gt; instance, checking for the validity of the given parameters.<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * The validity constraints are described below for each parameter.<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * &lt;p&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * The Java class name of tabular data values this tabular type represents<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * (ie the class name returned by the {@link OpenType#getClassName() getClassName} method)<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * is set to the string value returned by &lt;code&gt;TabularData.class.getName()&lt;/code&gt;.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * &lt;p&gt;<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * @param  typeName  The name given to the tabular type this instance represents; cannot be a null or empty string.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * &lt;br&gt;&amp;nbsp;<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * @param  description  The human readable description of the tabular type this instance represents;<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     *                      cannot be a null or empty string.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * &lt;br&gt;&amp;nbsp;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * @param  rowType  The type of the row elements of tabular data values described by this tabular type instance;<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     *                  cannot be null.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * &lt;br&gt;&amp;nbsp;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @param  indexNames  The names of the items the values of which are used to uniquely index each row element in the<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *                     tabular data values described by this tabular type instance;<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     *                     cannot be null or empty. Each element should be an item name defined in &lt;var&gt;rowType&lt;/var&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *                     (no null or empty string allowed).<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *                     It is important to note that the &lt;b&gt;order&lt;/b&gt; of the item names in &lt;var&gt;indexNames&lt;/var&gt;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *                     is used by the methods {@link TabularData#get(java.lang.Object[]) &lt;code&gt;get&lt;/code&gt;} and<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     *                     {@link TabularData#remove(java.lang.Object[]) &lt;code&gt;remove&lt;/code&gt;} of class<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     *                     &lt;code&gt;TabularData&lt;/code&gt; to match their array of values parameter to items.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * &lt;br&gt;&amp;nbsp;<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @throws IllegalArgumentException  if &lt;var&gt;rowType&lt;/var&gt; is null,<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     *                                   or &lt;var&gt;indexNames&lt;/var&gt; is a null or empty array,<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *                                   or an element in &lt;var&gt;indexNames&lt;/var&gt; is a null or empty string,<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     *                                   or &lt;var&gt;typeName&lt;/var&gt; or &lt;var&gt;description&lt;/var&gt; is a null or empty string.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * &lt;br&gt;&amp;nbsp;<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * @throws OpenDataException  if an element's value of &lt;var&gt;indexNames&lt;/var&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     *                            is not an item name defined in &lt;var&gt;rowType&lt;/var&gt;.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    public TabularType(String         typeName,<a name="line.104"></a>
+<span class="sourceLineNo">105</span>                       String         description,<a name="line.105"></a>
+<span class="sourceLineNo">106</span>                       CompositeType  rowType,<a name="line.106"></a>
+<span class="sourceLineNo">107</span>                       String[]       indexNames) throws OpenDataException {<a name="line.107"></a>
+<span class="sourceLineNo">108</span><a name="line.108"></a>
+<span class="sourceLineNo">109</span>        // Check and initialize state defined by parent.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        //<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        super(TabularData.class.getName(), typeName, description, false);<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>        // Check rowType is not null<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        //<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        if (rowType == null) {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>            throw new IllegalArgumentException("Argument rowType cannot be null.");<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        }<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>        // Check indexNames is neither null nor empty and does not contain any null element or empty string<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        //<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        checkForNullElement(indexNames, "indexNames");<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        checkForEmptyString(indexNames, "indexNames");<a name="line.122"></a>
+<span class="sourceLineNo">123</span><a name="line.123"></a>
+<span class="sourceLineNo">124</span>        // Check all indexNames values are valid item names for rowType<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        //<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        for (int i=0; i&lt;indexNames.length; i++) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            if ( ! rowType.containsKey(indexNames[i]) ) {<a name="line.127"></a>
+<span class="sourceLineNo">128</span>                throw new OpenDataException("Argument's element value indexNames["+ i +"]=\""+ indexNames[i] +<a name="line.128"></a>
+<span class="sourceLineNo">129</span>                                            "\" is not a valid item name for rowType.");<a name="line.129"></a>
+<span class="sourceLineNo">130</span>            }<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>        // initialize rowType<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        //<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        this.rowType    = rowType;<a name="line.135"></a>
+<span class="sourceLineNo">136</span><a name="line.136"></a>
+<span class="sourceLineNo">137</span>        // initialize indexNames (copy content so that subsequent<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        // modifs to the array referenced by the indexNames parameter<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        // have no impact)<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        //<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        List&lt;String&gt; tmpList = new ArrayList&lt;String&gt;(indexNames.length + 1);<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        for (int i=0; i&lt;indexNames.length; i++) {<a name="line.142"></a>
+<span class="sourceLineNo">143</span>            tmpList.add(indexNames[i]);<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        }<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        this.indexNames = Collections.unmodifiableList(tmpList);<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    }<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>    /**<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * Checks that Object[] arg is neither null nor empty (ie length==0)<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * and that it does not contain any null element.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     */<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    private static void checkForNullElement(Object[] arg, String argName) {<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        if ( (arg == null) || (arg.length == 0) ) {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>            throw new IllegalArgumentException("Argument "+ argName +"[] cannot be null or empty.");<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        }<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        for (int i=0; i&lt;arg.length; i++) {<a name="line.156"></a>
+<span class="sourceLineNo">157</span>            if (arg[i] == null) {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>                throw new IllegalArgumentException("Argument's element "+ argName +"["+ i +"] cannot be null.");<a name="line.158"></a>
+<span class="sourceLineNo">159</span>            }<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        }<a name="line.160"></a>
+<span class="sourceLineNo">161</span>    }<a name="line.161"></a>
+<span class="sourceLineNo">162</span><a name="line.162"></a>
+<span class="sourceLineNo">163</span>    /**<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * Checks that String[] does not contain any empty (or blank characters only) string.<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     */<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    private static void checkForEmptyString(String[] arg, String argName) {<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        for (int i=0; i&lt;arg.length; i++) {<a name="line.167"></a>
+<span class="sourceLineNo">168</span>            if (arg[i].trim().equals("")) {<a name="line.168"></a>
+<span class="sourceLineNo">169</span>                throw new IllegalArgumentException("Argument's element "+ argName +"["+ i +"] cannot be an empty string.");<a name="line.169"></a>
+<span class="sourceLineNo">170</span>            }<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        }<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    }<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span><a name="line.174"></a>
+<span class="sourceLineNo">175</span>    /* *** Tabular type specific information methods *** */<a name="line.175"></a>
+<span class="sourceLineNo">176</span><a name="line.176"></a>
+<span class="sourceLineNo">177</span>    /**<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * Returns the type of the row elements of tabular data values<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * described by this &lt;code&gt;TabularType&lt;/code&gt; instance.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     *<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * @return the type of each row.<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     */<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    public CompositeType getRowType() {<a name="line.183"></a>
+<span class="sourceLineNo">184</span><a name="line.184"></a>
+<span class="sourceLineNo">185</span>        return rowType;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    }<a name="line.186"></a>
+<span class="sourceLineNo">187</span><a name="line.187"></a>
+<span class="sourceLineNo">188</span>    /**<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * &lt;p&gt;Returns, in the same order as was given to this instance's<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * constructor, an unmodifiable List of the names of the items the<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * values of which are used to uniquely index each row element of<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * tabular data values described by this &lt;code&gt;TabularType&lt;/code&gt;<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * instance.&lt;/p&gt;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     *<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * @return a List of String representing the names of the index<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * items.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     */<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    public List&lt;String&gt; getIndexNames() {<a name="line.199"></a>
+<span class="sourceLineNo">200</span><a name="line.200"></a>
+<span class="sourceLineNo">201</span>        return indexNames;<a name="line.201"></a>
+<span class="sourceLineNo">202</span>    }<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>    /**<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * Tests whether &lt;var&gt;obj&lt;/var&gt; is a value which could be<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * described by this &lt;code&gt;TabularType&lt;/code&gt; instance.<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     *<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * &lt;p&gt;If &lt;var&gt;obj&lt;/var&gt; is null or is not an instance of<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * &lt;code&gt;javax.management.openmbean.TabularData&lt;/code&gt;,<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * &lt;code&gt;isValue&lt;/code&gt; returns &lt;code&gt;false&lt;/code&gt;.&lt;/p&gt;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     *<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * &lt;p&gt;If &lt;var&gt;obj&lt;/var&gt; is an instance of<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * &lt;code&gt;javax.management.openmbean.TabularData&lt;/code&gt;, say {@code<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * td}, the result is true if this {@code TabularType} is<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * &lt;em&gt;assignable from&lt;/em&gt; {@link TabularData#getTabularType()<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * td.getTabularType()}, as defined in {@link<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * CompositeType#isValue CompositeType.isValue}.&lt;/p&gt;<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @param obj the value whose open type is to be tested for<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * compatibility with this &lt;code&gt;TabularType&lt;/code&gt; instance.<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     *<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * @return &lt;code&gt;true&lt;/code&gt; if &lt;var&gt;obj&lt;/var&gt; is a value for this<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * tabular type, &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     */<a name="line.224"></a>
+<span class="sourceLineNo">225</span>    public boolean isValue(Object obj) {<a name="line.225"></a>
+<span class="sourceLineNo">226</span><a name="line.226"></a>
+<span class="sourceLineNo">227</span>        // if obj is null or not a TabularData, return false<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        //<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        if (!(obj instanceof TabularData))<a name="line.229"></a>
+<span class="sourceLineNo">230</span>            return false;<a name="line.230"></a>
+<span class="sourceLineNo">231</span><a name="line.231"></a>
+<span class="sourceLineNo">232</span>        // if obj is not a TabularData, return false<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        //<a name="line.233"></a>
+<span class="sourceLineNo">234</span>        TabularData value = (TabularData) obj;<a name="line.234"></a>
+<span class="sourceLineNo">235</span>        TabularType valueType = value.getTabularType();<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        return isAssignableFrom(valueType);<a name="line.236"></a>
+<span class="sourceLineNo">237</span>    }<a name="line.237"></a>
+<span class="sourceLineNo">238</span><a name="line.238"></a>
+<span class="sourceLineNo">239</span>    @Override<a name="line.239"></a>
+<span class="sourceLineNo">240</span>    boolean isAssignableFrom(OpenType&lt;?&gt; ot) {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        if (!(ot instanceof TabularType))<a name="line.241"></a>
+<span class="sourceLineNo">242</span>            return false;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>        TabularType tt = (TabularType) ot;<a name="line.243"></a>
+<span class="sourceLineNo">244</span>        if (!getTypeName().equals(tt.getTypeName()) ||<a name="line.244"></a>
+<span class="sourceLineNo">245</span>                !getIndexNames().equals(tt.getIndexNames()))<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            return false;<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        return getRowType().isAssignableFrom(tt.getRowType());<a name="line.247"></a>
+<span class="sourceLineNo">248</span>    }<a name="line.248"></a>
+<span class="sourceLineNo">249</span><a name="line.249"></a>
+<span class="sourceLineNo">250</span><a name="line.250"></a>
+<span class="sourceLineNo">251</span>    /* *** Methods overriden from class Object *** */<a name="line.251"></a>
+<span class="sourceLineNo">252</span><a name="line.252"></a>
+<span class="sourceLineNo">253</span>    /**<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * Compares the specified &lt;code&gt;obj&lt;/code&gt; parameter with this &lt;code&gt;TabularType&lt;/code&gt; instance for equality.<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * &lt;p&gt;<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * Two &lt;code&gt;TabularType&lt;/code&gt; instances are equal if and only if all of the following statements are true:<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * &lt;ul&gt;<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * &lt;li&gt;their type names are equal&lt;/li&gt;<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * &lt;li&gt;their row types are equal&lt;/li&gt;<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * &lt;li&gt;they use the same index names, in the same order&lt;/li&gt;<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * &lt;/ul&gt;<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * &lt;br&gt;&amp;nbsp;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * @param  obj  the object to be compared for equality with this &lt;code&gt;TabularType&lt;/code&gt; instance;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     *              if &lt;var&gt;obj&lt;/var&gt; is &lt;code&gt;null&lt;/code&gt;, &lt;code&gt;equals&lt;/code&gt; returns &lt;code&gt;false&lt;/code&gt;.<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     *<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * @return  &lt;code&gt;true&lt;/code&gt; if the specified object is equal to this &lt;code&gt;TabularType&lt;/code&gt; instance.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     */<a name="line.267"></a>
+<span class="sourceLineNo">268</span>    public boolean equals(Object obj) {<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span>        // if obj is null, return false<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        //<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        if (obj == null) {<a name="line.272"></a>
+<span class="sourceLineNo">273</span>            return false;<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        }<a name="line.274"></a>
+<span class="sourceLineNo">275</span><a name="line.275"></a>
+<span class="sourceLineNo">276</span>        // if obj is not a TabularType, return false<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        //<a name="line.277"></a>
+<span class="sourceLineNo">278</span>        TabularType other;<a name="line.278"></a>
+<span class="sourceLineNo">279</span>        try {<a name="line.279"></a>
+<span class="sourceLineNo">280</span>            other = (TabularType) obj;<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        } catch (ClassCastException e) {<a name="line.281"></a>
+<span class="sourceLineNo">282</span>            return false;<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        }<a name="line.283"></a>
+<span class="sourceLineNo">284</span><a name="line.284"></a>
+<span class="sourceLineNo">285</span>        // Now, really test for equality between this TabularType instance and the other:<a name="line.285"></a>
+<span class="sourceLineNo">286</span>        //<a name="line.286"></a>
+<span class="sourceLineNo">287</span><a name="line.287"></a>
+<span class="sourceLineNo">288</span>        // their names should be equal<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        if ( ! this.getTypeName().equals(other.getTypeName()) ) {<a name="line.289"></a>
+<span class="sourceLineNo">290</span>            return false;<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        }<a name="line.291"></a>
+<span class="sourceLineNo">292</span><a name="line.292"></a>
+<span class="sourceLineNo">293</span>        // their row types should be equal<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        if ( ! this.rowType.equals(other.rowType) ) {<a name="line.294"></a>
+<span class="sourceLineNo">295</span>            return false;<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        }<a name="line.296"></a>
+<span class="sourceLineNo">297</span><a name="line.297"></a>
+<span class="sourceLineNo">298</span>        // their index names should be equal and in the same order (ensured by List.equals())<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        if ( ! this.indexNames.equals(other.indexNames) ) {<a name="line.299"></a>
+<span class="sourceLineNo">300</span>            return false;<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        }<a name="line.301"></a>
+<span class="sourceLineNo">302</span><a name="line.302"></a>
+<span class="sourceLineNo">303</span>        // All tests for equality were successfull<a name="line.303"></a>
+<span class="sourceLineNo">304</span>        //<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        return true;<a name="line.305"></a>
+<span class="sourceLineNo">306</span>    }<a name="line.306"></a>
+<span class="sourceLineNo">307</span><a name="line.307"></a>
+<span class="sourceLineNo">308</span>    /**<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * Returns the hash code value for this &lt;code&gt;TabularType&lt;/code&gt; instance.<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * &lt;p&gt;<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * The hash code of a &lt;code&gt;TabularType&lt;/code&gt; instance is the sum of the hash codes<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * of all elements of information used in &lt;code&gt;equals&lt;/code&gt; comparisons<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * (ie: name, row type, index names).<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * This ensures that &lt;code&gt; t1.equals(t2) &lt;/code&gt; implies that &lt;code&gt; t1.hashCode()==t2.hashCode() &lt;/code&gt;<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * for any two &lt;code&gt;TabularType&lt;/code&gt; instances &lt;code&gt;t1&lt;/code&gt; and &lt;code&gt;t2&lt;/code&gt;,<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * as required by the general contract of the method<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * {@link Object#hashCode() Object.hashCode()}.<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * &lt;p&gt;<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * As &lt;code&gt;TabularType&lt;/code&gt; instances are immutable, the hash code for this instance is calculated once,<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * on the first call to &lt;code&gt;hashCode&lt;/code&gt;, and then the same value is returned for subsequent calls.<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     *<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * @return  the hash code value for this &lt;code&gt;TabularType&lt;/code&gt; instance<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     */<a name="line.323"></a>
+<span class="sourceLineNo">324</span>    public int hashCode() {<a name="line.324"></a>
+<span class="sourceLineNo">325</span><a name="line.325"></a>
+<span class="sourceLineNo">326</span>        // Calculate the hash code value if it has not yet been done (ie 1st call to hashCode())<a name="line.326"></a>
+<span class="sourceLineNo">327</span>        //<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        if (myHashCode == null) {<a name="line.328"></a>
+<span class="sourceLineNo">329</span>            int value = 0;<a name="line.329"></a>
+<span class="sourceLineNo">330</span>            value += this.getTypeName().hashCode();<a name="line.330"></a>
+<span class="sourceLineNo">331</span>            value += this.rowType.hashCode();<a name="line.331"></a>
+<span class="sourceLineNo">332</span>            for (String index : indexNames)<a name="line.332"></a>
+<span class="sourceLineNo">333</span>                value += index.hashCode();<a name="line.333"></a>
+<span class="sourceLineNo">334</span>            myHashCode = Integer.valueOf(value);<a name="line.334"></a>
+<span class="sourceLineNo">335</span>        }<a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span>        // return always the same hash code for this instance (immutable)<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        //<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        return myHashCode.intValue();<a name="line.339"></a>
+<span class="sourceLineNo">340</span>    }<a name="line.340"></a>
+<span class="sourceLineNo">341</span><a name="line.341"></a>
+<span class="sourceLineNo">342</span>    /**<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * Returns a string representation of this &lt;code&gt;TabularType&lt;/code&gt; instance.<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * &lt;p&gt;<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * The string representation consists of the name of this class (ie &lt;code&gt;javax.management.openmbean.TabularType&lt;/code&gt;),<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * the type name for this instance, the row type string representation of this instance,<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * and the index names of this instance.<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * &lt;p&gt;<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     * As &lt;code&gt;TabularType&lt;/code&gt; instances are immutable, the string representation for this instance is calculated once,<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     * on the first call to &lt;code&gt;toString&lt;/code&gt;, and then the same value is returned for subsequent calls.<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     *<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     * @return  a string representation of this &lt;code&gt;TabularType&lt;/code&gt; instance<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     */<a name="line.353"></a>
+<span class="sourceLineNo">354</span>    public String toString() {<a name="line.354"></a>
+<span class="sourceLineNo">355</span><a name="line.355"></a>
+<span class="sourceLineNo">356</span>        // Calculate the string representation if it has not yet been done (ie 1st call to toString())<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        //<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        if (myToString == null) {<a name="line.358"></a>
+<span class="sourceLineNo">359</span>            final StringBuilder result = new StringBuilder()<a name="line.359"></a>
+<span class="sourceLineNo">360</span>                .append(this.getClass().getName())<a name="line.360"></a>
+<span class="sourceLineNo">361</span>                .append("(name=")<a name="line.361"></a>
+<span class="sourceLineNo">362</span>                .append(getTypeName())<a name="line.362"></a>
+<span class="sourceLineNo">363</span>                .append(",rowType=")<a name="line.363"></a>
+<span class="sourceLineNo">364</span>                .append(rowType.toString())<a name="line.364"></a>
+<span class="sourceLineNo">365</span>                .append(",indexNames=(");<a name="line.365"></a>
+<span class="sourceLineNo">366</span>            String sep = "";<a name="line.366"></a>
+<span class="sourceLineNo">367</span>            for (String index : indexNames) {<a name="line.367"></a>
+<span class="sourceLineNo">368</span>                result.append(sep).append(index);<a name="line.368"></a>
+<span class="sourceLineNo">369</span>                sep = ",";<a name="line.369"></a>
+<span class="sourceLineNo">370</span>            }<a name="line.370"></a>
+<span class="sourceLineNo">371</span>            result.append("))");<a name="line.371"></a>
+<span class="sourceLineNo">372</span>            myToString = result.toString();<a name="line.372"></a>
+<span class="sourceLineNo">373</span>        }<a name="line.373"></a>
+<span class="sourceLineNo">374</span><a name="line.374"></a>
+<span class="sourceLineNo">375</span>        // return always the same string representation for this instance (immutable)<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        //<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        return myToString;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>    }<a name="line.378"></a>
+<span class="sourceLineNo">379</span><a name="line.379"></a>
+<span class="sourceLineNo">380</span>}<a name="line.380"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

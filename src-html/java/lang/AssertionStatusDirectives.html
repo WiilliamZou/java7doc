@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * A collection of assertion status directives (such as "enable assertions<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * in package p" or "disable assertions in class c").  This class is used by<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * the JVM to communicate the assertion status directives implied by<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * the &lt;tt&gt;java&lt;/tt&gt; command line flags &lt;tt&gt;-enableassertions&lt;/tt&gt;<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * (&lt;tt&gt;-ea&lt;/tt&gt;) and &lt;tt&gt;-disableassertions&lt;/tt&gt; (&lt;tt&gt;-da&lt;/tt&gt;).<a name="line.33"></a>
+<span class="sourceLineNo">034</span> *<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * @since  1.4<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * @author Josh Bloch<a name="line.36"></a>
+<span class="sourceLineNo">037</span> */<a name="line.37"></a>
+<span class="sourceLineNo">038</span>class AssertionStatusDirectives {<a name="line.38"></a>
+<span class="sourceLineNo">039</span>    /**<a name="line.39"></a>
+<span class="sourceLineNo">040</span>     * The classes for which assertions are to be enabled or disabled.<a name="line.40"></a>
+<span class="sourceLineNo">041</span>     * The strings in this array are fully qualified class names (for<a name="line.41"></a>
+<span class="sourceLineNo">042</span>     * example,"com.xyz.foo.Bar").<a name="line.42"></a>
+<span class="sourceLineNo">043</span>     */<a name="line.43"></a>
+<span class="sourceLineNo">044</span>    String[] classes;<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>    /**<a name="line.46"></a>
+<span class="sourceLineNo">047</span>     * A parallel array to &lt;tt&gt;classes&lt;/tt&gt;, indicating whether each class<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * is to have assertions enabled or disabled.  A value of &lt;tt&gt;true&lt;/tt&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * for &lt;tt&gt;classEnabled[i]&lt;/tt&gt; indicates that the class named by<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * &lt;tt&gt;classes[i]&lt;/tt&gt; should have assertions enabled; a value of<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     * &lt;tt&gt;false&lt;/tt&gt; indicates that it should have classes disabled.<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     * This array must have the same number of elements as &lt;tt&gt;classes&lt;/tt&gt;.<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     *<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * &lt;p&gt;In the case of conflicting directives for the same class, the<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * last directive for a given class wins.  In other words, if a string<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * &lt;tt&gt;s&lt;/tt&gt; appears multiple times in the &lt;tt&gt;classes&lt;/tt&gt; array<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * and &lt;tt&gt;i&lt;/tt&gt; is the highest integer for which<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * &lt;tt&gt;classes[i].equals(s)&lt;/tt&gt;, then &lt;tt&gt;classEnabled[i]&lt;/tt&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * indicates whether assertions are to be enabled in class &lt;tt&gt;s&lt;/tt&gt;.<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     */<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    boolean[] classEnabled;<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    /**<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * The package-trees for which assertions are to be enabled or disabled.<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * The strings in this array are compete or partial package names<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * (for example, "com.xyz" or "com.xyz.foo").<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     */<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    String[] packages;<a name="line.68"></a>
+<span class="sourceLineNo">069</span><a name="line.69"></a>
+<span class="sourceLineNo">070</span>    /**<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * A parallel array to &lt;tt&gt;packages&lt;/tt&gt;, indicating whether each<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * package-tree is to have assertions enabled or disabled.  A value of<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * &lt;tt&gt;true&lt;/tt&gt; for &lt;tt&gt;packageEnabled[i]&lt;/tt&gt; indicates that the<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * package-tree named by &lt;tt&gt;packages[i]&lt;/tt&gt; should have assertions<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * enabled; a value of &lt;tt&gt;false&lt;/tt&gt; indicates that it should have<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * assertions disabled.  This array must have the same number of<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * elements as &lt;tt&gt;packages&lt;/tt&gt;.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     *<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * In the case of conflicting directives for the same package-tree, the<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * last directive for a given package-tree wins.  In other words, if a<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * string &lt;tt&gt;s&lt;/tt&gt; appears multiple times in the &lt;tt&gt;packages&lt;/tt&gt; array<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * and &lt;tt&gt;i&lt;/tt&gt; is the highest integer for which<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * &lt;tt&gt;packages[i].equals(s)&lt;/tt&gt;, then &lt;tt&gt;packageEnabled[i]&lt;/tt&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * indicates whether assertions are to be enabled in package-tree<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * &lt;tt&gt;s&lt;/tt&gt;.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     */<a name="line.86"></a>
+<span class="sourceLineNo">087</span>    boolean[] packageEnabled;<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    /**<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * Whether or not assertions in non-system classes are to be enabled<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * by default.<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     */<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    boolean deflt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span>}<a name="line.94"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

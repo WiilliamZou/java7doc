@@ -1,0 +1,386 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2003, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.swing.event;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.EventObject;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.swing.tree.TreePath;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * Encapsulates information describing changes to a tree model, and<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * used to notify tree model listeners of the change.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * For more information and examples see<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;a<a name="line.36"></a>
+<span class="sourceLineNo">037</span> href="http://java.sun.com/docs/books/tutorial/uiswing/events/treemodellistener.html"&gt;How to Write a Tree Model Listener&lt;/a&gt;,<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * a section in &lt;em&gt;The Java Tutorial.&lt;/em&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;p&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * &lt;strong&gt;Warning:&lt;/strong&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * Serialized objects of this class will not be compatible with<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * future Swing releases. The current serialization support is<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * appropriate for short term storage or RMI between applications running<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * the same version of Swing.  As of 1.4, support for long term storage<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * of all JavaBeans&lt;sup&gt;&lt;font size="-2"&gt;TM&lt;/font&gt;&lt;/sup&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * has been added to the &lt;code&gt;java.beans&lt;/code&gt; package.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * Please see {@link java.beans.XMLEncoder}.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * @author Rob Davis<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * @author Ray Ryan<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * @author Scott Violet<a name="line.51"></a>
+<span class="sourceLineNo">052</span> */<a name="line.52"></a>
+<span class="sourceLineNo">053</span>public class TreeModelEvent extends EventObject {<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    /** Path to the parent of the nodes that have changed. */<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    protected TreePath  path;<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    /** Indices identifying the position of where the children were. */<a name="line.56"></a>
+<span class="sourceLineNo">057</span>    protected int[]     childIndices;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    /** Children that have been removed. */<a name="line.58"></a>
+<span class="sourceLineNo">059</span>    protected Object[]  children;<a name="line.59"></a>
+<span class="sourceLineNo">060</span><a name="line.60"></a>
+<span class="sourceLineNo">061</span>    /**<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * Used to create an event when nodes have been changed, inserted, or<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * removed, identifying the path to the parent of the modified items as<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * an array of Objects. All of the modified objects are siblings which are<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * direct descendents (not grandchildren) of the specified parent.<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * The positions at which the inserts, deletes, or changes occurred are<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * specified by an array of &lt;code&gt;int&lt;/code&gt;. The indexes in that array<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * must be in order, from lowest to highest.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * &lt;p&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * For changes, the indexes in the model correspond exactly to the indexes<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * of items currently displayed in the UI. As a result, it is not really<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * critical if the indexes are not in their exact order. But after multiple<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * inserts or deletes, the items currently in the UI no longer correspond<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * to the items in the model. It is therefore critical to specify the<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * indexes properly for inserts and deletes.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * &lt;p&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * For inserts, the indexes represent the &lt;i&gt;final&lt;/i&gt; state of the tree,<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * after the inserts have occurred. Since the indexes must be specified in<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * order, the most natural processing methodology is to do the inserts<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * starting at the lowest index and working towards the highest. Accumulate<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * a Vector of &lt;code&gt;Integer&lt;/code&gt; objects that specify the<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * insert-locations as you go, then convert the Vector to an<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * array of &lt;code&gt;int&lt;/code&gt; to create the event. When the postition-index<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * equals zero, the node is inserted at the beginning of the list. When the<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * position index equals the size of the list, the node is "inserted" at<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * (appended to) the end of the list.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * &lt;p&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * For deletes, the indexes represent the &lt;i&gt;initial&lt;/i&gt; state of the tree,<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * before the deletes have occurred. Since the indexes must be specified in<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * order, the most natural processing methodology is to use a delete-counter.<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * Start by initializing the counter to zero and start work through the<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * list from lowest to higest. Every time you do a delete, add the current<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * value of the delete-counter to the index-position where the delete occurred,<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * and append the result to a Vector of delete-locations, using<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * &lt;code&gt;addElement()&lt;/code&gt;. Then increment the delete-counter. The index<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * positions stored in the Vector therefore reflect the effects of all previous<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * deletes, so they represent each object's position in the initial tree.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * (You could also start at the highest index and working back towards the<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * lowest, accumulating a Vector of delete-locations as you go using the<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * &lt;code&gt;insertElementAt(Integer, 0)&lt;/code&gt;.) However you produce the Vector<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * of initial-positions, you then need to convert the Vector of &lt;code&gt;Integer&lt;/code&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * objects to an array of &lt;code&gt;int&lt;/code&gt; to create the event.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * &lt;p&gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * &lt;b&gt;Notes:&lt;/b&gt;&lt;ul&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * &lt;li&gt;Like the &lt;code&gt;insertNodeInto&lt;/code&gt; method in the<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     *    &lt;code&gt;DefaultTreeModel&lt;/code&gt; class, &lt;code&gt;insertElementAt&lt;/code&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     *    appends to the &lt;code&gt;Vector&lt;/code&gt; when the index matches the size<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     *    of the vector. So you can use &lt;code&gt;insertElementAt(Integer, 0)&lt;/code&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     *    even when the vector is empty.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * &lt;ul&gt;To create a node changed event for the root node, specify the parent<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *     and the child indices as &lt;code&gt;null&lt;/code&gt;.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * &lt;/ul&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @param source the Object responsible for generating the event (typically<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *               the creator of the event object passes &lt;code&gt;this&lt;/code&gt;<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *               for its value)<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @param path   an array of Object identifying the path to the<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *               parent of the modified item(s), where the first element<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     *               of the array is the Object stored at the root node and<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     *               the last element is the Object stored at the parent node<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * @param childIndices an array of &lt;code&gt;int&lt;/code&gt; that specifies the<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     *               index values of the removed items. The indices must be<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *               in sorted order, from lowest to highest<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @param children an array of Object containing the inserted, removed, or<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     *                 changed objects<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * @see TreePath<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     */<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    public TreeModelEvent(Object source, Object[] path, int[] childIndices,<a name="line.128"></a>
+<span class="sourceLineNo">129</span>                          Object[] children)<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    {<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        this(source, new TreePath(path), childIndices, children);<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    }<a name="line.132"></a>
+<span class="sourceLineNo">133</span><a name="line.133"></a>
+<span class="sourceLineNo">134</span>    /**<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * Used to create an event when nodes have been changed, inserted, or<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * removed, identifying the path to the parent of the modified items as<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * a TreePath object. For more information on how to specify the indexes<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * and objects, see<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * &lt;code&gt;TreeModelEvent(Object,Object[],int[],Object[])&lt;/code&gt;.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @param source the Object responsible for generating the event (typically<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *               the creator of the event object passes &lt;code&gt;this&lt;/code&gt;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *               for its value)<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @param path   a TreePath object that identifies the path to the<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *               parent of the modified item(s)<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @param childIndices an array of &lt;code&gt;int&lt;/code&gt; that specifies the<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *               index values of the modified items<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * @param children an array of Object containing the inserted, removed, or<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *                 changed objects<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @see #TreeModelEvent(Object,Object[],int[],Object[])<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    public TreeModelEvent(Object source, TreePath path, int[] childIndices,<a name="line.153"></a>
+<span class="sourceLineNo">154</span>                          Object[] children)<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    {<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        super(source);<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        this.path = path;<a name="line.157"></a>
+<span class="sourceLineNo">158</span>        this.childIndices = childIndices;<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        this.children = children;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    }<a name="line.160"></a>
+<span class="sourceLineNo">161</span><a name="line.161"></a>
+<span class="sourceLineNo">162</span>    /**<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * Used to create an event when the node structure has changed in some way,<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * identifying the path to the root of a modified subtree as an array of<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * Objects. A structure change event might involve nodes swapping position,<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * for example, or it might encapsulate multiple inserts and deletes in the<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * subtree stemming from the node, where the changes may have taken place at<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * different levels of the subtree.<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * &lt;blockquote&gt;<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *   &lt;b&gt;Note:&lt;/b&gt;&lt;br&gt;<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *   JTree collapses all nodes under the specified node, so that only its<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     *   immediate children are visible.<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * &lt;/blockquote&gt;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @param source the Object responsible for generating the event (typically<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *               the creator of the event object passes &lt;code&gt;this&lt;/code&gt;<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *               for its value)<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * @param path   an array of Object identifying the path to the root of the<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *               modified subtree, where the first element of the array is<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     *               the object stored at the root node and the last element<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     *               is the object stored at the changed node<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * @see TreePath<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     */<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    public TreeModelEvent(Object source, Object[] path)<a name="line.184"></a>
+<span class="sourceLineNo">185</span>    {<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        this(source, new TreePath(path));<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    }<a name="line.187"></a>
+<span class="sourceLineNo">188</span><a name="line.188"></a>
+<span class="sourceLineNo">189</span>    /**<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * Used to create an event when the node structure has changed in some way,<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * identifying the path to the root of the modified subtree as a TreePath<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * object. For more information on this event specification, see<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * &lt;code&gt;TreeModelEvent(Object,Object[])&lt;/code&gt;.<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     *<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * @param source the Object responsible for generating the event (typically<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     *               the creator of the event object passes &lt;code&gt;this&lt;/code&gt;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *               for its value)<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @param path   a TreePath object that identifies the path to the<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     *               change. In the DefaultTreeModel,<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     *               this object contains an array of user-data objects,<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     *               but a subclass of TreePath could use some totally<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     *               different mechanism -- for example, a node ID number<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     *<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * @see #TreeModelEvent(Object,Object[])<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     */<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    public TreeModelEvent(Object source, TreePath path)<a name="line.206"></a>
+<span class="sourceLineNo">207</span>    {<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        super(source);<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        this.path = path;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        this.childIndices = new int[0];<a name="line.210"></a>
+<span class="sourceLineNo">211</span>    }<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>    /**<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * For all events, except treeStructureChanged,<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * returns the parent of the changed nodes.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * For treeStructureChanged events, returns the ancestor of the<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * structure that has changed. This and<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * &lt;code&gt;getChildIndices&lt;/code&gt; are used to get a list of the effected<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * nodes.<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * &lt;p&gt;<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * The one exception to this is a treeNodesChanged event that is to<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * identify the root, in which case this will return the root<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * and &lt;code&gt;getChildIndices&lt;/code&gt; will return null.<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     *<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * @return the TreePath used in identifying the changed nodes.<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * @see TreePath#getLastPathComponent<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     */<a name="line.227"></a>
+<span class="sourceLineNo">228</span>    public TreePath getTreePath() { return path; }<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span>    /**<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * Convenience method to get the array of objects from the TreePath<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * instance that this event wraps.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     *<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * @return an array of Objects, where the first Object is the one<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     *         stored at the root and the last object is the one<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     *         stored at the node identified by the path<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     */<a name="line.237"></a>
+<span class="sourceLineNo">238</span>    public Object[] getPath() {<a name="line.238"></a>
+<span class="sourceLineNo">239</span>        if(path != null)<a name="line.239"></a>
+<span class="sourceLineNo">240</span>            return path.getPath();<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        return null;<a name="line.241"></a>
+<span class="sourceLineNo">242</span>    }<a name="line.242"></a>
+<span class="sourceLineNo">243</span><a name="line.243"></a>
+<span class="sourceLineNo">244</span>    /**<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * Returns the objects that are children of the node identified by<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * &lt;code&gt;getPath&lt;/code&gt; at the locations specified by<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * &lt;code&gt;getChildIndices&lt;/code&gt;. If this is a removal event the<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * returned objects are no longer children of the parent node.<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     *<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * @return an array of Object containing the children specified by<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     *         the event<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * @see #getPath<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * @see #getChildIndices<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     */<a name="line.254"></a>
+<span class="sourceLineNo">255</span>    public Object[] getChildren() {<a name="line.255"></a>
+<span class="sourceLineNo">256</span>        if(children != null) {<a name="line.256"></a>
+<span class="sourceLineNo">257</span>            int            cCount = children.length;<a name="line.257"></a>
+<span class="sourceLineNo">258</span>            Object[]       retChildren = new Object[cCount];<a name="line.258"></a>
+<span class="sourceLineNo">259</span><a name="line.259"></a>
+<span class="sourceLineNo">260</span>            System.arraycopy(children, 0, retChildren, 0, cCount);<a name="line.260"></a>
+<span class="sourceLineNo">261</span>            return retChildren;<a name="line.261"></a>
+<span class="sourceLineNo">262</span>        }<a name="line.262"></a>
+<span class="sourceLineNo">263</span>        return null;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>    }<a name="line.264"></a>
+<span class="sourceLineNo">265</span><a name="line.265"></a>
+<span class="sourceLineNo">266</span>    /**<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * Returns the values of the child indexes. If this is a removal event<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * the indexes point to locations in the initial list where items<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * were removed. If it is an insert, the indices point to locations<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * in the final list where the items were added. For node changes,<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * the indices point to the locations of the modified nodes.<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     *<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * @return an array of &lt;code&gt;int&lt;/code&gt; containing index locations for<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     *         the children specified by the event<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     */<a name="line.275"></a>
+<span class="sourceLineNo">276</span>    public int[] getChildIndices() {<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        if(childIndices != null) {<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            int            cCount = childIndices.length;<a name="line.278"></a>
+<span class="sourceLineNo">279</span>            int[]          retArray = new int[cCount];<a name="line.279"></a>
+<span class="sourceLineNo">280</span><a name="line.280"></a>
+<span class="sourceLineNo">281</span>            System.arraycopy(childIndices, 0, retArray, 0, cCount);<a name="line.281"></a>
+<span class="sourceLineNo">282</span>            return retArray;<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        }<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        return null;<a name="line.284"></a>
+<span class="sourceLineNo">285</span>    }<a name="line.285"></a>
+<span class="sourceLineNo">286</span><a name="line.286"></a>
+<span class="sourceLineNo">287</span>    /**<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * Returns a string that displays and identifies this object's<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * properties.<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     *<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * @return a String representation of this object<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     */<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    public String toString() {<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        StringBuffer   retBuffer = new StringBuffer();<a name="line.294"></a>
+<span class="sourceLineNo">295</span><a name="line.295"></a>
+<span class="sourceLineNo">296</span>        retBuffer.append(getClass().getName() + " " +<a name="line.296"></a>
+<span class="sourceLineNo">297</span>                         Integer.toString(hashCode()));<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        if(path != null)<a name="line.298"></a>
+<span class="sourceLineNo">299</span>            retBuffer.append(" path " + path);<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        if(childIndices != null) {<a name="line.300"></a>
+<span class="sourceLineNo">301</span>            retBuffer.append(" indices [ ");<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            for(int counter = 0; counter &lt; childIndices.length; counter++)<a name="line.302"></a>
+<span class="sourceLineNo">303</span>                retBuffer.append(Integer.toString(childIndices[counter])+ " ");<a name="line.303"></a>
+<span class="sourceLineNo">304</span>            retBuffer.append("]");<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        }<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        if(children != null) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            retBuffer.append(" children [ ");<a name="line.307"></a>
+<span class="sourceLineNo">308</span>            for(int counter = 0; counter &lt; children.length; counter++)<a name="line.308"></a>
+<span class="sourceLineNo">309</span>                retBuffer.append(children[counter] + " ");<a name="line.309"></a>
+<span class="sourceLineNo">310</span>            retBuffer.append("]");<a name="line.310"></a>
+<span class="sourceLineNo">311</span>        }<a name="line.311"></a>
+<span class="sourceLineNo">312</span>        return retBuffer.toString();<a name="line.312"></a>
+<span class="sourceLineNo">313</span>    }<a name="line.313"></a>
+<span class="sourceLineNo">314</span>}<a name="line.314"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

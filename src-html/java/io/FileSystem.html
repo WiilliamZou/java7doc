@@ -1,0 +1,324 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.io;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>/**<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * Package-private abstract class for the local filesystem abstraction.<a name="line.30"></a>
+<span class="sourceLineNo">031</span> */<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>abstract class FileSystem {<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>    /**<a name="line.35"></a>
+<span class="sourceLineNo">036</span>     * Return the FileSystem object representing this platform's local<a name="line.36"></a>
+<span class="sourceLineNo">037</span>     * filesystem.<a name="line.37"></a>
+<span class="sourceLineNo">038</span>     */<a name="line.38"></a>
+<span class="sourceLineNo">039</span>    public static native FileSystem getFileSystem();<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span><a name="line.41"></a>
+<span class="sourceLineNo">042</span>    /* -- Normalization and construction -- */<a name="line.42"></a>
+<span class="sourceLineNo">043</span><a name="line.43"></a>
+<span class="sourceLineNo">044</span>    /**<a name="line.44"></a>
+<span class="sourceLineNo">045</span>     * Return the local filesystem's name-separator character.<a name="line.45"></a>
+<span class="sourceLineNo">046</span>     */<a name="line.46"></a>
+<span class="sourceLineNo">047</span>    public abstract char getSeparator();<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>    /**<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * Return the local filesystem's path-separator character.<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     */<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    public abstract char getPathSeparator();<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>    /**<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * Convert the given pathname string to normal form.  If the string is<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * already in normal form then it is simply returned.<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     */<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    public abstract String normalize(String path);<a name="line.58"></a>
+<span class="sourceLineNo">059</span><a name="line.59"></a>
+<span class="sourceLineNo">060</span>    /**<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * Compute the length of this pathname string's prefix.  The pathname<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * string must be in normal form.<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     */<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    public abstract int prefixLength(String path);<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>    /**<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * Resolve the child pathname string against the parent.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * Both strings must be in normal form, and the result<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * will be in normal form.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    public abstract String resolve(String parent, String child);<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * Return the parent pathname string to be used when the parent-directory<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * argument in one of the two-argument File constructors is the empty<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * pathname.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     */<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    public abstract String getDefaultParent();<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>    /**<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * Post-process the given URI path string if necessary.  This is used on<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * win32, e.g., to transform "/c:/foo" into "c:/foo".  The path string<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * still has slash separators; code in the File class will translate them<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * after this method returns.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     */<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    public abstract String fromURIPath(String path);<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    /* -- Path operations -- */<a name="line.89"></a>
+<span class="sourceLineNo">090</span><a name="line.90"></a>
+<span class="sourceLineNo">091</span>    /**<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * Tell whether or not the given abstract pathname is absolute.<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     */<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    public abstract boolean isAbsolute(File f);<a name="line.94"></a>
+<span class="sourceLineNo">095</span><a name="line.95"></a>
+<span class="sourceLineNo">096</span>    /**<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * Resolve the given abstract pathname into absolute form.  Invoked by the<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * getAbsolutePath and getCanonicalPath methods in the File class.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     */<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    public abstract String resolve(File f);<a name="line.100"></a>
+<span class="sourceLineNo">101</span><a name="line.101"></a>
+<span class="sourceLineNo">102</span>    public abstract String canonicalize(String path) throws IOException;<a name="line.102"></a>
+<span class="sourceLineNo">103</span><a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span>    /* -- Attribute accessors -- */<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>    /* Constants for simple boolean attributes */<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    public static final int BA_EXISTS    = 0x01;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    public static final int BA_REGULAR   = 0x02;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    public static final int BA_DIRECTORY = 0x04;<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    public static final int BA_HIDDEN    = 0x08;<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    /**<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * Return the simple boolean attributes for the file or directory denoted<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * by the given abstract pathname, or zero if it does not exist or some<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * other I/O error occurs.<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     */<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    public abstract int getBooleanAttributes(File f);<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    public static final int ACCESS_READ    = 0x04;<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    public static final int ACCESS_WRITE   = 0x02;<a name="line.121"></a>
+<span class="sourceLineNo">122</span>    public static final int ACCESS_EXECUTE = 0x01;<a name="line.122"></a>
+<span class="sourceLineNo">123</span><a name="line.123"></a>
+<span class="sourceLineNo">124</span>    /**<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * Check whether the file or directory denoted by the given abstract<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * pathname may be accessed by this process.  The second argument specifies<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * which access, ACCESS_READ, ACCESS_WRITE or ACCESS_EXECUTE, to check.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * Return false if access is denied or an I/O error occurs<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     */<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    public abstract boolean checkAccess(File f, int access);<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    /**<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * Set on or off the access permission (to owner only or to all) to the file<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * or directory denoted by the given abstract pathname, based on the parameters<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * enable, access and oweronly.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     */<a name="line.135"></a>
+<span class="sourceLineNo">136</span>    public abstract boolean setPermission(File f, int access, boolean enable, boolean owneronly);<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>    /**<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * Return the time at which the file or directory denoted by the given<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * abstract pathname was last modified, or zero if it does not exist or<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * some other I/O error occurs.<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     */<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    public abstract long getLastModifiedTime(File f);<a name="line.143"></a>
+<span class="sourceLineNo">144</span><a name="line.144"></a>
+<span class="sourceLineNo">145</span>    /**<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * Return the length in bytes of the file denoted by the given abstract<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * pathname, or zero if it does not exist, is a directory, or some other<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * I/O error occurs.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     */<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    public abstract long getLength(File f);<a name="line.150"></a>
+<span class="sourceLineNo">151</span><a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    /* -- File operations -- */<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    /**<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * Create a new empty file with the given pathname.  Return<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * &lt;code&gt;true&lt;/code&gt; if the file was created and &lt;code&gt;false&lt;/code&gt; if a<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * file or directory with the given pathname already exists.  Throw an<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * IOException if an I/O error occurs.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     */<a name="line.160"></a>
+<span class="sourceLineNo">161</span>    public abstract boolean createFileExclusively(String pathname)<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        throws IOException;<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>    /**<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * Delete the file or directory denoted by the given abstract pathname,<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * returning &lt;code&gt;true&lt;/code&gt; if and only if the operation succeeds.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     */<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    public abstract boolean delete(File f);<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    /**<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * List the elements of the directory denoted by the given abstract<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * pathname.  Return an array of strings naming the elements of the<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * directory if successful; otherwise, return &lt;code&gt;null&lt;/code&gt;.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     */<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    public abstract String[] list(File f);<a name="line.175"></a>
+<span class="sourceLineNo">176</span><a name="line.176"></a>
+<span class="sourceLineNo">177</span>    /**<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * Create a new directory denoted by the given abstract pathname,<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * returning &lt;code&gt;true&lt;/code&gt; if and only if the operation succeeds.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    public abstract boolean createDirectory(File f);<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Rename the file or directory denoted by the first abstract pathname to<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * the second abstract pathname, returning &lt;code&gt;true&lt;/code&gt; if and only if<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * the operation succeeds.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     */<a name="line.187"></a>
+<span class="sourceLineNo">188</span>    public abstract boolean rename(File f1, File f2);<a name="line.188"></a>
+<span class="sourceLineNo">189</span><a name="line.189"></a>
+<span class="sourceLineNo">190</span>    /**<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * Set the last-modified time of the file or directory denoted by the<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * given abstract pathname, returning &lt;code&gt;true&lt;/code&gt; if and only if the<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * operation succeeds.<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     */<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    public abstract boolean setLastModifiedTime(File f, long time);<a name="line.195"></a>
+<span class="sourceLineNo">196</span><a name="line.196"></a>
+<span class="sourceLineNo">197</span>    /**<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * Mark the file or directory denoted by the given abstract pathname as<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * read-only, returning &lt;code&gt;true&lt;/code&gt; if and only if the operation<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * succeeds.<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     */<a name="line.201"></a>
+<span class="sourceLineNo">202</span>    public abstract boolean setReadOnly(File f);<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span><a name="line.204"></a>
+<span class="sourceLineNo">205</span>    /* -- Filesystem interface -- */<a name="line.205"></a>
+<span class="sourceLineNo">206</span><a name="line.206"></a>
+<span class="sourceLineNo">207</span>    /**<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * List the available filesystem roots.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     */<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    public abstract File[] listRoots();<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>    /* -- Disk usage -- */<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    public static final int SPACE_TOTAL  = 0;<a name="line.213"></a>
+<span class="sourceLineNo">214</span>    public static final int SPACE_FREE   = 1;<a name="line.214"></a>
+<span class="sourceLineNo">215</span>    public static final int SPACE_USABLE = 2;<a name="line.215"></a>
+<span class="sourceLineNo">216</span><a name="line.216"></a>
+<span class="sourceLineNo">217</span>    public abstract long getSpace(File f, int t);<a name="line.217"></a>
+<span class="sourceLineNo">218</span><a name="line.218"></a>
+<span class="sourceLineNo">219</span>    /* -- Basic infrastructure -- */<a name="line.219"></a>
+<span class="sourceLineNo">220</span><a name="line.220"></a>
+<span class="sourceLineNo">221</span>    /**<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * Compare two abstract pathnames lexicographically.<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     */<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    public abstract int compare(File f1, File f2);<a name="line.224"></a>
+<span class="sourceLineNo">225</span><a name="line.225"></a>
+<span class="sourceLineNo">226</span>    /**<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * Compute the hash code of an abstract pathname.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     */<a name="line.228"></a>
+<span class="sourceLineNo">229</span>    public abstract int hashCode(File f);<a name="line.229"></a>
+<span class="sourceLineNo">230</span><a name="line.230"></a>
+<span class="sourceLineNo">231</span>    // Flags for enabling/disabling performance optimizations for file<a name="line.231"></a>
+<span class="sourceLineNo">232</span>    // name canonicalization<a name="line.232"></a>
+<span class="sourceLineNo">233</span>    static boolean useCanonCaches      = true;<a name="line.233"></a>
+<span class="sourceLineNo">234</span>    static boolean useCanonPrefixCache = true;<a name="line.234"></a>
+<span class="sourceLineNo">235</span><a name="line.235"></a>
+<span class="sourceLineNo">236</span>    private static boolean getBooleanProperty(String prop, boolean defaultVal) {<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        String val = System.getProperty(prop);<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        if (val == null) return defaultVal;<a name="line.238"></a>
+<span class="sourceLineNo">239</span>        if (val.equalsIgnoreCase("true")) {<a name="line.239"></a>
+<span class="sourceLineNo">240</span>            return true;<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        } else {<a name="line.241"></a>
+<span class="sourceLineNo">242</span>            return false;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>        }<a name="line.243"></a>
+<span class="sourceLineNo">244</span>    }<a name="line.244"></a>
+<span class="sourceLineNo">245</span><a name="line.245"></a>
+<span class="sourceLineNo">246</span>    static {<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        useCanonCaches      = getBooleanProperty("sun.io.useCanonCaches",<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                                                 useCanonCaches);<a name="line.248"></a>
+<span class="sourceLineNo">249</span>        useCanonPrefixCache = getBooleanProperty("sun.io.useCanonPrefixCache",<a name="line.249"></a>
+<span class="sourceLineNo">250</span>                                                 useCanonPrefixCache);<a name="line.250"></a>
+<span class="sourceLineNo">251</span>    }<a name="line.251"></a>
+<span class="sourceLineNo">252</span>}<a name="line.252"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

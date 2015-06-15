@@ -1,0 +1,349 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1996, 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.sql;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * An object that can be used to get information about the types<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * and properties of the columns in a &lt;code&gt;ResultSet&lt;/code&gt; object.<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * The following code fragment creates the &lt;code&gt;ResultSet&lt;/code&gt; object rs,<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * creates the &lt;code&gt;ResultSetMetaData&lt;/code&gt; object rsmd, and uses rsmd<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * to find out how many columns rs has and whether the first column in rs<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * can be used in a &lt;code&gt;WHERE&lt;/code&gt; clause.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;PRE&gt;<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *     ResultSet rs = stmt.executeQuery("SELECT a, b, c FROM TABLE2");<a name="line.37"></a>
+<span class="sourceLineNo">038</span> *     ResultSetMetaData rsmd = rs.getMetaData();<a name="line.38"></a>
+<span class="sourceLineNo">039</span> *     int numberOfColumns = rsmd.getColumnCount();<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *     boolean b = rsmd.isSearchable(1);<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;/PRE&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> */<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>public interface ResultSetMetaData extends Wrapper {<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>    /**<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * Returns the number of columns in this &lt;code&gt;ResultSet&lt;/code&gt; object.<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     *<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * @return the number of columns<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     * @exception SQLException if a database access error occurs<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     */<a name="line.52"></a>
+<span class="sourceLineNo">053</span>    int getColumnCount() throws SQLException;<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>    /**<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * Indicates whether the designated column is automatically numbered.<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     *<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * @param column the first column is 1, the second is 2, ...<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * @return &lt;code&gt;true&lt;/code&gt; if so; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * @exception SQLException if a database access error occurs<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     */<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    boolean isAutoIncrement(int column) throws SQLException;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>    /**<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * Indicates whether a column's case matters.<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     *<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * @param column the first column is 1, the second is 2, ...<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * @return &lt;code&gt;true&lt;/code&gt; if so; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @exception SQLException if a database access error occurs<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    boolean isCaseSensitive(int column) throws SQLException;<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * Indicates whether the designated column can be used in a where clause.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     *<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * @param column the first column is 1, the second is 2, ...<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * @return &lt;code&gt;true&lt;/code&gt; if so; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * @exception SQLException if a database access error occurs<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     */<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    boolean isSearchable(int column) throws SQLException;<a name="line.80"></a>
+<span class="sourceLineNo">081</span><a name="line.81"></a>
+<span class="sourceLineNo">082</span>    /**<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * Indicates whether the designated column is a cash value.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     *<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * @param column the first column is 1, the second is 2, ...<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * @return &lt;code&gt;true&lt;/code&gt; if so; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @exception SQLException if a database access error occurs<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     */<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    boolean isCurrency(int column) throws SQLException;<a name="line.89"></a>
+<span class="sourceLineNo">090</span><a name="line.90"></a>
+<span class="sourceLineNo">091</span>    /**<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * Indicates the nullability of values in the designated column.<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     *<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @param column the first column is 1, the second is 2, ...<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * @return the nullability status of the given column; one of &lt;code&gt;columnNoNulls&lt;/code&gt;,<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *          &lt;code&gt;columnNullable&lt;/code&gt; or &lt;code&gt;columnNullableUnknown&lt;/code&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @exception SQLException if a database access error occurs<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     */<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    int isNullable(int column) throws SQLException;<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>    /**<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * The constant indicating that a<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * column does not allow &lt;code&gt;NULL&lt;/code&gt; values.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     */<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    int columnNoNulls = 0;<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>    /**<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * The constant indicating that a<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * column allows &lt;code&gt;NULL&lt;/code&gt; values.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     */<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    int columnNullable = 1;<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    /**<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * The constant indicating that the<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * nullability of a column's values is unknown.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    int columnNullableUnknown = 2;<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>    /**<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * Indicates whether values in the designated column are signed numbers.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @param column the first column is 1, the second is 2, ...<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * @return &lt;code&gt;true&lt;/code&gt; if so; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @exception SQLException if a database access error occurs<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     */<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    boolean isSigned(int column) throws SQLException;<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span>    /**<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * Indicates the designated column's normal maximum width in characters.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @param column the first column is 1, the second is 2, ...<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @return the normal maximum number of characters allowed as the width<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *          of the designated column<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * @exception SQLException if a database access error occurs<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     */<a name="line.135"></a>
+<span class="sourceLineNo">136</span>    int getColumnDisplaySize(int column) throws SQLException;<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>    /**<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * Gets the designated column's suggested title for use in printouts and<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * displays. The suggested title is usually specified by the SQL &lt;code&gt;AS&lt;/code&gt;<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * clause.  If a SQL &lt;code&gt;AS&lt;/code&gt; is not specified, the value returned from<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * &lt;code&gt;getColumnLabel&lt;/code&gt; will be the same as the value returned by the<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * &lt;code&gt;getColumnName&lt;/code&gt; method.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * @param column the first column is 1, the second is 2, ...<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @return the suggested column title<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @exception SQLException if a database access error occurs<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    String getColumnLabel(int column) throws SQLException;<a name="line.149"></a>
+<span class="sourceLineNo">150</span><a name="line.150"></a>
+<span class="sourceLineNo">151</span>    /**<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * Get the designated column's name.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     *<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * @param column the first column is 1, the second is 2, ...<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @return column name<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * @exception SQLException if a database access error occurs<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     */<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    String getColumnName(int column) throws SQLException;<a name="line.158"></a>
+<span class="sourceLineNo">159</span><a name="line.159"></a>
+<span class="sourceLineNo">160</span>    /**<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * Get the designated column's table's schema.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @param column the first column is 1, the second is 2, ...<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @return schema name or "" if not applicable<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * @exception SQLException if a database access error occurs<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     */<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    String getSchemaName(int column) throws SQLException;<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>    /**<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * Get the designated column's specified column size.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * For numeric data, this is the maximum precision.  For character data, this is the length in characters.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * For datetime datatypes, this is the length in characters of the String representation (assuming the<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * maximum allowed precision of the fractional seconds component). For binary data, this is the length in bytes.  For the ROWID datatype,<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * this is the length in bytes. 0 is returned for data types where the<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * column size is not applicable.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @param column the first column is 1, the second is 2, ...<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * @return precision<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @exception SQLException if a database access error occurs<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    int getPrecision(int column) throws SQLException;<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Gets the designated column's number of digits to right of the decimal point.<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * 0 is returned for data types where the scale is not applicable.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * @param column the first column is 1, the second is 2, ...<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * @return scale<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * @exception SQLException if a database access error occurs<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    int getScale(int column) throws SQLException;<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>    /**<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * Gets the designated column's table name.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     *<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @param column the first column is 1, the second is 2, ...<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @return table name or "" if not applicable<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @exception SQLException if a database access error occurs<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     */<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    String getTableName(int column) throws SQLException;<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>    /**<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * Gets the designated column's table's catalog name.<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     *<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * @param column the first column is 1, the second is 2, ...<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * @return the name of the catalog for the table in which the given column<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     *          appears or "" if not applicable<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * @exception SQLException if a database access error occurs<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     */<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    String getCatalogName(int column) throws SQLException;<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>    /**<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * Retrieves the designated column's SQL type.<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     *<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * @param column the first column is 1, the second is 2, ...<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * @return SQL type from java.sql.Types<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @exception SQLException if a database access error occurs<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * @see Types<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     */<a name="line.219"></a>
+<span class="sourceLineNo">220</span>    int getColumnType(int column) throws SQLException;<a name="line.220"></a>
+<span class="sourceLineNo">221</span><a name="line.221"></a>
+<span class="sourceLineNo">222</span>    /**<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * Retrieves the designated column's database-specific type name.<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     *<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * @param column the first column is 1, the second is 2, ...<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * @return type name used by the database. If the column type is<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * a user-defined type, then a fully-qualified type name is returned.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * @exception SQLException if a database access error occurs<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     */<a name="line.229"></a>
+<span class="sourceLineNo">230</span>    String getColumnTypeName(int column) throws SQLException;<a name="line.230"></a>
+<span class="sourceLineNo">231</span><a name="line.231"></a>
+<span class="sourceLineNo">232</span>    /**<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * Indicates whether the designated column is definitely not writable.<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     *<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * @param column the first column is 1, the second is 2, ...<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * @return &lt;code&gt;true&lt;/code&gt; if so; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * @exception SQLException if a database access error occurs<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     */<a name="line.238"></a>
+<span class="sourceLineNo">239</span>    boolean isReadOnly(int column) throws SQLException;<a name="line.239"></a>
+<span class="sourceLineNo">240</span><a name="line.240"></a>
+<span class="sourceLineNo">241</span>    /**<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * Indicates whether it is possible for a write on the designated column to succeed.<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     *<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * @param column the first column is 1, the second is 2, ...<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * @return &lt;code&gt;true&lt;/code&gt; if so; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * @exception SQLException if a database access error occurs<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     */<a name="line.247"></a>
+<span class="sourceLineNo">248</span>    boolean isWritable(int column) throws SQLException;<a name="line.248"></a>
+<span class="sourceLineNo">249</span><a name="line.249"></a>
+<span class="sourceLineNo">250</span>    /**<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * Indicates whether a write on the designated column will definitely succeed.<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     *<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * @param column the first column is 1, the second is 2, ...<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * @return &lt;code&gt;true&lt;/code&gt; if so; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * @exception SQLException if a database access error occurs<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     */<a name="line.256"></a>
+<span class="sourceLineNo">257</span>    boolean isDefinitelyWritable(int column) throws SQLException;<a name="line.257"></a>
+<span class="sourceLineNo">258</span><a name="line.258"></a>
+<span class="sourceLineNo">259</span>    //--------------------------JDBC 2.0-----------------------------------<a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>    /**<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * &lt;p&gt;Returns the fully-qualified name of the Java class whose instances<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * are manufactured if the method &lt;code&gt;ResultSet.getObject&lt;/code&gt;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * is called to retrieve a value<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * from the column.  &lt;code&gt;ResultSet.getObject&lt;/code&gt; may return a subclass of the<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * class returned by this method.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     *<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * @param column the first column is 1, the second is 2, ...<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * @return the fully-qualified name of the class in the Java programming<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     *         language that would be used by the method<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * &lt;code&gt;ResultSet.getObject&lt;/code&gt; to retrieve the value in the specified<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * column. This is the class name used for custom mapping.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * @exception SQLException if a database access error occurs<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * @since 1.2<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     */<a name="line.275"></a>
+<span class="sourceLineNo">276</span>    String getColumnClassName(int column) throws SQLException;<a name="line.276"></a>
+<span class="sourceLineNo">277</span>}<a name="line.277"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

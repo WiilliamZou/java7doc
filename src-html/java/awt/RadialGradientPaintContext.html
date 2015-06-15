@@ -1,0 +1,521 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.MultipleGradientPaint.CycleMethod;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.MultipleGradientPaint.ColorSpaceType;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.geom.AffineTransform;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.geom.Rectangle2D;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.image.ColorModel;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * Provides the actual implementation for the RadialGradientPaint.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * This is where the pixel processing is done.  A RadialGradienPaint<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * only supports circular gradients, but it should be possible to scale<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * the circle to look approximately elliptical, by means of a<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * gradient transform passed into the RadialGradientPaint constructor.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * @author Nicholas Talian, Vincent Hardy, Jim Graham, Jerry Evans<a name="line.41"></a>
+<span class="sourceLineNo">042</span> */<a name="line.42"></a>
+<span class="sourceLineNo">043</span>final class RadialGradientPaintContext extends MultipleGradientPaintContext {<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>    /** True when (focus == center).  */<a name="line.45"></a>
+<span class="sourceLineNo">046</span>    private boolean isSimpleFocus = false;<a name="line.46"></a>
+<span class="sourceLineNo">047</span><a name="line.47"></a>
+<span class="sourceLineNo">048</span>    /** True when (cycleMethod == NO_CYCLE). */<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    private boolean isNonCyclic = false;<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span>    /** Radius of the outermost circle defining the 100% gradient stop. */<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    private float radius;<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>    /** Variables representing center and focus points. */<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    private float centerX, centerY, focusX, focusY;<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>    /** Radius of the gradient circle squared. */<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    private float radiusSq;<a name="line.58"></a>
+<span class="sourceLineNo">059</span><a name="line.59"></a>
+<span class="sourceLineNo">060</span>    /** Constant part of X, Y user space coordinates. */<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    private float constA, constB;<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    /** Constant second order delta for simple loop. */<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    private float gDeltaDelta;<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>    /**<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * This value represents the solution when focusX == X.  It is called<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * trivial because it is easier to calculate than the general case.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     */<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    private float trivial;<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>    /** Amount for offset when clamping focus. */<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    private static final float SCALEBACK = .99f;<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    /**<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * Constructor for RadialGradientPaintContext.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     *<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * @param paint the {@code RadialGradientPaint} from which this context<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     *              is created<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * @param cm the {@code ColorModel} that receives<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     *           the {@code Paint} data (this is used only as a hint)<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * @param deviceBounds the device space bounding box of the<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     *                     graphics primitive being rendered<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * @param userBounds the user space bounding box of the<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     *                   graphics primitive being rendered<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * @param t the {@code AffineTransform} from user<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     *          space into device space (gradientTransform should be<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *          concatenated with this)<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @param hints the hints that the context object uses to choose<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *              between rendering alternatives<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @param cx the center X coordinate in user space of the circle defining<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *           the gradient.  The last color of the gradient is mapped to<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     *           the perimeter of this circle.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @param cy the center Y coordinate in user space of the circle defining<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *           the gradient.  The last color of the gradient is mapped to<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *           the perimeter of this circle.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @param r the radius of the circle defining the extents of the<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *          color gradient<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @param fx the X coordinate in user space to which the first color<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     *           is mapped<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * @param fy the Y coordinate in user space to which the first color<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     *           is mapped<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * @param fractions the fractions specifying the gradient distribution<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @param colors the gradient colors<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * @param cycleMethod either NO_CYCLE, REFLECT, or REPEAT<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * @param colorSpace which colorspace to use for interpolation,<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     *                   either SRGB or LINEAR_RGB<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     */<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    RadialGradientPaintContext(RadialGradientPaint paint,<a name="line.109"></a>
+<span class="sourceLineNo">110</span>                               ColorModel cm,<a name="line.110"></a>
+<span class="sourceLineNo">111</span>                               Rectangle deviceBounds,<a name="line.111"></a>
+<span class="sourceLineNo">112</span>                               Rectangle2D userBounds,<a name="line.112"></a>
+<span class="sourceLineNo">113</span>                               AffineTransform t,<a name="line.113"></a>
+<span class="sourceLineNo">114</span>                               RenderingHints hints,<a name="line.114"></a>
+<span class="sourceLineNo">115</span>                               float cx, float cy,<a name="line.115"></a>
+<span class="sourceLineNo">116</span>                               float r,<a name="line.116"></a>
+<span class="sourceLineNo">117</span>                               float fx, float fy,<a name="line.117"></a>
+<span class="sourceLineNo">118</span>                               float[] fractions,<a name="line.118"></a>
+<span class="sourceLineNo">119</span>                               Color[] colors,<a name="line.119"></a>
+<span class="sourceLineNo">120</span>                               CycleMethod cycleMethod,<a name="line.120"></a>
+<span class="sourceLineNo">121</span>                               ColorSpaceType colorSpace)<a name="line.121"></a>
+<span class="sourceLineNo">122</span>    {<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        super(paint, cm, deviceBounds, userBounds, t, hints,<a name="line.123"></a>
+<span class="sourceLineNo">124</span>              fractions, colors, cycleMethod, colorSpace);<a name="line.124"></a>
+<span class="sourceLineNo">125</span><a name="line.125"></a>
+<span class="sourceLineNo">126</span>        // copy some parameters<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        centerX = cx;<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        centerY = cy;<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        focusX = fx;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        focusY = fy;<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        radius = r;<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>        this.isSimpleFocus = (focusX == centerX) &amp;&amp; (focusY == centerY);<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        this.isNonCyclic = (cycleMethod == CycleMethod.NO_CYCLE);<a name="line.134"></a>
+<span class="sourceLineNo">135</span><a name="line.135"></a>
+<span class="sourceLineNo">136</span>        // for use in the quadractic equation<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        radiusSq = radius * radius;<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>        float dX = focusX - centerX;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        float dY = focusY - centerY;<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>        double distSq = (dX * dX) + (dY * dY);<a name="line.142"></a>
+<span class="sourceLineNo">143</span><a name="line.143"></a>
+<span class="sourceLineNo">144</span>        // test if distance from focus to center is greater than the radius<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        if (distSq &gt; radiusSq * SCALEBACK) {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>            // clamp focus to radius<a name="line.146"></a>
+<span class="sourceLineNo">147</span>            float scalefactor = (float)Math.sqrt(radiusSq * SCALEBACK / distSq);<a name="line.147"></a>
+<span class="sourceLineNo">148</span>            dX = dX * scalefactor;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>            dY = dY * scalefactor;<a name="line.149"></a>
+<span class="sourceLineNo">150</span>            focusX = centerX + dX;<a name="line.150"></a>
+<span class="sourceLineNo">151</span>            focusY = centerY + dY;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        }<a name="line.152"></a>
+<span class="sourceLineNo">153</span><a name="line.153"></a>
+<span class="sourceLineNo">154</span>        // calculate the solution to be used in the case where X == focusX<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        // in cyclicCircularGradientFillRaster()<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        trivial = (float)Math.sqrt(radiusSq - (dX * dX));<a name="line.156"></a>
+<span class="sourceLineNo">157</span><a name="line.157"></a>
+<span class="sourceLineNo">158</span>        // constant parts of X, Y user space coordinates<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        constA = a02 - centerX;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        constB = a12 - centerY;<a name="line.160"></a>
+<span class="sourceLineNo">161</span><a name="line.161"></a>
+<span class="sourceLineNo">162</span>        // constant second order delta for simple loop<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        gDeltaDelta = 2 * ( a00 *  a00 +  a10 *  a10) / radiusSq;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    }<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>    /**<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * Return a Raster containing the colors generated for the graphics<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * operation.<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * @param x,y,w,h the area in device space for which colors are<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * generated.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    protected void fillRaster(int pixels[], int off, int adjust,<a name="line.173"></a>
+<span class="sourceLineNo">174</span>                              int x, int y, int w, int h)<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    {<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        if (isSimpleFocus &amp;&amp; isNonCyclic &amp;&amp; isSimpleLookup) {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>            simpleNonCyclicFillRaster(pixels, off, adjust, x, y, w, h);<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        } else {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            cyclicCircularGradientFillRaster(pixels, off, adjust, x, y, w, h);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        }<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    }<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * This code works in the simplest of cases, where the focus == center<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * point, the gradient is noncyclic, and the gradient lookup method is<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * fast (single array index, no conversion necessary).<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     */<a name="line.187"></a>
+<span class="sourceLineNo">188</span>    private void simpleNonCyclicFillRaster(int pixels[], int off, int adjust,<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                                           int x, int y, int w, int h)<a name="line.189"></a>
+<span class="sourceLineNo">190</span>    {<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        /* We calculate sqrt(X^2 + Y^2) relative to the radius<a name="line.191"></a>
+<span class="sourceLineNo">192</span>         * size to get the fraction for the color to use.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>         *<a name="line.193"></a>
+<span class="sourceLineNo">194</span>         * Each step along the scanline adds (a00, a10) to (X, Y).<a name="line.194"></a>
+<span class="sourceLineNo">195</span>         * If we precalculate:<a name="line.195"></a>
+<span class="sourceLineNo">196</span>         *   gRel = X^2+Y^2<a name="line.196"></a>
+<span class="sourceLineNo">197</span>         * for the start of the row, then for each step we need to<a name="line.197"></a>
+<span class="sourceLineNo">198</span>         * calculate:<a name="line.198"></a>
+<span class="sourceLineNo">199</span>         *   gRel' = (X+a00)^2 + (Y+a10)^2<a name="line.199"></a>
+<span class="sourceLineNo">200</span>         *         = X^2 + 2*X*a00 + a00^2 + Y^2 + 2*Y*a10 + a10^2<a name="line.200"></a>
+<span class="sourceLineNo">201</span>         *         = (X^2+Y^2) + 2*(X*a00+Y*a10) + (a00^2+a10^2)<a name="line.201"></a>
+<span class="sourceLineNo">202</span>         *         = gRel + 2*(X*a00+Y*a10) + (a00^2+a10^2)<a name="line.202"></a>
+<span class="sourceLineNo">203</span>         *         = gRel + 2*DP + SD<a name="line.203"></a>
+<span class="sourceLineNo">204</span>         * (where DP = dot product between X,Y and a00,a10<a name="line.204"></a>
+<span class="sourceLineNo">205</span>         *  and   SD = dot product square of the delta vector)<a name="line.205"></a>
+<span class="sourceLineNo">206</span>         * For the step after that we get:<a name="line.206"></a>
+<span class="sourceLineNo">207</span>         *   gRel'' = (X+2*a00)^2 + (Y+2*a10)^2<a name="line.207"></a>
+<span class="sourceLineNo">208</span>         *          = X^2 + 4*X*a00 + 4*a00^2 + Y^2 + 4*Y*a10 + 4*a10^2<a name="line.208"></a>
+<span class="sourceLineNo">209</span>         *          = (X^2+Y^2) + 4*(X*a00+Y*a10) + 4*(a00^2+a10^2)<a name="line.209"></a>
+<span class="sourceLineNo">210</span>         *          = gRel  + 4*DP + 4*SD<a name="line.210"></a>
+<span class="sourceLineNo">211</span>         *          = gRel' + 2*DP + 3*SD<a name="line.211"></a>
+<span class="sourceLineNo">212</span>         * The increment changed by:<a name="line.212"></a>
+<span class="sourceLineNo">213</span>         *     (gRel'' - gRel') - (gRel' - gRel)<a name="line.213"></a>
+<span class="sourceLineNo">214</span>         *   = (2*DP + 3*SD) - (2*DP + SD)<a name="line.214"></a>
+<span class="sourceLineNo">215</span>         *   = 2*SD<a name="line.215"></a>
+<span class="sourceLineNo">216</span>         * Note that this value depends only on the (inverse of the)<a name="line.216"></a>
+<span class="sourceLineNo">217</span>         * transformation matrix and so is a constant for the loop.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>         * To make this all relative to the unit circle, we need to<a name="line.218"></a>
+<span class="sourceLineNo">219</span>         * divide all values as follows:<a name="line.219"></a>
+<span class="sourceLineNo">220</span>         *   [XY] /= radius<a name="line.220"></a>
+<span class="sourceLineNo">221</span>         *   gRel /= radiusSq<a name="line.221"></a>
+<span class="sourceLineNo">222</span>         *   DP   /= radiusSq<a name="line.222"></a>
+<span class="sourceLineNo">223</span>         *   SD   /= radiusSq<a name="line.223"></a>
+<span class="sourceLineNo">224</span>         */<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        // coordinates of UL corner in "user space" relative to center<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        float rowX = (a00*x) + (a01*y) + constA;<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        float rowY = (a10*x) + (a11*y) + constB;<a name="line.227"></a>
+<span class="sourceLineNo">228</span><a name="line.228"></a>
+<span class="sourceLineNo">229</span>        // second order delta calculated in constructor<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        float gDeltaDelta = this.gDeltaDelta;<a name="line.230"></a>
+<span class="sourceLineNo">231</span><a name="line.231"></a>
+<span class="sourceLineNo">232</span>        // adjust is (scan-w) of pixels array, we need (scan)<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        adjust += w;<a name="line.233"></a>
+<span class="sourceLineNo">234</span><a name="line.234"></a>
+<span class="sourceLineNo">235</span>        // rgb of the 1.0 color used when the distance exceeds gradient radius<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        int rgbclip = gradient[fastGradientArraySize];<a name="line.236"></a>
+<span class="sourceLineNo">237</span><a name="line.237"></a>
+<span class="sourceLineNo">238</span>        for (int j = 0; j &lt; h; j++) {<a name="line.238"></a>
+<span class="sourceLineNo">239</span>            // these values depend on the coordinates of the start of the row<a name="line.239"></a>
+<span class="sourceLineNo">240</span>            float gRel   =      (rowX * rowX + rowY * rowY) / radiusSq;<a name="line.240"></a>
+<span class="sourceLineNo">241</span>            float gDelta = (2 * ( a00 * rowX +  a10 * rowY) / radiusSq +<a name="line.241"></a>
+<span class="sourceLineNo">242</span>                            gDeltaDelta/2);<a name="line.242"></a>
+<span class="sourceLineNo">243</span><a name="line.243"></a>
+<span class="sourceLineNo">244</span>            /* Use optimized loops for any cases where gRel &gt;= 1.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>             * We do not need to calculate sqrt(gRel) for these<a name="line.245"></a>
+<span class="sourceLineNo">246</span>             * values since sqrt(N&gt;=1) == (M&gt;=1).<a name="line.246"></a>
+<span class="sourceLineNo">247</span>             * Note that gRel follows a parabola which can only be &lt; 1<a name="line.247"></a>
+<span class="sourceLineNo">248</span>             * for a small region around the center on each scanline. In<a name="line.248"></a>
+<span class="sourceLineNo">249</span>             * particular:<a name="line.249"></a>
+<span class="sourceLineNo">250</span>             *   gDeltaDelta is always positive<a name="line.250"></a>
+<span class="sourceLineNo">251</span>             *   gDelta is &lt;0 until it crosses the midpoint, then &gt;0<a name="line.251"></a>
+<span class="sourceLineNo">252</span>             * To the left and right of that region, it will always be<a name="line.252"></a>
+<span class="sourceLineNo">253</span>             * &gt;=1 out to infinity, so we can process the line in 3<a name="line.253"></a>
+<span class="sourceLineNo">254</span>             * regions:<a name="line.254"></a>
+<span class="sourceLineNo">255</span>             *   out to the left  - quick fill until gRel &lt; 1, updating gRel<a name="line.255"></a>
+<span class="sourceLineNo">256</span>             *   in the heart     - slow fraction=sqrt fill while gRel &lt; 1<a name="line.256"></a>
+<span class="sourceLineNo">257</span>             *   out to the right - quick fill rest of scanline, ignore gRel<a name="line.257"></a>
+<span class="sourceLineNo">258</span>             */<a name="line.258"></a>
+<span class="sourceLineNo">259</span>            int i = 0;<a name="line.259"></a>
+<span class="sourceLineNo">260</span>            // Quick fill for "out to the left"<a name="line.260"></a>
+<span class="sourceLineNo">261</span>            while (i &lt; w &amp;&amp; gRel &gt;= 1.0f) {<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                pixels[off + i] = rgbclip;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>                gRel += gDelta;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>                gDelta += gDeltaDelta;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>                i++;<a name="line.265"></a>
+<span class="sourceLineNo">266</span>            }<a name="line.266"></a>
+<span class="sourceLineNo">267</span>            // Slow fill for "in the heart"<a name="line.267"></a>
+<span class="sourceLineNo">268</span>            while (i &lt; w &amp;&amp; gRel &lt; 1.0f) {<a name="line.268"></a>
+<span class="sourceLineNo">269</span>                int gIndex;<a name="line.269"></a>
+<span class="sourceLineNo">270</span><a name="line.270"></a>
+<span class="sourceLineNo">271</span>                if (gRel &lt;= 0) {<a name="line.271"></a>
+<span class="sourceLineNo">272</span>                    gIndex = 0;<a name="line.272"></a>
+<span class="sourceLineNo">273</span>                } else {<a name="line.273"></a>
+<span class="sourceLineNo">274</span>                    float fIndex = gRel * SQRT_LUT_SIZE;<a name="line.274"></a>
+<span class="sourceLineNo">275</span>                    int iIndex = (int) (fIndex);<a name="line.275"></a>
+<span class="sourceLineNo">276</span>                    float s0 = sqrtLut[iIndex];<a name="line.276"></a>
+<span class="sourceLineNo">277</span>                    float s1 = sqrtLut[iIndex+1] - s0;<a name="line.277"></a>
+<span class="sourceLineNo">278</span>                    fIndex = s0 + (fIndex - iIndex) * s1;<a name="line.278"></a>
+<span class="sourceLineNo">279</span>                    gIndex = (int) (fIndex * fastGradientArraySize);<a name="line.279"></a>
+<span class="sourceLineNo">280</span>                }<a name="line.280"></a>
+<span class="sourceLineNo">281</span><a name="line.281"></a>
+<span class="sourceLineNo">282</span>                // store the color at this point<a name="line.282"></a>
+<span class="sourceLineNo">283</span>                pixels[off + i] = gradient[gIndex];<a name="line.283"></a>
+<span class="sourceLineNo">284</span><a name="line.284"></a>
+<span class="sourceLineNo">285</span>                // incremental calculation<a name="line.285"></a>
+<span class="sourceLineNo">286</span>                gRel += gDelta;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>                gDelta += gDeltaDelta;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>                i++;<a name="line.288"></a>
+<span class="sourceLineNo">289</span>            }<a name="line.289"></a>
+<span class="sourceLineNo">290</span>            // Quick fill to end of line for "out to the right"<a name="line.290"></a>
+<span class="sourceLineNo">291</span>            while (i &lt; w) {<a name="line.291"></a>
+<span class="sourceLineNo">292</span>                pixels[off + i] = rgbclip;<a name="line.292"></a>
+<span class="sourceLineNo">293</span>                i++;<a name="line.293"></a>
+<span class="sourceLineNo">294</span>            }<a name="line.294"></a>
+<span class="sourceLineNo">295</span><a name="line.295"></a>
+<span class="sourceLineNo">296</span>            off += adjust;<a name="line.296"></a>
+<span class="sourceLineNo">297</span>            rowX += a01;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>            rowY += a11;<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        }<a name="line.299"></a>
+<span class="sourceLineNo">300</span>    }<a name="line.300"></a>
+<span class="sourceLineNo">301</span><a name="line.301"></a>
+<span class="sourceLineNo">302</span>    // SQRT_LUT_SIZE must be a power of 2 for the test above to work.<a name="line.302"></a>
+<span class="sourceLineNo">303</span>    private static final int SQRT_LUT_SIZE = (1 &lt;&lt; 11);<a name="line.303"></a>
+<span class="sourceLineNo">304</span>    private static float sqrtLut[] = new float[SQRT_LUT_SIZE+1];<a name="line.304"></a>
+<span class="sourceLineNo">305</span>    static {<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        for (int i = 0; i &lt; sqrtLut.length; i++) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            sqrtLut[i] = (float) Math.sqrt(i / ((float) SQRT_LUT_SIZE));<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        }<a name="line.308"></a>
+<span class="sourceLineNo">309</span>    }<a name="line.309"></a>
+<span class="sourceLineNo">310</span><a name="line.310"></a>
+<span class="sourceLineNo">311</span>    /**<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * Fill the raster, cycling the gradient colors when a point falls outside<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * of the perimeter of the 100% stop circle.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     *<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * This calculation first computes the intersection point of the line<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * from the focus through the current point in the raster, and the<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * perimeter of the gradient circle.<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     *<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * Then it determines the percentage distance of the current point along<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * that line (focus is 0%, perimeter is 100%).<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     *<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * Equation of a circle centered at (a,b) with radius r:<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     *     (x-a)^2 + (y-b)^2 = r^2<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * Equation of a line with slope m and y-intercept b:<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     *     y = mx + b<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * Replacing y in the circle equation and solving using the quadratic<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * formula produces the following set of equations.  Constant factors have<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * been extracted out of the inner loop.<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     */<a name="line.329"></a>
+<span class="sourceLineNo">330</span>    private void cyclicCircularGradientFillRaster(int pixels[], int off,<a name="line.330"></a>
+<span class="sourceLineNo">331</span>                                                  int adjust,<a name="line.331"></a>
+<span class="sourceLineNo">332</span>                                                  int x, int y,<a name="line.332"></a>
+<span class="sourceLineNo">333</span>                                                  int w, int h)<a name="line.333"></a>
+<span class="sourceLineNo">334</span>    {<a name="line.334"></a>
+<span class="sourceLineNo">335</span>        // constant part of the C factor of the quadratic equation<a name="line.335"></a>
+<span class="sourceLineNo">336</span>        final double constC =<a name="line.336"></a>
+<span class="sourceLineNo">337</span>            -radiusSq + (centerX * centerX) + (centerY * centerY);<a name="line.337"></a>
+<span class="sourceLineNo">338</span><a name="line.338"></a>
+<span class="sourceLineNo">339</span>        // coefficients of the quadratic equation (Ax^2 + Bx + C = 0)<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        double A, B, C;<a name="line.340"></a>
+<span class="sourceLineNo">341</span><a name="line.341"></a>
+<span class="sourceLineNo">342</span>        // slope and y-intercept of the focus-perimeter line<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        double slope, yintcpt;<a name="line.343"></a>
+<span class="sourceLineNo">344</span><a name="line.344"></a>
+<span class="sourceLineNo">345</span>        // intersection with circle X,Y coordinate<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        double solutionX, solutionY;<a name="line.346"></a>
+<span class="sourceLineNo">347</span><a name="line.347"></a>
+<span class="sourceLineNo">348</span>        // constant parts of X, Y coordinates<a name="line.348"></a>
+<span class="sourceLineNo">349</span>        final float constX = (a00*x) + (a01*y) + a02;<a name="line.349"></a>
+<span class="sourceLineNo">350</span>        final float constY = (a10*x) + (a11*y) + a12;<a name="line.350"></a>
+<span class="sourceLineNo">351</span><a name="line.351"></a>
+<span class="sourceLineNo">352</span>        // constants in inner loop quadratic formula<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        final float precalc2 =  2 * centerY;<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        final float precalc3 = -2 * centerX;<a name="line.354"></a>
+<span class="sourceLineNo">355</span><a name="line.355"></a>
+<span class="sourceLineNo">356</span>        // value between 0 and 1 specifying position in the gradient<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        float g;<a name="line.357"></a>
+<span class="sourceLineNo">358</span><a name="line.358"></a>
+<span class="sourceLineNo">359</span>        // determinant of quadratic formula (should always be &gt; 0)<a name="line.359"></a>
+<span class="sourceLineNo">360</span>        float det;<a name="line.360"></a>
+<span class="sourceLineNo">361</span><a name="line.361"></a>
+<span class="sourceLineNo">362</span>        // sq distance from the current point to focus<a name="line.362"></a>
+<span class="sourceLineNo">363</span>        float currentToFocusSq;<a name="line.363"></a>
+<span class="sourceLineNo">364</span><a name="line.364"></a>
+<span class="sourceLineNo">365</span>        // sq distance from the intersect point to focus<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        float intersectToFocusSq;<a name="line.366"></a>
+<span class="sourceLineNo">367</span><a name="line.367"></a>
+<span class="sourceLineNo">368</span>        // temp variables for change in X,Y squared<a name="line.368"></a>
+<span class="sourceLineNo">369</span>        float deltaXSq, deltaYSq;<a name="line.369"></a>
+<span class="sourceLineNo">370</span><a name="line.370"></a>
+<span class="sourceLineNo">371</span>        // used to index pixels array<a name="line.371"></a>
+<span class="sourceLineNo">372</span>        int indexer = off;<a name="line.372"></a>
+<span class="sourceLineNo">373</span><a name="line.373"></a>
+<span class="sourceLineNo">374</span>        // incremental index change for pixels array<a name="line.374"></a>
+<span class="sourceLineNo">375</span>        int pixInc = w+adjust;<a name="line.375"></a>
+<span class="sourceLineNo">376</span><a name="line.376"></a>
+<span class="sourceLineNo">377</span>        // for every row<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        for (int j = 0; j &lt; h; j++) {<a name="line.378"></a>
+<span class="sourceLineNo">379</span><a name="line.379"></a>
+<span class="sourceLineNo">380</span>            // user space point; these are constant from column to column<a name="line.380"></a>
+<span class="sourceLineNo">381</span>            float X = (a01*j) + constX;<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            float Y = (a11*j) + constY;<a name="line.382"></a>
+<span class="sourceLineNo">383</span><a name="line.383"></a>
+<span class="sourceLineNo">384</span>            // for every column (inner loop begins here)<a name="line.384"></a>
+<span class="sourceLineNo">385</span>            for (int i = 0; i &lt; w; i++) {<a name="line.385"></a>
+<span class="sourceLineNo">386</span><a name="line.386"></a>
+<span class="sourceLineNo">387</span>                if (X == focusX) {<a name="line.387"></a>
+<span class="sourceLineNo">388</span>                    // special case to avoid divide by zero<a name="line.388"></a>
+<span class="sourceLineNo">389</span>                    solutionX = focusX;<a name="line.389"></a>
+<span class="sourceLineNo">390</span>                    solutionY = centerY;<a name="line.390"></a>
+<span class="sourceLineNo">391</span>                    solutionY += (Y &gt; focusY) ? trivial : -trivial;<a name="line.391"></a>
+<span class="sourceLineNo">392</span>                } else {<a name="line.392"></a>
+<span class="sourceLineNo">393</span>                    // slope and y-intercept of the focus-perimeter line<a name="line.393"></a>
+<span class="sourceLineNo">394</span>                    slope = (Y - focusY) / (X - focusX);<a name="line.394"></a>
+<span class="sourceLineNo">395</span>                    yintcpt = Y - (slope * X);<a name="line.395"></a>
+<span class="sourceLineNo">396</span><a name="line.396"></a>
+<span class="sourceLineNo">397</span>                    // use the quadratic formula to calculate the<a name="line.397"></a>
+<span class="sourceLineNo">398</span>                    // intersection point<a name="line.398"></a>
+<span class="sourceLineNo">399</span>                    A = (slope * slope) + 1;<a name="line.399"></a>
+<span class="sourceLineNo">400</span>                    B = precalc3 + (-2 * slope * (centerY - yintcpt));<a name="line.400"></a>
+<span class="sourceLineNo">401</span>                    C = constC + (yintcpt* (yintcpt - precalc2));<a name="line.401"></a>
+<span class="sourceLineNo">402</span><a name="line.402"></a>
+<span class="sourceLineNo">403</span>                    det = (float)Math.sqrt((B * B) - (4 * A * C));<a name="line.403"></a>
+<span class="sourceLineNo">404</span>                    solutionX = -B;<a name="line.404"></a>
+<span class="sourceLineNo">405</span><a name="line.405"></a>
+<span class="sourceLineNo">406</span>                    // choose the positive or negative root depending<a name="line.406"></a>
+<span class="sourceLineNo">407</span>                    // on where the X coord lies with respect to the focus<a name="line.407"></a>
+<span class="sourceLineNo">408</span>                    solutionX += (X &lt; focusX)? -det : det;<a name="line.408"></a>
+<span class="sourceLineNo">409</span>                    solutionX = solutionX / (2 * A); // divisor<a name="line.409"></a>
+<span class="sourceLineNo">410</span>                    solutionY = (slope * solutionX) + yintcpt;<a name="line.410"></a>
+<span class="sourceLineNo">411</span>                }<a name="line.411"></a>
+<span class="sourceLineNo">412</span><a name="line.412"></a>
+<span class="sourceLineNo">413</span>                // Calculate the square of the distance from the current point<a name="line.413"></a>
+<span class="sourceLineNo">414</span>                // to the focus and the square of the distance from the<a name="line.414"></a>
+<span class="sourceLineNo">415</span>                // intersection point to the focus. Want the squares so we can<a name="line.415"></a>
+<span class="sourceLineNo">416</span>                // do 1 square root after division instead of 2 before.<a name="line.416"></a>
+<span class="sourceLineNo">417</span><a name="line.417"></a>
+<span class="sourceLineNo">418</span>                deltaXSq = X - focusX;<a name="line.418"></a>
+<span class="sourceLineNo">419</span>                deltaXSq = deltaXSq * deltaXSq;<a name="line.419"></a>
+<span class="sourceLineNo">420</span><a name="line.420"></a>
+<span class="sourceLineNo">421</span>                deltaYSq = Y - focusY;<a name="line.421"></a>
+<span class="sourceLineNo">422</span>                deltaYSq = deltaYSq * deltaYSq;<a name="line.422"></a>
+<span class="sourceLineNo">423</span><a name="line.423"></a>
+<span class="sourceLineNo">424</span>                currentToFocusSq = deltaXSq + deltaYSq;<a name="line.424"></a>
+<span class="sourceLineNo">425</span><a name="line.425"></a>
+<span class="sourceLineNo">426</span>                deltaXSq = (float)solutionX - focusX;<a name="line.426"></a>
+<span class="sourceLineNo">427</span>                deltaXSq = deltaXSq * deltaXSq;<a name="line.427"></a>
+<span class="sourceLineNo">428</span><a name="line.428"></a>
+<span class="sourceLineNo">429</span>                deltaYSq = (float)solutionY - focusY;<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                deltaYSq = deltaYSq * deltaYSq;<a name="line.430"></a>
+<span class="sourceLineNo">431</span><a name="line.431"></a>
+<span class="sourceLineNo">432</span>                intersectToFocusSq = deltaXSq + deltaYSq;<a name="line.432"></a>
+<span class="sourceLineNo">433</span><a name="line.433"></a>
+<span class="sourceLineNo">434</span>                // get the percentage (0-1) of the current point along the<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                // focus-circumference line<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                g = (float)Math.sqrt(currentToFocusSq / intersectToFocusSq);<a name="line.436"></a>
+<span class="sourceLineNo">437</span><a name="line.437"></a>
+<span class="sourceLineNo">438</span>                // store the color at this point<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                pixels[indexer + i] = indexIntoGradientsArrays(g);<a name="line.439"></a>
+<span class="sourceLineNo">440</span><a name="line.440"></a>
+<span class="sourceLineNo">441</span>                // incremental change in X, Y<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                X += a00;<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                Y += a10;<a name="line.443"></a>
+<span class="sourceLineNo">444</span>            } //end inner loop<a name="line.444"></a>
+<span class="sourceLineNo">445</span><a name="line.445"></a>
+<span class="sourceLineNo">446</span>            indexer += pixInc;<a name="line.446"></a>
+<span class="sourceLineNo">447</span>        } //end outer loop<a name="line.447"></a>
+<span class="sourceLineNo">448</span>    }<a name="line.448"></a>
+<span class="sourceLineNo">449</span>}<a name="line.449"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

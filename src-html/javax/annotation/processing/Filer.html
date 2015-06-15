@@ -1,0 +1,335 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.annotation.processing;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.tools.JavaFileManager;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.tools.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.lang.model.element.Element;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.io.IOException;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>/**<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * This interface supports the creation of new files by an annotation<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * processor.  Files created in this way will be known to the<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * annotation processing tool implementing this interface, better<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * enabling the tool to manage them.  Source and class files so<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * created will be {@linkplain RoundEnvironment#getRootElements<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * considered for processing} by the tool in a subsequent {@linkplain<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * RoundEnvironment round of processing} after the {@code close}<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * method has been called on the {@code Writer} or {@code<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * OutputStream} used to write the contents of the file.<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * Three kinds of files are distinguished: source files, class files,<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * and auxiliary resource files.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;p&gt; There are two distinguished supported locations (subtrees<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * within the logical file system) where newly created files are<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * placed: one for {@linkplain<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * javax.tools.StandardLocation#SOURCE_OUTPUT new source files}, and<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * one for {@linkplain javax.tools.StandardLocation#CLASS_OUTPUT new<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * class files}.  (These might be specified on a tool's command line,<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * for example, using flags such as {@code -s} and {@code -d}.)  The<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * actual locations for new source files and new class files may or<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * may not be distinct on a particular run of the tool.  Resource<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * files may be created in either location.  The methods for reading<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * and writing resources take a relative name argument.  A relative<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * name is a non-null, non-empty sequence of path segments separated<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * by {@code '/'}; {@code '.'} and {@code '..'} are invalid path<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * segments.  A valid relative name must match the<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &amp;quot;path-rootless&amp;quot; rule of &lt;a<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * href="http://www.ietf.org/rfc/rfc3986.txt"&gt;RFC 3986&lt;/a&gt;, section<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * 3.3.<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * &lt;p&gt;The file creation methods take a variable number of arguments to<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * allow the &lt;em&gt;originating elements&lt;/em&gt; to be provided as hints to<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * the tool infrastructure to better manage dependencies.  The<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * originating elements are the types or packages (representing {@code<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * package-info} files) which caused an annotation processor to<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * attempt to create a new file.  For example, if an annotation<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * processor tries to create a source file, {@code<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * GeneratedFromUserSource}, in response to processing<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *  &amp;#64;Generate<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *  public class UserSource {}<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * the type element for {@code UserSource} should be passed as part of<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * the creation method call as in:<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *      filer.createSourceFile("GeneratedFromUserSource",<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *                             eltUtils.getTypeElement("UserSource"));<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * If there are no originating elements, none need to be passed.  This<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * information may be used in an incremental environment to determine<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * the need to rerun processors or remove generated files.<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * Non-incremental environments may ignore the originating element<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * information.<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;p&gt; During each run of an annotation processing tool, a file with a<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * given pathname may be created only once.  If that file already<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * exists before the first attempt to create it, the old contents will<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * be deleted.  Any subsequent attempt to create the same file during<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * a run will throw a {@link FilerException}, as will attempting to<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * create both a class file and source file for the same type name or<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * same package name.  The {@linkplain Processor initial inputs} to<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * the tool are considered to be created by the zeroth round;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * therefore, attempting to create a source or class file<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * corresponding to one of those inputs will result in a {@link<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * FilerException}.<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * &lt;p&gt; In general, processors must not knowingly attempt to overwrite<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * existing files that were not generated by some processor.  A {@code<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * Filer} may reject attempts to open a file corresponding to an<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * existing type, like {@code java.lang.Object}.  Likewise, the<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * invoker of the annotation processing tool must not knowingly<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * configure the tool such that the discovered processors will attempt<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * to overwrite existing files that were not generated.<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * &lt;p&gt; Processors can indicate a source or class file is generated by<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * including an {@link javax.annotation.Generated @Generated}<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * annotation.<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * &lt;p&gt; Note that some of the effect of overwriting a file can be<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * achieved by using a &lt;i&gt;decorator&lt;/i&gt;-style pattern.  Instead of<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * modifying a class directly, the class is designed so that either<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * its superclass is generated by annotation processing or subclasses<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * of the class are generated by annotation processing.  If the<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * subclasses are generated, the parent class may be designed to use<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * factories instead of public constructors so that only subclass<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * instances would be presented to clients of the parent class.<a name="line.124"></a>
+<span class="sourceLineNo">125</span> *<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * @author Joseph D. Darcy<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * @author Scott Seligman<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * @author Peter von der Ah&amp;eacute;<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * @since 1.6<a name="line.129"></a>
+<span class="sourceLineNo">130</span> */<a name="line.130"></a>
+<span class="sourceLineNo">131</span>public interface Filer {<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /**<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * Creates a new source file and returns an object to allow<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * writing to it.  The file's name and path (relative to the<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * {@linkplain StandardLocation#SOURCE_OUTPUT root output location<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * for source files}) are based on the type to be declared in that<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * file.  If more than one type is being declared, the name of the<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * principal top-level type (the public one, for example) should<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * be used.  A source file can also be created to hold information<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * about a package, including package annotations.  To create a<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * source file for a named package, have {@code name} be the<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * package's name followed by {@code ".package-info"}; to create a<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * source file for an unnamed package, use {@code "package-info"}.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * &lt;p&gt; Note that to use a particular {@linkplain<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * java.nio.charset.Charset charset} to encode the contents of the<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * file, an {@code OutputStreamWriter} with the chosen charset can<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * be created from the {@code OutputStream} from the returned<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * object. If the {@code Writer} from the returned object is<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * directly used for writing, its charset is determined by the<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * implementation.  An annotation processing tool may have an<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * {@code -encoding} flag or analogous option for specifying this;<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * otherwise, it will typically be the platform's default<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * encoding.<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     *<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * &lt;p&gt;To avoid subsequent errors, the contents of the source file<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * should be compatible with the {@linkplain<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * ProcessingEnvironment#getSourceVersion source version} being used<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * for this run.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @param name  canonical (fully qualified) name of the principal type<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *          being declared in this file or a package name followed by<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     *          {@code ".package-info"} for a package information file<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @param originatingElements type or package elements causally<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * associated with the creation of this file, may be elided or<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * {@code null}<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * @return a {@code JavaFileObject} to write the new source file<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * @throws FilerException if the same pathname has already been<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * created, the same type has already been created, or the name is<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * not valid for a type<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * @throws IOException if the file cannot be created<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    JavaFileObject createSourceFile(CharSequence name,<a name="line.173"></a>
+<span class="sourceLineNo">174</span>                                    Element... originatingElements) throws IOException;<a name="line.174"></a>
+<span class="sourceLineNo">175</span><a name="line.175"></a>
+<span class="sourceLineNo">176</span>    /**<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * Creates a new class file, and returns an object to allow<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * writing to it.  The file's name and path (relative to the<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * {@linkplain StandardLocation#CLASS_OUTPUT root output location<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * for class files}) are based on the name of the type being<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * written.  A class file can also be created to hold information<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * about a package, including package annotations.  To create a<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * class file for a named package, have {@code name} be the<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * package's name followed by {@code ".package-info"}; creating a<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * class file for an unnamed package is not supported.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;p&gt;To avoid subsequent errors, the contents of the class file<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * should be compatible with the {@linkplain<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * ProcessingEnvironment#getSourceVersion source version} being used<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * for this run.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     *<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * @param name binary name of the type being written or a package name followed by<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     *          {@code ".package-info"} for a package information file<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * @param originatingElements type or package elements causally<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * associated with the creation of this file, may be elided or<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * {@code null}<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @return a {@code JavaFileObject} to write the new class file<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @throws FilerException if the same pathname has already been<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * created, the same type has already been created, or the name is<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * not valid for a type<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * @throws IOException if the file cannot be created<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     */<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    JavaFileObject createClassFile(CharSequence name,<a name="line.203"></a>
+<span class="sourceLineNo">204</span>                                   Element... originatingElements) throws IOException;<a name="line.204"></a>
+<span class="sourceLineNo">205</span><a name="line.205"></a>
+<span class="sourceLineNo">206</span>    /**<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * Creates a new auxiliary resource file for writing and returns a<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * file object for it.  The file may be located along with the<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * newly created source files, newly created binary files, or<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * other supported location.  The locations {@link<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * StandardLocation#CLASS_OUTPUT CLASS_OUTPUT} and {@link<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * StandardLocation#SOURCE_OUTPUT SOURCE_OUTPUT} must be<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * supported.  The resource may be named relative to some package<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * (as are source and class files), and from there by a relative<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * pathname.  In a loose sense, the full pathname of the new file<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * will be the concatenation of {@code location}, {@code pkg}, and<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * {@code relativeName}.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * &lt;p&gt;Files created via this method are not registered for<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * annotation processing, even if the full pathname of the file<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * would correspond to the full pathname of a new source file<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * or new class file.<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     *<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * @param location location of the new file<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * @param pkg package relative to which the file should be named,<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     *          or the empty string if none<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * @param relativeName final pathname components of the file<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * @param originatingElements type or package elements causally<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * associated with the creation of this file, may be elided or<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * {@code null}<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * @return a {@code FileObject} to write the new resource<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * @throws IOException if the file cannot be created<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @throws FilerException if the same pathname has already been<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * created<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * @throws IllegalArgumentException for an unsupported location<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * @throws IllegalArgumentException if {@code relativeName} is not relative<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     */<a name="line.237"></a>
+<span class="sourceLineNo">238</span>   FileObject createResource(JavaFileManager.Location location,<a name="line.238"></a>
+<span class="sourceLineNo">239</span>                             CharSequence pkg,<a name="line.239"></a>
+<span class="sourceLineNo">240</span>                             CharSequence relativeName,<a name="line.240"></a>
+<span class="sourceLineNo">241</span>                             Element... originatingElements) throws IOException;<a name="line.241"></a>
+<span class="sourceLineNo">242</span><a name="line.242"></a>
+<span class="sourceLineNo">243</span>    /**<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * Returns an object for reading an existing resource.  The<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * locations {@link StandardLocation#CLASS_OUTPUT CLASS_OUTPUT}<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * and {@link StandardLocation#SOURCE_OUTPUT SOURCE_OUTPUT} must<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * be supported.<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     *<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * @param location location of the file<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * @param pkg package relative to which the file should be searched,<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     *          or the empty string if none<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * @param relativeName final pathname components of the file<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * @return an object to read the file<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * @throws FilerException if the same pathname has already been<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * opened for writing<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @throws IOException if the file cannot be opened<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * @throws IllegalArgumentException for an unsupported location<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * @throws IllegalArgumentException if {@code relativeName} is not relative<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     */<a name="line.259"></a>
+<span class="sourceLineNo">260</span>    FileObject getResource(JavaFileManager.Location location,<a name="line.260"></a>
+<span class="sourceLineNo">261</span>                           CharSequence pkg,<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                           CharSequence relativeName) throws IOException;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>}<a name="line.263"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

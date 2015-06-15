@@ -1,0 +1,465 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.sound.midi;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.List;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span> /**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * &lt;code&gt;MidiDevice&lt;/code&gt; is the base interface for all MIDI devices.<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * Common devices include synthesizers, sequencers, MIDI input ports, and MIDI<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * output ports.<a name="line.33"></a>
+<span class="sourceLineNo">034</span> *<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;p&gt;A &lt;code&gt;MidiDevice&lt;/code&gt; can be a transmitter or a receiver of<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * MIDI events, or both. Therefore, it can provide {@link Transmitter}<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * or {@link Receiver} instances (or both). Typically, MIDI IN ports<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * provide transmitters, MIDI OUT ports and synthesizers provide<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * receivers. A Sequencer typically provides transmitters for playback<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * and receivers for recording.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;A &lt;code&gt;MidiDevice&lt;/code&gt; can be opened and closed explicitly as<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * well as implicitly. Explicit opening is accomplished by calling<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * {@link #open}, explicit closing is done by calling {@link<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * #close} on the &lt;code&gt;MidiDevice&lt;/code&gt; instance.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * If an application opens a &lt;code&gt;MidiDevice&lt;/code&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * explicitly, it has to close it explicitly to free system resources<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * and enable the application to exit cleanly. Implicit opening is<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * done by calling {@link javax.sound.midi.MidiSystem#getReceiver<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * MidiSystem.getReceiver} and {@link<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * javax.sound.midi.MidiSystem#getTransmitter<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * MidiSystem.getTransmitter}. The &lt;code&gt;MidiDevice&lt;/code&gt; used by<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;code&gt;MidiSystem.getReceiver&lt;/code&gt; and<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;code&gt;MidiSystem.getTransmitter&lt;/code&gt; is implementation-dependant<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * unless the properties &lt;code&gt;javax.sound.midi.Receiver&lt;/code&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * and &lt;code&gt;javax.sound.midi.Transmitter&lt;/code&gt; are used (see the<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * description of properties to select default providers in<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * {@link javax.sound.midi.MidiSystem}). A &lt;code&gt;MidiDevice&lt;/code&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * that was opened implicitly, is closed implicitly by closing the<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;code&gt;Receiver&lt;/code&gt; or &lt;code&gt;Transmitter&lt;/code&gt; that resulted in<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * opening it. If more than one implicitly opening<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * &lt;code&gt;Receiver&lt;/code&gt; or &lt;code&gt;Transmitter&lt;/code&gt; were obtained by<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * the application, the decive is closed after the last<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;code&gt;Receiver&lt;/code&gt; or &lt;code&gt;Transmitter&lt;/code&gt; has been<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * closed. On the other hand, calling &lt;code&gt;getReceiver&lt;/code&gt; or<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;code&gt;getTransmitter&lt;/code&gt; on the device instance directly does<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * not open the device implicitly. Closing these<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;code&gt;Transmitter&lt;/code&gt;s and &lt;code&gt;Receiver&lt;/code&gt;s does not close<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * the device implicitly. To use a device with &lt;code&gt;Receiver&lt;/code&gt;s<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * or &lt;code&gt;Transmitter&lt;/code&gt;s obtained this way, the device has to<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * be opened and closed explicitly.<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * &lt;p&gt;If implicit and explicit opening and closing are mixed on the<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * same &lt;code&gt;MidiDevice&lt;/code&gt; instance, the following rules apply:<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * &lt;ul&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &lt;li&gt;After an explicit open (either before or after implicit<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * opens), the device will not be closed by implicit closing. The only<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * way to close an explicitly opened device is an explicit close.&lt;/li&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * &lt;li&gt;An explicit close always closes the device, even if it also has<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * been opened implicitly. A subsequent implicit close has no further<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * effect.&lt;/li&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * &lt;/ul&gt;<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * To detect if a MidiDevice represents a hardware MIDI port, the<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * following programming technique can be used:<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * &lt;pre&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * MidiDevice device = ...;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * if ( ! (device instanceof Sequencer) &amp;&amp; ! (device instanceof Synthesizer)) {<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *   // we're now sure that device represents a MIDI port<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *   // ...<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * }<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * &lt;/pre&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> *<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * &lt;p&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * A &lt;code&gt;MidiDevice&lt;/code&gt; includes a &lt;code&gt;{@link MidiDevice.Info}&lt;/code&gt; object<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * to provide manufacturer information and so on.<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * @see Synthesizer<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * @see Sequencer<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * @see Receiver<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * @see Transmitter<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * @author Kara Kytle<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * @author Florian Bomers<a name="line.107"></a>
+<span class="sourceLineNo">108</span> */<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span>public interface MidiDevice extends AutoCloseable {<a name="line.110"></a>
+<span class="sourceLineNo">111</span><a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    /**<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * Obtains information about the device, including its Java class and<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * &lt;code&gt;Strings&lt;/code&gt; containing its name, vendor, and description.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @return device info<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     */<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    public Info getDeviceInfo();<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>    /**<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * Opens the device, indicating that it should now acquire any<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * system resources it requires and become operational.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     *<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * &lt;p&gt;An application opening a device explicitly with this call<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * has to close the device by calling {@link #close}. This is<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * necessary to release system resources and allow applications to<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * exit cleanly.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * &lt;p&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * Note that some devices, once closed, cannot be reopened.  Attempts<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * to reopen such a device will always result in a MidiUnavailableException.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * @throws MidiUnavailableException thrown if the device cannot be<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * opened due to resource restrictions.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * @throws SecurityException thrown if the device cannot be<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * opened due to security restrictions.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * @see #close<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @see #isOpen<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     */<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    public void open() throws MidiUnavailableException;<a name="line.143"></a>
+<span class="sourceLineNo">144</span><a name="line.144"></a>
+<span class="sourceLineNo">145</span><a name="line.145"></a>
+<span class="sourceLineNo">146</span>    /**<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * Closes the device, indicating that the device should now release<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * any system resources it is using.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * &lt;p&gt;All &lt;code&gt;Receiver&lt;/code&gt; and &lt;code&gt;Transmitter&lt;/code&gt; instances<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * open from this device are closed. This includes instances retrieved<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * via &lt;code&gt;MidiSystem&lt;/code&gt;.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     *<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * @see #open<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @see #isOpen<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     */<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    public void close();<a name="line.157"></a>
+<span class="sourceLineNo">158</span><a name="line.158"></a>
+<span class="sourceLineNo">159</span><a name="line.159"></a>
+<span class="sourceLineNo">160</span>    /**<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * Reports whether the device is open.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @return &lt;code&gt;true&lt;/code&gt; if the device is open, otherwise<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * &lt;code&gt;false&lt;/code&gt;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * @see #open<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @see #close<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     */<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    public boolean isOpen();<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span><a name="line.170"></a>
+<span class="sourceLineNo">171</span>    /**<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * Obtains the current time-stamp of the device, in microseconds.<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * If a device supports time-stamps, it should start counting at<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * 0 when the device is opened and continue incrementing its<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * time-stamp in microseconds until the device is closed.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * If it does not support time-stamps, it should always return<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * -1.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * @return the current time-stamp of the device in microseconds,<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * or -1 if time-stamping is not supported by the device.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    public long getMicrosecondPosition();<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>    /**<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * Obtains the maximum number of MIDI IN connections available on this<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * MIDI device for receiving MIDI data.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * @return maximum number of MIDI IN connections,<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * or -1 if an unlimited number of connections is available.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     */<a name="line.189"></a>
+<span class="sourceLineNo">190</span>    public int getMaxReceivers();<a name="line.190"></a>
+<span class="sourceLineNo">191</span><a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>    /**<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * Obtains the maximum number of MIDI OUT connections available on this<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * MIDI device for transmitting MIDI data.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @return maximum number of MIDI OUT connections,<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * or -1 if an unlimited number of connections is available.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     */<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    public int getMaxTransmitters();<a name="line.199"></a>
+<span class="sourceLineNo">200</span><a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>    /**<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * Obtains a MIDI IN receiver through which the MIDI device may receive<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * MIDI data.  The returned receiver must be closed when the application<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * has finished using it.<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     *<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * &lt;p&gt;Usually the returned receiver implements<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * the {@code MidiDeviceReceiver} interface.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     *<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * &lt;p&gt;Obtaining a &lt;code&gt;Receiver&lt;/code&gt; with this method does not<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * open the device. To be able to use the device, it has to be<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * opened explicitly by calling {@link #open}. Also, closing the<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * &lt;code&gt;Receiver&lt;/code&gt; does not close the device. It has to be<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * closed explicitly by calling {@link #close}.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * @return a receiver for the device.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @throws MidiUnavailableException thrown if a receiver is not available<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * due to resource restrictions<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @see Receiver#close()<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     */<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    public Receiver getReceiver() throws MidiUnavailableException;<a name="line.221"></a>
+<span class="sourceLineNo">222</span><a name="line.222"></a>
+<span class="sourceLineNo">223</span><a name="line.223"></a>
+<span class="sourceLineNo">224</span>    /**<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * Returns all currently active, non-closed receivers<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * connected with this MidiDevice.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * A receiver can be removed<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * from the device by closing it.<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     *<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * &lt;p&gt;Usually the returned receivers implement<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * the {@code MidiDeviceReceiver} interface.<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     *<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @return an unmodifiable list of the open receivers<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * @since 1.5<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     */<a name="line.235"></a>
+<span class="sourceLineNo">236</span>    List&lt;Receiver&gt; getReceivers();<a name="line.236"></a>
+<span class="sourceLineNo">237</span><a name="line.237"></a>
+<span class="sourceLineNo">238</span><a name="line.238"></a>
+<span class="sourceLineNo">239</span>    /**<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * Obtains a MIDI OUT connection from which the MIDI device will transmit<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * MIDI data  The returned transmitter must be closed when the application<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * has finished using it.<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     *<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * &lt;p&gt;Usually the returned transmitter implements<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * the {@code MidiDeviceTransmitter} interface.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * &lt;p&gt;Obtaining a &lt;code&gt;Transmitter&lt;/code&gt; with this method does not<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * open the device. To be able to use the device, it has to be<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * opened explicitly by calling {@link #open}. Also, closing the<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * &lt;code&gt;Transmitter&lt;/code&gt; does not close the device. It has to be<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * closed explicitly by calling {@link #close}.<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     *<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * @return a MIDI OUT transmitter for the device.<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * @throws MidiUnavailableException thrown if a transmitter is not available<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * due to resource restrictions<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @see Transmitter#close()<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     */<a name="line.257"></a>
+<span class="sourceLineNo">258</span>    public Transmitter getTransmitter() throws MidiUnavailableException;<a name="line.258"></a>
+<span class="sourceLineNo">259</span><a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>    /**<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * Returns all currently active, non-closed transmitters<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * connected with this MidiDevice.<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * A transmitter can be removed<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * from the device by closing it.<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     *<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * &lt;p&gt;Usually the returned transmitters implement<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * the {@code MidiDeviceTransmitter} interface.<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     *<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * @return an unmodifiable list of the open transmitters<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * @since 1.5<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     */<a name="line.272"></a>
+<span class="sourceLineNo">273</span>    List&lt;Transmitter&gt; getTransmitters();<a name="line.273"></a>
+<span class="sourceLineNo">274</span><a name="line.274"></a>
+<span class="sourceLineNo">275</span><a name="line.275"></a>
+<span class="sourceLineNo">276</span><a name="line.276"></a>
+<span class="sourceLineNo">277</span>    /**<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * A &lt;code&gt;MidiDevice.Info&lt;/code&gt; object contains assorted<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * data about a &lt;code&gt;{@link MidiDevice}&lt;/code&gt;, including its<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * name, the company who created it, and descriptive text.<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     *<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * @see MidiDevice#getDeviceInfo<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     */<a name="line.283"></a>
+<span class="sourceLineNo">284</span>    public static class Info {<a name="line.284"></a>
+<span class="sourceLineNo">285</span><a name="line.285"></a>
+<span class="sourceLineNo">286</span>        /**<a name="line.286"></a>
+<span class="sourceLineNo">287</span>         * The device's name.<a name="line.287"></a>
+<span class="sourceLineNo">288</span>         */<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        private String name;<a name="line.289"></a>
+<span class="sourceLineNo">290</span><a name="line.290"></a>
+<span class="sourceLineNo">291</span>        /**<a name="line.291"></a>
+<span class="sourceLineNo">292</span>         * The name of the company who provides the device.<a name="line.292"></a>
+<span class="sourceLineNo">293</span>         */<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        private String vendor;<a name="line.294"></a>
+<span class="sourceLineNo">295</span><a name="line.295"></a>
+<span class="sourceLineNo">296</span>        /**<a name="line.296"></a>
+<span class="sourceLineNo">297</span>         * A description of the device.<a name="line.297"></a>
+<span class="sourceLineNo">298</span>         */<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        private String description;<a name="line.299"></a>
+<span class="sourceLineNo">300</span><a name="line.300"></a>
+<span class="sourceLineNo">301</span>        /**<a name="line.301"></a>
+<span class="sourceLineNo">302</span>         * Device version.<a name="line.302"></a>
+<span class="sourceLineNo">303</span>         */<a name="line.303"></a>
+<span class="sourceLineNo">304</span>        private String version;<a name="line.304"></a>
+<span class="sourceLineNo">305</span><a name="line.305"></a>
+<span class="sourceLineNo">306</span><a name="line.306"></a>
+<span class="sourceLineNo">307</span>        /**<a name="line.307"></a>
+<span class="sourceLineNo">308</span>         * Constructs a device info object.<a name="line.308"></a>
+<span class="sourceLineNo">309</span>         *<a name="line.309"></a>
+<span class="sourceLineNo">310</span>         * @param name the name of the device<a name="line.310"></a>
+<span class="sourceLineNo">311</span>         * @param vendor the name of the company who provides the device<a name="line.311"></a>
+<span class="sourceLineNo">312</span>         * @param description a description of the device<a name="line.312"></a>
+<span class="sourceLineNo">313</span>         * @param version version information for the device<a name="line.313"></a>
+<span class="sourceLineNo">314</span>         */<a name="line.314"></a>
+<span class="sourceLineNo">315</span>        protected Info(String name, String vendor, String description, String version) {<a name="line.315"></a>
+<span class="sourceLineNo">316</span><a name="line.316"></a>
+<span class="sourceLineNo">317</span>            this.name = name;<a name="line.317"></a>
+<span class="sourceLineNo">318</span>            this.vendor = vendor;<a name="line.318"></a>
+<span class="sourceLineNo">319</span>            this.description = description;<a name="line.319"></a>
+<span class="sourceLineNo">320</span>            this.version = version;<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        }<a name="line.321"></a>
+<span class="sourceLineNo">322</span><a name="line.322"></a>
+<span class="sourceLineNo">323</span><a name="line.323"></a>
+<span class="sourceLineNo">324</span>        /**<a name="line.324"></a>
+<span class="sourceLineNo">325</span>         * Reports whether two objects are equal.<a name="line.325"></a>
+<span class="sourceLineNo">326</span>         * Returns &lt;code&gt;true&lt;/code&gt; if the objects are identical.<a name="line.326"></a>
+<span class="sourceLineNo">327</span>         * @param obj the reference object with which to compare this<a name="line.327"></a>
+<span class="sourceLineNo">328</span>         * object<a name="line.328"></a>
+<span class="sourceLineNo">329</span>         * @return &lt;code&gt;true&lt;/code&gt; if this object is the same as the<a name="line.329"></a>
+<span class="sourceLineNo">330</span>         * &lt;code&gt;obj&lt;/code&gt; argument; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.330"></a>
+<span class="sourceLineNo">331</span>         */<a name="line.331"></a>
+<span class="sourceLineNo">332</span>        public final boolean equals(Object obj) {<a name="line.332"></a>
+<span class="sourceLineNo">333</span>            return super.equals(obj);<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        }<a name="line.334"></a>
+<span class="sourceLineNo">335</span><a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span>        /**<a name="line.337"></a>
+<span class="sourceLineNo">338</span>         * Finalizes the hashcode method.<a name="line.338"></a>
+<span class="sourceLineNo">339</span>         */<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        public final int hashCode() {<a name="line.340"></a>
+<span class="sourceLineNo">341</span>            return super.hashCode();<a name="line.341"></a>
+<span class="sourceLineNo">342</span>        }<a name="line.342"></a>
+<span class="sourceLineNo">343</span><a name="line.343"></a>
+<span class="sourceLineNo">344</span><a name="line.344"></a>
+<span class="sourceLineNo">345</span>        /**<a name="line.345"></a>
+<span class="sourceLineNo">346</span>         * Obtains the name of the device.<a name="line.346"></a>
+<span class="sourceLineNo">347</span>         *<a name="line.347"></a>
+<span class="sourceLineNo">348</span>         * @return a string containing the device's name<a name="line.348"></a>
+<span class="sourceLineNo">349</span>         */<a name="line.349"></a>
+<span class="sourceLineNo">350</span>        public final String getName() {<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            return name;<a name="line.351"></a>
+<span class="sourceLineNo">352</span>        }<a name="line.352"></a>
+<span class="sourceLineNo">353</span><a name="line.353"></a>
+<span class="sourceLineNo">354</span><a name="line.354"></a>
+<span class="sourceLineNo">355</span>        /**<a name="line.355"></a>
+<span class="sourceLineNo">356</span>         * Obtains the name of the company who supplies the device.<a name="line.356"></a>
+<span class="sourceLineNo">357</span>         * @return device the vendor's name<a name="line.357"></a>
+<span class="sourceLineNo">358</span>         */<a name="line.358"></a>
+<span class="sourceLineNo">359</span>        public final String getVendor() {<a name="line.359"></a>
+<span class="sourceLineNo">360</span>            return vendor;<a name="line.360"></a>
+<span class="sourceLineNo">361</span>        }<a name="line.361"></a>
+<span class="sourceLineNo">362</span><a name="line.362"></a>
+<span class="sourceLineNo">363</span><a name="line.363"></a>
+<span class="sourceLineNo">364</span>        /**<a name="line.364"></a>
+<span class="sourceLineNo">365</span>         * Obtains the description of the device.<a name="line.365"></a>
+<span class="sourceLineNo">366</span>         * @return a description of the device<a name="line.366"></a>
+<span class="sourceLineNo">367</span>         */<a name="line.367"></a>
+<span class="sourceLineNo">368</span>        public final String getDescription() {<a name="line.368"></a>
+<span class="sourceLineNo">369</span>            return description;<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        }<a name="line.370"></a>
+<span class="sourceLineNo">371</span><a name="line.371"></a>
+<span class="sourceLineNo">372</span><a name="line.372"></a>
+<span class="sourceLineNo">373</span>        /**<a name="line.373"></a>
+<span class="sourceLineNo">374</span>         * Obtains the version of the device.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>         * @return textual version information for the device.<a name="line.375"></a>
+<span class="sourceLineNo">376</span>         */<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        public final String getVersion() {<a name="line.377"></a>
+<span class="sourceLineNo">378</span>            return version;<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        }<a name="line.379"></a>
+<span class="sourceLineNo">380</span><a name="line.380"></a>
+<span class="sourceLineNo">381</span><a name="line.381"></a>
+<span class="sourceLineNo">382</span>        /**<a name="line.382"></a>
+<span class="sourceLineNo">383</span>         * Provides a string representation of the device information.<a name="line.383"></a>
+<span class="sourceLineNo">384</span><a name="line.384"></a>
+<span class="sourceLineNo">385</span>         * @return a description of the info object<a name="line.385"></a>
+<span class="sourceLineNo">386</span>         */<a name="line.386"></a>
+<span class="sourceLineNo">387</span>        public final String toString() {<a name="line.387"></a>
+<span class="sourceLineNo">388</span>            return name;<a name="line.388"></a>
+<span class="sourceLineNo">389</span>        }<a name="line.389"></a>
+<span class="sourceLineNo">390</span>    } // class Info<a name="line.390"></a>
+<span class="sourceLineNo">391</span><a name="line.391"></a>
+<span class="sourceLineNo">392</span><a name="line.392"></a>
+<span class="sourceLineNo">393</span>}<a name="line.393"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

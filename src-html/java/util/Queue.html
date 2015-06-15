@@ -1,0 +1,290 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> *<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> */<a name="line.23"></a>
+<span class="sourceLineNo">024</span><a name="line.24"></a>
+<span class="sourceLineNo">025</span>/*<a name="line.25"></a>
+<span class="sourceLineNo">026</span> *<a name="line.26"></a>
+<span class="sourceLineNo">027</span> *<a name="line.27"></a>
+<span class="sourceLineNo">028</span> *<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * Written by Doug Lea with assistance from members of JCP JSR-166<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * Expert Group and released to the public domain, as explained at<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * http://creativecommons.org/publicdomain/zero/1.0/<a name="line.33"></a>
+<span class="sourceLineNo">034</span> */<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>package java.util;<a name="line.36"></a>
+<span class="sourceLineNo">037</span><a name="line.37"></a>
+<span class="sourceLineNo">038</span>/**<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * A collection designed for holding elements prior to processing.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * Besides basic {@link java.util.Collection Collection} operations,<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * queues provide additional insertion, extraction, and inspection<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * operations.  Each of these methods exists in two forms: one throws<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * an exception if the operation fails, the other returns a special<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * value (either &lt;tt&gt;null&lt;/tt&gt; or &lt;tt&gt;false&lt;/tt&gt;, depending on the<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * operation).  The latter form of the insert operation is designed<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * specifically for use with capacity-restricted &lt;tt&gt;Queue&lt;/tt&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * implementations; in most implementations, insert operations cannot<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * fail.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;p&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;table BORDER CELLPADDING=3 CELLSPACING=1&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *  &lt;tr&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *    &lt;td&gt;&lt;/td&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *    &lt;td ALIGN=CENTER&gt;&lt;em&gt;Throws exception&lt;/em&gt;&lt;/td&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *    &lt;td ALIGN=CENTER&gt;&lt;em&gt;Returns special value&lt;/em&gt;&lt;/td&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *  &lt;/tr&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *  &lt;tr&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *    &lt;td&gt;&lt;b&gt;Insert&lt;/b&gt;&lt;/td&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *    &lt;td&gt;{@link #add add(e)}&lt;/td&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *    &lt;td&gt;{@link #offer offer(e)}&lt;/td&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *  &lt;/tr&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *  &lt;tr&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *    &lt;td&gt;&lt;b&gt;Remove&lt;/b&gt;&lt;/td&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *    &lt;td&gt;{@link #remove remove()}&lt;/td&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *    &lt;td&gt;{@link #poll poll()}&lt;/td&gt;<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *  &lt;/tr&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *  &lt;tr&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *    &lt;td&gt;&lt;b&gt;Examine&lt;/b&gt;&lt;/td&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *    &lt;td&gt;{@link #element element()}&lt;/td&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *    &lt;td&gt;{@link #peek peek()}&lt;/td&gt;<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *  &lt;/tr&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;/table&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;p&gt;Queues typically, but do not necessarily, order elements in a<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * FIFO (first-in-first-out) manner.  Among the exceptions are<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * priority queues, which order elements according to a supplied<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * comparator, or the elements' natural ordering, and LIFO queues (or<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * stacks) which order the elements LIFO (last-in-first-out).<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * Whatever the ordering used, the &lt;em&gt;head&lt;/em&gt; of the queue is that<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * element which would be removed by a call to {@link #remove() } or<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * {@link #poll()}.  In a FIFO queue, all new elements are inserted at<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * the &lt;em&gt; tail&lt;/em&gt; of the queue. Other kinds of queues may use<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * different placement rules.  Every &lt;tt&gt;Queue&lt;/tt&gt; implementation<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * must specify its ordering properties.<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;p&gt;The {@link #offer offer} method inserts an element if possible,<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * otherwise returning &lt;tt&gt;false&lt;/tt&gt;.  This differs from the {@link<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * java.util.Collection#add Collection.add} method, which can fail to<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * add an element only by throwing an unchecked exception.  The<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * &lt;tt&gt;offer&lt;/tt&gt; method is designed for use when failure is a normal,<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * rather than exceptional occurrence, for example, in fixed-capacity<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * (or &amp;quot;bounded&amp;quot;) queues.<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;p&gt;The {@link #remove()} and {@link #poll()} methods remove and<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * return the head of the queue.<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * Exactly which element is removed from the queue is a<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * function of the queue's ordering policy, which differs from<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * implementation to implementation. The &lt;tt&gt;remove()&lt;/tt&gt; and<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * &lt;tt&gt;poll()&lt;/tt&gt; methods differ only in their behavior when the<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * queue is empty: the &lt;tt&gt;remove()&lt;/tt&gt; method throws an exception,<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * while the &lt;tt&gt;poll()&lt;/tt&gt; method returns &lt;tt&gt;null&lt;/tt&gt;.<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * &lt;p&gt;The {@link #element()} and {@link #peek()} methods return, but do<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * not remove, the head of the queue.<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * &lt;p&gt;The &lt;tt&gt;Queue&lt;/tt&gt; interface does not define the &lt;i&gt;blocking queue<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * methods&lt;/i&gt;, which are common in concurrent programming.  These methods,<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * which wait for elements to appear or for space to become available, are<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * defined in the {@link java.util.concurrent.BlockingQueue} interface, which<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * extends this interface.<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * &lt;p&gt;&lt;tt&gt;Queue&lt;/tt&gt; implementations generally do not allow insertion<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * of &lt;tt&gt;null&lt;/tt&gt; elements, although some implementations, such as<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * {@link LinkedList}, do not prohibit insertion of &lt;tt&gt;null&lt;/tt&gt;.<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * Even in the implementations that permit it, &lt;tt&gt;null&lt;/tt&gt; should<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * not be inserted into a &lt;tt&gt;Queue&lt;/tt&gt;, as &lt;tt&gt;null&lt;/tt&gt; is also<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * used as a special return value by the &lt;tt&gt;poll&lt;/tt&gt; method to<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * indicate that the queue contains no elements.<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * &lt;p&gt;&lt;tt&gt;Queue&lt;/tt&gt; implementations generally do not define<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * element-based versions of methods &lt;tt&gt;equals&lt;/tt&gt; and<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * &lt;tt&gt;hashCode&lt;/tt&gt; but instead inherit the identity based versions<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * from class &lt;tt&gt;Object&lt;/tt&gt;, because element-based equality is not<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * always well-defined for queues with the same elements but different<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * ordering properties.<a name="line.125"></a>
+<span class="sourceLineNo">126</span> *<a name="line.126"></a>
+<span class="sourceLineNo">127</span> *<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * &lt;p&gt;This interface is a member of the<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * &lt;a href="{@docRoot}/../technotes/guides/collections/index.html"&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * Java Collections Framework&lt;/a&gt;.<a name="line.130"></a>
+<span class="sourceLineNo">131</span> *<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * @see java.util.Collection<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * @see LinkedList<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * @see PriorityQueue<a name="line.134"></a>
+<span class="sourceLineNo">135</span> * @see java.util.concurrent.LinkedBlockingQueue<a name="line.135"></a>
+<span class="sourceLineNo">136</span> * @see java.util.concurrent.BlockingQueue<a name="line.136"></a>
+<span class="sourceLineNo">137</span> * @see java.util.concurrent.ArrayBlockingQueue<a name="line.137"></a>
+<span class="sourceLineNo">138</span> * @see java.util.concurrent.LinkedBlockingQueue<a name="line.138"></a>
+<span class="sourceLineNo">139</span> * @see java.util.concurrent.PriorityBlockingQueue<a name="line.139"></a>
+<span class="sourceLineNo">140</span> * @since 1.5<a name="line.140"></a>
+<span class="sourceLineNo">141</span> * @author Doug Lea<a name="line.141"></a>
+<span class="sourceLineNo">142</span> * @param &lt;E&gt; the type of elements held in this collection<a name="line.142"></a>
+<span class="sourceLineNo">143</span> */<a name="line.143"></a>
+<span class="sourceLineNo">144</span>public interface Queue&lt;E&gt; extends Collection&lt;E&gt; {<a name="line.144"></a>
+<span class="sourceLineNo">145</span>    /**<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * Inserts the specified element into this queue if it is possible to do so<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * immediately without violating capacity restrictions, returning<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * &lt;tt&gt;true&lt;/tt&gt; upon success and throwing an &lt;tt&gt;IllegalStateException&lt;/tt&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * if no space is currently available.<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @param e the element to add<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * @return &lt;tt&gt;true&lt;/tt&gt; (as specified by {@link Collection#add})<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @throws IllegalStateException if the element cannot be added at this<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *         time due to capacity restrictions<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @throws ClassCastException if the class of the specified element<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *         prevents it from being added to this queue<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * @throws NullPointerException if the specified element is null and<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *         this queue does not permit null elements<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * @throws IllegalArgumentException if some property of this element<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *         prevents it from being added to this queue<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     */<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    boolean add(E e);<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>    /**<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * Inserts the specified element into this queue if it is possible to do<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * so immediately without violating capacity restrictions.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * When using a capacity-restricted queue, this method is generally<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * preferable to {@link #add}, which can fail to insert an element only<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * by throwing an exception.<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * @param e the element to add<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if the element was added to this queue, else<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     *         &lt;tt&gt;false&lt;/tt&gt;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * @throws ClassCastException if the class of the specified element<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *         prevents it from being added to this queue<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @throws NullPointerException if the specified element is null and<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *         this queue does not permit null elements<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * @throws IllegalArgumentException if some property of this element<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *         prevents it from being added to this queue<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    boolean offer(E e);<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Retrieves and removes the head of this queue.  This method differs<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * from {@link #poll poll} only in that it throws an exception if this<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * queue is empty.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     *<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * @return the head of this queue<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * @throws NoSuchElementException if this queue is empty<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    E remove();<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>    /**<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * Retrieves and removes the head of this queue,<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * or returns &lt;tt&gt;null&lt;/tt&gt; if this queue is empty.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     *<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @return the head of this queue, or &lt;tt&gt;null&lt;/tt&gt; if this queue is empty<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     */<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    E poll();<a name="line.199"></a>
+<span class="sourceLineNo">200</span><a name="line.200"></a>
+<span class="sourceLineNo">201</span>    /**<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * Retrieves, but does not remove, the head of this queue.  This method<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * differs from {@link #peek peek} only in that it throws an exception<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * if this queue is empty.<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     *<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * @return the head of this queue<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * @throws NoSuchElementException if this queue is empty<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     */<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    E element();<a name="line.209"></a>
+<span class="sourceLineNo">210</span><a name="line.210"></a>
+<span class="sourceLineNo">211</span>    /**<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * Retrieves, but does not remove, the head of this queue,<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * or returns &lt;tt&gt;null&lt;/tt&gt; if this queue is empty.<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     *<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * @return the head of this queue, or &lt;tt&gt;null&lt;/tt&gt; if this queue is empty<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     */<a name="line.216"></a>
+<span class="sourceLineNo">217</span>    E peek();<a name="line.217"></a>
+<span class="sourceLineNo">218</span>}<a name="line.218"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

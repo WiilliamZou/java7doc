@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.nio.channels;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.nio.ByteBuffer;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.IOException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>/**<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * A byte channel that maintains a current &lt;i&gt;position&lt;/i&gt; and allows the<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * position to be changed.<a name="line.33"></a>
+<span class="sourceLineNo">034</span> *<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;p&gt; A seekable byte channel is connected to an entity, typically a file,<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * that contains a variable-length sequence of bytes that can be read and<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * written. The current position can be {@link #position() &lt;i&gt;queried&lt;/i&gt;} and<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * {@link #position(long) &lt;i&gt;modified&lt;/i&gt;}. The channel also provides access to<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * the current &lt;i&gt;size&lt;/i&gt; of the entity to which the channel is connected. The<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * size increases when bytes are written beyond its current size; the size<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * decreases when it is {@link #truncate &lt;i&gt;truncated&lt;/i&gt;}.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;p&gt; The {@link #position(long) position} and {@link #truncate truncate} methods<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * which do not otherwise have a value to return are specified to return the<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * channel upon which they are invoked. This allows method invocations to be<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * chained. Implementations of this interface should specialize the return type<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * so that method invocations on the implementation class can be chained.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * @since 1.7<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * @see java.nio.file.Files#newByteChannel<a name="line.50"></a>
+<span class="sourceLineNo">051</span> */<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>public interface SeekableByteChannel<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    extends ByteChannel<a name="line.54"></a>
+<span class="sourceLineNo">055</span>{<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    /**<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * Reads a sequence of bytes from this channel into the given buffer.<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     *<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * &lt;p&gt; Bytes are read starting at this channel's current position, and<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * then the position is updated with the number of bytes actually read.<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * Otherwise this method behaves exactly as specified in the {@link<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * ReadableByteChannel} interface.<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     */<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    @Override<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    int read(ByteBuffer dst) throws IOException;<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>    /**<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * Writes a sequence of bytes to this channel from the given buffer.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     *<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * &lt;p&gt; Bytes are written starting at this channel's current position, unless<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * the channel is connected to an entity such as a file that is opened with<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * the {@link java.nio.file.StandardOpenOption#APPEND APPEND} option, in<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * which case the position is first advanced to the end. The entity to which<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * the channel is connected is grown, if necessary, to accommodate the<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * written bytes, and then the position is updated with the number of bytes<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * actually written. Otherwise this method behaves exactly as specified by<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * the {@link WritableByteChannel} interface.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     */<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    @Override<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    int write(ByteBuffer src) throws IOException;<a name="line.80"></a>
+<span class="sourceLineNo">081</span><a name="line.81"></a>
+<span class="sourceLineNo">082</span>    /**<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * Returns this channel's position.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     *<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * @return  This channel's position,<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     *          a non-negative integer counting the number of bytes<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     *          from the beginning of the entity to the current position<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @throws  ClosedChannelException<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *          If this channel is closed<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @throws  IOException<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *          If some other I/O error occurs<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     */<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    long position() throws IOException;<a name="line.94"></a>
+<span class="sourceLineNo">095</span><a name="line.95"></a>
+<span class="sourceLineNo">096</span>    /**<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * Sets this channel's position.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * &lt;p&gt; Setting the position to a value that is greater than the current size<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * is legal but does not change the size of the entity.  A later attempt to<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * read bytes at such a position will immediately return an end-of-file<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * indication.  A later attempt to write bytes at such a position will cause<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * the entity to grow to accommodate the new bytes; the values of any bytes<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * between the previous end-of-file and the newly-written bytes are<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * unspecified.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     *<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * &lt;p&gt; Setting the channel's position is not recommended when connected to<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * an entity, typically a file, that is opened with the {@link<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * java.nio.file.StandardOpenOption#APPEND APPEND} option. When opened for<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * append, the position is first advanced to the end before writing.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @param  newPosition<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *         The new position, a non-negative integer counting<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *         the number of bytes from the beginning of the entity<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * @return  This channel<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     *<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * @throws  ClosedChannelException<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     *          If this channel is closed<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * @throws  IllegalArgumentException<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *          If the new position is negative<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @throws  IOException<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *          If some other I/O error occurs<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     */<a name="line.124"></a>
+<span class="sourceLineNo">125</span>    SeekableByteChannel position(long newPosition) throws IOException;<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>    /**<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * Returns the current size of entity to which this channel is connected.<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     *<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * @return  The current size, measured in bytes<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @throws  ClosedChannelException<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *          If this channel is closed<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * @throws  IOException<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *          If some other I/O error occurs<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     */<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    long size() throws IOException;<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    /**<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * Truncates the entity, to which this channel is connected, to the given<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * size.<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * &lt;p&gt; If the given size is less than the current size then the entity is<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * truncated, discarding any bytes beyond the new end. If the given size is<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * greater than or equal to the current size then the entity is not modified.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * In either case, if the current position is greater than the given size<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * then it is set to that size.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     *<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * &lt;p&gt; An implementation of this interface may prohibit truncation when<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * connected to an entity, typically a file, opened with the {@link<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * java.nio.file.StandardOpenOption#APPEND APPEND} option.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @param  size<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *         The new size, a non-negative byte count<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     *<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * @return  This channel<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * @throws  NonWritableChannelException<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *          If this channel was not opened for writing<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @throws  ClosedChannelException<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *          If this channel is closed<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @throws  IllegalArgumentException<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     *          If the new size is negative<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @throws  IOException<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     *          If some other I/O error occurs<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     */<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    SeekableByteChannel truncate(long size) throws IOException;<a name="line.167"></a>
+<span class="sourceLineNo">168</span>}<a name="line.168"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

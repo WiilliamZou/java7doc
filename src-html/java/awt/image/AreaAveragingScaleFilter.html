@@ -1,0 +1,353 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1996, 2002, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt.image;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.image.ImageConsumer;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.image.ColorModel;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.Hashtable;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.Rectangle;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>/**<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * An ImageFilter class for scaling images using a simple area averaging<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * algorithm that produces smoother results than the nearest neighbor<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * algorithm.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;This class extends the basic ImageFilter Class to scale an existing<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * image and provide a source for a new image containing the resampled<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * image.  The pixels in the source image are blended to produce pixels<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * for an image of the specified size.  The blending process is analogous<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * to scaling up the source image to a multiple of the destination size<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * using pixel replication and then scaling it back down to the destination<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * size by simply averaging all the pixels in the supersized image that<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * fall within a given pixel of the destination image.  If the data from<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * the source is not delivered in TopDownLeftRight order then the filter<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * will back off to a simple pixel replication behavior and utilize the<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * requestTopDownLeftRightResend() method to refilter the pixels in a<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * better way at the end.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;p&gt;It is meant to be used in conjunction with a FilteredImageSource<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * object to produce scaled versions of existing images.  Due to<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * implementation dependencies, there may be differences in pixel values<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * of an image filtered on different platforms.<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * @see FilteredImageSource<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * @see ReplicateScaleFilter<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * @see ImageFilter<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * @author      Jim Graham<a name="line.58"></a>
+<span class="sourceLineNo">059</span> */<a name="line.59"></a>
+<span class="sourceLineNo">060</span>public class AreaAveragingScaleFilter extends ReplicateScaleFilter {<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    private static final ColorModel rgbmodel = ColorModel.getRGBdefault();<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    private static final int neededHints = (TOPDOWNLEFTRIGHT<a name="line.62"></a>
+<span class="sourceLineNo">063</span>                                            | COMPLETESCANLINES);<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>    private boolean passthrough;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    private float reds[], greens[], blues[], alphas[];<a name="line.66"></a>
+<span class="sourceLineNo">067</span>    private int savedy;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    private int savedyrem;<a name="line.68"></a>
+<span class="sourceLineNo">069</span><a name="line.69"></a>
+<span class="sourceLineNo">070</span>    /**<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * Constructs an AreaAveragingScaleFilter that scales the pixels from<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * its source Image as specified by the width and height parameters.<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * @param width the target width to scale the image<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * @param height the target height to scale the image<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     */<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    public AreaAveragingScaleFilter(int width, int height) {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        super(width, height);<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    }<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>    /**<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * Detect if the data is being delivered with the necessary hints<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * to allow the averaging algorithm to do its work.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * &lt;p&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * Note: This method is intended to be called by the<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * &lt;code&gt;ImageProducer&lt;/code&gt; of the &lt;code&gt;Image&lt;/code&gt; whose<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * pixels are being filtered.  Developers using<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * this class to filter pixels from an image should avoid calling<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * this method directly since that operation could interfere<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * with the filtering operation.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @see ImageConsumer#setHints<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     */<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    public void setHints(int hints) {<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        passthrough = ((hints &amp; neededHints) != neededHints);<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        super.setHints(hints);<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    }<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>    private void makeAccumBuffers() {<a name="line.97"></a>
+<span class="sourceLineNo">098</span>        reds = new float[destWidth];<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        greens = new float[destWidth];<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        blues = new float[destWidth];<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        alphas = new float[destWidth];<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    }<a name="line.102"></a>
+<span class="sourceLineNo">103</span><a name="line.103"></a>
+<span class="sourceLineNo">104</span>    private int[] calcRow() {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        float origmult = ((float) srcWidth) * srcHeight;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        if (outpixbuf == null || !(outpixbuf instanceof int[])) {<a name="line.106"></a>
+<span class="sourceLineNo">107</span>            outpixbuf = new int[destWidth];<a name="line.107"></a>
+<span class="sourceLineNo">108</span>        }<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        int[] outpix = (int[]) outpixbuf;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        for (int x = 0; x &lt; destWidth; x++) {<a name="line.110"></a>
+<span class="sourceLineNo">111</span>            float mult = origmult;<a name="line.111"></a>
+<span class="sourceLineNo">112</span>            int a = Math.round(alphas[x] / mult);<a name="line.112"></a>
+<span class="sourceLineNo">113</span>            if (a &lt;= 0) {<a name="line.113"></a>
+<span class="sourceLineNo">114</span>                a = 0;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>            } else if (a &gt;= 255) {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>                a = 255;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>            } else {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>                // un-premultiply the components (by modifying mult here, we<a name="line.118"></a>
+<span class="sourceLineNo">119</span>                // are effectively doing the divide by mult and divide by<a name="line.119"></a>
+<span class="sourceLineNo">120</span>                // alpha in the same step)<a name="line.120"></a>
+<span class="sourceLineNo">121</span>                mult = alphas[x] / 255;<a name="line.121"></a>
+<span class="sourceLineNo">122</span>            }<a name="line.122"></a>
+<span class="sourceLineNo">123</span>            int r = Math.round(reds[x] / mult);<a name="line.123"></a>
+<span class="sourceLineNo">124</span>            int g = Math.round(greens[x] / mult);<a name="line.124"></a>
+<span class="sourceLineNo">125</span>            int b = Math.round(blues[x] / mult);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>            if (r &lt; 0) {r = 0;} else if (r &gt; 255) {r = 255;}<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            if (g &lt; 0) {g = 0;} else if (g &gt; 255) {g = 255;}<a name="line.127"></a>
+<span class="sourceLineNo">128</span>            if (b &lt; 0) {b = 0;} else if (b &gt; 255) {b = 255;}<a name="line.128"></a>
+<span class="sourceLineNo">129</span>            outpix[x] = (a &lt;&lt; 24 | r &lt;&lt; 16 | g &lt;&lt; 8 | b);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        }<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        return outpix;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    }<a name="line.132"></a>
+<span class="sourceLineNo">133</span><a name="line.133"></a>
+<span class="sourceLineNo">134</span>    private void accumPixels(int x, int y, int w, int h,<a name="line.134"></a>
+<span class="sourceLineNo">135</span>                             ColorModel model, Object pixels, int off,<a name="line.135"></a>
+<span class="sourceLineNo">136</span>                             int scansize) {<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        if (reds == null) {<a name="line.137"></a>
+<span class="sourceLineNo">138</span>            makeAccumBuffers();<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        }<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        int sy = y;<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        int syrem = destHeight;<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        int dy, dyrem;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        if (sy == 0) {<a name="line.143"></a>
+<span class="sourceLineNo">144</span>            dy = 0;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>            dyrem = 0;<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        } else {<a name="line.146"></a>
+<span class="sourceLineNo">147</span>            dy = savedy;<a name="line.147"></a>
+<span class="sourceLineNo">148</span>            dyrem = savedyrem;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        }<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        while (sy &lt; y + h) {<a name="line.150"></a>
+<span class="sourceLineNo">151</span>            int amty;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>            if (dyrem == 0) {<a name="line.152"></a>
+<span class="sourceLineNo">153</span>                for (int i = 0; i &lt; destWidth; i++) {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>                    alphas[i] = reds[i] = greens[i] = blues[i] = 0f;<a name="line.154"></a>
+<span class="sourceLineNo">155</span>                }<a name="line.155"></a>
+<span class="sourceLineNo">156</span>                dyrem = srcHeight;<a name="line.156"></a>
+<span class="sourceLineNo">157</span>            }<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            if (syrem &lt; dyrem) {<a name="line.158"></a>
+<span class="sourceLineNo">159</span>                amty = syrem;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            } else {<a name="line.160"></a>
+<span class="sourceLineNo">161</span>                amty = dyrem;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            }<a name="line.162"></a>
+<span class="sourceLineNo">163</span>            int sx = 0;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            int dx = 0;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>            int sxrem = 0;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            int dxrem = srcWidth;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            float a = 0f, r = 0f, g = 0f, b = 0f;<a name="line.167"></a>
+<span class="sourceLineNo">168</span>            while (sx &lt; w) {<a name="line.168"></a>
+<span class="sourceLineNo">169</span>                if (sxrem == 0) {<a name="line.169"></a>
+<span class="sourceLineNo">170</span>                    sxrem = destWidth;<a name="line.170"></a>
+<span class="sourceLineNo">171</span>                    int rgb;<a name="line.171"></a>
+<span class="sourceLineNo">172</span>                    if (pixels instanceof byte[]) {<a name="line.172"></a>
+<span class="sourceLineNo">173</span>                        rgb = ((byte[]) pixels)[off + sx] &amp; 0xff;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>                    } else {<a name="line.174"></a>
+<span class="sourceLineNo">175</span>                        rgb = ((int[]) pixels)[off + sx];<a name="line.175"></a>
+<span class="sourceLineNo">176</span>                    }<a name="line.176"></a>
+<span class="sourceLineNo">177</span>                    // getRGB() always returns non-premultiplied components<a name="line.177"></a>
+<span class="sourceLineNo">178</span>                    rgb = model.getRGB(rgb);<a name="line.178"></a>
+<span class="sourceLineNo">179</span>                    a = rgb &gt;&gt;&gt; 24;<a name="line.179"></a>
+<span class="sourceLineNo">180</span>                    r = (rgb &gt;&gt; 16) &amp; 0xff;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>                    g = (rgb &gt;&gt;  8) &amp; 0xff;<a name="line.181"></a>
+<span class="sourceLineNo">182</span>                    b = rgb &amp; 0xff;<a name="line.182"></a>
+<span class="sourceLineNo">183</span>                    // premultiply the components if necessary<a name="line.183"></a>
+<span class="sourceLineNo">184</span>                    if (a != 255.0f) {<a name="line.184"></a>
+<span class="sourceLineNo">185</span>                        float ascale = a / 255.0f;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>                        r *= ascale;<a name="line.186"></a>
+<span class="sourceLineNo">187</span>                        g *= ascale;<a name="line.187"></a>
+<span class="sourceLineNo">188</span>                        b *= ascale;<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                    }<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                }<a name="line.190"></a>
+<span class="sourceLineNo">191</span>                int amtx;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>                if (sxrem &lt; dxrem) {<a name="line.192"></a>
+<span class="sourceLineNo">193</span>                    amtx = sxrem;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>                } else {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>                    amtx = dxrem;<a name="line.195"></a>
+<span class="sourceLineNo">196</span>                }<a name="line.196"></a>
+<span class="sourceLineNo">197</span>                float mult = ((float) amtx) * amty;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>                alphas[dx] += mult * a;<a name="line.198"></a>
+<span class="sourceLineNo">199</span>                reds[dx] += mult * r;<a name="line.199"></a>
+<span class="sourceLineNo">200</span>                greens[dx] += mult * g;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>                blues[dx] += mult * b;<a name="line.201"></a>
+<span class="sourceLineNo">202</span>                if ((sxrem -= amtx) == 0) {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>                    sx++;<a name="line.203"></a>
+<span class="sourceLineNo">204</span>                }<a name="line.204"></a>
+<span class="sourceLineNo">205</span>                if ((dxrem -= amtx) == 0) {<a name="line.205"></a>
+<span class="sourceLineNo">206</span>                    dx++;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>                    dxrem = srcWidth;<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                }<a name="line.208"></a>
+<span class="sourceLineNo">209</span>            }<a name="line.209"></a>
+<span class="sourceLineNo">210</span>            if ((dyrem -= amty) == 0) {<a name="line.210"></a>
+<span class="sourceLineNo">211</span>                int outpix[] = calcRow();<a name="line.211"></a>
+<span class="sourceLineNo">212</span>                do {<a name="line.212"></a>
+<span class="sourceLineNo">213</span>                    consumer.setPixels(0, dy, destWidth, 1,<a name="line.213"></a>
+<span class="sourceLineNo">214</span>                                       rgbmodel, outpix, 0, destWidth);<a name="line.214"></a>
+<span class="sourceLineNo">215</span>                    dy++;<a name="line.215"></a>
+<span class="sourceLineNo">216</span>                } while ((syrem -= amty) &gt;= amty &amp;&amp; amty == srcHeight);<a name="line.216"></a>
+<span class="sourceLineNo">217</span>            } else {<a name="line.217"></a>
+<span class="sourceLineNo">218</span>                syrem -= amty;<a name="line.218"></a>
+<span class="sourceLineNo">219</span>            }<a name="line.219"></a>
+<span class="sourceLineNo">220</span>            if (syrem == 0) {<a name="line.220"></a>
+<span class="sourceLineNo">221</span>                syrem = destHeight;<a name="line.221"></a>
+<span class="sourceLineNo">222</span>                sy++;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>                off += scansize;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>            }<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        }<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        savedyrem = dyrem;<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        savedy = dy;<a name="line.227"></a>
+<span class="sourceLineNo">228</span>    }<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span>    /**<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * Combine the components for the delivered byte pixels into the<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * accumulation arrays and send on any averaged data for rows of<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * pixels that are complete.  If the correct hints were not<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * specified in the setHints call then relay the work to our<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * superclass which is capable of scaling pixels regardless of<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * the delivery hints.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * &lt;p&gt;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * Note: This method is intended to be called by the<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * &lt;code&gt;ImageProducer&lt;/code&gt; of the &lt;code&gt;Image&lt;/code&gt;<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * whose pixels are being filtered.  Developers using<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * this class to filter pixels from an image should avoid calling<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * this method directly since that operation could interfere<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * with the filtering operation.<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * @see ReplicateScaleFilter<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     */<a name="line.245"></a>
+<span class="sourceLineNo">246</span>    public void setPixels(int x, int y, int w, int h,<a name="line.246"></a>
+<span class="sourceLineNo">247</span>                          ColorModel model, byte pixels[], int off,<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                          int scansize) {<a name="line.248"></a>
+<span class="sourceLineNo">249</span>        if (passthrough) {<a name="line.249"></a>
+<span class="sourceLineNo">250</span>            super.setPixels(x, y, w, h, model, pixels, off, scansize);<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        } else {<a name="line.251"></a>
+<span class="sourceLineNo">252</span>            accumPixels(x, y, w, h, model, pixels, off, scansize);<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        }<a name="line.253"></a>
+<span class="sourceLineNo">254</span>    }<a name="line.254"></a>
+<span class="sourceLineNo">255</span><a name="line.255"></a>
+<span class="sourceLineNo">256</span>    /**<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * Combine the components for the delivered int pixels into the<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * accumulation arrays and send on any averaged data for rows of<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * pixels that are complete.  If the correct hints were not<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * specified in the setHints call then relay the work to our<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * superclass which is capable of scaling pixels regardless of<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * the delivery hints.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * &lt;p&gt;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * Note: This method is intended to be called by the<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * &lt;code&gt;ImageProducer&lt;/code&gt; of the &lt;code&gt;Image&lt;/code&gt;<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * whose pixels are being filtered.  Developers using<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * this class to filter pixels from an image should avoid calling<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * this method directly since that operation could interfere<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * with the filtering operation.<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * @see ReplicateScaleFilter<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     */<a name="line.271"></a>
+<span class="sourceLineNo">272</span>    public void setPixels(int x, int y, int w, int h,<a name="line.272"></a>
+<span class="sourceLineNo">273</span>                          ColorModel model, int pixels[], int off,<a name="line.273"></a>
+<span class="sourceLineNo">274</span>                          int scansize) {<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        if (passthrough) {<a name="line.275"></a>
+<span class="sourceLineNo">276</span>            super.setPixels(x, y, w, h, model, pixels, off, scansize);<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        } else {<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            accumPixels(x, y, w, h, model, pixels, off, scansize);<a name="line.278"></a>
+<span class="sourceLineNo">279</span>        }<a name="line.279"></a>
+<span class="sourceLineNo">280</span>    }<a name="line.280"></a>
+<span class="sourceLineNo">281</span>}<a name="line.281"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

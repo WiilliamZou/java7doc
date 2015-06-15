@@ -1,0 +1,294 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.util;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * A {@link Set} that further provides a &lt;i&gt;total ordering&lt;/i&gt; on its elements.<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * The elements are ordered using their {@linkplain Comparable natural<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * ordering}, or by a {@link Comparator} typically provided at sorted<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * set creation time.  The set's iterator will traverse the set in<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * ascending element order. Several additional operations are provided<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * to take advantage of the ordering.  (This interface is the set<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * analogue of {@link SortedMap}.)<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;All elements inserted into a sorted set must implement the &lt;tt&gt;Comparable&lt;/tt&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * interface (or be accepted by the specified comparator).  Furthermore, all<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * such elements must be &lt;i&gt;mutually comparable&lt;/i&gt;: &lt;tt&gt;e1.compareTo(e2)&lt;/tt&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * (or &lt;tt&gt;comparator.compare(e1, e2)&lt;/tt&gt;) must not throw a<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;tt&gt;ClassCastException&lt;/tt&gt; for any elements &lt;tt&gt;e1&lt;/tt&gt; and &lt;tt&gt;e2&lt;/tt&gt; in<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * the sorted set.  Attempts to violate this restriction will cause the<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * offending method or constructor invocation to throw a<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;tt&gt;ClassCastException&lt;/tt&gt;.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;p&gt;Note that the ordering maintained by a sorted set (whether or not an<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * explicit comparator is provided) must be &lt;i&gt;consistent with equals&lt;/i&gt; if<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * the sorted set is to correctly implement the &lt;tt&gt;Set&lt;/tt&gt; interface.  (See<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * the &lt;tt&gt;Comparable&lt;/tt&gt; interface or &lt;tt&gt;Comparator&lt;/tt&gt; interface for a<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * precise definition of &lt;i&gt;consistent with equals&lt;/i&gt;.)  This is so because<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * the &lt;tt&gt;Set&lt;/tt&gt; interface is defined in terms of the &lt;tt&gt;equals&lt;/tt&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * operation, but a sorted set performs all element comparisons using its<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;tt&gt;compareTo&lt;/tt&gt; (or &lt;tt&gt;compare&lt;/tt&gt;) method, so two elements that are<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * deemed equal by this method are, from the standpoint of the sorted set,<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * equal.  The behavior of a sorted set &lt;i&gt;is&lt;/i&gt; well-defined even if its<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * ordering is inconsistent with equals; it just fails to obey the general<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * contract of the &lt;tt&gt;Set&lt;/tt&gt; interface.<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * &lt;p&gt;All general-purpose sorted set implementation classes should<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * provide four "standard" constructors: 1) A void (no arguments)<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * constructor, which creates an empty sorted set sorted according to<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * the natural ordering of its elements.  2) A constructor with a<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * single argument of type &lt;tt&gt;Comparator&lt;/tt&gt;, which creates an empty<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * sorted set sorted according to the specified comparator.  3) A<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * constructor with a single argument of type &lt;tt&gt;Collection&lt;/tt&gt;,<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * which creates a new sorted set with the same elements as its<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * argument, sorted according to the natural ordering of the elements.<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * 4) A constructor with a single argument of type &lt;tt&gt;SortedSet&lt;/tt&gt;,<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * which creates a new sorted set with the same elements and the same<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * ordering as the input sorted set.  There is no way to enforce this<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * recommendation, as interfaces cannot contain constructors.<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * &lt;p&gt;Note: several methods return subsets with restricted ranges.<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * Such ranges are &lt;i&gt;half-open&lt;/i&gt;, that is, they include their low<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * endpoint but not their high endpoint (where applicable).<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * If you need a &lt;i&gt;closed range&lt;/i&gt; (which includes both endpoints), and<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * the element type allows for calculation of the successor of a given<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * value, merely request the subrange from &lt;tt&gt;lowEndpoint&lt;/tt&gt; to<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * &lt;tt&gt;successor(highEndpoint)&lt;/tt&gt;.  For example, suppose that &lt;tt&gt;s&lt;/tt&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * is a sorted set of strings.  The following idiom obtains a view<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * containing all of the strings in &lt;tt&gt;s&lt;/tt&gt; from &lt;tt&gt;low&lt;/tt&gt; to<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;tt&gt;high&lt;/tt&gt;, inclusive:&lt;pre&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *   SortedSet&amp;lt;String&amp;gt; sub = s.subSet(low, high+"\0");&lt;/pre&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * A similar technique can be used to generate an &lt;i&gt;open range&lt;/i&gt; (which<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * contains neither endpoint).  The following idiom obtains a view<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * containing all of the Strings in &lt;tt&gt;s&lt;/tt&gt; from &lt;tt&gt;low&lt;/tt&gt; to<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * &lt;tt&gt;high&lt;/tt&gt;, exclusive:&lt;pre&gt;<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *   SortedSet&amp;lt;String&amp;gt; sub = s.subSet(low+"\0", high);&lt;/pre&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;p&gt;This interface is a member of the<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * &lt;a href="{@docRoot}/../technotes/guides/collections/index.html"&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * Java Collections Framework&lt;/a&gt;.<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * @param &lt;E&gt; the type of elements maintained by this set<a name="line.95"></a>
+<span class="sourceLineNo">096</span> *<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * @author  Josh Bloch<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * @see Set<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * @see TreeSet<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * @see SortedMap<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * @see Collection<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * @see Comparable<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * @see Comparator<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * @see ClassCastException<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * @since 1.2<a name="line.105"></a>
+<span class="sourceLineNo">106</span> */<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>public interface SortedSet&lt;E&gt; extends Set&lt;E&gt; {<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    /**<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * Returns the comparator used to order the elements in this set,<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * or &lt;tt&gt;null&lt;/tt&gt; if this set uses the {@linkplain Comparable<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * natural ordering} of its elements.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @return the comparator used to order the elements in this set,<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *         or &lt;tt&gt;null&lt;/tt&gt; if this set uses the natural ordering<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *         of its elements<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     */<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    Comparator&lt;? super E&gt; comparator();<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    /**<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * Returns a view of the portion of this set whose elements range<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * from &lt;tt&gt;fromElement&lt;/tt&gt;, inclusive, to &lt;tt&gt;toElement&lt;/tt&gt;,<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * exclusive.  (If &lt;tt&gt;fromElement&lt;/tt&gt; and &lt;tt&gt;toElement&lt;/tt&gt; are<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * equal, the returned set is empty.)  The returned set is backed<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * by this set, so changes in the returned set are reflected in<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * this set, and vice-versa.  The returned set supports all<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * optional set operations that this set supports.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     *<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * &lt;p&gt;The returned set will throw an &lt;tt&gt;IllegalArgumentException&lt;/tt&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * on an attempt to insert an element outside its range.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @param fromElement low endpoint (inclusive) of the returned set<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * @param toElement high endpoint (exclusive) of the returned set<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * @return a view of the portion of this set whose elements range from<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *         &lt;tt&gt;fromElement&lt;/tt&gt;, inclusive, to &lt;tt&gt;toElement&lt;/tt&gt;, exclusive<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @throws ClassCastException if &lt;tt&gt;fromElement&lt;/tt&gt; and<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *         &lt;tt&gt;toElement&lt;/tt&gt; cannot be compared to one another using this<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     *         set's comparator (or, if the set has no comparator, using<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *         natural ordering).  Implementations may, but are not required<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *         to, throw this exception if &lt;tt&gt;fromElement&lt;/tt&gt; or<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *         &lt;tt&gt;toElement&lt;/tt&gt; cannot be compared to elements currently in<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *         the set.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @throws NullPointerException if &lt;tt&gt;fromElement&lt;/tt&gt; or<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *         &lt;tt&gt;toElement&lt;/tt&gt; is null and this set does not permit null<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *         elements<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @throws IllegalArgumentException if &lt;tt&gt;fromElement&lt;/tt&gt; is<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *         greater than &lt;tt&gt;toElement&lt;/tt&gt;; or if this set itself<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     *         has a restricted range, and &lt;tt&gt;fromElement&lt;/tt&gt; or<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *         &lt;tt&gt;toElement&lt;/tt&gt; lies outside the bounds of the range<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     */<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    SortedSet&lt;E&gt; subSet(E fromElement, E toElement);<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    /**<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * Returns a view of the portion of this set whose elements are<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * strictly less than &lt;tt&gt;toElement&lt;/tt&gt;.  The returned set is<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * backed by this set, so changes in the returned set are<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * reflected in this set, and vice-versa.  The returned set<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * supports all optional set operations that this set supports.<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * &lt;p&gt;The returned set will throw an &lt;tt&gt;IllegalArgumentException&lt;/tt&gt;<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * on an attempt to insert an element outside its range.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @param toElement high endpoint (exclusive) of the returned set<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @return a view of the portion of this set whose elements are strictly<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     *         less than &lt;tt&gt;toElement&lt;/tt&gt;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @throws ClassCastException if &lt;tt&gt;toElement&lt;/tt&gt; is not compatible<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *         with this set's comparator (or, if the set has no comparator,<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     *         if &lt;tt&gt;toElement&lt;/tt&gt; does not implement {@link Comparable}).<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *         Implementations may, but are not required to, throw this<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *         exception if &lt;tt&gt;toElement&lt;/tt&gt; cannot be compared to elements<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *         currently in the set.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @throws NullPointerException if &lt;tt&gt;toElement&lt;/tt&gt; is null and<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     *         this set does not permit null elements<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * @throws IllegalArgumentException if this set itself has a<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *         restricted range, and &lt;tt&gt;toElement&lt;/tt&gt; lies outside the<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *         bounds of the range<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     */<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    SortedSet&lt;E&gt; headSet(E toElement);<a name="line.178"></a>
+<span class="sourceLineNo">179</span><a name="line.179"></a>
+<span class="sourceLineNo">180</span>    /**<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * Returns a view of the portion of this set whose elements are<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * greater than or equal to &lt;tt&gt;fromElement&lt;/tt&gt;.  The returned<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * set is backed by this set, so changes in the returned set are<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * reflected in this set, and vice-versa.  The returned set<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * supports all optional set operations that this set supports.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;p&gt;The returned set will throw an &lt;tt&gt;IllegalArgumentException&lt;/tt&gt;<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * on an attempt to insert an element outside its range.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * @param fromElement low endpoint (inclusive) of the returned set<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * @return a view of the portion of this set whose elements are greater<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     *         than or equal to &lt;tt&gt;fromElement&lt;/tt&gt;<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * @throws ClassCastException if &lt;tt&gt;fromElement&lt;/tt&gt; is not compatible<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     *         with this set's comparator (or, if the set has no comparator,<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     *         if &lt;tt&gt;fromElement&lt;/tt&gt; does not implement {@link Comparable}).<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     *         Implementations may, but are not required to, throw this<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *         exception if &lt;tt&gt;fromElement&lt;/tt&gt; cannot be compared to elements<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     *         currently in the set.<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * @throws NullPointerException if &lt;tt&gt;fromElement&lt;/tt&gt; is null<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     *         and this set does not permit null elements<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * @throws IllegalArgumentException if this set itself has a<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     *         restricted range, and &lt;tt&gt;fromElement&lt;/tt&gt; lies outside the<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     *         bounds of the range<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     */<a name="line.204"></a>
+<span class="sourceLineNo">205</span>    SortedSet&lt;E&gt; tailSet(E fromElement);<a name="line.205"></a>
+<span class="sourceLineNo">206</span><a name="line.206"></a>
+<span class="sourceLineNo">207</span>    /**<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * Returns the first (lowest) element currently in this set.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     *<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * @return the first (lowest) element currently in this set<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * @throws NoSuchElementException if this set is empty<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     */<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    E first();<a name="line.213"></a>
+<span class="sourceLineNo">214</span><a name="line.214"></a>
+<span class="sourceLineNo">215</span>    /**<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * Returns the last (highest) element currently in this set.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     *<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * @return the last (highest) element currently in this set<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @throws NoSuchElementException if this set is empty<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     */<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    E last();<a name="line.221"></a>
+<span class="sourceLineNo">222</span>}<a name="line.222"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

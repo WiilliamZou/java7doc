@@ -1,0 +1,224 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt.dnd;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.EventListener;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.dnd.DropTargetDragEvent;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.dnd.DropTargetDropEvent;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>/**<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * The &lt;code&gt;DropTargetListener&lt;/code&gt; interface<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * is the callback interface used by the<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;code&gt;DropTarget&lt;/code&gt; class to provide<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * notification of DnD operations that involve<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * the subject &lt;code&gt;DropTarget&lt;/code&gt;. Methods of<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * this interface may be implemented to provide<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * "drag under" visual feedback to the user throughout<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * the Drag and Drop operation.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * Create a listener object by implementing the interface and then register it<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * with a &lt;code&gt;DropTarget&lt;/code&gt;. When the drag enters, moves over, or exits<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * the operable part of the drop site for that &lt;code&gt;DropTarget&lt;/code&gt;, when<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * the drop action changes, and when the drop occurs, the relevant method in<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * the listener object is invoked, and the &lt;code&gt;DropTargetEvent&lt;/code&gt; is<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * passed to it.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;p&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * The operable part of the drop site for the &lt;code&gt;DropTarget&lt;/code&gt; is<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * the part of the associated &lt;code&gt;Component&lt;/code&gt;'s geometry that is not<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * obscured by an overlapping top-level window or by another<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;code&gt;Component&lt;/code&gt; higher in the Z-order that has an associated active<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;code&gt;DropTarget&lt;/code&gt;.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;p&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * During the drag, the data associated with the current drag operation can be<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * retrieved by calling &lt;code&gt;getTransferable()&lt;/code&gt; on<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;code&gt;DropTargetDragEvent&lt;/code&gt; instances passed to the listener's<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * methods.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;p&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * Note that &lt;code&gt;getTransferable()&lt;/code&gt; on the<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * &lt;code&gt;DropTargetDragEvent&lt;/code&gt; instance should only be called within the<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * respective listener's method and all the necessary data should be retrieved<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * from the returned &lt;code&gt;Transferable&lt;/code&gt; before that method returns.<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * @since 1.2<a name="line.66"></a>
+<span class="sourceLineNo">067</span> */<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>public interface DropTargetListener extends EventListener {<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    /**<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * Called while a drag operation is ongoing, when the mouse pointer enters<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * the operable part of the drop site for the &lt;code&gt;DropTarget&lt;/code&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * registered with this listener.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     *<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * @param dtde the &lt;code&gt;DropTargetDragEvent&lt;/code&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     */<a name="line.77"></a>
+<span class="sourceLineNo">078</span><a name="line.78"></a>
+<span class="sourceLineNo">079</span>    void dragEnter(DropTargetDragEvent dtde);<a name="line.79"></a>
+<span class="sourceLineNo">080</span><a name="line.80"></a>
+<span class="sourceLineNo">081</span>    /**<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * Called when a drag operation is ongoing, while the mouse pointer is still<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * over the operable part of the drop site for the &lt;code&gt;DropTarget&lt;/code&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * registered with this listener.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     *<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * @param dtde the &lt;code&gt;DropTargetDragEvent&lt;/code&gt;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     */<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    void dragOver(DropTargetDragEvent dtde);<a name="line.89"></a>
+<span class="sourceLineNo">090</span><a name="line.90"></a>
+<span class="sourceLineNo">091</span>    /**<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * Called if the user has modified<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * the current drop gesture.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * &lt;P&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * @param dtde the &lt;code&gt;DropTargetDragEvent&lt;/code&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     */<a name="line.96"></a>
+<span class="sourceLineNo">097</span><a name="line.97"></a>
+<span class="sourceLineNo">098</span>    void dropActionChanged(DropTargetDragEvent dtde);<a name="line.98"></a>
+<span class="sourceLineNo">099</span><a name="line.99"></a>
+<span class="sourceLineNo">100</span>    /**<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * Called while a drag operation is ongoing, when the mouse pointer has<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * exited the operable part of the drop site for the<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * &lt;code&gt;DropTarget&lt;/code&gt; registered with this listener.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     *<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * @param dte the &lt;code&gt;DropTargetEvent&lt;/code&gt;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     */<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    void dragExit(DropTargetEvent dte);<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span>    /**<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * Called when the drag operation has terminated with a drop on<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * the operable part of the drop site for the &lt;code&gt;DropTarget&lt;/code&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * registered with this listener.<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * &lt;p&gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * This method is responsible for undertaking<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * the transfer of the data associated with the<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * gesture. The &lt;code&gt;DropTargetDropEvent&lt;/code&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * provides a means to obtain a &lt;code&gt;Transferable&lt;/code&gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * object that represents the data object(s) to<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * be transfered.&lt;P&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * From this method, the &lt;code&gt;DropTargetListener&lt;/code&gt;<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * shall accept or reject the drop via the<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * acceptDrop(int dropAction) or rejectDrop() methods of the<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * &lt;code&gt;DropTargetDropEvent&lt;/code&gt; parameter.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * &lt;P&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * Subsequent to acceptDrop(), but not before,<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * &lt;code&gt;DropTargetDropEvent&lt;/code&gt;'s getTransferable()<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * method may be invoked, and data transfer may be<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * performed via the returned &lt;code&gt;Transferable&lt;/code&gt;'s<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * getTransferData() method.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * &lt;P&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * At the completion of a drop, an implementation<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * of this method is required to signal the success/failure<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * of the drop by passing an appropriate<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * &lt;code&gt;boolean&lt;/code&gt; to the &lt;code&gt;DropTargetDropEvent&lt;/code&gt;'s<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * dropComplete(boolean success) method.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * &lt;P&gt;<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * Note: The data transfer should be completed before the call  to the<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * &lt;code&gt;DropTargetDropEvent&lt;/code&gt;'s dropComplete(boolean success) method.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * After that, a call to the getTransferData() method of the<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * &lt;code&gt;Transferable&lt;/code&gt; returned by<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * &lt;code&gt;DropTargetDropEvent.getTransferable()&lt;/code&gt; is guaranteed to<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * succeed only if the data transfer is local; that is, only if<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * &lt;code&gt;DropTargetDropEvent.isLocalTransfer()&lt;/code&gt; returns<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * &lt;code&gt;true&lt;/code&gt;. Otherwise, the behavior of the call is<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * implementation-dependent.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * &lt;P&gt;<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * @param dtde the &lt;code&gt;DropTargetDropEvent&lt;/code&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     */<a name="line.149"></a>
+<span class="sourceLineNo">150</span><a name="line.150"></a>
+<span class="sourceLineNo">151</span>    void drop(DropTargetDropEvent dtde);<a name="line.151"></a>
+<span class="sourceLineNo">152</span>}<a name="line.152"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

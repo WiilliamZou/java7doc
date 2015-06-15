@@ -1,0 +1,1635 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>package java.util.logging;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.security.*;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.lang.ref.ReferenceQueue;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.lang.ref.WeakReference;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.beans.PropertyChangeListener;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.beans.PropertyChangeSupport;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import sun.misc.JavaAWTAccess;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import sun.misc.SharedSecrets;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>/**<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * There is a single global LogManager object that is used to<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * maintain a set of shared state about Loggers and log services.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * This LogManager object:<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;ul&gt;<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;li&gt; Manages a hierarchical namespace of Logger objects.  All<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *      named Loggers are stored in this namespace.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;li&gt; Manages a set of logging control properties.  These are<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *      simple key-value pairs that can be used by Handlers and<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *      other logging objects to configure themselves.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;/ul&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;p&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * The global LogManager object can be retrieved using LogManager.getLogManager().<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * The LogManager object is created during class initialization and<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * cannot subsequently be changed.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;p&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * At startup the LogManager class is located using the<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * java.util.logging.manager system property.<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;p&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * By default, the LogManager reads its initial configuration from<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * a properties file "lib/logging.properties" in the JRE directory.<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * If you edit that property file you can change the default logging<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * configuration for all uses of that JRE.<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;p&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * In addition, the LogManager uses two optional system properties that<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * allow more control over reading the initial configuration:<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;ul&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;li&gt;"java.util.logging.config.class"<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;li&gt;"java.util.logging.config.file"<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * &lt;/ul&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * These two properties may be set via the Preferences API, or as<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * command line property definitions to the "java" command, or as<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * system property definitions passed to JNI_CreateJavaVM.<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * &lt;p&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * If the "java.util.logging.config.class" property is set, then the<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * property value is treated as a class name.  The given class will be<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * loaded, an object will be instantiated, and that object's constructor<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * is responsible for reading in the initial configuration.  (That object<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * may use other system properties to control its configuration.)  The<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * alternate configuration class can use &lt;tt&gt;readConfiguration(InputStream)&lt;/tt&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * to define properties in the LogManager.<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * &lt;p&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * If "java.util.logging.config.class" property is &lt;b&gt;not&lt;/b&gt; set,<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * then the "java.util.logging.config.file" system property can be used<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * to specify a properties file (in java.util.Properties format). The<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * initial logging configuration will be read from this file.<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;p&gt;<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * If neither of these properties is defined then, as described<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * above, the LogManager will read its initial configuration from<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * a properties file "lib/logging.properties" in the JRE directory.<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * &lt;p&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * The properties for loggers and Handlers will have names starting<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * with the dot-separated name for the handler or logger.<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;p&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * The global logging properties may include:<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * &lt;ul&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;li&gt;A property "handlers".  This defines a whitespace or comma separated<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * list of class names for handler classes to load and register as<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * handlers on the root Logger (the Logger named "").  Each class<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * name must be for a Handler class which has a default constructor.<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * Note that these Handlers may be created lazily, when they are<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * first used.<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * &lt;li&gt;A property "&amp;lt;logger&amp;gt;.handlers". This defines a whitespace or<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * comma separated list of class names for handlers classes to<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * load and register as handlers to the specified logger. Each class<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * name must be for a Handler class which has a default constructor.<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * Note that these Handlers may be created lazily, when they are<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * first used.<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * &lt;li&gt;A property "&amp;lt;logger&amp;gt;.useParentHandlers". This defines a boolean<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * value. By default every logger calls its parent in addition to<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * handling the logging message itself, this often result in messages<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * being handled by the root logger as well. When setting this property<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * to false a Handler needs to be configured for this logger otherwise<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * no logging messages are delivered.<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * &lt;li&gt;A property "config".  This property is intended to allow<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * arbitrary configuration code to be run.  The property defines a<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * whitespace or comma separated list of class names.  A new instance will be<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * created for each named class.  The default constructor of each class<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * may execute arbitrary code to update the logging configuration, such as<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * setting logger levels, adding handlers, adding filters, etc.<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * &lt;/ul&gt;<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * &lt;p&gt;<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * Note that all classes loaded during LogManager configuration are<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * first searched on the system class path before any user class path.<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * That includes the LogManager class, any config classes, and any<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * handler classes.<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * &lt;p&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * Loggers are organized into a naming hierarchy based on their<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * dot separated names.  Thus "a.b.c" is a child of "a.b", but<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * "a.b1" and a.b2" are peers.<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * &lt;p&gt;<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * All properties whose names end with ".level" are assumed to define<a name="line.134"></a>
+<span class="sourceLineNo">135</span> * log levels for Loggers.  Thus "foo.level" defines a log level for<a name="line.135"></a>
+<span class="sourceLineNo">136</span> * the logger called "foo" and (recursively) for any of its children<a name="line.136"></a>
+<span class="sourceLineNo">137</span> * in the naming hierarchy.  Log Levels are applied in the order they<a name="line.137"></a>
+<span class="sourceLineNo">138</span> * are defined in the properties file.  Thus level settings for child<a name="line.138"></a>
+<span class="sourceLineNo">139</span> * nodes in the tree should come after settings for their parents.<a name="line.139"></a>
+<span class="sourceLineNo">140</span> * The property name ".level" can be used to set the level for the<a name="line.140"></a>
+<span class="sourceLineNo">141</span> * root of the tree.<a name="line.141"></a>
+<span class="sourceLineNo">142</span> * &lt;p&gt;<a name="line.142"></a>
+<span class="sourceLineNo">143</span> * All methods on the LogManager object are multi-thread safe.<a name="line.143"></a>
+<span class="sourceLineNo">144</span> *<a name="line.144"></a>
+<span class="sourceLineNo">145</span> * @since 1.4<a name="line.145"></a>
+<span class="sourceLineNo">146</span>*/<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>public class LogManager {<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    // The global LogManager object<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    private static LogManager manager;<a name="line.150"></a>
+<span class="sourceLineNo">151</span><a name="line.151"></a>
+<span class="sourceLineNo">152</span>    // 'props' is assigned within a lock but accessed without it.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    // Declaring it volatile makes sure that another thread will not<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    // be able to see a partially constructed 'props' object.<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    // (seeing a partially constructed 'props' object can result in<a name="line.155"></a>
+<span class="sourceLineNo">156</span>    // NPE being thrown in Hashtable.get(), because it leaves the door<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    // open for props.getProperties() to be called before the construcor<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    // of Hashtable is actually completed).<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    private volatile Properties props = new Properties();<a name="line.159"></a>
+<span class="sourceLineNo">160</span><a name="line.160"></a>
+<span class="sourceLineNo">161</span>    private PropertyChangeSupport changes<a name="line.161"></a>
+<span class="sourceLineNo">162</span>                         = new PropertyChangeSupport(LogManager.class);<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    private final static Level defaultLevel = Level.INFO;<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>    // LoggerContext for system loggers and user loggers<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    private final LoggerContext systemContext = new SystemLoggerContext();<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    private final LoggerContext userContext = new LoggerContext();<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    private Logger rootLogger;<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    // Have we done the primordial reading of the configuration file?<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    // (Must be done after a suitable amount of java.lang.System<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    // initialization has been done)<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    private volatile boolean readPrimordialConfiguration;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    // Have we initialized global (root) handlers yet?<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    // This gets set to false in readConfiguration<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    private boolean initializedGlobalHandlers = true;<a name="line.176"></a>
+<span class="sourceLineNo">177</span>    // True if JVM death is imminent and the exit hook has been called.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    private boolean deathImminent;<a name="line.178"></a>
+<span class="sourceLineNo">179</span><a name="line.179"></a>
+<span class="sourceLineNo">180</span>    static {<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        AccessController.doPrivileged(new PrivilegedAction&lt;Object&gt;() {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>                public Object run() {<a name="line.182"></a>
+<span class="sourceLineNo">183</span>                    String cname = null;<a name="line.183"></a>
+<span class="sourceLineNo">184</span>                    try {<a name="line.184"></a>
+<span class="sourceLineNo">185</span>                        cname = System.getProperty("java.util.logging.manager");<a name="line.185"></a>
+<span class="sourceLineNo">186</span>                        if (cname != null) {<a name="line.186"></a>
+<span class="sourceLineNo">187</span>                            try {<a name="line.187"></a>
+<span class="sourceLineNo">188</span>                                Class clz = ClassLoader.getSystemClassLoader().loadClass(cname);<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                                manager = (LogManager) clz.newInstance();<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                            } catch (ClassNotFoundException ex) {<a name="line.190"></a>
+<span class="sourceLineNo">191</span>                                Class clz = Thread.currentThread().getContextClassLoader().loadClass(cname);<a name="line.191"></a>
+<span class="sourceLineNo">192</span>                                manager = (LogManager) clz.newInstance();<a name="line.192"></a>
+<span class="sourceLineNo">193</span>                            }<a name="line.193"></a>
+<span class="sourceLineNo">194</span>                        }<a name="line.194"></a>
+<span class="sourceLineNo">195</span>                    } catch (Exception ex) {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>                        System.err.println("Could not load Logmanager \"" + cname + "\"");<a name="line.196"></a>
+<span class="sourceLineNo">197</span>                        ex.printStackTrace();<a name="line.197"></a>
+<span class="sourceLineNo">198</span>                    }<a name="line.198"></a>
+<span class="sourceLineNo">199</span>                    if (manager == null) {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>                        manager = new LogManager();<a name="line.200"></a>
+<span class="sourceLineNo">201</span>                    }<a name="line.201"></a>
+<span class="sourceLineNo">202</span><a name="line.202"></a>
+<span class="sourceLineNo">203</span>                    // Create and retain Logger for the root of the namespace.<a name="line.203"></a>
+<span class="sourceLineNo">204</span>                    manager.rootLogger = manager.new RootLogger();<a name="line.204"></a>
+<span class="sourceLineNo">205</span>                    // since by design the global manager's userContext and<a name="line.205"></a>
+<span class="sourceLineNo">206</span>                    // systemContext don't have their requiresDefaultLoggers<a name="line.206"></a>
+<span class="sourceLineNo">207</span>                    // flag set - we make sure to add the root logger to<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                    // the global manager's default contexts here.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>                    manager.addLogger(manager.rootLogger);<a name="line.209"></a>
+<span class="sourceLineNo">210</span>                    manager.systemContext.addLocalLogger(manager.rootLogger, false);<a name="line.210"></a>
+<span class="sourceLineNo">211</span>                    manager.userContext.addLocalLogger(manager.rootLogger, false);<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>                    // Adding the global Logger. Doing so in the Logger.&lt;clinit&gt;<a name="line.213"></a>
+<span class="sourceLineNo">214</span>                    // would deadlock with the LogManager.&lt;clinit&gt;.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>                    Logger.global.setLogManager(manager);<a name="line.215"></a>
+<span class="sourceLineNo">216</span>                    // Make sure the global logger will be registered in the<a name="line.216"></a>
+<span class="sourceLineNo">217</span>                    // global manager's default contexts.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>                    manager.addLogger(Logger.global);<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                    manager.systemContext.addLocalLogger(Logger.global, false);<a name="line.219"></a>
+<span class="sourceLineNo">220</span>                    manager.userContext.addLocalLogger(Logger.global, false);<a name="line.220"></a>
+<span class="sourceLineNo">221</span><a name="line.221"></a>
+<span class="sourceLineNo">222</span>                    // We don't call readConfiguration() here, as we may be running<a name="line.222"></a>
+<span class="sourceLineNo">223</span>                    // very early in the JVM startup sequence.  Instead readConfiguration<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                    // will be called lazily in getLogManager().<a name="line.224"></a>
+<span class="sourceLineNo">225</span>                    return null;<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                }<a name="line.226"></a>
+<span class="sourceLineNo">227</span>            });<a name="line.227"></a>
+<span class="sourceLineNo">228</span>    }<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span><a name="line.230"></a>
+<span class="sourceLineNo">231</span>    // This private class is used as a shutdown hook.<a name="line.231"></a>
+<span class="sourceLineNo">232</span>    // It does a "reset" to close all open handlers.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>    private class Cleaner extends Thread {<a name="line.233"></a>
+<span class="sourceLineNo">234</span><a name="line.234"></a>
+<span class="sourceLineNo">235</span>        private Cleaner() {<a name="line.235"></a>
+<span class="sourceLineNo">236</span>            /* Set context class loader to null in order to avoid<a name="line.236"></a>
+<span class="sourceLineNo">237</span>             * keeping a strong reference to an application classloader.<a name="line.237"></a>
+<span class="sourceLineNo">238</span>             */<a name="line.238"></a>
+<span class="sourceLineNo">239</span>            this.setContextClassLoader(null);<a name="line.239"></a>
+<span class="sourceLineNo">240</span>        }<a name="line.240"></a>
+<span class="sourceLineNo">241</span><a name="line.241"></a>
+<span class="sourceLineNo">242</span>        public void run() {<a name="line.242"></a>
+<span class="sourceLineNo">243</span>            // This is to ensure the LogManager.&lt;clinit&gt; is completed<a name="line.243"></a>
+<span class="sourceLineNo">244</span>            // before synchronized block. Otherwise deadlocks are possible.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>            LogManager mgr = manager;<a name="line.245"></a>
+<span class="sourceLineNo">246</span><a name="line.246"></a>
+<span class="sourceLineNo">247</span>            // If the global handlers haven't been initialized yet, we<a name="line.247"></a>
+<span class="sourceLineNo">248</span>            // don't want to initialize them just so we can close them!<a name="line.248"></a>
+<span class="sourceLineNo">249</span>            synchronized (LogManager.this) {<a name="line.249"></a>
+<span class="sourceLineNo">250</span>                // Note that death is imminent.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>                deathImminent = true;<a name="line.251"></a>
+<span class="sourceLineNo">252</span>                initializedGlobalHandlers = true;<a name="line.252"></a>
+<span class="sourceLineNo">253</span>            }<a name="line.253"></a>
+<span class="sourceLineNo">254</span><a name="line.254"></a>
+<span class="sourceLineNo">255</span>            // Do a reset to close all active handlers.<a name="line.255"></a>
+<span class="sourceLineNo">256</span>            reset();<a name="line.256"></a>
+<span class="sourceLineNo">257</span>        }<a name="line.257"></a>
+<span class="sourceLineNo">258</span>    }<a name="line.258"></a>
+<span class="sourceLineNo">259</span><a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>    /**<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * Protected constructor.  This is protected so that container applications<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * (such as J2EE containers) can subclass the object.  It is non-public as<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * it is intended that there only be one LogManager object, whose value is<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * retrieved by calling Logmanager.getLogManager.<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     */<a name="line.266"></a>
+<span class="sourceLineNo">267</span>    protected LogManager() {<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        this(checkSubclassPermissions());<a name="line.268"></a>
+<span class="sourceLineNo">269</span>    }<a name="line.269"></a>
+<span class="sourceLineNo">270</span><a name="line.270"></a>
+<span class="sourceLineNo">271</span>    private LogManager(Void checked) {<a name="line.271"></a>
+<span class="sourceLineNo">272</span><a name="line.272"></a>
+<span class="sourceLineNo">273</span>        // Add a shutdown hook to close the global handlers.<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        try {<a name="line.274"></a>
+<span class="sourceLineNo">275</span>            Runtime.getRuntime().addShutdownHook(new Cleaner());<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        } catch (IllegalStateException e) {<a name="line.276"></a>
+<span class="sourceLineNo">277</span>            // If the VM is already shutting down,<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            // We do not need to register shutdownHook.<a name="line.278"></a>
+<span class="sourceLineNo">279</span>        }<a name="line.279"></a>
+<span class="sourceLineNo">280</span>    }<a name="line.280"></a>
+<span class="sourceLineNo">281</span><a name="line.281"></a>
+<span class="sourceLineNo">282</span>    private static Void checkSubclassPermissions() {<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        final SecurityManager sm = System.getSecurityManager();<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        if (sm != null) {<a name="line.284"></a>
+<span class="sourceLineNo">285</span>            // These permission will be checked in the LogManager constructor,<a name="line.285"></a>
+<span class="sourceLineNo">286</span>            // in order to register the Cleaner() thread as a shutdown hook.<a name="line.286"></a>
+<span class="sourceLineNo">287</span>            // Check them here to avoid the penalty of constructing the object<a name="line.287"></a>
+<span class="sourceLineNo">288</span>            // etc...<a name="line.288"></a>
+<span class="sourceLineNo">289</span>            sm.checkPermission(new RuntimePermission("shutdownHooks"));<a name="line.289"></a>
+<span class="sourceLineNo">290</span>            sm.checkPermission(new RuntimePermission("setContextClassLoader"));<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        }<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        return null;<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    }<a name="line.293"></a>
+<span class="sourceLineNo">294</span><a name="line.294"></a>
+<span class="sourceLineNo">295</span>    /**<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * Return the global LogManager object.<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     */<a name="line.297"></a>
+<span class="sourceLineNo">298</span>    public static LogManager getLogManager() {<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        if (manager != null) {<a name="line.299"></a>
+<span class="sourceLineNo">300</span>            manager.readPrimordialConfiguration();<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        }<a name="line.301"></a>
+<span class="sourceLineNo">302</span>        return manager;<a name="line.302"></a>
+<span class="sourceLineNo">303</span>    }<a name="line.303"></a>
+<span class="sourceLineNo">304</span><a name="line.304"></a>
+<span class="sourceLineNo">305</span>    private void readPrimordialConfiguration() {<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        if (!readPrimordialConfiguration) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            synchronized (this) {<a name="line.307"></a>
+<span class="sourceLineNo">308</span>                if (!readPrimordialConfiguration) {<a name="line.308"></a>
+<span class="sourceLineNo">309</span>                    // If System.in/out/err are null, it's a good<a name="line.309"></a>
+<span class="sourceLineNo">310</span>                    // indication that we're still in the<a name="line.310"></a>
+<span class="sourceLineNo">311</span>                    // bootstrapping phase<a name="line.311"></a>
+<span class="sourceLineNo">312</span>                    if (System.out == null) {<a name="line.312"></a>
+<span class="sourceLineNo">313</span>                        return;<a name="line.313"></a>
+<span class="sourceLineNo">314</span>                    }<a name="line.314"></a>
+<span class="sourceLineNo">315</span>                    readPrimordialConfiguration = true;<a name="line.315"></a>
+<span class="sourceLineNo">316</span><a name="line.316"></a>
+<span class="sourceLineNo">317</span>                    try {<a name="line.317"></a>
+<span class="sourceLineNo">318</span>                        AccessController.doPrivileged(new PrivilegedExceptionAction&lt;Void&gt;() {<a name="line.318"></a>
+<span class="sourceLineNo">319</span>                                public Void run() throws Exception {<a name="line.319"></a>
+<span class="sourceLineNo">320</span>                                    readConfiguration();<a name="line.320"></a>
+<span class="sourceLineNo">321</span><a name="line.321"></a>
+<span class="sourceLineNo">322</span>                                    // Platform loggers begin to delegate to java.util.logging.Logger<a name="line.322"></a>
+<span class="sourceLineNo">323</span>                                    sun.util.logging.PlatformLogger.redirectPlatformLoggers();<a name="line.323"></a>
+<span class="sourceLineNo">324</span>                                    return null;<a name="line.324"></a>
+<span class="sourceLineNo">325</span>                                }<a name="line.325"></a>
+<span class="sourceLineNo">326</span>                            });<a name="line.326"></a>
+<span class="sourceLineNo">327</span>                    } catch (Exception ex) {<a name="line.327"></a>
+<span class="sourceLineNo">328</span>                        // System.err.println("Can't read logging configuration:");<a name="line.328"></a>
+<span class="sourceLineNo">329</span>                        // ex.printStackTrace();<a name="line.329"></a>
+<span class="sourceLineNo">330</span>                    }<a name="line.330"></a>
+<span class="sourceLineNo">331</span>                }<a name="line.331"></a>
+<span class="sourceLineNo">332</span>            }<a name="line.332"></a>
+<span class="sourceLineNo">333</span>        }<a name="line.333"></a>
+<span class="sourceLineNo">334</span>    }<a name="line.334"></a>
+<span class="sourceLineNo">335</span><a name="line.335"></a>
+<span class="sourceLineNo">336</span>    /**<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * Adds an event listener to be invoked when the logging<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * properties are re-read. Adding multiple instances of<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * the same event Listener results in multiple entries<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * in the property event listener table.<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     *<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * @param l  event listener<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * @exception  SecurityException  if a security manager exists and if<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     *             the caller does not have LoggingPermission("control").<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * @exception NullPointerException if the PropertyChangeListener is null.<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     */<a name="line.346"></a>
+<span class="sourceLineNo">347</span>    public void addPropertyChangeListener(PropertyChangeListener l) throws SecurityException {<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        if (l == null) {<a name="line.348"></a>
+<span class="sourceLineNo">349</span>            throw new NullPointerException();<a name="line.349"></a>
+<span class="sourceLineNo">350</span>        }<a name="line.350"></a>
+<span class="sourceLineNo">351</span>        checkPermission();<a name="line.351"></a>
+<span class="sourceLineNo">352</span>        changes.addPropertyChangeListener(l);<a name="line.352"></a>
+<span class="sourceLineNo">353</span>    }<a name="line.353"></a>
+<span class="sourceLineNo">354</span><a name="line.354"></a>
+<span class="sourceLineNo">355</span>    /**<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * Removes an event listener for property change events.<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * If the same listener instance has been added to the listener table<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * through multiple invocations of &lt;CODE&gt;addPropertyChangeListener&lt;/CODE&gt;,<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * then an equivalent number of<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * &lt;CODE&gt;removePropertyChangeListener&lt;/CODE&gt; invocations are required to remove<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * all instances of that listener from the listener table.<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * &lt;P&gt;<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * Returns silently if the given listener is not found.<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     *<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * @param l  event listener (can be null)<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * @exception  SecurityException  if a security manager exists and if<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     *             the caller does not have LoggingPermission("control").<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     */<a name="line.368"></a>
+<span class="sourceLineNo">369</span>    public void removePropertyChangeListener(PropertyChangeListener l) throws SecurityException {<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        checkPermission();<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        changes.removePropertyChangeListener(l);<a name="line.371"></a>
+<span class="sourceLineNo">372</span>    }<a name="line.372"></a>
+<span class="sourceLineNo">373</span><a name="line.373"></a>
+<span class="sourceLineNo">374</span>    // LoggerContext maps from AppContext<a name="line.374"></a>
+<span class="sourceLineNo">375</span>    private static WeakHashMap&lt;Object, LoggerContext&gt; contextsMap = null;<a name="line.375"></a>
+<span class="sourceLineNo">376</span><a name="line.376"></a>
+<span class="sourceLineNo">377</span>    // Returns the LoggerContext for the user code (i.e. application or AppContext).<a name="line.377"></a>
+<span class="sourceLineNo">378</span>    // Loggers are isolated from each AppContext.<a name="line.378"></a>
+<span class="sourceLineNo">379</span>    private LoggerContext getUserContext() {<a name="line.379"></a>
+<span class="sourceLineNo">380</span>        LoggerContext context = null;<a name="line.380"></a>
+<span class="sourceLineNo">381</span><a name="line.381"></a>
+<span class="sourceLineNo">382</span>        SecurityManager sm = System.getSecurityManager();<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        JavaAWTAccess javaAwtAccess = SharedSecrets.getJavaAWTAccess();<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        if (sm != null &amp;&amp; javaAwtAccess != null) {<a name="line.384"></a>
+<span class="sourceLineNo">385</span>            // for each applet, it has its own LoggerContext isolated from others<a name="line.385"></a>
+<span class="sourceLineNo">386</span>            final Object ecx = javaAwtAccess.getAppletContext();<a name="line.386"></a>
+<span class="sourceLineNo">387</span>            if (ecx != null) {<a name="line.387"></a>
+<span class="sourceLineNo">388</span>                synchronized (javaAwtAccess) {<a name="line.388"></a>
+<span class="sourceLineNo">389</span>                    // find the AppContext of the applet code<a name="line.389"></a>
+<span class="sourceLineNo">390</span>                    // will be null if we are in the main app context.<a name="line.390"></a>
+<span class="sourceLineNo">391</span>                    if (contextsMap == null) {<a name="line.391"></a>
+<span class="sourceLineNo">392</span>                        contextsMap = new WeakHashMap&lt;&gt;();<a name="line.392"></a>
+<span class="sourceLineNo">393</span>                    }<a name="line.393"></a>
+<span class="sourceLineNo">394</span>                    context = contextsMap.get(ecx);<a name="line.394"></a>
+<span class="sourceLineNo">395</span>                    if (context == null) {<a name="line.395"></a>
+<span class="sourceLineNo">396</span>                        // Create a new LoggerContext for the applet.<a name="line.396"></a>
+<span class="sourceLineNo">397</span>                        // The new logger context has its requiresDefaultLoggers<a name="line.397"></a>
+<span class="sourceLineNo">398</span>                        // flag set to true - so that these loggers will be<a name="line.398"></a>
+<span class="sourceLineNo">399</span>                        // lazily added when the context is firt accessed.<a name="line.399"></a>
+<span class="sourceLineNo">400</span>                        context = new LoggerContext(true);<a name="line.400"></a>
+<span class="sourceLineNo">401</span>                        contextsMap.put(ecx, context);<a name="line.401"></a>
+<span class="sourceLineNo">402</span>                    }<a name="line.402"></a>
+<span class="sourceLineNo">403</span>                }<a name="line.403"></a>
+<span class="sourceLineNo">404</span>            }<a name="line.404"></a>
+<span class="sourceLineNo">405</span>        }<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        // for standalone app, return userContext<a name="line.406"></a>
+<span class="sourceLineNo">407</span>        return context != null ? context : userContext;<a name="line.407"></a>
+<span class="sourceLineNo">408</span>    }<a name="line.408"></a>
+<span class="sourceLineNo">409</span><a name="line.409"></a>
+<span class="sourceLineNo">410</span>    private List&lt;LoggerContext&gt; contexts() {<a name="line.410"></a>
+<span class="sourceLineNo">411</span>        List&lt;LoggerContext&gt; cxs = new ArrayList&lt;&gt;();<a name="line.411"></a>
+<span class="sourceLineNo">412</span>        cxs.add(systemContext);<a name="line.412"></a>
+<span class="sourceLineNo">413</span>        cxs.add(getUserContext());<a name="line.413"></a>
+<span class="sourceLineNo">414</span>        return cxs;<a name="line.414"></a>
+<span class="sourceLineNo">415</span>    }<a name="line.415"></a>
+<span class="sourceLineNo">416</span><a name="line.416"></a>
+<span class="sourceLineNo">417</span>    // Find or create a specified logger instance. If a logger has<a name="line.417"></a>
+<span class="sourceLineNo">418</span>    // already been created with the given name it is returned.<a name="line.418"></a>
+<span class="sourceLineNo">419</span>    // Otherwise a new logger instance is created and registered<a name="line.419"></a>
+<span class="sourceLineNo">420</span>    // in the LogManager global namespace.<a name="line.420"></a>
+<span class="sourceLineNo">421</span>    // This method will always return a non-null Logger object.<a name="line.421"></a>
+<span class="sourceLineNo">422</span>    // Synchronization is not required here. All synchronization for<a name="line.422"></a>
+<span class="sourceLineNo">423</span>    // adding a new Logger object is handled by addLogger().<a name="line.423"></a>
+<span class="sourceLineNo">424</span>    //<a name="line.424"></a>
+<span class="sourceLineNo">425</span>    // This method must delegate to the LogManager implementation to<a name="line.425"></a>
+<span class="sourceLineNo">426</span>    // add a new Logger or return the one that has been added previously<a name="line.426"></a>
+<span class="sourceLineNo">427</span>    // as a LogManager subclass may override the addLogger, getLogger,<a name="line.427"></a>
+<span class="sourceLineNo">428</span>    // readConfiguration, and other methods.<a name="line.428"></a>
+<span class="sourceLineNo">429</span>    Logger demandLogger(String name, String resourceBundleName, Class&lt;?&gt; caller) {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>        Logger result = getLogger(name);<a name="line.430"></a>
+<span class="sourceLineNo">431</span>        if (result == null) {<a name="line.431"></a>
+<span class="sourceLineNo">432</span>            // only allocate the new logger once<a name="line.432"></a>
+<span class="sourceLineNo">433</span>            Logger newLogger = new Logger(name, resourceBundleName, caller, false);<a name="line.433"></a>
+<span class="sourceLineNo">434</span>            do {<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                if (addLogger(newLogger)) {<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                    // We successfully added the new Logger that we<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                    // created above so return it without refetching.<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                    return newLogger;<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                }<a name="line.439"></a>
+<span class="sourceLineNo">440</span><a name="line.440"></a>
+<span class="sourceLineNo">441</span>                // We didn't add the new Logger that we created above<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                // because another thread added a Logger with the same<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                // name after our null check above and before our call<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                // to addLogger(). We have to refetch the Logger because<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                // addLogger() returns a boolean instead of the Logger<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                // reference itself. However, if the thread that created<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                // the other Logger is not holding a strong reference to<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                // the other Logger, then it is possible for the other<a name="line.448"></a>
+<span class="sourceLineNo">449</span>                // Logger to be GC'ed after we saw it in addLogger() and<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                // before we can refetch it. If it has been GC'ed then<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                // we'll just loop around and try again.<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                result = getLogger(name);<a name="line.452"></a>
+<span class="sourceLineNo">453</span>            } while (result == null);<a name="line.453"></a>
+<span class="sourceLineNo">454</span>        }<a name="line.454"></a>
+<span class="sourceLineNo">455</span>        return result;<a name="line.455"></a>
+<span class="sourceLineNo">456</span>    }<a name="line.456"></a>
+<span class="sourceLineNo">457</span><a name="line.457"></a>
+<span class="sourceLineNo">458</span>    Logger demandSystemLogger(String name, String resourceBundleName) {<a name="line.458"></a>
+<span class="sourceLineNo">459</span>        // Add a system logger in the system context's namespace<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        final Logger sysLogger = systemContext.demandLogger(name, resourceBundleName);<a name="line.460"></a>
+<span class="sourceLineNo">461</span><a name="line.461"></a>
+<span class="sourceLineNo">462</span>        // Add the system logger to the LogManager's namespace if not exist<a name="line.462"></a>
+<span class="sourceLineNo">463</span>        // so that there is only one single logger of the given name.<a name="line.463"></a>
+<span class="sourceLineNo">464</span>        // System loggers are visible to applications unless a logger of<a name="line.464"></a>
+<span class="sourceLineNo">465</span>        // the same name has been added.<a name="line.465"></a>
+<span class="sourceLineNo">466</span>        Logger logger;<a name="line.466"></a>
+<span class="sourceLineNo">467</span>        do {<a name="line.467"></a>
+<span class="sourceLineNo">468</span>            // First attempt to call addLogger instead of getLogger<a name="line.468"></a>
+<span class="sourceLineNo">469</span>            // This would avoid potential bug in custom LogManager.getLogger<a name="line.469"></a>
+<span class="sourceLineNo">470</span>            // implementation that adds a logger if does not exist<a name="line.470"></a>
+<span class="sourceLineNo">471</span>            if (addLogger(sysLogger)) {<a name="line.471"></a>
+<span class="sourceLineNo">472</span>                // successfully added the new system logger<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                logger = sysLogger;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>            } else {<a name="line.474"></a>
+<span class="sourceLineNo">475</span>                logger = getLogger(name);<a name="line.475"></a>
+<span class="sourceLineNo">476</span>            }<a name="line.476"></a>
+<span class="sourceLineNo">477</span>        } while (logger == null);<a name="line.477"></a>
+<span class="sourceLineNo">478</span><a name="line.478"></a>
+<span class="sourceLineNo">479</span>        // LogManager will set the sysLogger's handlers via LogManager.addLogger method.<a name="line.479"></a>
+<span class="sourceLineNo">480</span>        if (logger != sysLogger &amp;&amp; sysLogger.accessCheckedHandlers().length == 0) {<a name="line.480"></a>
+<span class="sourceLineNo">481</span>            // if logger already exists but handlers not set<a name="line.481"></a>
+<span class="sourceLineNo">482</span>            final Logger l = logger;<a name="line.482"></a>
+<span class="sourceLineNo">483</span>            AccessController.doPrivileged(new PrivilegedAction&lt;Void&gt;() {<a name="line.483"></a>
+<span class="sourceLineNo">484</span>                public Void run() {<a name="line.484"></a>
+<span class="sourceLineNo">485</span>                    for (Handler hdl : l.accessCheckedHandlers()) {<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                        sysLogger.addHandler(hdl);<a name="line.486"></a>
+<span class="sourceLineNo">487</span>                    }<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                    return null;<a name="line.488"></a>
+<span class="sourceLineNo">489</span>                }<a name="line.489"></a>
+<span class="sourceLineNo">490</span>            });<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        }<a name="line.491"></a>
+<span class="sourceLineNo">492</span>        return sysLogger;<a name="line.492"></a>
+<span class="sourceLineNo">493</span>    }<a name="line.493"></a>
+<span class="sourceLineNo">494</span><a name="line.494"></a>
+<span class="sourceLineNo">495</span>    // LoggerContext maintains the logger namespace per context.<a name="line.495"></a>
+<span class="sourceLineNo">496</span>    // The default LogManager implementation has one system context and user<a name="line.496"></a>
+<span class="sourceLineNo">497</span>    // context.  The system context is used to maintain the namespace for<a name="line.497"></a>
+<span class="sourceLineNo">498</span>    // all system loggers and is queried by the system code.  If a system logger<a name="line.498"></a>
+<span class="sourceLineNo">499</span>    // doesn't exist in the user context, it'll also be added to the user context.<a name="line.499"></a>
+<span class="sourceLineNo">500</span>    // The user context is queried by the user code and all other loggers are<a name="line.500"></a>
+<span class="sourceLineNo">501</span>    // added in the user context.<a name="line.501"></a>
+<span class="sourceLineNo">502</span>    static class LoggerContext {<a name="line.502"></a>
+<span class="sourceLineNo">503</span>        // Table of named Loggers that maps names to Loggers.<a name="line.503"></a>
+<span class="sourceLineNo">504</span>        private final Hashtable&lt;String,LoggerWeakRef&gt; namedLoggers = new Hashtable&lt;&gt;();<a name="line.504"></a>
+<span class="sourceLineNo">505</span>        // Tree of named Loggers<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        private final LogNode root;<a name="line.506"></a>
+<span class="sourceLineNo">507</span>        private final boolean requiresDefaultLoggers;<a name="line.507"></a>
+<span class="sourceLineNo">508</span>        private LoggerContext() {<a name="line.508"></a>
+<span class="sourceLineNo">509</span>            this(false);<a name="line.509"></a>
+<span class="sourceLineNo">510</span>        }<a name="line.510"></a>
+<span class="sourceLineNo">511</span>        private LoggerContext(boolean requiresDefaultLoggers) {<a name="line.511"></a>
+<span class="sourceLineNo">512</span>            this.root = new LogNode(null, this);<a name="line.512"></a>
+<span class="sourceLineNo">513</span>            this.requiresDefaultLoggers = requiresDefaultLoggers;<a name="line.513"></a>
+<span class="sourceLineNo">514</span>        }<a name="line.514"></a>
+<span class="sourceLineNo">515</span><a name="line.515"></a>
+<span class="sourceLineNo">516</span>        Logger demandLogger(String name, String resourceBundleName) {<a name="line.516"></a>
+<span class="sourceLineNo">517</span>            // a LogManager subclass may have its own implementation to add and<a name="line.517"></a>
+<span class="sourceLineNo">518</span>            // get a Logger.  So delegate to the LogManager to do the work.<a name="line.518"></a>
+<span class="sourceLineNo">519</span>            return manager.demandLogger(name, resourceBundleName, null);<a name="line.519"></a>
+<span class="sourceLineNo">520</span>        }<a name="line.520"></a>
+<span class="sourceLineNo">521</span><a name="line.521"></a>
+<span class="sourceLineNo">522</span><a name="line.522"></a>
+<span class="sourceLineNo">523</span>        // Due to subtle deadlock issues getUserContext() no longer<a name="line.523"></a>
+<span class="sourceLineNo">524</span>        // calls addLocalLogger(rootLogger);<a name="line.524"></a>
+<span class="sourceLineNo">525</span>        // Therefore - we need to add the default loggers later on.<a name="line.525"></a>
+<span class="sourceLineNo">526</span>        // Checks that the context is properly initialized<a name="line.526"></a>
+<span class="sourceLineNo">527</span>        // This is necessary before calling e.g. find(name)<a name="line.527"></a>
+<span class="sourceLineNo">528</span>        // or getLoggerNames()<a name="line.528"></a>
+<span class="sourceLineNo">529</span>        //<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        private void ensureInitialized() {<a name="line.530"></a>
+<span class="sourceLineNo">531</span>            if (requiresDefaultLoggers) {<a name="line.531"></a>
+<span class="sourceLineNo">532</span>                // Ensure that the root and global loggers are set.<a name="line.532"></a>
+<span class="sourceLineNo">533</span>                ensureDefaultLogger(manager.rootLogger);<a name="line.533"></a>
+<span class="sourceLineNo">534</span>                ensureDefaultLogger(Logger.global);<a name="line.534"></a>
+<span class="sourceLineNo">535</span>            }<a name="line.535"></a>
+<span class="sourceLineNo">536</span>        }<a name="line.536"></a>
+<span class="sourceLineNo">537</span><a name="line.537"></a>
+<span class="sourceLineNo">538</span><a name="line.538"></a>
+<span class="sourceLineNo">539</span>        synchronized Logger findLogger(String name) {<a name="line.539"></a>
+<span class="sourceLineNo">540</span>            // ensure that this context is properly initialized before<a name="line.540"></a>
+<span class="sourceLineNo">541</span>            // looking for loggers.<a name="line.541"></a>
+<span class="sourceLineNo">542</span>            ensureInitialized();<a name="line.542"></a>
+<span class="sourceLineNo">543</span>            LoggerWeakRef ref = namedLoggers.get(name);<a name="line.543"></a>
+<span class="sourceLineNo">544</span>            if (ref == null) {<a name="line.544"></a>
+<span class="sourceLineNo">545</span>                return null;<a name="line.545"></a>
+<span class="sourceLineNo">546</span>            }<a name="line.546"></a>
+<span class="sourceLineNo">547</span>            Logger logger = ref.get();<a name="line.547"></a>
+<span class="sourceLineNo">548</span>            if (logger == null) {<a name="line.548"></a>
+<span class="sourceLineNo">549</span>                // Hashtable holds stale weak reference<a name="line.549"></a>
+<span class="sourceLineNo">550</span>                // to a logger which has been GC-ed.<a name="line.550"></a>
+<span class="sourceLineNo">551</span>                ref.dispose();<a name="line.551"></a>
+<span class="sourceLineNo">552</span>            }<a name="line.552"></a>
+<span class="sourceLineNo">553</span>            return logger;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>        }<a name="line.554"></a>
+<span class="sourceLineNo">555</span><a name="line.555"></a>
+<span class="sourceLineNo">556</span>        // This method is called before adding a logger to the<a name="line.556"></a>
+<span class="sourceLineNo">557</span>        // context.<a name="line.557"></a>
+<span class="sourceLineNo">558</span>        // 'logger' is the context that will be added.<a name="line.558"></a>
+<span class="sourceLineNo">559</span>        // This method will ensure that the defaults loggers are added<a name="line.559"></a>
+<span class="sourceLineNo">560</span>        // before adding 'logger'.<a name="line.560"></a>
+<span class="sourceLineNo">561</span>        //<a name="line.561"></a>
+<span class="sourceLineNo">562</span>        private void ensureAllDefaultLoggers(Logger logger) {<a name="line.562"></a>
+<span class="sourceLineNo">563</span>            if (requiresDefaultLoggers) {<a name="line.563"></a>
+<span class="sourceLineNo">564</span>                final String name = logger.getName();<a name="line.564"></a>
+<span class="sourceLineNo">565</span>                if (!name.isEmpty()) {<a name="line.565"></a>
+<span class="sourceLineNo">566</span>                    ensureDefaultLogger(manager.rootLogger);<a name="line.566"></a>
+<span class="sourceLineNo">567</span>                }<a name="line.567"></a>
+<span class="sourceLineNo">568</span>                if (!Logger.GLOBAL_LOGGER_NAME.equals(name)) {<a name="line.568"></a>
+<span class="sourceLineNo">569</span>                    ensureDefaultLogger(Logger.global);<a name="line.569"></a>
+<span class="sourceLineNo">570</span>                }<a name="line.570"></a>
+<span class="sourceLineNo">571</span>            }<a name="line.571"></a>
+<span class="sourceLineNo">572</span>        }<a name="line.572"></a>
+<span class="sourceLineNo">573</span><a name="line.573"></a>
+<span class="sourceLineNo">574</span>        private void ensureDefaultLogger(Logger logger) {<a name="line.574"></a>
+<span class="sourceLineNo">575</span>            // Used for lazy addition of root logger and global logger<a name="line.575"></a>
+<span class="sourceLineNo">576</span>            // to a LoggerContext.<a name="line.576"></a>
+<span class="sourceLineNo">577</span><a name="line.577"></a>
+<span class="sourceLineNo">578</span>            // This check is simple sanity: we do not want that this<a name="line.578"></a>
+<span class="sourceLineNo">579</span>            // method be called for anything else than Logger.global<a name="line.579"></a>
+<span class="sourceLineNo">580</span>            // or owner.rootLogger.<a name="line.580"></a>
+<span class="sourceLineNo">581</span>            if (!requiresDefaultLoggers || logger == null<a name="line.581"></a>
+<span class="sourceLineNo">582</span>                    || logger != Logger.global &amp;&amp; logger != manager.rootLogger) {<a name="line.582"></a>
+<span class="sourceLineNo">583</span><a name="line.583"></a>
+<span class="sourceLineNo">584</span>                // the case where we have a non null logger which is neither<a name="line.584"></a>
+<span class="sourceLineNo">585</span>                // Logger.global nor manager.rootLogger indicates a serious<a name="line.585"></a>
+<span class="sourceLineNo">586</span>                // issue - as ensureDefaultLogger should never be called<a name="line.586"></a>
+<span class="sourceLineNo">587</span>                // with any other loggers than one of these two (or null - if<a name="line.587"></a>
+<span class="sourceLineNo">588</span>                // e.g manager.rootLogger is not yet initialized)...<a name="line.588"></a>
+<span class="sourceLineNo">589</span>                assert logger == null;<a name="line.589"></a>
+<span class="sourceLineNo">590</span><a name="line.590"></a>
+<span class="sourceLineNo">591</span>                return;<a name="line.591"></a>
+<span class="sourceLineNo">592</span>            }<a name="line.592"></a>
+<span class="sourceLineNo">593</span><a name="line.593"></a>
+<span class="sourceLineNo">594</span>            // Adds the logger if it's not already there.<a name="line.594"></a>
+<span class="sourceLineNo">595</span>            if (!namedLoggers.containsKey(logger.getName())) {<a name="line.595"></a>
+<span class="sourceLineNo">596</span>                // It is important to prevent addLocalLogger to<a name="line.596"></a>
+<span class="sourceLineNo">597</span>                // call ensureAllDefaultLoggers when we're in the process<a name="line.597"></a>
+<span class="sourceLineNo">598</span>                // off adding one of those default loggers - as this would<a name="line.598"></a>
+<span class="sourceLineNo">599</span>                // immediately cause a stack overflow.<a name="line.599"></a>
+<span class="sourceLineNo">600</span>                // Therefore we must pass addDefaultLoggersIfNeeded=false,<a name="line.600"></a>
+<span class="sourceLineNo">601</span>                // even if requiresDefaultLoggers is true.<a name="line.601"></a>
+<span class="sourceLineNo">602</span>                addLocalLogger(logger, false);<a name="line.602"></a>
+<span class="sourceLineNo">603</span>            }<a name="line.603"></a>
+<span class="sourceLineNo">604</span>        }<a name="line.604"></a>
+<span class="sourceLineNo">605</span><a name="line.605"></a>
+<span class="sourceLineNo">606</span>        boolean addLocalLogger(Logger logger) {<a name="line.606"></a>
+<span class="sourceLineNo">607</span>            // no need to add default loggers if it's not required<a name="line.607"></a>
+<span class="sourceLineNo">608</span>            return addLocalLogger(logger, requiresDefaultLoggers);<a name="line.608"></a>
+<span class="sourceLineNo">609</span>        }<a name="line.609"></a>
+<span class="sourceLineNo">610</span><a name="line.610"></a>
+<span class="sourceLineNo">611</span>        // Add a logger to this context.  This method will only set its level<a name="line.611"></a>
+<span class="sourceLineNo">612</span>        // and process parent loggers.  It doesn't set its handlers.<a name="line.612"></a>
+<span class="sourceLineNo">613</span>        synchronized boolean addLocalLogger(Logger logger, boolean addDefaultLoggersIfNeeded) {<a name="line.613"></a>
+<span class="sourceLineNo">614</span>            // addDefaultLoggersIfNeeded serves to break recursion when adding<a name="line.614"></a>
+<span class="sourceLineNo">615</span>            // default loggers. If we're adding one of the default loggers<a name="line.615"></a>
+<span class="sourceLineNo">616</span>            // (we're being called from ensureDefaultLogger()) then<a name="line.616"></a>
+<span class="sourceLineNo">617</span>            // addDefaultLoggersIfNeeded will be false: we don't want to<a name="line.617"></a>
+<span class="sourceLineNo">618</span>            // call ensureAllDefaultLoggers again.<a name="line.618"></a>
+<span class="sourceLineNo">619</span>            //<a name="line.619"></a>
+<span class="sourceLineNo">620</span>            // Note: addDefaultLoggersIfNeeded can also be false when<a name="line.620"></a>
+<span class="sourceLineNo">621</span>            //       requiresDefaultLoggers is false - since calling<a name="line.621"></a>
+<span class="sourceLineNo">622</span>            //       ensureAllDefaultLoggers would have no effect in this case.<a name="line.622"></a>
+<span class="sourceLineNo">623</span>            if (addDefaultLoggersIfNeeded) {<a name="line.623"></a>
+<span class="sourceLineNo">624</span>                ensureAllDefaultLoggers(logger);<a name="line.624"></a>
+<span class="sourceLineNo">625</span>            }<a name="line.625"></a>
+<span class="sourceLineNo">626</span><a name="line.626"></a>
+<span class="sourceLineNo">627</span>            final String name = logger.getName();<a name="line.627"></a>
+<span class="sourceLineNo">628</span>            if (name == null) {<a name="line.628"></a>
+<span class="sourceLineNo">629</span>                throw new NullPointerException();<a name="line.629"></a>
+<span class="sourceLineNo">630</span>            }<a name="line.630"></a>
+<span class="sourceLineNo">631</span><a name="line.631"></a>
+<span class="sourceLineNo">632</span>            LoggerWeakRef ref = namedLoggers.get(name);<a name="line.632"></a>
+<span class="sourceLineNo">633</span>            if (ref != null) {<a name="line.633"></a>
+<span class="sourceLineNo">634</span>                if (ref.get() == null) {<a name="line.634"></a>
+<span class="sourceLineNo">635</span>                    // It's possible that the Logger was GC'ed after a<a name="line.635"></a>
+<span class="sourceLineNo">636</span>                    // drainLoggerRefQueueBounded() call so allow<a name="line.636"></a>
+<span class="sourceLineNo">637</span>                    // a new one to be registered.<a name="line.637"></a>
+<span class="sourceLineNo">638</span>                    ref.dispose();<a name="line.638"></a>
+<span class="sourceLineNo">639</span>                } else {<a name="line.639"></a>
+<span class="sourceLineNo">640</span>                    // We already have a registered logger with the given name.<a name="line.640"></a>
+<span class="sourceLineNo">641</span>                    return false;<a name="line.641"></a>
+<span class="sourceLineNo">642</span>                }<a name="line.642"></a>
+<span class="sourceLineNo">643</span>            }<a name="line.643"></a>
+<span class="sourceLineNo">644</span><a name="line.644"></a>
+<span class="sourceLineNo">645</span>            // We're adding a new logger.<a name="line.645"></a>
+<span class="sourceLineNo">646</span>            // Note that we are creating a weak reference here.<a name="line.646"></a>
+<span class="sourceLineNo">647</span>            ref = manager.new LoggerWeakRef(logger);<a name="line.647"></a>
+<span class="sourceLineNo">648</span>            namedLoggers.put(name, ref);<a name="line.648"></a>
+<span class="sourceLineNo">649</span><a name="line.649"></a>
+<span class="sourceLineNo">650</span>            // Apply any initial level defined for the new logger.<a name="line.650"></a>
+<span class="sourceLineNo">651</span>            Level level = manager.getLevelProperty(name + ".level", null);<a name="line.651"></a>
+<span class="sourceLineNo">652</span>            if (level != null) {<a name="line.652"></a>
+<span class="sourceLineNo">653</span>                doSetLevel(logger, level);<a name="line.653"></a>
+<span class="sourceLineNo">654</span>            }<a name="line.654"></a>
+<span class="sourceLineNo">655</span><a name="line.655"></a>
+<span class="sourceLineNo">656</span>            processParentHandlers(logger, name);<a name="line.656"></a>
+<span class="sourceLineNo">657</span><a name="line.657"></a>
+<span class="sourceLineNo">658</span>            // Find the new node and its parent.<a name="line.658"></a>
+<span class="sourceLineNo">659</span>            LogNode node = getNode(name);<a name="line.659"></a>
+<span class="sourceLineNo">660</span>            node.loggerRef = ref;<a name="line.660"></a>
+<span class="sourceLineNo">661</span>            Logger parent = null;<a name="line.661"></a>
+<span class="sourceLineNo">662</span>            LogNode nodep = node.parent;<a name="line.662"></a>
+<span class="sourceLineNo">663</span>            while (nodep != null) {<a name="line.663"></a>
+<span class="sourceLineNo">664</span>                LoggerWeakRef nodeRef = nodep.loggerRef;<a name="line.664"></a>
+<span class="sourceLineNo">665</span>                if (nodeRef != null) {<a name="line.665"></a>
+<span class="sourceLineNo">666</span>                    parent = nodeRef.get();<a name="line.666"></a>
+<span class="sourceLineNo">667</span>                    if (parent != null) {<a name="line.667"></a>
+<span class="sourceLineNo">668</span>                        break;<a name="line.668"></a>
+<span class="sourceLineNo">669</span>                    }<a name="line.669"></a>
+<span class="sourceLineNo">670</span>                }<a name="line.670"></a>
+<span class="sourceLineNo">671</span>                nodep = nodep.parent;<a name="line.671"></a>
+<span class="sourceLineNo">672</span>            }<a name="line.672"></a>
+<span class="sourceLineNo">673</span><a name="line.673"></a>
+<span class="sourceLineNo">674</span>            if (parent != null) {<a name="line.674"></a>
+<span class="sourceLineNo">675</span>                doSetParent(logger, parent);<a name="line.675"></a>
+<span class="sourceLineNo">676</span>            }<a name="line.676"></a>
+<span class="sourceLineNo">677</span>            // Walk over the children and tell them we are their new parent.<a name="line.677"></a>
+<span class="sourceLineNo">678</span>            node.walkAndSetParent(logger);<a name="line.678"></a>
+<span class="sourceLineNo">679</span>            // new LogNode is ready so tell the LoggerWeakRef about it<a name="line.679"></a>
+<span class="sourceLineNo">680</span>            ref.setNode(node);<a name="line.680"></a>
+<span class="sourceLineNo">681</span>            return true;<a name="line.681"></a>
+<span class="sourceLineNo">682</span>        }<a name="line.682"></a>
+<span class="sourceLineNo">683</span><a name="line.683"></a>
+<span class="sourceLineNo">684</span>        synchronized void removeLoggerRef(String name, LoggerWeakRef ref) {<a name="line.684"></a>
+<span class="sourceLineNo">685</span>            if (namedLoggers.get(name) == ref) {<a name="line.685"></a>
+<span class="sourceLineNo">686</span>                namedLoggers.remove(name);<a name="line.686"></a>
+<span class="sourceLineNo">687</span>            }<a name="line.687"></a>
+<span class="sourceLineNo">688</span>        }<a name="line.688"></a>
+<span class="sourceLineNo">689</span><a name="line.689"></a>
+<span class="sourceLineNo">690</span>        synchronized Enumeration&lt;String&gt; getLoggerNames() {<a name="line.690"></a>
+<span class="sourceLineNo">691</span>            // ensure that this context is properly initialized before<a name="line.691"></a>
+<span class="sourceLineNo">692</span>            // returning logger names.<a name="line.692"></a>
+<span class="sourceLineNo">693</span>            ensureInitialized();<a name="line.693"></a>
+<span class="sourceLineNo">694</span>            return namedLoggers.keys();<a name="line.694"></a>
+<span class="sourceLineNo">695</span>        }<a name="line.695"></a>
+<span class="sourceLineNo">696</span><a name="line.696"></a>
+<span class="sourceLineNo">697</span>        // If logger.getUseParentHandlers() returns 'true' and any of the logger's<a name="line.697"></a>
+<span class="sourceLineNo">698</span>        // parents have levels or handlers defined, make sure they are instantiated.<a name="line.698"></a>
+<span class="sourceLineNo">699</span>        private void processParentHandlers(final Logger logger, final String name) {<a name="line.699"></a>
+<span class="sourceLineNo">700</span>            AccessController.doPrivileged(new PrivilegedAction&lt;Void&gt;() {<a name="line.700"></a>
+<span class="sourceLineNo">701</span>                public Void run() {<a name="line.701"></a>
+<span class="sourceLineNo">702</span>                    if (logger != manager.rootLogger) {<a name="line.702"></a>
+<span class="sourceLineNo">703</span>                        boolean useParent = manager.getBooleanProperty(name + ".useParentHandlers", true);<a name="line.703"></a>
+<span class="sourceLineNo">704</span>                        if (!useParent) {<a name="line.704"></a>
+<span class="sourceLineNo">705</span>                            logger.setUseParentHandlers(false);<a name="line.705"></a>
+<span class="sourceLineNo">706</span>                        }<a name="line.706"></a>
+<span class="sourceLineNo">707</span>                    }<a name="line.707"></a>
+<span class="sourceLineNo">708</span>                    return null;<a name="line.708"></a>
+<span class="sourceLineNo">709</span>                }<a name="line.709"></a>
+<span class="sourceLineNo">710</span>            });<a name="line.710"></a>
+<span class="sourceLineNo">711</span><a name="line.711"></a>
+<span class="sourceLineNo">712</span>            int ix = 1;<a name="line.712"></a>
+<span class="sourceLineNo">713</span>            for (;;) {<a name="line.713"></a>
+<span class="sourceLineNo">714</span>                int ix2 = name.indexOf(".", ix);<a name="line.714"></a>
+<span class="sourceLineNo">715</span>                if (ix2 &lt; 0) {<a name="line.715"></a>
+<span class="sourceLineNo">716</span>                    break;<a name="line.716"></a>
+<span class="sourceLineNo">717</span>                }<a name="line.717"></a>
+<span class="sourceLineNo">718</span>                String pname = name.substring(0, ix2);<a name="line.718"></a>
+<span class="sourceLineNo">719</span>                if (manager.getProperty(pname + ".level") != null ||<a name="line.719"></a>
+<span class="sourceLineNo">720</span>                    manager.getProperty(pname + ".handlers") != null) {<a name="line.720"></a>
+<span class="sourceLineNo">721</span>                    // This pname has a level/handlers definition.<a name="line.721"></a>
+<span class="sourceLineNo">722</span>                    // Make sure it exists.<a name="line.722"></a>
+<span class="sourceLineNo">723</span>                    demandLogger(pname, null);<a name="line.723"></a>
+<span class="sourceLineNo">724</span>                }<a name="line.724"></a>
+<span class="sourceLineNo">725</span>                ix = ix2+1;<a name="line.725"></a>
+<span class="sourceLineNo">726</span>            }<a name="line.726"></a>
+<span class="sourceLineNo">727</span>        }<a name="line.727"></a>
+<span class="sourceLineNo">728</span><a name="line.728"></a>
+<span class="sourceLineNo">729</span>        // Gets a node in our tree of logger nodes.<a name="line.729"></a>
+<span class="sourceLineNo">730</span>        // If necessary, create it.<a name="line.730"></a>
+<span class="sourceLineNo">731</span>        LogNode getNode(String name) {<a name="line.731"></a>
+<span class="sourceLineNo">732</span>            if (name == null || name.equals("")) {<a name="line.732"></a>
+<span class="sourceLineNo">733</span>                return root;<a name="line.733"></a>
+<span class="sourceLineNo">734</span>            }<a name="line.734"></a>
+<span class="sourceLineNo">735</span>            LogNode node = root;<a name="line.735"></a>
+<span class="sourceLineNo">736</span>            while (name.length() &gt; 0) {<a name="line.736"></a>
+<span class="sourceLineNo">737</span>                int ix = name.indexOf(".");<a name="line.737"></a>
+<span class="sourceLineNo">738</span>                String head;<a name="line.738"></a>
+<span class="sourceLineNo">739</span>                if (ix &gt; 0) {<a name="line.739"></a>
+<span class="sourceLineNo">740</span>                    head = name.substring(0, ix);<a name="line.740"></a>
+<span class="sourceLineNo">741</span>                    name = name.substring(ix + 1);<a name="line.741"></a>
+<span class="sourceLineNo">742</span>                } else {<a name="line.742"></a>
+<span class="sourceLineNo">743</span>                    head = name;<a name="line.743"></a>
+<span class="sourceLineNo">744</span>                    name = "";<a name="line.744"></a>
+<span class="sourceLineNo">745</span>                }<a name="line.745"></a>
+<span class="sourceLineNo">746</span>                if (node.children == null) {<a name="line.746"></a>
+<span class="sourceLineNo">747</span>                    node.children = new HashMap&lt;&gt;();<a name="line.747"></a>
+<span class="sourceLineNo">748</span>                }<a name="line.748"></a>
+<span class="sourceLineNo">749</span>                LogNode child = node.children.get(head);<a name="line.749"></a>
+<span class="sourceLineNo">750</span>                if (child == null) {<a name="line.750"></a>
+<span class="sourceLineNo">751</span>                    child = new LogNode(node, this);<a name="line.751"></a>
+<span class="sourceLineNo">752</span>                    node.children.put(head, child);<a name="line.752"></a>
+<span class="sourceLineNo">753</span>                }<a name="line.753"></a>
+<span class="sourceLineNo">754</span>                node = child;<a name="line.754"></a>
+<span class="sourceLineNo">755</span>            }<a name="line.755"></a>
+<span class="sourceLineNo">756</span>            return node;<a name="line.756"></a>
+<span class="sourceLineNo">757</span>        }<a name="line.757"></a>
+<span class="sourceLineNo">758</span>    }<a name="line.758"></a>
+<span class="sourceLineNo">759</span><a name="line.759"></a>
+<span class="sourceLineNo">760</span>    static class SystemLoggerContext extends LoggerContext {<a name="line.760"></a>
+<span class="sourceLineNo">761</span>        // Add a system logger in the system context's namespace as well as<a name="line.761"></a>
+<span class="sourceLineNo">762</span>        // in the LogManager's namespace if not exist so that there is only<a name="line.762"></a>
+<span class="sourceLineNo">763</span>        // one single logger of the given name.  System loggers are visible<a name="line.763"></a>
+<span class="sourceLineNo">764</span>        // to applications unless a logger of the same name has been added.<a name="line.764"></a>
+<span class="sourceLineNo">765</span>        Logger demandLogger(String name, String resourceBundleName) {<a name="line.765"></a>
+<span class="sourceLineNo">766</span>            Logger result = findLogger(name);<a name="line.766"></a>
+<span class="sourceLineNo">767</span>            if (result == null) {<a name="line.767"></a>
+<span class="sourceLineNo">768</span>                // only allocate the new system logger once<a name="line.768"></a>
+<span class="sourceLineNo">769</span>                Logger newLogger = new Logger(name, resourceBundleName, null, true);<a name="line.769"></a>
+<span class="sourceLineNo">770</span>                do {<a name="line.770"></a>
+<span class="sourceLineNo">771</span>                    if (addLocalLogger(newLogger)) {<a name="line.771"></a>
+<span class="sourceLineNo">772</span>                        // We successfully added the new Logger that we<a name="line.772"></a>
+<span class="sourceLineNo">773</span>                        // created above so return it without refetching.<a name="line.773"></a>
+<span class="sourceLineNo">774</span>                        result = newLogger;<a name="line.774"></a>
+<span class="sourceLineNo">775</span>                    } else {<a name="line.775"></a>
+<span class="sourceLineNo">776</span>                        // We didn't add the new Logger that we created above<a name="line.776"></a>
+<span class="sourceLineNo">777</span>                        // because another thread added a Logger with the same<a name="line.777"></a>
+<span class="sourceLineNo">778</span>                        // name after our null check above and before our call<a name="line.778"></a>
+<span class="sourceLineNo">779</span>                        // to addLogger(). We have to refetch the Logger because<a name="line.779"></a>
+<span class="sourceLineNo">780</span>                        // addLogger() returns a boolean instead of the Logger<a name="line.780"></a>
+<span class="sourceLineNo">781</span>                        // reference itself. However, if the thread that created<a name="line.781"></a>
+<span class="sourceLineNo">782</span>                        // the other Logger is not holding a strong reference to<a name="line.782"></a>
+<span class="sourceLineNo">783</span>                        // the other Logger, then it is possible for the other<a name="line.783"></a>
+<span class="sourceLineNo">784</span>                        // Logger to be GC'ed after we saw it in addLogger() and<a name="line.784"></a>
+<span class="sourceLineNo">785</span>                        // before we can refetch it. If it has been GC'ed then<a name="line.785"></a>
+<span class="sourceLineNo">786</span>                        // we'll just loop around and try again.<a name="line.786"></a>
+<span class="sourceLineNo">787</span>                        result = findLogger(name);<a name="line.787"></a>
+<span class="sourceLineNo">788</span>                    }<a name="line.788"></a>
+<span class="sourceLineNo">789</span>                } while (result == null);<a name="line.789"></a>
+<span class="sourceLineNo">790</span>            }<a name="line.790"></a>
+<span class="sourceLineNo">791</span>            return result;<a name="line.791"></a>
+<span class="sourceLineNo">792</span>        }<a name="line.792"></a>
+<span class="sourceLineNo">793</span>    }<a name="line.793"></a>
+<span class="sourceLineNo">794</span><a name="line.794"></a>
+<span class="sourceLineNo">795</span>    // Add new per logger handlers.<a name="line.795"></a>
+<span class="sourceLineNo">796</span>    // We need to raise privilege here. All our decisions will<a name="line.796"></a>
+<span class="sourceLineNo">797</span>    // be made based on the logging configuration, which can<a name="line.797"></a>
+<span class="sourceLineNo">798</span>    // only be modified by trusted code.<a name="line.798"></a>
+<span class="sourceLineNo">799</span>    private void loadLoggerHandlers(final Logger logger, final String name,<a name="line.799"></a>
+<span class="sourceLineNo">800</span>                                    final String handlersPropertyName)<a name="line.800"></a>
+<span class="sourceLineNo">801</span>    {<a name="line.801"></a>
+<span class="sourceLineNo">802</span>        AccessController.doPrivileged(new PrivilegedAction&lt;Object&gt;() {<a name="line.802"></a>
+<span class="sourceLineNo">803</span>            public Object run() {<a name="line.803"></a>
+<span class="sourceLineNo">804</span>                String names[] = parseClassNames(handlersPropertyName);<a name="line.804"></a>
+<span class="sourceLineNo">805</span>                for (int i = 0; i &lt; names.length; i++) {<a name="line.805"></a>
+<span class="sourceLineNo">806</span>                    String word = names[i];<a name="line.806"></a>
+<span class="sourceLineNo">807</span>                    try {<a name="line.807"></a>
+<span class="sourceLineNo">808</span>                        Class clz = ClassLoader.getSystemClassLoader().loadClass(word);<a name="line.808"></a>
+<span class="sourceLineNo">809</span>                        Handler hdl = (Handler) clz.newInstance();<a name="line.809"></a>
+<span class="sourceLineNo">810</span>                        // Check if there is a property defining the<a name="line.810"></a>
+<span class="sourceLineNo">811</span>                        // this handler's level.<a name="line.811"></a>
+<span class="sourceLineNo">812</span>                        String levs = getProperty(word + ".level");<a name="line.812"></a>
+<span class="sourceLineNo">813</span>                        if (levs != null) {<a name="line.813"></a>
+<span class="sourceLineNo">814</span>                            Level l = Level.findLevel(levs);<a name="line.814"></a>
+<span class="sourceLineNo">815</span>                            if (l != null) {<a name="line.815"></a>
+<span class="sourceLineNo">816</span>                                hdl.setLevel(l);<a name="line.816"></a>
+<span class="sourceLineNo">817</span>                            } else {<a name="line.817"></a>
+<span class="sourceLineNo">818</span>                                // Probably a bad level. Drop through.<a name="line.818"></a>
+<span class="sourceLineNo">819</span>                                System.err.println("Can't set level for " + word);<a name="line.819"></a>
+<span class="sourceLineNo">820</span>                            }<a name="line.820"></a>
+<span class="sourceLineNo">821</span>                        }<a name="line.821"></a>
+<span class="sourceLineNo">822</span>                        // Add this Handler to the logger<a name="line.822"></a>
+<span class="sourceLineNo">823</span>                        logger.addHandler(hdl);<a name="line.823"></a>
+<span class="sourceLineNo">824</span>                    } catch (Exception ex) {<a name="line.824"></a>
+<span class="sourceLineNo">825</span>                        System.err.println("Can't load log handler \"" + word + "\"");<a name="line.825"></a>
+<span class="sourceLineNo">826</span>                        System.err.println("" + ex);<a name="line.826"></a>
+<span class="sourceLineNo">827</span>                        ex.printStackTrace();<a name="line.827"></a>
+<span class="sourceLineNo">828</span>                    }<a name="line.828"></a>
+<span class="sourceLineNo">829</span>                }<a name="line.829"></a>
+<span class="sourceLineNo">830</span>                return null;<a name="line.830"></a>
+<span class="sourceLineNo">831</span>            }<a name="line.831"></a>
+<span class="sourceLineNo">832</span>        });<a name="line.832"></a>
+<span class="sourceLineNo">833</span>    }<a name="line.833"></a>
+<span class="sourceLineNo">834</span><a name="line.834"></a>
+<span class="sourceLineNo">835</span><a name="line.835"></a>
+<span class="sourceLineNo">836</span>    // loggerRefQueue holds LoggerWeakRef objects for Logger objects<a name="line.836"></a>
+<span class="sourceLineNo">837</span>    // that have been GC'ed.<a name="line.837"></a>
+<span class="sourceLineNo">838</span>    private final ReferenceQueue&lt;Logger&gt; loggerRefQueue<a name="line.838"></a>
+<span class="sourceLineNo">839</span>        = new ReferenceQueue&lt;&gt;();<a name="line.839"></a>
+<span class="sourceLineNo">840</span><a name="line.840"></a>
+<span class="sourceLineNo">841</span>    // Package-level inner class.<a name="line.841"></a>
+<span class="sourceLineNo">842</span>    // Helper class for managing WeakReferences to Logger objects.<a name="line.842"></a>
+<span class="sourceLineNo">843</span>    //<a name="line.843"></a>
+<span class="sourceLineNo">844</span>    // LogManager.namedLoggers<a name="line.844"></a>
+<span class="sourceLineNo">845</span>    //     - has weak references to all named Loggers<a name="line.845"></a>
+<span class="sourceLineNo">846</span>    //     - namedLoggers keeps the LoggerWeakRef objects for the named<a name="line.846"></a>
+<span class="sourceLineNo">847</span>    //       Loggers around until we can deal with the book keeping for<a name="line.847"></a>
+<span class="sourceLineNo">848</span>    //       the named Logger that is being GC'ed.<a name="line.848"></a>
+<span class="sourceLineNo">849</span>    // LogManager.LogNode.loggerRef<a name="line.849"></a>
+<span class="sourceLineNo">850</span>    //     - has a weak reference to a named Logger<a name="line.850"></a>
+<span class="sourceLineNo">851</span>    //     - the LogNode will also keep the LoggerWeakRef objects for<a name="line.851"></a>
+<span class="sourceLineNo">852</span>    //       the named Loggers around; currently LogNodes never go away.<a name="line.852"></a>
+<span class="sourceLineNo">853</span>    // Logger.kids<a name="line.853"></a>
+<span class="sourceLineNo">854</span>    //     - has a weak reference to each direct child Logger; this<a name="line.854"></a>
+<span class="sourceLineNo">855</span>    //       includes anonymous and named Loggers<a name="line.855"></a>
+<span class="sourceLineNo">856</span>    //     - anonymous Loggers are always children of the rootLogger<a name="line.856"></a>
+<span class="sourceLineNo">857</span>    //       which is a strong reference; rootLogger.kids keeps the<a name="line.857"></a>
+<span class="sourceLineNo">858</span>    //       LoggerWeakRef objects for the anonymous Loggers around<a name="line.858"></a>
+<span class="sourceLineNo">859</span>    //       until we can deal with the book keeping.<a name="line.859"></a>
+<span class="sourceLineNo">860</span>    //<a name="line.860"></a>
+<span class="sourceLineNo">861</span>    final class LoggerWeakRef extends WeakReference&lt;Logger&gt; {<a name="line.861"></a>
+<span class="sourceLineNo">862</span>        private String                name;       // for namedLoggers cleanup<a name="line.862"></a>
+<span class="sourceLineNo">863</span>        private LogNode               node;       // for loggerRef cleanup<a name="line.863"></a>
+<span class="sourceLineNo">864</span>        private WeakReference&lt;Logger&gt; parentRef;  // for kids cleanup<a name="line.864"></a>
+<span class="sourceLineNo">865</span>        private boolean disposed = false;         // avoid calling dispose twice<a name="line.865"></a>
+<span class="sourceLineNo">866</span><a name="line.866"></a>
+<span class="sourceLineNo">867</span>        LoggerWeakRef(Logger logger) {<a name="line.867"></a>
+<span class="sourceLineNo">868</span>            super(logger, loggerRefQueue);<a name="line.868"></a>
+<span class="sourceLineNo">869</span><a name="line.869"></a>
+<span class="sourceLineNo">870</span>            name = logger.getName();  // save for namedLoggers cleanup<a name="line.870"></a>
+<span class="sourceLineNo">871</span>        }<a name="line.871"></a>
+<span class="sourceLineNo">872</span><a name="line.872"></a>
+<span class="sourceLineNo">873</span>        // dispose of this LoggerWeakRef object<a name="line.873"></a>
+<span class="sourceLineNo">874</span>        void dispose() {<a name="line.874"></a>
+<span class="sourceLineNo">875</span>            // Avoid calling dispose twice. When a Logger is gc'ed, its<a name="line.875"></a>
+<span class="sourceLineNo">876</span>            // LoggerWeakRef will be enqueued.<a name="line.876"></a>
+<span class="sourceLineNo">877</span>            // However, a new logger of the same name may be added (or looked<a name="line.877"></a>
+<span class="sourceLineNo">878</span>            // up) before the queue is drained. When that happens, dispose()<a name="line.878"></a>
+<span class="sourceLineNo">879</span>            // will be called by addLocalLogger() or findLogger().<a name="line.879"></a>
+<span class="sourceLineNo">880</span>            // Later when the queue is drained, dispose() will be called again<a name="line.880"></a>
+<span class="sourceLineNo">881</span>            // for the same LoggerWeakRef. Marking LoggerWeakRef as disposed<a name="line.881"></a>
+<span class="sourceLineNo">882</span>            // avoids processing the data twice (even though the code should<a name="line.882"></a>
+<span class="sourceLineNo">883</span>            // now be reentrant).<a name="line.883"></a>
+<span class="sourceLineNo">884</span>            synchronized(this) {<a name="line.884"></a>
+<span class="sourceLineNo">885</span>                // Note to maintainers:<a name="line.885"></a>
+<span class="sourceLineNo">886</span>                // Be careful not to call any method that tries to acquire<a name="line.886"></a>
+<span class="sourceLineNo">887</span>                // another lock from within this block - as this would surely<a name="line.887"></a>
+<span class="sourceLineNo">888</span>                // lead to deadlocks, given that dispose() can be called by<a name="line.888"></a>
+<span class="sourceLineNo">889</span>                // multiple threads, and from within different synchronized<a name="line.889"></a>
+<span class="sourceLineNo">890</span>                // methods/blocks.<a name="line.890"></a>
+<span class="sourceLineNo">891</span>                if (disposed) return;<a name="line.891"></a>
+<span class="sourceLineNo">892</span>                disposed = true;<a name="line.892"></a>
+<span class="sourceLineNo">893</span>            }<a name="line.893"></a>
+<span class="sourceLineNo">894</span><a name="line.894"></a>
+<span class="sourceLineNo">895</span>            final LogNode n = node;<a name="line.895"></a>
+<span class="sourceLineNo">896</span>            if (n != null) {<a name="line.896"></a>
+<span class="sourceLineNo">897</span>                // n.loggerRef can only be safely modified from within<a name="line.897"></a>
+<span class="sourceLineNo">898</span>                // a lock on LoggerContext. removeLoggerRef is already<a name="line.898"></a>
+<span class="sourceLineNo">899</span>                // synchronized on LoggerContext so calling<a name="line.899"></a>
+<span class="sourceLineNo">900</span>                // n.context.removeLoggerRef from within this lock is safe.<a name="line.900"></a>
+<span class="sourceLineNo">901</span>                synchronized (n.context) {<a name="line.901"></a>
+<span class="sourceLineNo">902</span>                    // if we have a LogNode, then we were a named Logger<a name="line.902"></a>
+<span class="sourceLineNo">903</span>                    // so clear namedLoggers weak ref to us<a name="line.903"></a>
+<span class="sourceLineNo">904</span>                    n.context.removeLoggerRef(name, this);<a name="line.904"></a>
+<span class="sourceLineNo">905</span>                    name = null;  // clear our ref to the Logger's name<a name="line.905"></a>
+<span class="sourceLineNo">906</span><a name="line.906"></a>
+<span class="sourceLineNo">907</span>                    // LogNode may have been reused - so only clear<a name="line.907"></a>
+<span class="sourceLineNo">908</span>                    // LogNode.loggerRef if LogNode.loggerRef == this<a name="line.908"></a>
+<span class="sourceLineNo">909</span>                    if (n.loggerRef == this) {<a name="line.909"></a>
+<span class="sourceLineNo">910</span>                        n.loggerRef = null;  // clear LogNode's weak ref to us<a name="line.910"></a>
+<span class="sourceLineNo">911</span>                    }<a name="line.911"></a>
+<span class="sourceLineNo">912</span>                    node = null;            // clear our ref to LogNode<a name="line.912"></a>
+<span class="sourceLineNo">913</span>                }<a name="line.913"></a>
+<span class="sourceLineNo">914</span>            }<a name="line.914"></a>
+<span class="sourceLineNo">915</span><a name="line.915"></a>
+<span class="sourceLineNo">916</span>            if (parentRef != null) {<a name="line.916"></a>
+<span class="sourceLineNo">917</span>                // this LoggerWeakRef has or had a parent Logger<a name="line.917"></a>
+<span class="sourceLineNo">918</span>                Logger parent = parentRef.get();<a name="line.918"></a>
+<span class="sourceLineNo">919</span>                if (parent != null) {<a name="line.919"></a>
+<span class="sourceLineNo">920</span>                    // the parent Logger is still there so clear the<a name="line.920"></a>
+<span class="sourceLineNo">921</span>                    // parent Logger's weak ref to us<a name="line.921"></a>
+<span class="sourceLineNo">922</span>                    parent.removeChildLogger(this);<a name="line.922"></a>
+<span class="sourceLineNo">923</span>                }<a name="line.923"></a>
+<span class="sourceLineNo">924</span>                parentRef = null;  // clear our weak ref to the parent Logger<a name="line.924"></a>
+<span class="sourceLineNo">925</span>            }<a name="line.925"></a>
+<span class="sourceLineNo">926</span>        }<a name="line.926"></a>
+<span class="sourceLineNo">927</span><a name="line.927"></a>
+<span class="sourceLineNo">928</span>        // set the node field to the specified value<a name="line.928"></a>
+<span class="sourceLineNo">929</span>        void setNode(LogNode node) {<a name="line.929"></a>
+<span class="sourceLineNo">930</span>            this.node = node;<a name="line.930"></a>
+<span class="sourceLineNo">931</span>        }<a name="line.931"></a>
+<span class="sourceLineNo">932</span><a name="line.932"></a>
+<span class="sourceLineNo">933</span>        // set the parentRef field to the specified value<a name="line.933"></a>
+<span class="sourceLineNo">934</span>        void setParentRef(WeakReference&lt;Logger&gt; parentRef) {<a name="line.934"></a>
+<span class="sourceLineNo">935</span>            this.parentRef = parentRef;<a name="line.935"></a>
+<span class="sourceLineNo">936</span>        }<a name="line.936"></a>
+<span class="sourceLineNo">937</span>    }<a name="line.937"></a>
+<span class="sourceLineNo">938</span><a name="line.938"></a>
+<span class="sourceLineNo">939</span>    // Package-level method.<a name="line.939"></a>
+<span class="sourceLineNo">940</span>    // Drain some Logger objects that have been GC'ed.<a name="line.940"></a>
+<span class="sourceLineNo">941</span>    //<a name="line.941"></a>
+<span class="sourceLineNo">942</span>    // drainLoggerRefQueueBounded() is called by addLogger() below<a name="line.942"></a>
+<span class="sourceLineNo">943</span>    // and by Logger.getAnonymousLogger(String) so we'll drain up to<a name="line.943"></a>
+<span class="sourceLineNo">944</span>    // MAX_ITERATIONS GC'ed Loggers for every Logger we add.<a name="line.944"></a>
+<span class="sourceLineNo">945</span>    //<a name="line.945"></a>
+<span class="sourceLineNo">946</span>    // On a WinXP VMware client, a MAX_ITERATIONS value of 400 gives<a name="line.946"></a>
+<span class="sourceLineNo">947</span>    // us about a 50/50 mix in increased weak ref counts versus<a name="line.947"></a>
+<span class="sourceLineNo">948</span>    // decreased weak ref counts in the AnonLoggerWeakRefLeak test.<a name="line.948"></a>
+<span class="sourceLineNo">949</span>    // Here are stats for cleaning up sets of 400 anonymous Loggers:<a name="line.949"></a>
+<span class="sourceLineNo">950</span>    //   - test duration 1 minute<a name="line.950"></a>
+<span class="sourceLineNo">951</span>    //   - sample size of 125 sets of 400<a name="line.951"></a>
+<span class="sourceLineNo">952</span>    //   - average: 1.99 ms<a name="line.952"></a>
+<span class="sourceLineNo">953</span>    //   - minimum: 0.57 ms<a name="line.953"></a>
+<span class="sourceLineNo">954</span>    //   - maximum: 25.3 ms<a name="line.954"></a>
+<span class="sourceLineNo">955</span>    //<a name="line.955"></a>
+<span class="sourceLineNo">956</span>    // The same config gives us a better decreased weak ref count<a name="line.956"></a>
+<span class="sourceLineNo">957</span>    // than increased weak ref count in the LoggerWeakRefLeak test.<a name="line.957"></a>
+<span class="sourceLineNo">958</span>    // Here are stats for cleaning up sets of 400 named Loggers:<a name="line.958"></a>
+<span class="sourceLineNo">959</span>    //   - test duration 2 minutes<a name="line.959"></a>
+<span class="sourceLineNo">960</span>    //   - sample size of 506 sets of 400<a name="line.960"></a>
+<span class="sourceLineNo">961</span>    //   - average: 0.57 ms<a name="line.961"></a>
+<span class="sourceLineNo">962</span>    //   - minimum: 0.02 ms<a name="line.962"></a>
+<span class="sourceLineNo">963</span>    //   - maximum: 10.9 ms<a name="line.963"></a>
+<span class="sourceLineNo">964</span>    //<a name="line.964"></a>
+<span class="sourceLineNo">965</span>    private final static int MAX_ITERATIONS = 400;<a name="line.965"></a>
+<span class="sourceLineNo">966</span>    final void drainLoggerRefQueueBounded() {<a name="line.966"></a>
+<span class="sourceLineNo">967</span>        for (int i = 0; i &lt; MAX_ITERATIONS; i++) {<a name="line.967"></a>
+<span class="sourceLineNo">968</span>            if (loggerRefQueue == null) {<a name="line.968"></a>
+<span class="sourceLineNo">969</span>                // haven't finished loading LogManager yet<a name="line.969"></a>
+<span class="sourceLineNo">970</span>                break;<a name="line.970"></a>
+<span class="sourceLineNo">971</span>            }<a name="line.971"></a>
+<span class="sourceLineNo">972</span><a name="line.972"></a>
+<span class="sourceLineNo">973</span>            LoggerWeakRef ref = (LoggerWeakRef) loggerRefQueue.poll();<a name="line.973"></a>
+<span class="sourceLineNo">974</span>            if (ref == null) {<a name="line.974"></a>
+<span class="sourceLineNo">975</span>                break;<a name="line.975"></a>
+<span class="sourceLineNo">976</span>            }<a name="line.976"></a>
+<span class="sourceLineNo">977</span>            // a Logger object has been GC'ed so clean it up<a name="line.977"></a>
+<span class="sourceLineNo">978</span>            ref.dispose();<a name="line.978"></a>
+<span class="sourceLineNo">979</span>        }<a name="line.979"></a>
+<span class="sourceLineNo">980</span>    }<a name="line.980"></a>
+<span class="sourceLineNo">981</span><a name="line.981"></a>
+<span class="sourceLineNo">982</span>    /**<a name="line.982"></a>
+<span class="sourceLineNo">983</span>     * Add a named logger.  This does nothing and returns false if a logger<a name="line.983"></a>
+<span class="sourceLineNo">984</span>     * with the same name is already registered.<a name="line.984"></a>
+<span class="sourceLineNo">985</span>     * &lt;p&gt;<a name="line.985"></a>
+<span class="sourceLineNo">986</span>     * The Logger factory methods call this method to register each<a name="line.986"></a>
+<span class="sourceLineNo">987</span>     * newly created Logger.<a name="line.987"></a>
+<span class="sourceLineNo">988</span>     * &lt;p&gt;<a name="line.988"></a>
+<span class="sourceLineNo">989</span>     * The application should retain its own reference to the Logger<a name="line.989"></a>
+<span class="sourceLineNo">990</span>     * object to avoid it being garbage collected.  The LogManager<a name="line.990"></a>
+<span class="sourceLineNo">991</span>     * may only retain a weak reference.<a name="line.991"></a>
+<span class="sourceLineNo">992</span>     *<a name="line.992"></a>
+<span class="sourceLineNo">993</span>     * @param   logger the new logger.<a name="line.993"></a>
+<span class="sourceLineNo">994</span>     * @return  true if the argument logger was registered successfully,<a name="line.994"></a>
+<span class="sourceLineNo">995</span>     *          false if a logger of that name already exists.<a name="line.995"></a>
+<span class="sourceLineNo">996</span>     * @exception NullPointerException if the logger name is null.<a name="line.996"></a>
+<span class="sourceLineNo">997</span>     */<a name="line.997"></a>
+<span class="sourceLineNo">998</span>    public boolean addLogger(Logger logger) {<a name="line.998"></a>
+<span class="sourceLineNo">999</span>        final String name = logger.getName();<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>        if (name == null) {<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>            throw new NullPointerException();<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>        }<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>        drainLoggerRefQueueBounded();<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>        LoggerContext cx = getUserContext();<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>        if (cx.addLocalLogger(logger)) {<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>            // Do we have a per logger handler too?<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>            // Note: this will add a 200ms penalty<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>            loadLoggerHandlers(logger, name, name + ".handlers");<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>            return true;<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>        } else {<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>            return false;<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>        }<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>    }<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span><a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>    // Private method to set a level on a logger.<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>    // If necessary, we raise privilege before doing the call.<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>    private static void doSetLevel(final Logger logger, final Level level) {<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>        SecurityManager sm = System.getSecurityManager();<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>        if (sm == null) {<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>            // There is no security manager, so things are easy.<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>            logger.setLevel(level);<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>            return;<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>        }<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>        // There is a security manager.  Raise privilege before<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>        // calling setLevel.<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>        AccessController.doPrivileged(new PrivilegedAction&lt;Object&gt;() {<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>            public Object run() {<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>                logger.setLevel(level);<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>                return null;<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>            }});<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>    }<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span><a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>    // Private method to set a parent on a logger.<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>    // If necessary, we raise privilege before doing the setParent call.<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>    private static void doSetParent(final Logger logger, final Logger parent) {<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>        SecurityManager sm = System.getSecurityManager();<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>        if (sm == null) {<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>            // There is no security manager, so things are easy.<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>            logger.setParent(parent);<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>            return;<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>        }<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>        // There is a security manager.  Raise privilege before<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>        // calling setParent.<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>        AccessController.doPrivileged(new PrivilegedAction&lt;Object&gt;() {<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>            public Object run() {<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>                logger.setParent(parent);<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>                return null;<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>            }});<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>    }<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span><a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>    /**<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>     * Method to find a named logger.<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>     * &lt;p&gt;<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>     * Note that since untrusted code may create loggers with<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>     * arbitrary names this method should not be relied on to<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>     * find Loggers for security sensitive logging.<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>     * It is also important to note that the Logger associated with the<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>     * String {@code name} may be garbage collected at any time if there<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>     * is no strong reference to the Logger. The caller of this method<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>     * must check the return value for null in order to properly handle<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>     * the case where the Logger has been garbage collected.<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>     * &lt;p&gt;<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>     * @param name name of the logger<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>     * @return  matching logger or null if none is found<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span>     */<a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>    public Logger getLogger(String name) {<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>        return getUserContext().findLogger(name);<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>    }<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span><a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>    /**<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>     * Get an enumeration of known logger names.<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>     * &lt;p&gt;<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>     * Note:  Loggers may be added dynamically as new classes are loaded.<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>     * This method only reports on the loggers that are currently registered.<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>     * It is also important to note that this method only returns the name<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>     * of a Logger, not a strong reference to the Logger itself.<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>     * The returned String does nothing to prevent the Logger from being<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>     * garbage collected. In particular, if the returned name is passed<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>     * to {@code LogManager.getLogger()}, then the caller must check the<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>     * return value from {@code LogManager.getLogger()} for null to properly<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>     * handle the case where the Logger has been garbage collected in the<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>     * time since its name was returned by this method.<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>     * &lt;p&gt;<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>     * @return  enumeration of logger name strings<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>     */<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>    public Enumeration&lt;String&gt; getLoggerNames() {<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>        return getUserContext().getLoggerNames();<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>    }<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span><a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>    /**<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>     * Reinitialize the logging properties and reread the logging configuration.<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>     * &lt;p&gt;<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>     * The same rules are used for locating the configuration properties<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>     * as are used at startup.  So normally the logging properties will<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>     * be re-read from the same file that was used at startup.<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>     * &lt;P&gt;<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>     * Any log level definitions in the new configuration file will be<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>     * applied using Logger.setLevel(), if the target Logger exists.<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>     * &lt;p&gt;<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>     * A PropertyChangeEvent will be fired after the properties are read.<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>     *<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>     * @exception  SecurityException  if a security manager exists and if<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>     *             the caller does not have LoggingPermission("control").<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>     * @exception  IOException if there are IO problems reading the configuration.<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>     */<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>    public void readConfiguration() throws IOException, SecurityException {<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>        checkPermission();<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span><a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>        // if a configuration class is specified, load it and use it.<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>        String cname = System.getProperty("java.util.logging.config.class");<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>        if (cname != null) {<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>            try {<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>                // Instantiate the named class.  It is its constructor's<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>                // responsibility to initialize the logging configuration, by<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>                // calling readConfiguration(InputStream) with a suitable stream.<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>                try {<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>                    Class clz = ClassLoader.getSystemClassLoader().loadClass(cname);<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>                    clz.newInstance();<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>                    return;<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>                } catch (ClassNotFoundException ex) {<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>                    Class clz = Thread.currentThread().getContextClassLoader().loadClass(cname);<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>                    clz.newInstance();<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>                    return;<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>                }<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>            } catch (Exception ex) {<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>                System.err.println("Logging configuration class \"" + cname + "\" failed");<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>                System.err.println("" + ex);<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>                // keep going and useful config file.<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>            }<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>        }<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span><a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>        String fname = System.getProperty("java.util.logging.config.file");<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>        if (fname == null) {<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>            fname = System.getProperty("java.home");<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>            if (fname == null) {<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>                throw new Error("Can't find java.home ??");<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>            }<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>            File f = new File(fname, "lib");<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>            f = new File(f, "logging.properties");<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>            fname = f.getCanonicalPath();<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>        }<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>        InputStream in = new FileInputStream(fname);<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>        BufferedInputStream bin = new BufferedInputStream(in);<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>        try {<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>            readConfiguration(bin);<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>        } finally {<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>            if (in != null) {<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>                in.close();<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>            }<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>        }<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>    }<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span><a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>    /**<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>     * Reset the logging configuration.<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>     * &lt;p&gt;<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>     * For all named loggers, the reset operation removes and closes<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span>     * all Handlers and (except for the root logger) sets the level<a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>     * to null.  The root logger's level is set to Level.INFO.<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>     *<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>     * @exception  SecurityException  if a security manager exists and if<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>     *             the caller does not have LoggingPermission("control").<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>     */<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span><a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>    public void reset() throws SecurityException {<a name="line.1164"></a>
+<span class="sourceLineNo">1165</span>        checkPermission();<a name="line.1165"></a>
+<span class="sourceLineNo">1166</span>        synchronized (this) {<a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>            props = new Properties();<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>            // Since we are doing a reset we no longer want to initialize<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>            // the global handlers, if they haven't been initialized yet.<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>            initializedGlobalHandlers = true;<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>        }<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>        for (LoggerContext cx : contexts()) {<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span>            Enumeration&lt;String&gt; enum_ = cx.getLoggerNames();<a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>            while (enum_.hasMoreElements()) {<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>                String name = enum_.nextElement();<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>                Logger logger = cx.findLogger(name);<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>                if (logger != null) {<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>                    resetLogger(logger);<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span>                }<a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>            }<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>        }<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span>    }<a name="line.1182"></a>
+<span class="sourceLineNo">1183</span><a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>    // Private method to reset an individual target logger.<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>    private void resetLogger(Logger logger) {<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>        // Close all the Logger's handlers.<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>        Handler[] targets = logger.getHandlers();<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>        for (int i = 0; i &lt; targets.length; i++) {<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span>            Handler h = targets[i];<a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>            logger.removeHandler(h);<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>            try {<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>                h.close();<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span>            } catch (Exception ex) {<a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>                // Problems closing a handler?  Keep going...<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>            }<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>        }<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>        String name = logger.getName();<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>        if (name != null &amp;&amp; name.equals("")) {<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>            // This is the root logger.<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>            logger.setLevel(defaultLevel);<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>        } else {<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span>            logger.setLevel(null);<a name="line.1202"></a>
+<span class="sourceLineNo">1203</span>        }<a name="line.1203"></a>
+<span class="sourceLineNo">1204</span>    }<a name="line.1204"></a>
+<span class="sourceLineNo">1205</span><a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>    // get a list of whitespace separated classnames from a property.<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span>    private String[] parseClassNames(String propertyName) {<a name="line.1207"></a>
+<span class="sourceLineNo">1208</span>        String hands = getProperty(propertyName);<a name="line.1208"></a>
+<span class="sourceLineNo">1209</span>        if (hands == null) {<a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>            return new String[0];<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span>        }<a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>        hands = hands.trim();<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span>        int ix = 0;<a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>        Vector&lt;String&gt; result = new Vector&lt;&gt;();<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>        while (ix &lt; hands.length()) {<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>            int end = ix;<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>            while (end &lt; hands.length()) {<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span>                if (Character.isWhitespace(hands.charAt(end))) {<a name="line.1218"></a>
+<span class="sourceLineNo">1219</span>                    break;<a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>                }<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span>                if (hands.charAt(end) == ',') {<a name="line.1221"></a>
+<span class="sourceLineNo">1222</span>                    break;<a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>                }<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>                end++;<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span>            }<a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>            String word = hands.substring(ix, end);<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span>            ix = end+1;<a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>            word = word.trim();<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span>            if (word.length() == 0) {<a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>                continue;<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span>            }<a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>            result.add(word);<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>        }<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>        return result.toArray(new String[result.size()]);<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span>    }<a name="line.1235"></a>
+<span class="sourceLineNo">1236</span><a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>    /**<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span>     * Reinitialize the logging properties and reread the logging configuration<a name="line.1238"></a>
+<span class="sourceLineNo">1239</span>     * from the given stream, which should be in java.util.Properties format.<a name="line.1239"></a>
+<span class="sourceLineNo">1240</span>     * A PropertyChangeEvent will be fired after the properties are read.<a name="line.1240"></a>
+<span class="sourceLineNo">1241</span>     * &lt;p&gt;<a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>     * Any log level definitions in the new configuration file will be<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>     * applied using Logger.setLevel(), if the target Logger exists.<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span>     *<a name="line.1244"></a>
+<span class="sourceLineNo">1245</span>     * @param ins       stream to read properties from<a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>     * @exception  SecurityException  if a security manager exists and if<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span>     *             the caller does not have LoggingPermission("control").<a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>     * @exception  IOException if there are problems reading from the stream.<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>     */<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>    public void readConfiguration(InputStream ins) throws IOException, SecurityException {<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span>        checkPermission();<a name="line.1251"></a>
+<span class="sourceLineNo">1252</span>        reset();<a name="line.1252"></a>
+<span class="sourceLineNo">1253</span><a name="line.1253"></a>
+<span class="sourceLineNo">1254</span>        // Load the properties<a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>        props.load(ins);<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span>        // Instantiate new configuration objects.<a name="line.1256"></a>
+<span class="sourceLineNo">1257</span>        String names[] = parseClassNames("config");<a name="line.1257"></a>
+<span class="sourceLineNo">1258</span><a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>        for (int i = 0; i &lt; names.length; i++) {<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span>            String word = names[i];<a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>            try {<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>                Class clz = ClassLoader.getSystemClassLoader().loadClass(word);<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>                clz.newInstance();<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>            } catch (Exception ex) {<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span>                System.err.println("Can't load config class \"" + word + "\"");<a name="line.1265"></a>
+<span class="sourceLineNo">1266</span>                System.err.println("" + ex);<a name="line.1266"></a>
+<span class="sourceLineNo">1267</span>                // ex.printStackTrace();<a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>            }<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span>        }<a name="line.1269"></a>
+<span class="sourceLineNo">1270</span><a name="line.1270"></a>
+<span class="sourceLineNo">1271</span>        // Set levels on any pre-existing loggers, based on the new properties.<a name="line.1271"></a>
+<span class="sourceLineNo">1272</span>        setLevelsOnExistingLoggers();<a name="line.1272"></a>
+<span class="sourceLineNo">1273</span><a name="line.1273"></a>
+<span class="sourceLineNo">1274</span>        // Notify any interested parties that our properties have changed.<a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>        changes.firePropertyChange(null, null, null);<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span><a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>        // Note that we need to reinitialize global handles when<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span>        // they are first referenced.<a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>        synchronized (this) {<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span>            initializedGlobalHandlers = false;<a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>        }<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span>    }<a name="line.1282"></a>
+<span class="sourceLineNo">1283</span><a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>    /**<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span>     * Get the value of a logging property.<a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>     * The method returns null if the property is not found.<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span>     * @param name      property name<a name="line.1287"></a>
+<span class="sourceLineNo">1288</span>     * @return          property value<a name="line.1288"></a>
+<span class="sourceLineNo">1289</span>     */<a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>    public String getProperty(String name) {<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span>        return props.getProperty(name);<a name="line.1291"></a>
+<span class="sourceLineNo">1292</span>    }<a name="line.1292"></a>
+<span class="sourceLineNo">1293</span><a name="line.1293"></a>
+<span class="sourceLineNo">1294</span>    // Package private method to get a String property.<a name="line.1294"></a>
+<span class="sourceLineNo">1295</span>    // If the property is not defined we return the given<a name="line.1295"></a>
+<span class="sourceLineNo">1296</span>    // default value.<a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>    String getStringProperty(String name, String defaultValue) {<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span>        String val = getProperty(name);<a name="line.1298"></a>
+<span class="sourceLineNo">1299</span>        if (val == null) {<a name="line.1299"></a>
+<span class="sourceLineNo">1300</span>            return defaultValue;<a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>        }<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>        return val.trim();<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>    }<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span><a name="line.1304"></a>
+<span class="sourceLineNo">1305</span>    // Package private method to get an integer property.<a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>    // If the property is not defined or cannot be parsed<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span>    // we return the given default value.<a name="line.1307"></a>
+<span class="sourceLineNo">1308</span>    int getIntProperty(String name, int defaultValue) {<a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>        String val = getProperty(name);<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span>        if (val == null) {<a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>            return defaultValue;<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>        }<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span>        try {<a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>            return Integer.parseInt(val.trim());<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span>        } catch (Exception ex) {<a name="line.1315"></a>
+<span class="sourceLineNo">1316</span>            return defaultValue;<a name="line.1316"></a>
+<span class="sourceLineNo">1317</span>        }<a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>    }<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span><a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>    // Package private method to get a boolean property.<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span>    // If the property is not defined or cannot be parsed<a name="line.1321"></a>
+<span class="sourceLineNo">1322</span>    // we return the given default value.<a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>    boolean getBooleanProperty(String name, boolean defaultValue) {<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>        String val = getProperty(name);<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>        if (val == null) {<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span>            return defaultValue;<a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>        }<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span>        val = val.toLowerCase();<a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>        if (val.equals("true") || val.equals("1")) {<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>            return true;<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>        } else if (val.equals("false") || val.equals("0")) {<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span>            return false;<a name="line.1332"></a>
+<span class="sourceLineNo">1333</span>        }<a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>        return defaultValue;<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span>    }<a name="line.1335"></a>
+<span class="sourceLineNo">1336</span><a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>    // Package private method to get a Level property.<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span>    // If the property is not defined or cannot be parsed<a name="line.1338"></a>
+<span class="sourceLineNo">1339</span>    // we return the given default value.<a name="line.1339"></a>
+<span class="sourceLineNo">1340</span>    Level getLevelProperty(String name, Level defaultValue) {<a name="line.1340"></a>
+<span class="sourceLineNo">1341</span>        String val = getProperty(name);<a name="line.1341"></a>
+<span class="sourceLineNo">1342</span>        if (val == null) {<a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>            return defaultValue;<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span>        }<a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>        Level l = Level.findLevel(val.trim());<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>        return l != null ? l : defaultValue;<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>    }<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span><a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>    // Package private method to get a filter property.<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>    // We return an instance of the class named by the "name"<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span>    // property. If the property is not defined or has problems<a name="line.1351"></a>
+<span class="sourceLineNo">1352</span>    // we return the defaultValue.<a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>    Filter getFilterProperty(String name, Filter defaultValue) {<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span>        String val = getProperty(name);<a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>        try {<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span>            if (val != null) {<a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>                Class clz = ClassLoader.getSystemClassLoader().loadClass(val);<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span>                return (Filter) clz.newInstance();<a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>            }<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span>        } catch (Exception ex) {<a name="line.1360"></a>
+<span class="sourceLineNo">1361</span>            // We got one of a variety of exceptions in creating the<a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>            // class or creating an instance.<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span>            // Drop through.<a name="line.1363"></a>
+<span class="sourceLineNo">1364</span>        }<a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>        // We got an exception.  Return the defaultValue.<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span>        return defaultValue;<a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>    }<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span><a name="line.1368"></a>
+<span class="sourceLineNo">1369</span><a name="line.1369"></a>
+<span class="sourceLineNo">1370</span>    // Package private method to get a formatter property.<a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>    // We return an instance of the class named by the "name"<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span>    // property. If the property is not defined or has problems<a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>    // we return the defaultValue.<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>    Formatter getFormatterProperty(String name, Formatter defaultValue) {<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span>        String val = getProperty(name);<a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>        try {<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>            if (val != null) {<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>                Class clz = ClassLoader.getSystemClassLoader().loadClass(val);<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span>                return (Formatter) clz.newInstance();<a name="line.1379"></a>
+<span class="sourceLineNo">1380</span>            }<a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>        } catch (Exception ex) {<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span>            // We got one of a variety of exceptions in creating the<a name="line.1382"></a>
+<span class="sourceLineNo">1383</span>            // class or creating an instance.<a name="line.1383"></a>
+<span class="sourceLineNo">1384</span>            // Drop through.<a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>        }<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span>        // We got an exception.  Return the defaultValue.<a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>        return defaultValue;<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span>    }<a name="line.1388"></a>
+<span class="sourceLineNo">1389</span><a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>    // Private method to load the global handlers.<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>    // We do the real work lazily, when the global handlers<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span>    // are first used.<a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>    private synchronized void initializeGlobalHandlers() {<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span>        if (initializedGlobalHandlers) {<a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>            return;<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span>        }<a name="line.1396"></a>
+<span class="sourceLineNo">1397</span><a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>        initializedGlobalHandlers = true;<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span><a name="line.1399"></a>
+<span class="sourceLineNo">1400</span>        if (deathImminent) {<a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>            // Aaargh...<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span>            // The VM is shutting down and our exit hook has been called.<a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>            // Avoid allocating global handlers.<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span>            return;<a name="line.1404"></a>
+<span class="sourceLineNo">1405</span>        }<a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>        loadLoggerHandlers(rootLogger, null, "handlers");<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>    }<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span><a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>    private final Permission controlPermission = new LoggingPermission("control", null);<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span><a name="line.1410"></a>
+<span class="sourceLineNo">1411</span>    void checkPermission() {<a name="line.1411"></a>
+<span class="sourceLineNo">1412</span>        SecurityManager sm = System.getSecurityManager();<a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>        if (sm != null)<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span>            sm.checkPermission(controlPermission);<a name="line.1414"></a>
+<span class="sourceLineNo">1415</span>    }<a name="line.1415"></a>
+<span class="sourceLineNo">1416</span><a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>    /**<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span>     * Check that the current context is trusted to modify the logging<a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>     * configuration.  This requires LoggingPermission("control").<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span>     * &lt;p&gt;<a name="line.1420"></a>
+<span class="sourceLineNo">1421</span>     * If the check fails we throw a SecurityException, otherwise<a name="line.1421"></a>
+<span class="sourceLineNo">1422</span>     * we return normally.<a name="line.1422"></a>
+<span class="sourceLineNo">1423</span>     *<a name="line.1423"></a>
+<span class="sourceLineNo">1424</span>     * @exception  SecurityException  if a security manager exists and if<a name="line.1424"></a>
+<span class="sourceLineNo">1425</span>     *             the caller does not have LoggingPermission("control").<a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>     */<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span>    public void checkAccess() throws SecurityException {<a name="line.1427"></a>
+<span class="sourceLineNo">1428</span>        checkPermission();<a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>    }<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span><a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>    // Nested class to represent a node in our tree of named loggers.<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span>    private static class LogNode {<a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>        HashMap&lt;String,LogNode&gt; children;<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span>        LoggerWeakRef loggerRef;<a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>        LogNode parent;<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span>        final LoggerContext context;<a name="line.1436"></a>
+<span class="sourceLineNo">1437</span><a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>        LogNode(LogNode parent, LoggerContext context) {<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>            this.parent = parent;<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>            this.context = context;<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>        }<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span><a name="line.1442"></a>
+<span class="sourceLineNo">1443</span>        // Recursive method to walk the tree below a node and set<a name="line.1443"></a>
+<span class="sourceLineNo">1444</span>        // a new parent logger.<a name="line.1444"></a>
+<span class="sourceLineNo">1445</span>        void walkAndSetParent(Logger parent) {<a name="line.1445"></a>
+<span class="sourceLineNo">1446</span>            if (children == null) {<a name="line.1446"></a>
+<span class="sourceLineNo">1447</span>                return;<a name="line.1447"></a>
+<span class="sourceLineNo">1448</span>            }<a name="line.1448"></a>
+<span class="sourceLineNo">1449</span>            Iterator&lt;LogNode&gt; values = children.values().iterator();<a name="line.1449"></a>
+<span class="sourceLineNo">1450</span>            while (values.hasNext()) {<a name="line.1450"></a>
+<span class="sourceLineNo">1451</span>                LogNode node = values.next();<a name="line.1451"></a>
+<span class="sourceLineNo">1452</span>                LoggerWeakRef ref = node.loggerRef;<a name="line.1452"></a>
+<span class="sourceLineNo">1453</span>                Logger logger = (ref == null) ? null : ref.get();<a name="line.1453"></a>
+<span class="sourceLineNo">1454</span>                if (logger == null) {<a name="line.1454"></a>
+<span class="sourceLineNo">1455</span>                    node.walkAndSetParent(parent);<a name="line.1455"></a>
+<span class="sourceLineNo">1456</span>                } else {<a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>                    doSetParent(logger, parent);<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span>                }<a name="line.1458"></a>
+<span class="sourceLineNo">1459</span>            }<a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>        }<a name="line.1460"></a>
+<span class="sourceLineNo">1461</span>    }<a name="line.1461"></a>
+<span class="sourceLineNo">1462</span><a name="line.1462"></a>
+<span class="sourceLineNo">1463</span>    // We use a subclass of Logger for the root logger, so<a name="line.1463"></a>
+<span class="sourceLineNo">1464</span>    // that we only instantiate the global handlers when they<a name="line.1464"></a>
+<span class="sourceLineNo">1465</span>    // are first needed.<a name="line.1465"></a>
+<span class="sourceLineNo">1466</span>    private final class RootLogger extends Logger {<a name="line.1466"></a>
+<span class="sourceLineNo">1467</span>        private RootLogger() {<a name="line.1467"></a>
+<span class="sourceLineNo">1468</span>            super("", null, null, true);<a name="line.1468"></a>
+<span class="sourceLineNo">1469</span>            setLevel(defaultLevel);<a name="line.1469"></a>
+<span class="sourceLineNo">1470</span>        }<a name="line.1470"></a>
+<span class="sourceLineNo">1471</span><a name="line.1471"></a>
+<span class="sourceLineNo">1472</span>        @Override<a name="line.1472"></a>
+<span class="sourceLineNo">1473</span>        public void log(LogRecord record) {<a name="line.1473"></a>
+<span class="sourceLineNo">1474</span>            // Make sure that the global handlers have been instantiated.<a name="line.1474"></a>
+<span class="sourceLineNo">1475</span>            initializeGlobalHandlers();<a name="line.1475"></a>
+<span class="sourceLineNo">1476</span>            super.log(record);<a name="line.1476"></a>
+<span class="sourceLineNo">1477</span>        }<a name="line.1477"></a>
+<span class="sourceLineNo">1478</span><a name="line.1478"></a>
+<span class="sourceLineNo">1479</span>        @Override<a name="line.1479"></a>
+<span class="sourceLineNo">1480</span>        public void addHandler(Handler h) {<a name="line.1480"></a>
+<span class="sourceLineNo">1481</span>            initializeGlobalHandlers();<a name="line.1481"></a>
+<span class="sourceLineNo">1482</span>            super.addHandler(h);<a name="line.1482"></a>
+<span class="sourceLineNo">1483</span>        }<a name="line.1483"></a>
+<span class="sourceLineNo">1484</span><a name="line.1484"></a>
+<span class="sourceLineNo">1485</span>        @Override<a name="line.1485"></a>
+<span class="sourceLineNo">1486</span>        public void removeHandler(Handler h) {<a name="line.1486"></a>
+<span class="sourceLineNo">1487</span>            initializeGlobalHandlers();<a name="line.1487"></a>
+<span class="sourceLineNo">1488</span>            super.removeHandler(h);<a name="line.1488"></a>
+<span class="sourceLineNo">1489</span>        }<a name="line.1489"></a>
+<span class="sourceLineNo">1490</span><a name="line.1490"></a>
+<span class="sourceLineNo">1491</span>        @Override<a name="line.1491"></a>
+<span class="sourceLineNo">1492</span>        Handler[] accessCheckedHandlers() {<a name="line.1492"></a>
+<span class="sourceLineNo">1493</span>            initializeGlobalHandlers();<a name="line.1493"></a>
+<span class="sourceLineNo">1494</span>            return super.accessCheckedHandlers();<a name="line.1494"></a>
+<span class="sourceLineNo">1495</span>        }<a name="line.1495"></a>
+<span class="sourceLineNo">1496</span>    }<a name="line.1496"></a>
+<span class="sourceLineNo">1497</span><a name="line.1497"></a>
+<span class="sourceLineNo">1498</span><a name="line.1498"></a>
+<span class="sourceLineNo">1499</span>    // Private method to be called when the configuration has<a name="line.1499"></a>
+<span class="sourceLineNo">1500</span>    // changed to apply any level settings to any pre-existing loggers.<a name="line.1500"></a>
+<span class="sourceLineNo">1501</span>    synchronized private void setLevelsOnExistingLoggers() {<a name="line.1501"></a>
+<span class="sourceLineNo">1502</span>        Enumeration&lt;?&gt; enum_ = props.propertyNames();<a name="line.1502"></a>
+<span class="sourceLineNo">1503</span>        while (enum_.hasMoreElements()) {<a name="line.1503"></a>
+<span class="sourceLineNo">1504</span>            String key = (String)enum_.nextElement();<a name="line.1504"></a>
+<span class="sourceLineNo">1505</span>            if (!key.endsWith(".level")) {<a name="line.1505"></a>
+<span class="sourceLineNo">1506</span>                // Not a level definition.<a name="line.1506"></a>
+<span class="sourceLineNo">1507</span>                continue;<a name="line.1507"></a>
+<span class="sourceLineNo">1508</span>            }<a name="line.1508"></a>
+<span class="sourceLineNo">1509</span>            int ix = key.length() - 6;<a name="line.1509"></a>
+<span class="sourceLineNo">1510</span>            String name = key.substring(0, ix);<a name="line.1510"></a>
+<span class="sourceLineNo">1511</span>            Level level = getLevelProperty(key, null);<a name="line.1511"></a>
+<span class="sourceLineNo">1512</span>            if (level == null) {<a name="line.1512"></a>
+<span class="sourceLineNo">1513</span>                System.err.println("Bad level value for property: " + key);<a name="line.1513"></a>
+<span class="sourceLineNo">1514</span>                continue;<a name="line.1514"></a>
+<span class="sourceLineNo">1515</span>            }<a name="line.1515"></a>
+<span class="sourceLineNo">1516</span>            for (LoggerContext cx : contexts()) {<a name="line.1516"></a>
+<span class="sourceLineNo">1517</span>                Logger l = cx.findLogger(name);<a name="line.1517"></a>
+<span class="sourceLineNo">1518</span>                if (l == null) {<a name="line.1518"></a>
+<span class="sourceLineNo">1519</span>                    continue;<a name="line.1519"></a>
+<span class="sourceLineNo">1520</span>                }<a name="line.1520"></a>
+<span class="sourceLineNo">1521</span>                l.setLevel(level);<a name="line.1521"></a>
+<span class="sourceLineNo">1522</span>            }<a name="line.1522"></a>
+<span class="sourceLineNo">1523</span>        }<a name="line.1523"></a>
+<span class="sourceLineNo">1524</span>    }<a name="line.1524"></a>
+<span class="sourceLineNo">1525</span><a name="line.1525"></a>
+<span class="sourceLineNo">1526</span>    // Management Support<a name="line.1526"></a>
+<span class="sourceLineNo">1527</span>    private static LoggingMXBean loggingMXBean = null;<a name="line.1527"></a>
+<span class="sourceLineNo">1528</span>    /**<a name="line.1528"></a>
+<span class="sourceLineNo">1529</span>     * String representation of the<a name="line.1529"></a>
+<span class="sourceLineNo">1530</span>     * {@link javax.management.ObjectName} for the management interface<a name="line.1530"></a>
+<span class="sourceLineNo">1531</span>     * for the logging facility.<a name="line.1531"></a>
+<span class="sourceLineNo">1532</span>     *<a name="line.1532"></a>
+<span class="sourceLineNo">1533</span>     * @see java.lang.management.PlatformLoggingMXBean<a name="line.1533"></a>
+<span class="sourceLineNo">1534</span>     * @see java.util.logging.LoggingMXBean<a name="line.1534"></a>
+<span class="sourceLineNo">1535</span>     *<a name="line.1535"></a>
+<span class="sourceLineNo">1536</span>     * @since 1.5<a name="line.1536"></a>
+<span class="sourceLineNo">1537</span>     */<a name="line.1537"></a>
+<span class="sourceLineNo">1538</span>    public final static String LOGGING_MXBEAN_NAME<a name="line.1538"></a>
+<span class="sourceLineNo">1539</span>        = "java.util.logging:type=Logging";<a name="line.1539"></a>
+<span class="sourceLineNo">1540</span><a name="line.1540"></a>
+<span class="sourceLineNo">1541</span>    /**<a name="line.1541"></a>
+<span class="sourceLineNo">1542</span>     * Returns &lt;tt&gt;LoggingMXBean&lt;/tt&gt; for managing loggers.<a name="line.1542"></a>
+<span class="sourceLineNo">1543</span>     * An alternative way to manage loggers is through the<a name="line.1543"></a>
+<span class="sourceLineNo">1544</span>     * {@link java.lang.management.PlatformLoggingMXBean} interface<a name="line.1544"></a>
+<span class="sourceLineNo">1545</span>     * that can be obtained by calling:<a name="line.1545"></a>
+<span class="sourceLineNo">1546</span>     * &lt;pre&gt;<a name="line.1546"></a>
+<span class="sourceLineNo">1547</span>     *     PlatformLoggingMXBean logging = {@link java.lang.management.ManagementFactory#getPlatformMXBean(Class)<a name="line.1547"></a>
+<span class="sourceLineNo">1548</span>     *         ManagementFactory.getPlatformMXBean}(PlatformLoggingMXBean.class);<a name="line.1548"></a>
+<span class="sourceLineNo">1549</span>     * &lt;/pre&gt;<a name="line.1549"></a>
+<span class="sourceLineNo">1550</span>     *<a name="line.1550"></a>
+<span class="sourceLineNo">1551</span>     * @return a {@link LoggingMXBean} object.<a name="line.1551"></a>
+<span class="sourceLineNo">1552</span>     *<a name="line.1552"></a>
+<span class="sourceLineNo">1553</span>     * @see java.lang.management.PlatformLoggingMXBean<a name="line.1553"></a>
+<span class="sourceLineNo">1554</span>     * @since 1.5<a name="line.1554"></a>
+<span class="sourceLineNo">1555</span>     */<a name="line.1555"></a>
+<span class="sourceLineNo">1556</span>    public static synchronized LoggingMXBean getLoggingMXBean() {<a name="line.1556"></a>
+<span class="sourceLineNo">1557</span>        if (loggingMXBean == null) {<a name="line.1557"></a>
+<span class="sourceLineNo">1558</span>            loggingMXBean =  new Logging();<a name="line.1558"></a>
+<span class="sourceLineNo">1559</span>        }<a name="line.1559"></a>
+<span class="sourceLineNo">1560</span>        return loggingMXBean;<a name="line.1560"></a>
+<span class="sourceLineNo">1561</span>    }<a name="line.1561"></a>
+<span class="sourceLineNo">1562</span><a name="line.1562"></a>
+<span class="sourceLineNo">1563</span>}<a name="line.1563"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

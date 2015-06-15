@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.management.remote.rmi;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.IOException;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.rmi.NoSuchObjectException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.rmi.Remote;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.rmi.RemoteException;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.rmi.server.RMIClientSocketFactory;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.rmi.server.RMIServerSocketFactory;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.rmi.server.UnicastRemoteObject;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.rmi.server.RemoteObject;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.util.Map;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.util.Collections;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import javax.security.auth.Subject;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>import com.sun.jmx.remote.internal.RMIExporter;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import com.sun.jmx.remote.util.EnvHelp;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import sun.rmi.server.UnicastServerRef;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import sun.rmi.server.UnicastServerRef2;<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>/**<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;p&gt;An {@link RMIServer} object that is exported through JRMP and that<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * creates client connections as RMI objects exported through JRMP.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * User code does not usually reference this class directly.&lt;/p&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * @see RMIServerImpl<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * @since 1.5<a name="line.52"></a>
+<span class="sourceLineNo">053</span> */<a name="line.53"></a>
+<span class="sourceLineNo">054</span>public class RMIJRMPServerImpl extends RMIServerImpl {<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    /**<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * &lt;p&gt;Creates a new {@link RMIServer} object that will be exported<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * on the given port using the given socket factories.&lt;/p&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     *<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * @param port the port on which this object and the {@link<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * RMIConnectionImpl} objects it creates will be exported.  Can be<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * zero, to indicate any available port.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     *<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * @param csf the client socket factory for the created RMI<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * objects.  Can be null.<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     *<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * @param ssf the server socket factory for the created RMI<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * objects.  Can be null.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     *<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @param env the environment map.  Can be null.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     *<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * @exception IOException if the {@link RMIServer} object<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * cannot be created.<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     *<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * @exception IllegalArgumentException if &lt;code&gt;port&lt;/code&gt; is<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * negative.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     */<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    public RMIJRMPServerImpl(int port,<a name="line.77"></a>
+<span class="sourceLineNo">078</span>                             RMIClientSocketFactory csf,<a name="line.78"></a>
+<span class="sourceLineNo">079</span>                             RMIServerSocketFactory ssf,<a name="line.79"></a>
+<span class="sourceLineNo">080</span>                             Map&lt;String,?&gt; env)<a name="line.80"></a>
+<span class="sourceLineNo">081</span>            throws IOException {<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>        super(env);<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>        if (port &lt; 0)<a name="line.85"></a>
+<span class="sourceLineNo">086</span>            throw new IllegalArgumentException("Negative port: " + port);<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>        this.port = port;<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        this.csf = csf;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        this.ssf = ssf;<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        this.env = (env == null) ? Collections.&lt;String, Object&gt;emptyMap() : env;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    }<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>    protected void export() throws IOException {<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        export(this);<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    }<a name="line.96"></a>
+<span class="sourceLineNo">097</span><a name="line.97"></a>
+<span class="sourceLineNo">098</span>    private void export(Remote obj) throws RemoteException {<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        final RMIExporter exporter =<a name="line.99"></a>
+<span class="sourceLineNo">100</span>            (RMIExporter) env.get(RMIExporter.EXPORTER_ATTRIBUTE);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        final boolean daemon = EnvHelp.isServerDaemon(env);<a name="line.101"></a>
+<span class="sourceLineNo">102</span><a name="line.102"></a>
+<span class="sourceLineNo">103</span>        if (daemon &amp;&amp; exporter != null) {<a name="line.103"></a>
+<span class="sourceLineNo">104</span>            throw new IllegalArgumentException("If "+EnvHelp.JMX_SERVER_DAEMON+<a name="line.104"></a>
+<span class="sourceLineNo">105</span>                    " is specified as true, "+RMIExporter.EXPORTER_ATTRIBUTE+<a name="line.105"></a>
+<span class="sourceLineNo">106</span>                    " cannot be used to specify an exporter!");<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        }<a name="line.107"></a>
+<span class="sourceLineNo">108</span><a name="line.108"></a>
+<span class="sourceLineNo">109</span>        if (daemon) {<a name="line.109"></a>
+<span class="sourceLineNo">110</span>            if (csf == null &amp;&amp; ssf == null) {<a name="line.110"></a>
+<span class="sourceLineNo">111</span>                new UnicastServerRef(port).exportObject(obj, null, true);<a name="line.111"></a>
+<span class="sourceLineNo">112</span>            } else {<a name="line.112"></a>
+<span class="sourceLineNo">113</span>                new UnicastServerRef2(port, csf, ssf).exportObject(obj, null, true);<a name="line.113"></a>
+<span class="sourceLineNo">114</span>            }<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        } else if (exporter != null) {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>            exporter.exportObject(obj, port, csf, ssf);<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        } else {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>            UnicastRemoteObject.exportObject(obj, port, csf, ssf);<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        }<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    }<a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>    private void unexport(Remote obj, boolean force)<a name="line.122"></a>
+<span class="sourceLineNo">123</span>            throws NoSuchObjectException {<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        RMIExporter exporter =<a name="line.124"></a>
+<span class="sourceLineNo">125</span>            (RMIExporter) env.get(RMIExporter.EXPORTER_ATTRIBUTE);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        if (exporter == null)<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            UnicastRemoteObject.unexportObject(obj, force);<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        else<a name="line.128"></a>
+<span class="sourceLineNo">129</span>            exporter.unexportObject(obj, force);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    }<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    protected String getProtocol() {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>        return "rmi";<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    }<a name="line.134"></a>
+<span class="sourceLineNo">135</span><a name="line.135"></a>
+<span class="sourceLineNo">136</span>    /**<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * &lt;p&gt;Returns a serializable stub for this {@link RMIServer} object.&lt;/p&gt;<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     *<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @return a serializable stub.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @exception IOException if the stub cannot be obtained - e.g the<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *            RMIJRMPServerImpl has not been exported yet.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     */<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    public Remote toStub() throws IOException {<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        return RemoteObject.toStub(this);<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    }<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>    /**<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * &lt;p&gt;Creates a new client connection as an RMI object exported<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * through JRMP. The port and socket factories for the new<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * {@link RMIConnection} object are the ones supplied<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * to the &lt;code&gt;RMIJRMPServerImpl&lt;/code&gt; constructor.&lt;/p&gt;<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     *<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * @param connectionId the ID of the new connection. Every<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * connection opened by this connector server will have a<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * different id.  The behavior is unspecified if this parameter is<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * null.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * @param subject the authenticated subject.  Can be null.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @return the newly-created &lt;code&gt;RMIConnection&lt;/code&gt;.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @exception IOException if the new {@link RMIConnection}<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * object cannot be created or exported.<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     */<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    protected RMIConnection makeClient(String connectionId, Subject subject)<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            throws IOException {<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>        if (connectionId == null)<a name="line.169"></a>
+<span class="sourceLineNo">170</span>            throw new NullPointerException("Null connectionId");<a name="line.170"></a>
+<span class="sourceLineNo">171</span><a name="line.171"></a>
+<span class="sourceLineNo">172</span>        RMIConnection client =<a name="line.172"></a>
+<span class="sourceLineNo">173</span>            new RMIConnectionImpl(this, connectionId, getDefaultClassLoader(),<a name="line.173"></a>
+<span class="sourceLineNo">174</span>                                  subject, env);<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        export(client);<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        return client;<a name="line.176"></a>
+<span class="sourceLineNo">177</span>    }<a name="line.177"></a>
+<span class="sourceLineNo">178</span><a name="line.178"></a>
+<span class="sourceLineNo">179</span>    protected void closeClient(RMIConnection client) throws IOException {<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        unexport(client, true);<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    }<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * &lt;p&gt;Called by {@link #close()} to close the connector server by<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * unexporting this object.  After returning from this method, the<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * connector server must not accept any new connections.&lt;/p&gt;<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     *<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * @exception IOException if the attempt to close the connector<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * server failed.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    protected void closeServer() throws IOException {<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        unexport(this, true);<a name="line.192"></a>
+<span class="sourceLineNo">193</span>    }<a name="line.193"></a>
+<span class="sourceLineNo">194</span><a name="line.194"></a>
+<span class="sourceLineNo">195</span>    private final int port;<a name="line.195"></a>
+<span class="sourceLineNo">196</span>    private final RMIClientSocketFactory csf;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>    private final RMIServerSocketFactory ssf;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    private final Map&lt;String, ?&gt; env;<a name="line.198"></a>
+<span class="sourceLineNo">199</span>}<a name="line.199"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

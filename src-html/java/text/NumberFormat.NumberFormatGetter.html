@@ -1,0 +1,1234 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>/*<a name="line.26"></a>
+<span class="sourceLineNo">027</span> * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved<a name="line.27"></a>
+<span class="sourceLineNo">028</span> * (C) Copyright IBM Corp. 1996 - 1998 - All Rights Reserved<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *   The original version of this source code and documentation is copyrighted<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * and owned by Taligent, Inc., a wholly-owned subsidiary of IBM. These<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * materials are provided under terms of a License Agreement between Taligent<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * and Sun. This technology is protected by multiple US and International<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * patents. This notice and attribution to Taligent may not be removed.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *   Taligent is a registered trademark of Taligent, Inc.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> */<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>package java.text;<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>import java.io.InvalidObjectException;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import java.io.IOException;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import java.io.ObjectInputStream;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import java.io.ObjectOutputStream;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import java.math.BigInteger;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import java.math.RoundingMode;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import java.text.spi.NumberFormatProvider;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import java.util.Currency;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>import java.util.HashMap;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>import java.util.Hashtable;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>import java.util.Locale;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>import java.util.Map;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>import java.util.ResourceBundle;<a name="line.53"></a>
+<span class="sourceLineNo">054</span>import java.util.concurrent.atomic.AtomicInteger;<a name="line.54"></a>
+<span class="sourceLineNo">055</span>import java.util.concurrent.atomic.AtomicLong;<a name="line.55"></a>
+<span class="sourceLineNo">056</span>import java.util.spi.LocaleServiceProvider;<a name="line.56"></a>
+<span class="sourceLineNo">057</span>import sun.util.LocaleServiceProviderPool;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>import sun.util.resources.LocaleData;<a name="line.58"></a>
+<span class="sourceLineNo">059</span><a name="line.59"></a>
+<span class="sourceLineNo">060</span>/**<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;code&gt;NumberFormat&lt;/code&gt; is the abstract base class for all number<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * formats. This class provides the interface for formatting and parsing<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * numbers. &lt;code&gt;NumberFormat&lt;/code&gt; also provides methods for determining<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * which locales have number formats, and what their names are.<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;p&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;code&gt;NumberFormat&lt;/code&gt; helps you to format and parse numbers for any locale.<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * Your code can be completely independent of the locale conventions for<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * decimal points, thousands-separators, or even the particular decimal<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * digits used, or whether the number format is even decimal.<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;p&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * To format a number for the current Locale, use one of the factory<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * class methods:<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;blockquote&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * &lt;pre&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *  myString = NumberFormat.getInstance().format(myNumber);<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * &lt;/pre&gt;<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * &lt;/blockquote&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * If you are formatting multiple numbers, it is<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * more efficient to get the format and use it multiple times so that<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * the system doesn't have to fetch the information about the local<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * language and country conventions multiple times.<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * &lt;blockquote&gt;<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;pre&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * NumberFormat nf = NumberFormat.getInstance();<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * for (int i = 0; i &lt; myNumber.length; ++i) {<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *     output.println(nf.format(myNumber[i]) + "; ");<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * }<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * &lt;/pre&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;/blockquote&gt;<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * To format a number for a different Locale, specify it in the<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * call to &lt;code&gt;getInstance&lt;/code&gt;.<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;blockquote&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * &lt;pre&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * NumberFormat nf = NumberFormat.getInstance(Locale.FRENCH);<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * &lt;/pre&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * &lt;/blockquote&gt;<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * You can also use a &lt;code&gt;NumberFormat&lt;/code&gt; to parse numbers:<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * &lt;blockquote&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * &lt;pre&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * myNumber = nf.parse(myString);<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * &lt;/pre&gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * &lt;/blockquote&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * Use &lt;code&gt;getInstance&lt;/code&gt; or &lt;code&gt;getNumberInstance&lt;/code&gt; to get the<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * normal number format. Use &lt;code&gt;getIntegerInstance&lt;/code&gt; to get an<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * integer number format. Use &lt;code&gt;getCurrencyInstance&lt;/code&gt; to get the<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * currency number format. And use &lt;code&gt;getPercentInstance&lt;/code&gt; to get a<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * format for displaying percentages. With this format, a fraction like<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * 0.53 is displayed as 53%.<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * &lt;p&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * You can also control the display of numbers with such methods as<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * &lt;code&gt;setMinimumFractionDigits&lt;/code&gt;.<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * If you want even more control over the format or parsing,<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * or want to give your users more control,<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * you can try casting the &lt;code&gt;NumberFormat&lt;/code&gt; you get from the factory methods<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * to a &lt;code&gt;DecimalFormat&lt;/code&gt;. This will work for the vast majority<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * of locales; just remember to put it in a &lt;code&gt;try&lt;/code&gt; block in case you<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * encounter an unusual one.<a name="line.120"></a>
+<span class="sourceLineNo">121</span> *<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * &lt;p&gt;<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * NumberFormat and DecimalFormat are designed such that some controls<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * work for formatting and others work for parsing.  The following is<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * the detailed description for each these control methods,<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * &lt;p&gt;<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * setParseIntegerOnly : only affects parsing, e.g.<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * if true,  "3456.78" -&gt; 3456 (and leaves the parse position just after index 6)<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * if false, "3456.78" -&gt; 3456.78 (and leaves the parse position just after index 8)<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * This is independent of formatting.  If you want to not show a decimal point<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * where there might be no digits after the decimal point, use<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * setDecimalSeparatorAlwaysShown.<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * &lt;p&gt;<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * setDecimalSeparatorAlwaysShown : only affects formatting, and only where<a name="line.134"></a>
+<span class="sourceLineNo">135</span> * there might be no digits after the decimal point, such as with a pattern<a name="line.135"></a>
+<span class="sourceLineNo">136</span> * like "#,##0.##", e.g.,<a name="line.136"></a>
+<span class="sourceLineNo">137</span> * if true,  3456.00 -&gt; "3,456."<a name="line.137"></a>
+<span class="sourceLineNo">138</span> * if false, 3456.00 -&gt; "3456"<a name="line.138"></a>
+<span class="sourceLineNo">139</span> * This is independent of parsing.  If you want parsing to stop at the decimal<a name="line.139"></a>
+<span class="sourceLineNo">140</span> * point, use setParseIntegerOnly.<a name="line.140"></a>
+<span class="sourceLineNo">141</span> *<a name="line.141"></a>
+<span class="sourceLineNo">142</span> * &lt;p&gt;<a name="line.142"></a>
+<span class="sourceLineNo">143</span> * You can also use forms of the &lt;code&gt;parse&lt;/code&gt; and &lt;code&gt;format&lt;/code&gt;<a name="line.143"></a>
+<span class="sourceLineNo">144</span> * methods with &lt;code&gt;ParsePosition&lt;/code&gt; and &lt;code&gt;FieldPosition&lt;/code&gt; to<a name="line.144"></a>
+<span class="sourceLineNo">145</span> * allow you to:<a name="line.145"></a>
+<span class="sourceLineNo">146</span> * &lt;ul&gt;<a name="line.146"></a>
+<span class="sourceLineNo">147</span> * &lt;li&gt; progressively parse through pieces of a string<a name="line.147"></a>
+<span class="sourceLineNo">148</span> * &lt;li&gt; align the decimal point and other areas<a name="line.148"></a>
+<span class="sourceLineNo">149</span> * &lt;/ul&gt;<a name="line.149"></a>
+<span class="sourceLineNo">150</span> * For example, you can align numbers in two ways:<a name="line.150"></a>
+<span class="sourceLineNo">151</span> * &lt;ol&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span> * &lt;li&gt; If you are using a monospaced font with spacing for alignment,<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *      you can pass the &lt;code&gt;FieldPosition&lt;/code&gt; in your format call, with<a name="line.153"></a>
+<span class="sourceLineNo">154</span> *      &lt;code&gt;field&lt;/code&gt; = &lt;code&gt;INTEGER_FIELD&lt;/code&gt;. On output,<a name="line.154"></a>
+<span class="sourceLineNo">155</span> *      &lt;code&gt;getEndIndex&lt;/code&gt; will be set to the offset between the<a name="line.155"></a>
+<span class="sourceLineNo">156</span> *      last character of the integer and the decimal. Add<a name="line.156"></a>
+<span class="sourceLineNo">157</span> *      (desiredSpaceCount - getEndIndex) spaces at the front of the string.<a name="line.157"></a>
+<span class="sourceLineNo">158</span> *<a name="line.158"></a>
+<span class="sourceLineNo">159</span> * &lt;li&gt; If you are using proportional fonts,<a name="line.159"></a>
+<span class="sourceLineNo">160</span> *      instead of padding with spaces, measure the width<a name="line.160"></a>
+<span class="sourceLineNo">161</span> *      of the string in pixels from the start to &lt;code&gt;getEndIndex&lt;/code&gt;.<a name="line.161"></a>
+<span class="sourceLineNo">162</span> *      Then move the pen by<a name="line.162"></a>
+<span class="sourceLineNo">163</span> *      (desiredPixelWidth - widthToAlignmentPoint) before drawing the text.<a name="line.163"></a>
+<span class="sourceLineNo">164</span> *      It also works where there is no decimal, but possibly additional<a name="line.164"></a>
+<span class="sourceLineNo">165</span> *      characters at the end, e.g., with parentheses in negative<a name="line.165"></a>
+<span class="sourceLineNo">166</span> *      numbers: "(12)" for -12.<a name="line.166"></a>
+<span class="sourceLineNo">167</span> * &lt;/ol&gt;<a name="line.167"></a>
+<span class="sourceLineNo">168</span> *<a name="line.168"></a>
+<span class="sourceLineNo">169</span> * &lt;h4&gt;&lt;a name="synchronization"&gt;Synchronization&lt;/a&gt;&lt;/h4&gt;<a name="line.169"></a>
+<span class="sourceLineNo">170</span> *<a name="line.170"></a>
+<span class="sourceLineNo">171</span> * &lt;p&gt;<a name="line.171"></a>
+<span class="sourceLineNo">172</span> * Number formats are generally not synchronized.<a name="line.172"></a>
+<span class="sourceLineNo">173</span> * It is recommended to create separate format instances for each thread.<a name="line.173"></a>
+<span class="sourceLineNo">174</span> * If multiple threads access a format concurrently, it must be synchronized<a name="line.174"></a>
+<span class="sourceLineNo">175</span> * externally.<a name="line.175"></a>
+<span class="sourceLineNo">176</span> *<a name="line.176"></a>
+<span class="sourceLineNo">177</span> * @see          DecimalFormat<a name="line.177"></a>
+<span class="sourceLineNo">178</span> * @see          ChoiceFormat<a name="line.178"></a>
+<span class="sourceLineNo">179</span> * @author       Mark Davis<a name="line.179"></a>
+<span class="sourceLineNo">180</span> * @author       Helena Shih<a name="line.180"></a>
+<span class="sourceLineNo">181</span> */<a name="line.181"></a>
+<span class="sourceLineNo">182</span>public abstract class NumberFormat extends Format  {<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>    /**<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * Field constant used to construct a FieldPosition object. Signifies that<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * the position of the integer part of a formatted number should be returned.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * @see java.text.FieldPosition<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     */<a name="line.188"></a>
+<span class="sourceLineNo">189</span>    public static final int INTEGER_FIELD = 0;<a name="line.189"></a>
+<span class="sourceLineNo">190</span><a name="line.190"></a>
+<span class="sourceLineNo">191</span>    /**<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * Field constant used to construct a FieldPosition object. Signifies that<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * the position of the fraction part of a formatted number should be returned.<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * @see java.text.FieldPosition<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     */<a name="line.195"></a>
+<span class="sourceLineNo">196</span>    public static final int FRACTION_FIELD = 1;<a name="line.196"></a>
+<span class="sourceLineNo">197</span><a name="line.197"></a>
+<span class="sourceLineNo">198</span>    /**<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * Sole constructor.  (For invocation by subclass constructors, typically<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * implicit.)<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     */<a name="line.201"></a>
+<span class="sourceLineNo">202</span>    protected NumberFormat() {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    }<a name="line.203"></a>
+<span class="sourceLineNo">204</span><a name="line.204"></a>
+<span class="sourceLineNo">205</span>    /**<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * Formats a number and appends the resulting text to the given string<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * buffer.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * The number can be of any subclass of {@link java.lang.Number}.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * &lt;p&gt;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * This implementation extracts the number's value using<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * {@link java.lang.Number#longValue()} for all integral type values that<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * can be converted to &lt;code&gt;long&lt;/code&gt; without loss of information,<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * including &lt;code&gt;BigInteger&lt;/code&gt; values with a<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * {@link java.math.BigInteger#bitLength() bit length} of less than 64,<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * and {@link java.lang.Number#doubleValue()} for all other types. It<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * then calls<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * {@link #format(long,java.lang.StringBuffer,java.text.FieldPosition)}<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * or {@link #format(double,java.lang.StringBuffer,java.text.FieldPosition)}.<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * This may result in loss of magnitude information and precision for<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * &lt;code&gt;BigInteger&lt;/code&gt; and &lt;code&gt;BigDecimal&lt;/code&gt; values.<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * @param number     the number to format<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * @param toAppendTo the &lt;code&gt;StringBuffer&lt;/code&gt; to which the formatted<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     *                   text is to be appended<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * @param pos        On input: an alignment field, if desired.<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     *                   On output: the offsets of the alignment field.<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * @return           the value passed in as &lt;code&gt;toAppendTo&lt;/code&gt;<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * @exception        IllegalArgumentException if &lt;code&gt;number&lt;/code&gt; is<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     *                   null or not an instance of &lt;code&gt;Number&lt;/code&gt;.<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * @exception        NullPointerException if &lt;code&gt;toAppendTo&lt;/code&gt; or<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     *                   &lt;code&gt;pos&lt;/code&gt; is null<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * @exception        ArithmeticException if rounding is needed with rounding<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     *                   mode being set to RoundingMode.UNNECESSARY<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @see              java.text.FieldPosition<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     */<a name="line.234"></a>
+<span class="sourceLineNo">235</span>    public StringBuffer format(Object number,<a name="line.235"></a>
+<span class="sourceLineNo">236</span>                               StringBuffer toAppendTo,<a name="line.236"></a>
+<span class="sourceLineNo">237</span>                               FieldPosition pos) {<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        if (number instanceof Long || number instanceof Integer ||<a name="line.238"></a>
+<span class="sourceLineNo">239</span>            number instanceof Short || number instanceof Byte ||<a name="line.239"></a>
+<span class="sourceLineNo">240</span>            number instanceof AtomicInteger || number instanceof AtomicLong ||<a name="line.240"></a>
+<span class="sourceLineNo">241</span>            (number instanceof BigInteger &amp;&amp;<a name="line.241"></a>
+<span class="sourceLineNo">242</span>             ((BigInteger)number).bitLength() &lt; 64)) {<a name="line.242"></a>
+<span class="sourceLineNo">243</span>            return format(((Number)number).longValue(), toAppendTo, pos);<a name="line.243"></a>
+<span class="sourceLineNo">244</span>        } else if (number instanceof Number) {<a name="line.244"></a>
+<span class="sourceLineNo">245</span>            return format(((Number)number).doubleValue(), toAppendTo, pos);<a name="line.245"></a>
+<span class="sourceLineNo">246</span>        } else {<a name="line.246"></a>
+<span class="sourceLineNo">247</span>            throw new IllegalArgumentException("Cannot format given Object as a Number");<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        }<a name="line.248"></a>
+<span class="sourceLineNo">249</span>    }<a name="line.249"></a>
+<span class="sourceLineNo">250</span><a name="line.250"></a>
+<span class="sourceLineNo">251</span>    /**<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * Parses text from a string to produce a &lt;code&gt;Number&lt;/code&gt;.<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * &lt;p&gt;<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * The method attempts to parse text starting at the index given by<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * &lt;code&gt;pos&lt;/code&gt;.<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * If parsing succeeds, then the index of &lt;code&gt;pos&lt;/code&gt; is updated<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * to the index after the last character used (parsing does not necessarily<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * use all characters up to the end of the string), and the parsed<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * number is returned. The updated &lt;code&gt;pos&lt;/code&gt; can be used to<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * indicate the starting point for the next call to this method.<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * If an error occurs, then the index of &lt;code&gt;pos&lt;/code&gt; is not<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * changed, the error index of &lt;code&gt;pos&lt;/code&gt; is set to the index of<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * the character where the error occurred, and null is returned.<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * &lt;p&gt;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * See the {@link #parse(String, ParsePosition)} method for more information<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * on number parsing.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     *<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * @param source A &lt;code&gt;String&lt;/code&gt;, part of which should be parsed.<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * @param pos A &lt;code&gt;ParsePosition&lt;/code&gt; object with index and error<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     *            index information as described above.<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * @return A &lt;code&gt;Number&lt;/code&gt; parsed from the string. In case of<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     *         error, returns null.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * @exception NullPointerException if &lt;code&gt;pos&lt;/code&gt; is null.<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     */<a name="line.274"></a>
+<span class="sourceLineNo">275</span>    public final Object parseObject(String source, ParsePosition pos) {<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        return parse(source, pos);<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    }<a name="line.277"></a>
+<span class="sourceLineNo">278</span><a name="line.278"></a>
+<span class="sourceLineNo">279</span>   /**<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * Specialization of format.<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * @exception        ArithmeticException if rounding is needed with rounding<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     *                   mode being set to RoundingMode.UNNECESSARY<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * @see java.text.Format#format<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     */<a name="line.284"></a>
+<span class="sourceLineNo">285</span>    public final String format(double number) {<a name="line.285"></a>
+<span class="sourceLineNo">286</span>        return format(number, new StringBuffer(),<a name="line.286"></a>
+<span class="sourceLineNo">287</span>                      DontCareFieldPosition.INSTANCE).toString();<a name="line.287"></a>
+<span class="sourceLineNo">288</span>    }<a name="line.288"></a>
+<span class="sourceLineNo">289</span><a name="line.289"></a>
+<span class="sourceLineNo">290</span>   /**<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * Specialization of format.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * @exception        ArithmeticException if rounding is needed with rounding<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     *                   mode being set to RoundingMode.UNNECESSARY<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * @see java.text.Format#format<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     */<a name="line.295"></a>
+<span class="sourceLineNo">296</span>    public final String format(long number) {<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        return format(number, new StringBuffer(),<a name="line.297"></a>
+<span class="sourceLineNo">298</span>                      DontCareFieldPosition.INSTANCE).toString();<a name="line.298"></a>
+<span class="sourceLineNo">299</span>    }<a name="line.299"></a>
+<span class="sourceLineNo">300</span><a name="line.300"></a>
+<span class="sourceLineNo">301</span>   /**<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * Specialization of format.<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * @exception        ArithmeticException if rounding is needed with rounding<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     *                   mode being set to RoundingMode.UNNECESSARY<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * @see java.text.Format#format<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     */<a name="line.306"></a>
+<span class="sourceLineNo">307</span>    public abstract StringBuffer format(double number,<a name="line.307"></a>
+<span class="sourceLineNo">308</span>                                        StringBuffer toAppendTo,<a name="line.308"></a>
+<span class="sourceLineNo">309</span>                                        FieldPosition pos);<a name="line.309"></a>
+<span class="sourceLineNo">310</span><a name="line.310"></a>
+<span class="sourceLineNo">311</span>   /**<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * Specialization of format.<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * @exception        ArithmeticException if rounding is needed with rounding<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     *                   mode being set to RoundingMode.UNNECESSARY<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * @see java.text.Format#format<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     */<a name="line.316"></a>
+<span class="sourceLineNo">317</span>    public abstract StringBuffer format(long number,<a name="line.317"></a>
+<span class="sourceLineNo">318</span>                                        StringBuffer toAppendTo,<a name="line.318"></a>
+<span class="sourceLineNo">319</span>                                        FieldPosition pos);<a name="line.319"></a>
+<span class="sourceLineNo">320</span><a name="line.320"></a>
+<span class="sourceLineNo">321</span>   /**<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * Returns a Long if possible (e.g., within the range [Long.MIN_VALUE,<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * Long.MAX_VALUE] and with no decimals), otherwise a Double.<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * If IntegerOnly is set, will stop at a decimal<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * point (or equivalent; e.g., for rational numbers "1 2/3", will stop<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * after the 1).<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * Does not throw an exception; if no object can be parsed, index is<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * unchanged!<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * @see java.text.NumberFormat#isParseIntegerOnly<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * @see java.text.Format#parseObject<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     */<a name="line.331"></a>
+<span class="sourceLineNo">332</span>    public abstract Number parse(String source, ParsePosition parsePosition);<a name="line.332"></a>
+<span class="sourceLineNo">333</span><a name="line.333"></a>
+<span class="sourceLineNo">334</span>    /**<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * Parses text from the beginning of the given string to produce a number.<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * The method may not use the entire text of the given string.<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * &lt;p&gt;<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * See the {@link #parse(String, ParsePosition)} method for more information<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * on number parsing.<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     *<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * @param source A &lt;code&gt;String&lt;/code&gt; whose beginning should be parsed.<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * @return A &lt;code&gt;Number&lt;/code&gt; parsed from the string.<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * @exception ParseException if the beginning of the specified string<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     *            cannot be parsed.<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     */<a name="line.345"></a>
+<span class="sourceLineNo">346</span>    public Number parse(String source) throws ParseException {<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        ParsePosition parsePosition = new ParsePosition(0);<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        Number result = parse(source, parsePosition);<a name="line.348"></a>
+<span class="sourceLineNo">349</span>        if (parsePosition.index == 0) {<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            throw new ParseException("Unparseable number: \"" + source + "\"",<a name="line.350"></a>
+<span class="sourceLineNo">351</span>                                     parsePosition.errorIndex);<a name="line.351"></a>
+<span class="sourceLineNo">352</span>        }<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        return result;<a name="line.353"></a>
+<span class="sourceLineNo">354</span>    }<a name="line.354"></a>
+<span class="sourceLineNo">355</span><a name="line.355"></a>
+<span class="sourceLineNo">356</span>    /**<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * Returns true if this format will parse numbers as integers only.<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * For example in the English locale, with ParseIntegerOnly true, the<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * string "1234." would be parsed as the integer value 1234 and parsing<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * would stop at the "." character.  Of course, the exact format accepted<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * by the parse operation is locale dependant and determined by sub-classes<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * of NumberFormat.<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     */<a name="line.363"></a>
+<span class="sourceLineNo">364</span>    public boolean isParseIntegerOnly() {<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        return parseIntegerOnly;<a name="line.365"></a>
+<span class="sourceLineNo">366</span>    }<a name="line.366"></a>
+<span class="sourceLineNo">367</span><a name="line.367"></a>
+<span class="sourceLineNo">368</span>    /**<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * Sets whether or not numbers should be parsed as integers only.<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * @see #isParseIntegerOnly<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     */<a name="line.371"></a>
+<span class="sourceLineNo">372</span>    public void setParseIntegerOnly(boolean value) {<a name="line.372"></a>
+<span class="sourceLineNo">373</span>        parseIntegerOnly = value;<a name="line.373"></a>
+<span class="sourceLineNo">374</span>    }<a name="line.374"></a>
+<span class="sourceLineNo">375</span><a name="line.375"></a>
+<span class="sourceLineNo">376</span>    //============== Locale Stuff =====================<a name="line.376"></a>
+<span class="sourceLineNo">377</span><a name="line.377"></a>
+<span class="sourceLineNo">378</span>    /**<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * Returns a general-purpose number format for the current default locale.<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * This is the same as calling<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * {@link #getNumberInstance() getNumberInstance()}.<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     */<a name="line.382"></a>
+<span class="sourceLineNo">383</span>    public final static NumberFormat getInstance() {<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        return getInstance(Locale.getDefault(Locale.Category.FORMAT), NUMBERSTYLE);<a name="line.384"></a>
+<span class="sourceLineNo">385</span>    }<a name="line.385"></a>
+<span class="sourceLineNo">386</span><a name="line.386"></a>
+<span class="sourceLineNo">387</span>    /**<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * Returns a general-purpose number format for the specified locale.<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * This is the same as calling<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * {@link #getNumberInstance(java.util.Locale) getNumberInstance(inLocale)}.<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     */<a name="line.391"></a>
+<span class="sourceLineNo">392</span>    public static NumberFormat getInstance(Locale inLocale) {<a name="line.392"></a>
+<span class="sourceLineNo">393</span>        return getInstance(inLocale, NUMBERSTYLE);<a name="line.393"></a>
+<span class="sourceLineNo">394</span>    }<a name="line.394"></a>
+<span class="sourceLineNo">395</span><a name="line.395"></a>
+<span class="sourceLineNo">396</span>    /**<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * Returns a general-purpose number format for the current default locale.<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     */<a name="line.398"></a>
+<span class="sourceLineNo">399</span>    public final static NumberFormat getNumberInstance() {<a name="line.399"></a>
+<span class="sourceLineNo">400</span>        return getInstance(Locale.getDefault(Locale.Category.FORMAT), NUMBERSTYLE);<a name="line.400"></a>
+<span class="sourceLineNo">401</span>    }<a name="line.401"></a>
+<span class="sourceLineNo">402</span><a name="line.402"></a>
+<span class="sourceLineNo">403</span>    /**<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * Returns a general-purpose number format for the specified locale.<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     */<a name="line.405"></a>
+<span class="sourceLineNo">406</span>    public static NumberFormat getNumberInstance(Locale inLocale) {<a name="line.406"></a>
+<span class="sourceLineNo">407</span>        return getInstance(inLocale, NUMBERSTYLE);<a name="line.407"></a>
+<span class="sourceLineNo">408</span>    }<a name="line.408"></a>
+<span class="sourceLineNo">409</span><a name="line.409"></a>
+<span class="sourceLineNo">410</span>    /**<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * Returns an integer number format for the current default locale. The<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * returned number format is configured to round floating point numbers<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     * to the nearest integer using half-even rounding (see {@link<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     * java.math.RoundingMode#HALF_EVEN RoundingMode.HALF_EVEN}) for formatting,<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     * and to parse only the integer part of an input string (see {@link<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     * #isParseIntegerOnly isParseIntegerOnly}).<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     *<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * @see #getRoundingMode()<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * @return a number format for integer values<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * @since 1.4<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     */<a name="line.421"></a>
+<span class="sourceLineNo">422</span>    public final static NumberFormat getIntegerInstance() {<a name="line.422"></a>
+<span class="sourceLineNo">423</span>        return getInstance(Locale.getDefault(Locale.Category.FORMAT), INTEGERSTYLE);<a name="line.423"></a>
+<span class="sourceLineNo">424</span>    }<a name="line.424"></a>
+<span class="sourceLineNo">425</span><a name="line.425"></a>
+<span class="sourceLineNo">426</span>    /**<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * Returns an integer number format for the specified locale. The<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     * returned number format is configured to round floating point numbers<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * to the nearest integer using half-even rounding (see {@link<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * java.math.RoundingMode#HALF_EVEN RoundingMode.HALF_EVEN}) for formatting,<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * and to parse only the integer part of an input string (see {@link<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     * #isParseIntegerOnly isParseIntegerOnly}).<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     *<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     * @see #getRoundingMode()<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     * @return a number format for integer values<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     * @since 1.4<a name="line.436"></a>
+<span class="sourceLineNo">437</span>     */<a name="line.437"></a>
+<span class="sourceLineNo">438</span>    public static NumberFormat getIntegerInstance(Locale inLocale) {<a name="line.438"></a>
+<span class="sourceLineNo">439</span>        return getInstance(inLocale, INTEGERSTYLE);<a name="line.439"></a>
+<span class="sourceLineNo">440</span>    }<a name="line.440"></a>
+<span class="sourceLineNo">441</span><a name="line.441"></a>
+<span class="sourceLineNo">442</span>    /**<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * Returns a currency format for the current default locale.<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     */<a name="line.444"></a>
+<span class="sourceLineNo">445</span>    public final static NumberFormat getCurrencyInstance() {<a name="line.445"></a>
+<span class="sourceLineNo">446</span>        return getInstance(Locale.getDefault(Locale.Category.FORMAT), CURRENCYSTYLE);<a name="line.446"></a>
+<span class="sourceLineNo">447</span>    }<a name="line.447"></a>
+<span class="sourceLineNo">448</span><a name="line.448"></a>
+<span class="sourceLineNo">449</span>    /**<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * Returns a currency format for the specified locale.<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     */<a name="line.451"></a>
+<span class="sourceLineNo">452</span>    public static NumberFormat getCurrencyInstance(Locale inLocale) {<a name="line.452"></a>
+<span class="sourceLineNo">453</span>        return getInstance(inLocale, CURRENCYSTYLE);<a name="line.453"></a>
+<span class="sourceLineNo">454</span>    }<a name="line.454"></a>
+<span class="sourceLineNo">455</span><a name="line.455"></a>
+<span class="sourceLineNo">456</span>    /**<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     * Returns a percentage format for the current default locale.<a name="line.457"></a>
+<span class="sourceLineNo">458</span>     */<a name="line.458"></a>
+<span class="sourceLineNo">459</span>    public final static NumberFormat getPercentInstance() {<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        return getInstance(Locale.getDefault(Locale.Category.FORMAT), PERCENTSTYLE);<a name="line.460"></a>
+<span class="sourceLineNo">461</span>    }<a name="line.461"></a>
+<span class="sourceLineNo">462</span><a name="line.462"></a>
+<span class="sourceLineNo">463</span>    /**<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     * Returns a percentage format for the specified locale.<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     */<a name="line.465"></a>
+<span class="sourceLineNo">466</span>    public static NumberFormat getPercentInstance(Locale inLocale) {<a name="line.466"></a>
+<span class="sourceLineNo">467</span>        return getInstance(inLocale, PERCENTSTYLE);<a name="line.467"></a>
+<span class="sourceLineNo">468</span>    }<a name="line.468"></a>
+<span class="sourceLineNo">469</span><a name="line.469"></a>
+<span class="sourceLineNo">470</span>    /**<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     * Returns a scientific format for the current default locale.<a name="line.471"></a>
+<span class="sourceLineNo">472</span>     */<a name="line.472"></a>
+<span class="sourceLineNo">473</span>    /*public*/ final static NumberFormat getScientificInstance() {<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        return getInstance(Locale.getDefault(Locale.Category.FORMAT), SCIENTIFICSTYLE);<a name="line.474"></a>
+<span class="sourceLineNo">475</span>    }<a name="line.475"></a>
+<span class="sourceLineNo">476</span><a name="line.476"></a>
+<span class="sourceLineNo">477</span>    /**<a name="line.477"></a>
+<span class="sourceLineNo">478</span>     * Returns a scientific format for the specified locale.<a name="line.478"></a>
+<span class="sourceLineNo">479</span>     */<a name="line.479"></a>
+<span class="sourceLineNo">480</span>    /*public*/ static NumberFormat getScientificInstance(Locale inLocale) {<a name="line.480"></a>
+<span class="sourceLineNo">481</span>        return getInstance(inLocale, SCIENTIFICSTYLE);<a name="line.481"></a>
+<span class="sourceLineNo">482</span>    }<a name="line.482"></a>
+<span class="sourceLineNo">483</span><a name="line.483"></a>
+<span class="sourceLineNo">484</span>    /**<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     * Returns an array of all locales for which the<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     * &lt;code&gt;get*Instance&lt;/code&gt; methods of this class can return<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     * localized instances.<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     * The returned array represents the union of locales supported by the Java<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     * runtime and by installed<a name="line.489"></a>
+<span class="sourceLineNo">490</span>     * {@link java.text.spi.NumberFormatProvider NumberFormatProvider} implementations.<a name="line.490"></a>
+<span class="sourceLineNo">491</span>     * It must contain at least a &lt;code&gt;Locale&lt;/code&gt; instance equal to<a name="line.491"></a>
+<span class="sourceLineNo">492</span>     * {@link java.util.Locale#US Locale.US}.<a name="line.492"></a>
+<span class="sourceLineNo">493</span>     *<a name="line.493"></a>
+<span class="sourceLineNo">494</span>     * @return An array of locales for which localized<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     *         &lt;code&gt;NumberFormat&lt;/code&gt; instances are available.<a name="line.495"></a>
+<span class="sourceLineNo">496</span>     */<a name="line.496"></a>
+<span class="sourceLineNo">497</span>    public static Locale[] getAvailableLocales() {<a name="line.497"></a>
+<span class="sourceLineNo">498</span>        LocaleServiceProviderPool pool =<a name="line.498"></a>
+<span class="sourceLineNo">499</span>            LocaleServiceProviderPool.getPool(NumberFormatProvider.class);<a name="line.499"></a>
+<span class="sourceLineNo">500</span>        return pool.getAvailableLocales();<a name="line.500"></a>
+<span class="sourceLineNo">501</span>    }<a name="line.501"></a>
+<span class="sourceLineNo">502</span><a name="line.502"></a>
+<span class="sourceLineNo">503</span>    /**<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * Overrides hashCode<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     */<a name="line.505"></a>
+<span class="sourceLineNo">506</span>    public int hashCode() {<a name="line.506"></a>
+<span class="sourceLineNo">507</span>        return maximumIntegerDigits * 37 + maxFractionDigits;<a name="line.507"></a>
+<span class="sourceLineNo">508</span>        // just enough fields for a reasonable distribution<a name="line.508"></a>
+<span class="sourceLineNo">509</span>    }<a name="line.509"></a>
+<span class="sourceLineNo">510</span><a name="line.510"></a>
+<span class="sourceLineNo">511</span>    /**<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     * Overrides equals<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     */<a name="line.513"></a>
+<span class="sourceLineNo">514</span>    public boolean equals(Object obj) {<a name="line.514"></a>
+<span class="sourceLineNo">515</span>        if (obj == null) {<a name="line.515"></a>
+<span class="sourceLineNo">516</span>            return false;<a name="line.516"></a>
+<span class="sourceLineNo">517</span>        }<a name="line.517"></a>
+<span class="sourceLineNo">518</span>        if (this == obj) {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>            return true;<a name="line.519"></a>
+<span class="sourceLineNo">520</span>        }<a name="line.520"></a>
+<span class="sourceLineNo">521</span>        if (getClass() != obj.getClass()) {<a name="line.521"></a>
+<span class="sourceLineNo">522</span>            return false;<a name="line.522"></a>
+<span class="sourceLineNo">523</span>        }<a name="line.523"></a>
+<span class="sourceLineNo">524</span>        NumberFormat other = (NumberFormat) obj;<a name="line.524"></a>
+<span class="sourceLineNo">525</span>        return (maximumIntegerDigits == other.maximumIntegerDigits<a name="line.525"></a>
+<span class="sourceLineNo">526</span>            &amp;&amp; minimumIntegerDigits == other.minimumIntegerDigits<a name="line.526"></a>
+<span class="sourceLineNo">527</span>            &amp;&amp; maximumFractionDigits == other.maximumFractionDigits<a name="line.527"></a>
+<span class="sourceLineNo">528</span>            &amp;&amp; minimumFractionDigits == other.minimumFractionDigits<a name="line.528"></a>
+<span class="sourceLineNo">529</span>            &amp;&amp; groupingUsed == other.groupingUsed<a name="line.529"></a>
+<span class="sourceLineNo">530</span>            &amp;&amp; parseIntegerOnly == other.parseIntegerOnly);<a name="line.530"></a>
+<span class="sourceLineNo">531</span>    }<a name="line.531"></a>
+<span class="sourceLineNo">532</span><a name="line.532"></a>
+<span class="sourceLineNo">533</span>    /**<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * Overrides Cloneable<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     */<a name="line.535"></a>
+<span class="sourceLineNo">536</span>    public Object clone() {<a name="line.536"></a>
+<span class="sourceLineNo">537</span>        NumberFormat other = (NumberFormat) super.clone();<a name="line.537"></a>
+<span class="sourceLineNo">538</span>        return other;<a name="line.538"></a>
+<span class="sourceLineNo">539</span>    }<a name="line.539"></a>
+<span class="sourceLineNo">540</span><a name="line.540"></a>
+<span class="sourceLineNo">541</span>    /**<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * Returns true if grouping is used in this format. For example, in the<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * English locale, with grouping on, the number 1234567 might be formatted<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     * as "1,234,567". The grouping separator as well as the size of each group<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     * is locale dependant and is determined by sub-classes of NumberFormat.<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     * @see #setGroupingUsed<a name="line.546"></a>
+<span class="sourceLineNo">547</span>     */<a name="line.547"></a>
+<span class="sourceLineNo">548</span>    public boolean isGroupingUsed() {<a name="line.548"></a>
+<span class="sourceLineNo">549</span>        return groupingUsed;<a name="line.549"></a>
+<span class="sourceLineNo">550</span>    }<a name="line.550"></a>
+<span class="sourceLineNo">551</span><a name="line.551"></a>
+<span class="sourceLineNo">552</span>    /**<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     * Set whether or not grouping will be used in this format.<a name="line.553"></a>
+<span class="sourceLineNo">554</span>     * @see #isGroupingUsed<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     */<a name="line.555"></a>
+<span class="sourceLineNo">556</span>    public void setGroupingUsed(boolean newValue) {<a name="line.556"></a>
+<span class="sourceLineNo">557</span>        groupingUsed = newValue;<a name="line.557"></a>
+<span class="sourceLineNo">558</span>    }<a name="line.558"></a>
+<span class="sourceLineNo">559</span><a name="line.559"></a>
+<span class="sourceLineNo">560</span>    /**<a name="line.560"></a>
+<span class="sourceLineNo">561</span>     * Returns the maximum number of digits allowed in the integer portion of a<a name="line.561"></a>
+<span class="sourceLineNo">562</span>     * number.<a name="line.562"></a>
+<span class="sourceLineNo">563</span>     * @see #setMaximumIntegerDigits<a name="line.563"></a>
+<span class="sourceLineNo">564</span>     */<a name="line.564"></a>
+<span class="sourceLineNo">565</span>    public int getMaximumIntegerDigits() {<a name="line.565"></a>
+<span class="sourceLineNo">566</span>        return maximumIntegerDigits;<a name="line.566"></a>
+<span class="sourceLineNo">567</span>    }<a name="line.567"></a>
+<span class="sourceLineNo">568</span><a name="line.568"></a>
+<span class="sourceLineNo">569</span>    /**<a name="line.569"></a>
+<span class="sourceLineNo">570</span>     * Sets the maximum number of digits allowed in the integer portion of a<a name="line.570"></a>
+<span class="sourceLineNo">571</span>     * number. maximumIntegerDigits must be &gt;= minimumIntegerDigits.  If the<a name="line.571"></a>
+<span class="sourceLineNo">572</span>     * new value for maximumIntegerDigits is less than the current value<a name="line.572"></a>
+<span class="sourceLineNo">573</span>     * of minimumIntegerDigits, then minimumIntegerDigits will also be set to<a name="line.573"></a>
+<span class="sourceLineNo">574</span>     * the new value.<a name="line.574"></a>
+<span class="sourceLineNo">575</span>     * @param newValue the maximum number of integer digits to be shown; if<a name="line.575"></a>
+<span class="sourceLineNo">576</span>     * less than zero, then zero is used. The concrete subclass may enforce an<a name="line.576"></a>
+<span class="sourceLineNo">577</span>     * upper limit to this value appropriate to the numeric type being formatted.<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     * @see #getMaximumIntegerDigits<a name="line.578"></a>
+<span class="sourceLineNo">579</span>     */<a name="line.579"></a>
+<span class="sourceLineNo">580</span>    public void setMaximumIntegerDigits(int newValue) {<a name="line.580"></a>
+<span class="sourceLineNo">581</span>        maximumIntegerDigits = Math.max(0,newValue);<a name="line.581"></a>
+<span class="sourceLineNo">582</span>        if (minimumIntegerDigits &gt; maximumIntegerDigits) {<a name="line.582"></a>
+<span class="sourceLineNo">583</span>            minimumIntegerDigits = maximumIntegerDigits;<a name="line.583"></a>
+<span class="sourceLineNo">584</span>        }<a name="line.584"></a>
+<span class="sourceLineNo">585</span>    }<a name="line.585"></a>
+<span class="sourceLineNo">586</span><a name="line.586"></a>
+<span class="sourceLineNo">587</span>    /**<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * Returns the minimum number of digits allowed in the integer portion of a<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     * number.<a name="line.589"></a>
+<span class="sourceLineNo">590</span>     * @see #setMinimumIntegerDigits<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     */<a name="line.591"></a>
+<span class="sourceLineNo">592</span>    public int getMinimumIntegerDigits() {<a name="line.592"></a>
+<span class="sourceLineNo">593</span>        return minimumIntegerDigits;<a name="line.593"></a>
+<span class="sourceLineNo">594</span>    }<a name="line.594"></a>
+<span class="sourceLineNo">595</span><a name="line.595"></a>
+<span class="sourceLineNo">596</span>    /**<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     * Sets the minimum number of digits allowed in the integer portion of a<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * number. minimumIntegerDigits must be &lt;= maximumIntegerDigits.  If the<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * new value for minimumIntegerDigits exceeds the current value<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     * of maximumIntegerDigits, then maximumIntegerDigits will also be set to<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     * the new value<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     * @param newValue the minimum number of integer digits to be shown; if<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * less than zero, then zero is used. The concrete subclass may enforce an<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * upper limit to this value appropriate to the numeric type being formatted.<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * @see #getMinimumIntegerDigits<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     */<a name="line.606"></a>
+<span class="sourceLineNo">607</span>    public void setMinimumIntegerDigits(int newValue) {<a name="line.607"></a>
+<span class="sourceLineNo">608</span>        minimumIntegerDigits = Math.max(0,newValue);<a name="line.608"></a>
+<span class="sourceLineNo">609</span>        if (minimumIntegerDigits &gt; maximumIntegerDigits) {<a name="line.609"></a>
+<span class="sourceLineNo">610</span>            maximumIntegerDigits = minimumIntegerDigits;<a name="line.610"></a>
+<span class="sourceLineNo">611</span>        }<a name="line.611"></a>
+<span class="sourceLineNo">612</span>    }<a name="line.612"></a>
+<span class="sourceLineNo">613</span><a name="line.613"></a>
+<span class="sourceLineNo">614</span>    /**<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     * Returns the maximum number of digits allowed in the fraction portion of a<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     * number.<a name="line.616"></a>
+<span class="sourceLineNo">617</span>     * @see #setMaximumFractionDigits<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     */<a name="line.618"></a>
+<span class="sourceLineNo">619</span>    public int getMaximumFractionDigits() {<a name="line.619"></a>
+<span class="sourceLineNo">620</span>        return maximumFractionDigits;<a name="line.620"></a>
+<span class="sourceLineNo">621</span>    }<a name="line.621"></a>
+<span class="sourceLineNo">622</span><a name="line.622"></a>
+<span class="sourceLineNo">623</span>    /**<a name="line.623"></a>
+<span class="sourceLineNo">624</span>     * Sets the maximum number of digits allowed in the fraction portion of a<a name="line.624"></a>
+<span class="sourceLineNo">625</span>     * number. maximumFractionDigits must be &gt;= minimumFractionDigits.  If the<a name="line.625"></a>
+<span class="sourceLineNo">626</span>     * new value for maximumFractionDigits is less than the current value<a name="line.626"></a>
+<span class="sourceLineNo">627</span>     * of minimumFractionDigits, then minimumFractionDigits will also be set to<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     * the new value.<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     * @param newValue the maximum number of fraction digits to be shown; if<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     * less than zero, then zero is used. The concrete subclass may enforce an<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * upper limit to this value appropriate to the numeric type being formatted.<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * @see #getMaximumFractionDigits<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     */<a name="line.633"></a>
+<span class="sourceLineNo">634</span>    public void setMaximumFractionDigits(int newValue) {<a name="line.634"></a>
+<span class="sourceLineNo">635</span>        maximumFractionDigits = Math.max(0,newValue);<a name="line.635"></a>
+<span class="sourceLineNo">636</span>        if (maximumFractionDigits &lt; minimumFractionDigits) {<a name="line.636"></a>
+<span class="sourceLineNo">637</span>            minimumFractionDigits = maximumFractionDigits;<a name="line.637"></a>
+<span class="sourceLineNo">638</span>        }<a name="line.638"></a>
+<span class="sourceLineNo">639</span>    }<a name="line.639"></a>
+<span class="sourceLineNo">640</span><a name="line.640"></a>
+<span class="sourceLineNo">641</span>    /**<a name="line.641"></a>
+<span class="sourceLineNo">642</span>     * Returns the minimum number of digits allowed in the fraction portion of a<a name="line.642"></a>
+<span class="sourceLineNo">643</span>     * number.<a name="line.643"></a>
+<span class="sourceLineNo">644</span>     * @see #setMinimumFractionDigits<a name="line.644"></a>
+<span class="sourceLineNo">645</span>     */<a name="line.645"></a>
+<span class="sourceLineNo">646</span>    public int getMinimumFractionDigits() {<a name="line.646"></a>
+<span class="sourceLineNo">647</span>        return minimumFractionDigits;<a name="line.647"></a>
+<span class="sourceLineNo">648</span>    }<a name="line.648"></a>
+<span class="sourceLineNo">649</span><a name="line.649"></a>
+<span class="sourceLineNo">650</span>    /**<a name="line.650"></a>
+<span class="sourceLineNo">651</span>     * Sets the minimum number of digits allowed in the fraction portion of a<a name="line.651"></a>
+<span class="sourceLineNo">652</span>     * number. minimumFractionDigits must be &lt;= maximumFractionDigits.  If the<a name="line.652"></a>
+<span class="sourceLineNo">653</span>     * new value for minimumFractionDigits exceeds the current value<a name="line.653"></a>
+<span class="sourceLineNo">654</span>     * of maximumFractionDigits, then maximumIntegerDigits will also be set to<a name="line.654"></a>
+<span class="sourceLineNo">655</span>     * the new value<a name="line.655"></a>
+<span class="sourceLineNo">656</span>     * @param newValue the minimum number of fraction digits to be shown; if<a name="line.656"></a>
+<span class="sourceLineNo">657</span>     * less than zero, then zero is used. The concrete subclass may enforce an<a name="line.657"></a>
+<span class="sourceLineNo">658</span>     * upper limit to this value appropriate to the numeric type being formatted.<a name="line.658"></a>
+<span class="sourceLineNo">659</span>     * @see #getMinimumFractionDigits<a name="line.659"></a>
+<span class="sourceLineNo">660</span>     */<a name="line.660"></a>
+<span class="sourceLineNo">661</span>    public void setMinimumFractionDigits(int newValue) {<a name="line.661"></a>
+<span class="sourceLineNo">662</span>        minimumFractionDigits = Math.max(0,newValue);<a name="line.662"></a>
+<span class="sourceLineNo">663</span>        if (maximumFractionDigits &lt; minimumFractionDigits) {<a name="line.663"></a>
+<span class="sourceLineNo">664</span>            maximumFractionDigits = minimumFractionDigits;<a name="line.664"></a>
+<span class="sourceLineNo">665</span>        }<a name="line.665"></a>
+<span class="sourceLineNo">666</span>    }<a name="line.666"></a>
+<span class="sourceLineNo">667</span><a name="line.667"></a>
+<span class="sourceLineNo">668</span>    /**<a name="line.668"></a>
+<span class="sourceLineNo">669</span>     * Gets the currency used by this number format when formatting<a name="line.669"></a>
+<span class="sourceLineNo">670</span>     * currency values. The initial value is derived in a locale dependent<a name="line.670"></a>
+<span class="sourceLineNo">671</span>     * way. The returned value may be null if no valid<a name="line.671"></a>
+<span class="sourceLineNo">672</span>     * currency could be determined and no currency has been set using<a name="line.672"></a>
+<span class="sourceLineNo">673</span>     * {@link #setCurrency(java.util.Currency) setCurrency}.<a name="line.673"></a>
+<span class="sourceLineNo">674</span>     * &lt;p&gt;<a name="line.674"></a>
+<span class="sourceLineNo">675</span>     * The default implementation throws<a name="line.675"></a>
+<span class="sourceLineNo">676</span>     * &lt;code&gt;UnsupportedOperationException&lt;/code&gt;.<a name="line.676"></a>
+<span class="sourceLineNo">677</span>     *<a name="line.677"></a>
+<span class="sourceLineNo">678</span>     * @return the currency used by this number format, or &lt;code&gt;null&lt;/code&gt;<a name="line.678"></a>
+<span class="sourceLineNo">679</span>     * @exception UnsupportedOperationException if the number format class<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     * doesn't implement currency formatting<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     * @since 1.4<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     */<a name="line.682"></a>
+<span class="sourceLineNo">683</span>    public Currency getCurrency() {<a name="line.683"></a>
+<span class="sourceLineNo">684</span>        throw new UnsupportedOperationException();<a name="line.684"></a>
+<span class="sourceLineNo">685</span>    }<a name="line.685"></a>
+<span class="sourceLineNo">686</span><a name="line.686"></a>
+<span class="sourceLineNo">687</span>    /**<a name="line.687"></a>
+<span class="sourceLineNo">688</span>     * Sets the currency used by this number format when formatting<a name="line.688"></a>
+<span class="sourceLineNo">689</span>     * currency values. This does not update the minimum or maximum<a name="line.689"></a>
+<span class="sourceLineNo">690</span>     * number of fraction digits used by the number format.<a name="line.690"></a>
+<span class="sourceLineNo">691</span>     * &lt;p&gt;<a name="line.691"></a>
+<span class="sourceLineNo">692</span>     * The default implementation throws<a name="line.692"></a>
+<span class="sourceLineNo">693</span>     * &lt;code&gt;UnsupportedOperationException&lt;/code&gt;.<a name="line.693"></a>
+<span class="sourceLineNo">694</span>     *<a name="line.694"></a>
+<span class="sourceLineNo">695</span>     * @param currency the new currency to be used by this number format<a name="line.695"></a>
+<span class="sourceLineNo">696</span>     * @exception UnsupportedOperationException if the number format class<a name="line.696"></a>
+<span class="sourceLineNo">697</span>     * doesn't implement currency formatting<a name="line.697"></a>
+<span class="sourceLineNo">698</span>     * @exception NullPointerException if &lt;code&gt;currency&lt;/code&gt; is null<a name="line.698"></a>
+<span class="sourceLineNo">699</span>     * @since 1.4<a name="line.699"></a>
+<span class="sourceLineNo">700</span>     */<a name="line.700"></a>
+<span class="sourceLineNo">701</span>    public void setCurrency(Currency currency) {<a name="line.701"></a>
+<span class="sourceLineNo">702</span>        throw new UnsupportedOperationException();<a name="line.702"></a>
+<span class="sourceLineNo">703</span>    }<a name="line.703"></a>
+<span class="sourceLineNo">704</span><a name="line.704"></a>
+<span class="sourceLineNo">705</span>    /**<a name="line.705"></a>
+<span class="sourceLineNo">706</span>     * Gets the {@link java.math.RoundingMode} used in this NumberFormat.<a name="line.706"></a>
+<span class="sourceLineNo">707</span>     * The default implementation of this method in NumberFormat<a name="line.707"></a>
+<span class="sourceLineNo">708</span>     * always throws {@link java.lang.UnsupportedOperationException}.<a name="line.708"></a>
+<span class="sourceLineNo">709</span>     * Subclasses which handle different rounding modes should override<a name="line.709"></a>
+<span class="sourceLineNo">710</span>     * this method.<a name="line.710"></a>
+<span class="sourceLineNo">711</span>     *<a name="line.711"></a>
+<span class="sourceLineNo">712</span>     * @exception UnsupportedOperationException The default implementation<a name="line.712"></a>
+<span class="sourceLineNo">713</span>     *     always throws this exception<a name="line.713"></a>
+<span class="sourceLineNo">714</span>     * @return The &lt;code&gt;RoundingMode&lt;/code&gt; used for this NumberFormat.<a name="line.714"></a>
+<span class="sourceLineNo">715</span>     * @see #setRoundingMode(RoundingMode)<a name="line.715"></a>
+<span class="sourceLineNo">716</span>     * @since 1.6<a name="line.716"></a>
+<span class="sourceLineNo">717</span>     */<a name="line.717"></a>
+<span class="sourceLineNo">718</span>    public RoundingMode getRoundingMode() {<a name="line.718"></a>
+<span class="sourceLineNo">719</span>        throw new UnsupportedOperationException();<a name="line.719"></a>
+<span class="sourceLineNo">720</span>    }<a name="line.720"></a>
+<span class="sourceLineNo">721</span><a name="line.721"></a>
+<span class="sourceLineNo">722</span>    /**<a name="line.722"></a>
+<span class="sourceLineNo">723</span>     * Sets the {@link java.math.RoundingMode} used in this NumberFormat.<a name="line.723"></a>
+<span class="sourceLineNo">724</span>     * The default implementation of this method in NumberFormat always<a name="line.724"></a>
+<span class="sourceLineNo">725</span>     * throws {@link java.lang.UnsupportedOperationException}.<a name="line.725"></a>
+<span class="sourceLineNo">726</span>     * Subclasses which handle different rounding modes should override<a name="line.726"></a>
+<span class="sourceLineNo">727</span>     * this method.<a name="line.727"></a>
+<span class="sourceLineNo">728</span>     *<a name="line.728"></a>
+<span class="sourceLineNo">729</span>     * @exception UnsupportedOperationException The default implementation<a name="line.729"></a>
+<span class="sourceLineNo">730</span>     *     always throws this exception<a name="line.730"></a>
+<span class="sourceLineNo">731</span>     * @exception NullPointerException if &lt;code&gt;roundingMode&lt;/code&gt; is null<a name="line.731"></a>
+<span class="sourceLineNo">732</span>     * @param roundingMode The &lt;code&gt;RoundingMode&lt;/code&gt; to be used<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     * @see #getRoundingMode()<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     * @since 1.6<a name="line.734"></a>
+<span class="sourceLineNo">735</span>     */<a name="line.735"></a>
+<span class="sourceLineNo">736</span>    public void setRoundingMode(RoundingMode roundingMode) {<a name="line.736"></a>
+<span class="sourceLineNo">737</span>        throw new UnsupportedOperationException();<a name="line.737"></a>
+<span class="sourceLineNo">738</span>    }<a name="line.738"></a>
+<span class="sourceLineNo">739</span><a name="line.739"></a>
+<span class="sourceLineNo">740</span>    // =======================privates===============================<a name="line.740"></a>
+<span class="sourceLineNo">741</span><a name="line.741"></a>
+<span class="sourceLineNo">742</span>    private static NumberFormat getInstance(Locale desiredLocale,<a name="line.742"></a>
+<span class="sourceLineNo">743</span>                                           int choice) {<a name="line.743"></a>
+<span class="sourceLineNo">744</span>        // Check whether a provider can provide an implementation that's closer<a name="line.744"></a>
+<span class="sourceLineNo">745</span>        // to the requested locale than what the Java runtime itself can provide.<a name="line.745"></a>
+<span class="sourceLineNo">746</span>        LocaleServiceProviderPool pool =<a name="line.746"></a>
+<span class="sourceLineNo">747</span>            LocaleServiceProviderPool.getPool(NumberFormatProvider.class);<a name="line.747"></a>
+<span class="sourceLineNo">748</span>        if (pool.hasProviders()) {<a name="line.748"></a>
+<span class="sourceLineNo">749</span>            NumberFormat providersInstance = pool.getLocalizedObject(<a name="line.749"></a>
+<span class="sourceLineNo">750</span>                                    NumberFormatGetter.INSTANCE,<a name="line.750"></a>
+<span class="sourceLineNo">751</span>                                    desiredLocale,<a name="line.751"></a>
+<span class="sourceLineNo">752</span>                                    choice);<a name="line.752"></a>
+<span class="sourceLineNo">753</span>            if (providersInstance != null) {<a name="line.753"></a>
+<span class="sourceLineNo">754</span>                return providersInstance;<a name="line.754"></a>
+<span class="sourceLineNo">755</span>            }<a name="line.755"></a>
+<span class="sourceLineNo">756</span>        }<a name="line.756"></a>
+<span class="sourceLineNo">757</span><a name="line.757"></a>
+<span class="sourceLineNo">758</span>        /* try the cache first */<a name="line.758"></a>
+<span class="sourceLineNo">759</span>        String[] numberPatterns = (String[])cachedLocaleData.get(desiredLocale);<a name="line.759"></a>
+<span class="sourceLineNo">760</span>        if (numberPatterns == null) { /* cache miss */<a name="line.760"></a>
+<span class="sourceLineNo">761</span>            ResourceBundle resource = LocaleData.getNumberFormatData(desiredLocale);<a name="line.761"></a>
+<span class="sourceLineNo">762</span>            numberPatterns = resource.getStringArray("NumberPatterns");<a name="line.762"></a>
+<span class="sourceLineNo">763</span>            /* update cache */<a name="line.763"></a>
+<span class="sourceLineNo">764</span>            cachedLocaleData.put(desiredLocale, numberPatterns);<a name="line.764"></a>
+<span class="sourceLineNo">765</span>        }<a name="line.765"></a>
+<span class="sourceLineNo">766</span><a name="line.766"></a>
+<span class="sourceLineNo">767</span>        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(desiredLocale);<a name="line.767"></a>
+<span class="sourceLineNo">768</span>        int entry = (choice == INTEGERSTYLE) ? NUMBERSTYLE : choice;<a name="line.768"></a>
+<span class="sourceLineNo">769</span>        DecimalFormat format = new DecimalFormat(numberPatterns[entry], symbols);<a name="line.769"></a>
+<span class="sourceLineNo">770</span><a name="line.770"></a>
+<span class="sourceLineNo">771</span>        if (choice == INTEGERSTYLE) {<a name="line.771"></a>
+<span class="sourceLineNo">772</span>            format.setMaximumFractionDigits(0);<a name="line.772"></a>
+<span class="sourceLineNo">773</span>            format.setDecimalSeparatorAlwaysShown(false);<a name="line.773"></a>
+<span class="sourceLineNo">774</span>            format.setParseIntegerOnly(true);<a name="line.774"></a>
+<span class="sourceLineNo">775</span>        } else if (choice == CURRENCYSTYLE) {<a name="line.775"></a>
+<span class="sourceLineNo">776</span>            format.adjustForCurrencyDefaultFractionDigits();<a name="line.776"></a>
+<span class="sourceLineNo">777</span>        }<a name="line.777"></a>
+<span class="sourceLineNo">778</span><a name="line.778"></a>
+<span class="sourceLineNo">779</span>        return format;<a name="line.779"></a>
+<span class="sourceLineNo">780</span>    }<a name="line.780"></a>
+<span class="sourceLineNo">781</span><a name="line.781"></a>
+<span class="sourceLineNo">782</span>    /**<a name="line.782"></a>
+<span class="sourceLineNo">783</span>     * First, read in the default serializable data.<a name="line.783"></a>
+<span class="sourceLineNo">784</span>     *<a name="line.784"></a>
+<span class="sourceLineNo">785</span>     * Then, if &lt;code&gt;serialVersionOnStream&lt;/code&gt; is less than 1, indicating that<a name="line.785"></a>
+<span class="sourceLineNo">786</span>     * the stream was written by JDK 1.1,<a name="line.786"></a>
+<span class="sourceLineNo">787</span>     * set the &lt;code&gt;int&lt;/code&gt; fields such as &lt;code&gt;maximumIntegerDigits&lt;/code&gt;<a name="line.787"></a>
+<span class="sourceLineNo">788</span>     * to be equal to the &lt;code&gt;byte&lt;/code&gt; fields such as &lt;code&gt;maxIntegerDigits&lt;/code&gt;,<a name="line.788"></a>
+<span class="sourceLineNo">789</span>     * since the &lt;code&gt;int&lt;/code&gt; fields were not present in JDK 1.1.<a name="line.789"></a>
+<span class="sourceLineNo">790</span>     * Finally, set serialVersionOnStream back to the maximum allowed value so that<a name="line.790"></a>
+<span class="sourceLineNo">791</span>     * default serialization will work properly if this object is streamed out again.<a name="line.791"></a>
+<span class="sourceLineNo">792</span>     *<a name="line.792"></a>
+<span class="sourceLineNo">793</span>     * &lt;p&gt;If &lt;code&gt;minimumIntegerDigits&lt;/code&gt; is greater than<a name="line.793"></a>
+<span class="sourceLineNo">794</span>     * &lt;code&gt;maximumIntegerDigits&lt;/code&gt; or &lt;code&gt;minimumFractionDigits&lt;/code&gt;<a name="line.794"></a>
+<span class="sourceLineNo">795</span>     * is greater than &lt;code&gt;maximumFractionDigits&lt;/code&gt;, then the stream data<a name="line.795"></a>
+<span class="sourceLineNo">796</span>     * is invalid and this method throws an &lt;code&gt;InvalidObjectException&lt;/code&gt;.<a name="line.796"></a>
+<span class="sourceLineNo">797</span>     * In addition, if any of these values is negative, then this method throws<a name="line.797"></a>
+<span class="sourceLineNo">798</span>     * an &lt;code&gt;InvalidObjectException&lt;/code&gt;.<a name="line.798"></a>
+<span class="sourceLineNo">799</span>     *<a name="line.799"></a>
+<span class="sourceLineNo">800</span>     * @since 1.2<a name="line.800"></a>
+<span class="sourceLineNo">801</span>     */<a name="line.801"></a>
+<span class="sourceLineNo">802</span>    private void readObject(ObjectInputStream stream)<a name="line.802"></a>
+<span class="sourceLineNo">803</span>         throws IOException, ClassNotFoundException<a name="line.803"></a>
+<span class="sourceLineNo">804</span>    {<a name="line.804"></a>
+<span class="sourceLineNo">805</span>        stream.defaultReadObject();<a name="line.805"></a>
+<span class="sourceLineNo">806</span>        if (serialVersionOnStream &lt; 1) {<a name="line.806"></a>
+<span class="sourceLineNo">807</span>            // Didn't have additional int fields, reassign to use them.<a name="line.807"></a>
+<span class="sourceLineNo">808</span>            maximumIntegerDigits = maxIntegerDigits;<a name="line.808"></a>
+<span class="sourceLineNo">809</span>            minimumIntegerDigits = minIntegerDigits;<a name="line.809"></a>
+<span class="sourceLineNo">810</span>            maximumFractionDigits = maxFractionDigits;<a name="line.810"></a>
+<span class="sourceLineNo">811</span>            minimumFractionDigits = minFractionDigits;<a name="line.811"></a>
+<span class="sourceLineNo">812</span>        }<a name="line.812"></a>
+<span class="sourceLineNo">813</span>        if (minimumIntegerDigits &gt; maximumIntegerDigits ||<a name="line.813"></a>
+<span class="sourceLineNo">814</span>            minimumFractionDigits &gt; maximumFractionDigits ||<a name="line.814"></a>
+<span class="sourceLineNo">815</span>            minimumIntegerDigits &lt; 0 || minimumFractionDigits &lt; 0) {<a name="line.815"></a>
+<span class="sourceLineNo">816</span>            throw new InvalidObjectException("Digit count range invalid");<a name="line.816"></a>
+<span class="sourceLineNo">817</span>        }<a name="line.817"></a>
+<span class="sourceLineNo">818</span>        serialVersionOnStream = currentSerialVersion;<a name="line.818"></a>
+<span class="sourceLineNo">819</span>    }<a name="line.819"></a>
+<span class="sourceLineNo">820</span><a name="line.820"></a>
+<span class="sourceLineNo">821</span>    /**<a name="line.821"></a>
+<span class="sourceLineNo">822</span>     * Write out the default serializable data, after first setting<a name="line.822"></a>
+<span class="sourceLineNo">823</span>     * the &lt;code&gt;byte&lt;/code&gt; fields such as &lt;code&gt;maxIntegerDigits&lt;/code&gt; to be<a name="line.823"></a>
+<span class="sourceLineNo">824</span>     * equal to the &lt;code&gt;int&lt;/code&gt; fields such as &lt;code&gt;maximumIntegerDigits&lt;/code&gt;<a name="line.824"></a>
+<span class="sourceLineNo">825</span>     * (or to &lt;code&gt;Byte.MAX_VALUE&lt;/code&gt;, whichever is smaller), for compatibility<a name="line.825"></a>
+<span class="sourceLineNo">826</span>     * with the JDK 1.1 version of the stream format.<a name="line.826"></a>
+<span class="sourceLineNo">827</span>     *<a name="line.827"></a>
+<span class="sourceLineNo">828</span>     * @since 1.2<a name="line.828"></a>
+<span class="sourceLineNo">829</span>     */<a name="line.829"></a>
+<span class="sourceLineNo">830</span>    private void writeObject(ObjectOutputStream stream)<a name="line.830"></a>
+<span class="sourceLineNo">831</span>         throws IOException<a name="line.831"></a>
+<span class="sourceLineNo">832</span>    {<a name="line.832"></a>
+<span class="sourceLineNo">833</span>        maxIntegerDigits = (maximumIntegerDigits &gt; Byte.MAX_VALUE) ?<a name="line.833"></a>
+<span class="sourceLineNo">834</span>                           Byte.MAX_VALUE : (byte)maximumIntegerDigits;<a name="line.834"></a>
+<span class="sourceLineNo">835</span>        minIntegerDigits = (minimumIntegerDigits &gt; Byte.MAX_VALUE) ?<a name="line.835"></a>
+<span class="sourceLineNo">836</span>                           Byte.MAX_VALUE : (byte)minimumIntegerDigits;<a name="line.836"></a>
+<span class="sourceLineNo">837</span>        maxFractionDigits = (maximumFractionDigits &gt; Byte.MAX_VALUE) ?<a name="line.837"></a>
+<span class="sourceLineNo">838</span>                            Byte.MAX_VALUE : (byte)maximumFractionDigits;<a name="line.838"></a>
+<span class="sourceLineNo">839</span>        minFractionDigits = (minimumFractionDigits &gt; Byte.MAX_VALUE) ?<a name="line.839"></a>
+<span class="sourceLineNo">840</span>                            Byte.MAX_VALUE : (byte)minimumFractionDigits;<a name="line.840"></a>
+<span class="sourceLineNo">841</span>        stream.defaultWriteObject();<a name="line.841"></a>
+<span class="sourceLineNo">842</span>    }<a name="line.842"></a>
+<span class="sourceLineNo">843</span><a name="line.843"></a>
+<span class="sourceLineNo">844</span>    /**<a name="line.844"></a>
+<span class="sourceLineNo">845</span>     * Cache to hold the NumberPatterns of a Locale.<a name="line.845"></a>
+<span class="sourceLineNo">846</span>     */<a name="line.846"></a>
+<span class="sourceLineNo">847</span>    private static final Hashtable cachedLocaleData = new Hashtable(3);<a name="line.847"></a>
+<span class="sourceLineNo">848</span><a name="line.848"></a>
+<span class="sourceLineNo">849</span>    // Constants used by factory methods to specify a style of format.<a name="line.849"></a>
+<span class="sourceLineNo">850</span>    private static final int NUMBERSTYLE = 0;<a name="line.850"></a>
+<span class="sourceLineNo">851</span>    private static final int CURRENCYSTYLE = 1;<a name="line.851"></a>
+<span class="sourceLineNo">852</span>    private static final int PERCENTSTYLE = 2;<a name="line.852"></a>
+<span class="sourceLineNo">853</span>    private static final int SCIENTIFICSTYLE = 3;<a name="line.853"></a>
+<span class="sourceLineNo">854</span>    private static final int INTEGERSTYLE = 4;<a name="line.854"></a>
+<span class="sourceLineNo">855</span><a name="line.855"></a>
+<span class="sourceLineNo">856</span>    /**<a name="line.856"></a>
+<span class="sourceLineNo">857</span>     * True if the grouping (i.e. thousands) separator is used when<a name="line.857"></a>
+<span class="sourceLineNo">858</span>     * formatting and parsing numbers.<a name="line.858"></a>
+<span class="sourceLineNo">859</span>     *<a name="line.859"></a>
+<span class="sourceLineNo">860</span>     * @serial<a name="line.860"></a>
+<span class="sourceLineNo">861</span>     * @see #isGroupingUsed<a name="line.861"></a>
+<span class="sourceLineNo">862</span>     */<a name="line.862"></a>
+<span class="sourceLineNo">863</span>    private boolean groupingUsed = true;<a name="line.863"></a>
+<span class="sourceLineNo">864</span><a name="line.864"></a>
+<span class="sourceLineNo">865</span>    /**<a name="line.865"></a>
+<span class="sourceLineNo">866</span>     * The maximum number of digits allowed in the integer portion of a<a name="line.866"></a>
+<span class="sourceLineNo">867</span>     * number.  &lt;code&gt;maxIntegerDigits&lt;/code&gt; must be greater than or equal to<a name="line.867"></a>
+<span class="sourceLineNo">868</span>     * &lt;code&gt;minIntegerDigits&lt;/code&gt;.<a name="line.868"></a>
+<span class="sourceLineNo">869</span>     * &lt;p&gt;<a name="line.869"></a>
+<span class="sourceLineNo">870</span>     * &lt;strong&gt;Note:&lt;/strong&gt; This field exists only for serialization<a name="line.870"></a>
+<span class="sourceLineNo">871</span>     * compatibility with JDK 1.1.  In Java platform 2 v1.2 and higher, the new<a name="line.871"></a>
+<span class="sourceLineNo">872</span>     * &lt;code&gt;int&lt;/code&gt; field &lt;code&gt;maximumIntegerDigits&lt;/code&gt; is used instead.<a name="line.872"></a>
+<span class="sourceLineNo">873</span>     * When writing to a stream, &lt;code&gt;maxIntegerDigits&lt;/code&gt; is set to<a name="line.873"></a>
+<span class="sourceLineNo">874</span>     * &lt;code&gt;maximumIntegerDigits&lt;/code&gt; or &lt;code&gt;Byte.MAX_VALUE&lt;/code&gt;,<a name="line.874"></a>
+<span class="sourceLineNo">875</span>     * whichever is smaller.  When reading from a stream, this field is used<a name="line.875"></a>
+<span class="sourceLineNo">876</span>     * only if &lt;code&gt;serialVersionOnStream&lt;/code&gt; is less than 1.<a name="line.876"></a>
+<span class="sourceLineNo">877</span>     *<a name="line.877"></a>
+<span class="sourceLineNo">878</span>     * @serial<a name="line.878"></a>
+<span class="sourceLineNo">879</span>     * @see #getMaximumIntegerDigits<a name="line.879"></a>
+<span class="sourceLineNo">880</span>     */<a name="line.880"></a>
+<span class="sourceLineNo">881</span>    private byte    maxIntegerDigits = 40;<a name="line.881"></a>
+<span class="sourceLineNo">882</span><a name="line.882"></a>
+<span class="sourceLineNo">883</span>    /**<a name="line.883"></a>
+<span class="sourceLineNo">884</span>     * The minimum number of digits allowed in the integer portion of a<a name="line.884"></a>
+<span class="sourceLineNo">885</span>     * number.  &lt;code&gt;minimumIntegerDigits&lt;/code&gt; must be less than or equal to<a name="line.885"></a>
+<span class="sourceLineNo">886</span>     * &lt;code&gt;maximumIntegerDigits&lt;/code&gt;.<a name="line.886"></a>
+<span class="sourceLineNo">887</span>     * &lt;p&gt;<a name="line.887"></a>
+<span class="sourceLineNo">888</span>     * &lt;strong&gt;Note:&lt;/strong&gt; This field exists only for serialization<a name="line.888"></a>
+<span class="sourceLineNo">889</span>     * compatibility with JDK 1.1.  In Java platform 2 v1.2 and higher, the new<a name="line.889"></a>
+<span class="sourceLineNo">890</span>     * &lt;code&gt;int&lt;/code&gt; field &lt;code&gt;minimumIntegerDigits&lt;/code&gt; is used instead.<a name="line.890"></a>
+<span class="sourceLineNo">891</span>     * When writing to a stream, &lt;code&gt;minIntegerDigits&lt;/code&gt; is set to<a name="line.891"></a>
+<span class="sourceLineNo">892</span>     * &lt;code&gt;minimumIntegerDigits&lt;/code&gt; or &lt;code&gt;Byte.MAX_VALUE&lt;/code&gt;,<a name="line.892"></a>
+<span class="sourceLineNo">893</span>     * whichever is smaller.  When reading from a stream, this field is used<a name="line.893"></a>
+<span class="sourceLineNo">894</span>     * only if &lt;code&gt;serialVersionOnStream&lt;/code&gt; is less than 1.<a name="line.894"></a>
+<span class="sourceLineNo">895</span>     *<a name="line.895"></a>
+<span class="sourceLineNo">896</span>     * @serial<a name="line.896"></a>
+<span class="sourceLineNo">897</span>     * @see #getMinimumIntegerDigits<a name="line.897"></a>
+<span class="sourceLineNo">898</span>     */<a name="line.898"></a>
+<span class="sourceLineNo">899</span>    private byte    minIntegerDigits = 1;<a name="line.899"></a>
+<span class="sourceLineNo">900</span><a name="line.900"></a>
+<span class="sourceLineNo">901</span>    /**<a name="line.901"></a>
+<span class="sourceLineNo">902</span>     * The maximum number of digits allowed in the fractional portion of a<a name="line.902"></a>
+<span class="sourceLineNo">903</span>     * number.  &lt;code&gt;maximumFractionDigits&lt;/code&gt; must be greater than or equal to<a name="line.903"></a>
+<span class="sourceLineNo">904</span>     * &lt;code&gt;minimumFractionDigits&lt;/code&gt;.<a name="line.904"></a>
+<span class="sourceLineNo">905</span>     * &lt;p&gt;<a name="line.905"></a>
+<span class="sourceLineNo">906</span>     * &lt;strong&gt;Note:&lt;/strong&gt; This field exists only for serialization<a name="line.906"></a>
+<span class="sourceLineNo">907</span>     * compatibility with JDK 1.1.  In Java platform 2 v1.2 and higher, the new<a name="line.907"></a>
+<span class="sourceLineNo">908</span>     * &lt;code&gt;int&lt;/code&gt; field &lt;code&gt;maximumFractionDigits&lt;/code&gt; is used instead.<a name="line.908"></a>
+<span class="sourceLineNo">909</span>     * When writing to a stream, &lt;code&gt;maxFractionDigits&lt;/code&gt; is set to<a name="line.909"></a>
+<span class="sourceLineNo">910</span>     * &lt;code&gt;maximumFractionDigits&lt;/code&gt; or &lt;code&gt;Byte.MAX_VALUE&lt;/code&gt;,<a name="line.910"></a>
+<span class="sourceLineNo">911</span>     * whichever is smaller.  When reading from a stream, this field is used<a name="line.911"></a>
+<span class="sourceLineNo">912</span>     * only if &lt;code&gt;serialVersionOnStream&lt;/code&gt; is less than 1.<a name="line.912"></a>
+<span class="sourceLineNo">913</span>     *<a name="line.913"></a>
+<span class="sourceLineNo">914</span>     * @serial<a name="line.914"></a>
+<span class="sourceLineNo">915</span>     * @see #getMaximumFractionDigits<a name="line.915"></a>
+<span class="sourceLineNo">916</span>     */<a name="line.916"></a>
+<span class="sourceLineNo">917</span>    private byte    maxFractionDigits = 3;    // invariant, &gt;= minFractionDigits<a name="line.917"></a>
+<span class="sourceLineNo">918</span><a name="line.918"></a>
+<span class="sourceLineNo">919</span>    /**<a name="line.919"></a>
+<span class="sourceLineNo">920</span>     * The minimum number of digits allowed in the fractional portion of a<a name="line.920"></a>
+<span class="sourceLineNo">921</span>     * number.  &lt;code&gt;minimumFractionDigits&lt;/code&gt; must be less than or equal to<a name="line.921"></a>
+<span class="sourceLineNo">922</span>     * &lt;code&gt;maximumFractionDigits&lt;/code&gt;.<a name="line.922"></a>
+<span class="sourceLineNo">923</span>     * &lt;p&gt;<a name="line.923"></a>
+<span class="sourceLineNo">924</span>     * &lt;strong&gt;Note:&lt;/strong&gt; This field exists only for serialization<a name="line.924"></a>
+<span class="sourceLineNo">925</span>     * compatibility with JDK 1.1.  In Java platform 2 v1.2 and higher, the new<a name="line.925"></a>
+<span class="sourceLineNo">926</span>     * &lt;code&gt;int&lt;/code&gt; field &lt;code&gt;minimumFractionDigits&lt;/code&gt; is used instead.<a name="line.926"></a>
+<span class="sourceLineNo">927</span>     * When writing to a stream, &lt;code&gt;minFractionDigits&lt;/code&gt; is set to<a name="line.927"></a>
+<span class="sourceLineNo">928</span>     * &lt;code&gt;minimumFractionDigits&lt;/code&gt; or &lt;code&gt;Byte.MAX_VALUE&lt;/code&gt;,<a name="line.928"></a>
+<span class="sourceLineNo">929</span>     * whichever is smaller.  When reading from a stream, this field is used<a name="line.929"></a>
+<span class="sourceLineNo">930</span>     * only if &lt;code&gt;serialVersionOnStream&lt;/code&gt; is less than 1.<a name="line.930"></a>
+<span class="sourceLineNo">931</span>     *<a name="line.931"></a>
+<span class="sourceLineNo">932</span>     * @serial<a name="line.932"></a>
+<span class="sourceLineNo">933</span>     * @see #getMinimumFractionDigits<a name="line.933"></a>
+<span class="sourceLineNo">934</span>     */<a name="line.934"></a>
+<span class="sourceLineNo">935</span>    private byte    minFractionDigits = 0;<a name="line.935"></a>
+<span class="sourceLineNo">936</span><a name="line.936"></a>
+<span class="sourceLineNo">937</span>    /**<a name="line.937"></a>
+<span class="sourceLineNo">938</span>     * True if this format will parse numbers as integers only.<a name="line.938"></a>
+<span class="sourceLineNo">939</span>     *<a name="line.939"></a>
+<span class="sourceLineNo">940</span>     * @serial<a name="line.940"></a>
+<span class="sourceLineNo">941</span>     * @see #isParseIntegerOnly<a name="line.941"></a>
+<span class="sourceLineNo">942</span>     */<a name="line.942"></a>
+<span class="sourceLineNo">943</span>    private boolean parseIntegerOnly = false;<a name="line.943"></a>
+<span class="sourceLineNo">944</span><a name="line.944"></a>
+<span class="sourceLineNo">945</span>    // new fields for 1.2.  byte is too small for integer digits.<a name="line.945"></a>
+<span class="sourceLineNo">946</span><a name="line.946"></a>
+<span class="sourceLineNo">947</span>    /**<a name="line.947"></a>
+<span class="sourceLineNo">948</span>     * The maximum number of digits allowed in the integer portion of a<a name="line.948"></a>
+<span class="sourceLineNo">949</span>     * number.  &lt;code&gt;maximumIntegerDigits&lt;/code&gt; must be greater than or equal to<a name="line.949"></a>
+<span class="sourceLineNo">950</span>     * &lt;code&gt;minimumIntegerDigits&lt;/code&gt;.<a name="line.950"></a>
+<span class="sourceLineNo">951</span>     *<a name="line.951"></a>
+<span class="sourceLineNo">952</span>     * @serial<a name="line.952"></a>
+<span class="sourceLineNo">953</span>     * @since 1.2<a name="line.953"></a>
+<span class="sourceLineNo">954</span>     * @see #getMaximumIntegerDigits<a name="line.954"></a>
+<span class="sourceLineNo">955</span>     */<a name="line.955"></a>
+<span class="sourceLineNo">956</span>    private int    maximumIntegerDigits = 40;<a name="line.956"></a>
+<span class="sourceLineNo">957</span><a name="line.957"></a>
+<span class="sourceLineNo">958</span>    /**<a name="line.958"></a>
+<span class="sourceLineNo">959</span>     * The minimum number of digits allowed in the integer portion of a<a name="line.959"></a>
+<span class="sourceLineNo">960</span>     * number.  &lt;code&gt;minimumIntegerDigits&lt;/code&gt; must be less than or equal to<a name="line.960"></a>
+<span class="sourceLineNo">961</span>     * &lt;code&gt;maximumIntegerDigits&lt;/code&gt;.<a name="line.961"></a>
+<span class="sourceLineNo">962</span>     *<a name="line.962"></a>
+<span class="sourceLineNo">963</span>     * @serial<a name="line.963"></a>
+<span class="sourceLineNo">964</span>     * @since 1.2<a name="line.964"></a>
+<span class="sourceLineNo">965</span>     * @see #getMinimumIntegerDigits<a name="line.965"></a>
+<span class="sourceLineNo">966</span>     */<a name="line.966"></a>
+<span class="sourceLineNo">967</span>    private int    minimumIntegerDigits = 1;<a name="line.967"></a>
+<span class="sourceLineNo">968</span><a name="line.968"></a>
+<span class="sourceLineNo">969</span>    /**<a name="line.969"></a>
+<span class="sourceLineNo">970</span>     * The maximum number of digits allowed in the fractional portion of a<a name="line.970"></a>
+<span class="sourceLineNo">971</span>     * number.  &lt;code&gt;maximumFractionDigits&lt;/code&gt; must be greater than or equal to<a name="line.971"></a>
+<span class="sourceLineNo">972</span>     * &lt;code&gt;minimumFractionDigits&lt;/code&gt;.<a name="line.972"></a>
+<span class="sourceLineNo">973</span>     *<a name="line.973"></a>
+<span class="sourceLineNo">974</span>     * @serial<a name="line.974"></a>
+<span class="sourceLineNo">975</span>     * @since 1.2<a name="line.975"></a>
+<span class="sourceLineNo">976</span>     * @see #getMaximumFractionDigits<a name="line.976"></a>
+<span class="sourceLineNo">977</span>     */<a name="line.977"></a>
+<span class="sourceLineNo">978</span>    private int    maximumFractionDigits = 3;    // invariant, &gt;= minFractionDigits<a name="line.978"></a>
+<span class="sourceLineNo">979</span><a name="line.979"></a>
+<span class="sourceLineNo">980</span>    /**<a name="line.980"></a>
+<span class="sourceLineNo">981</span>     * The minimum number of digits allowed in the fractional portion of a<a name="line.981"></a>
+<span class="sourceLineNo">982</span>     * number.  &lt;code&gt;minimumFractionDigits&lt;/code&gt; must be less than or equal to<a name="line.982"></a>
+<span class="sourceLineNo">983</span>     * &lt;code&gt;maximumFractionDigits&lt;/code&gt;.<a name="line.983"></a>
+<span class="sourceLineNo">984</span>     *<a name="line.984"></a>
+<span class="sourceLineNo">985</span>     * @serial<a name="line.985"></a>
+<span class="sourceLineNo">986</span>     * @since 1.2<a name="line.986"></a>
+<span class="sourceLineNo">987</span>     * @see #getMinimumFractionDigits<a name="line.987"></a>
+<span class="sourceLineNo">988</span>     */<a name="line.988"></a>
+<span class="sourceLineNo">989</span>    private int    minimumFractionDigits = 0;<a name="line.989"></a>
+<span class="sourceLineNo">990</span><a name="line.990"></a>
+<span class="sourceLineNo">991</span>    static final int currentSerialVersion = 1;<a name="line.991"></a>
+<span class="sourceLineNo">992</span><a name="line.992"></a>
+<span class="sourceLineNo">993</span>    /**<a name="line.993"></a>
+<span class="sourceLineNo">994</span>     * Describes the version of &lt;code&gt;NumberFormat&lt;/code&gt; present on the stream.<a name="line.994"></a>
+<span class="sourceLineNo">995</span>     * Possible values are:<a name="line.995"></a>
+<span class="sourceLineNo">996</span>     * &lt;ul&gt;<a name="line.996"></a>
+<span class="sourceLineNo">997</span>     * &lt;li&gt;&lt;b&gt;0&lt;/b&gt; (or uninitialized): the JDK 1.1 version of the stream format.<a name="line.997"></a>
+<span class="sourceLineNo">998</span>     *     In this version, the &lt;code&gt;int&lt;/code&gt; fields such as<a name="line.998"></a>
+<span class="sourceLineNo">999</span>     *     &lt;code&gt;maximumIntegerDigits&lt;/code&gt; were not present, and the &lt;code&gt;byte&lt;/code&gt;<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>     *     fields such as &lt;code&gt;maxIntegerDigits&lt;/code&gt; are used instead.<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>     *<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>     * &lt;li&gt;&lt;b&gt;1&lt;/b&gt;: the 1.2 version of the stream format.  The values of the<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>     *     &lt;code&gt;byte&lt;/code&gt; fields such as &lt;code&gt;maxIntegerDigits&lt;/code&gt; are ignored,<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>     *     and the &lt;code&gt;int&lt;/code&gt; fields such as &lt;code&gt;maximumIntegerDigits&lt;/code&gt;<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>     *     are used instead.<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>     * &lt;/ul&gt;<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>     * When streaming out a &lt;code&gt;NumberFormat&lt;/code&gt;, the most recent format<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>     * (corresponding to the highest allowable &lt;code&gt;serialVersionOnStream&lt;/code&gt;)<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>     * is always written.<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>     *<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>     * @serial<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>     * @since 1.2<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>     */<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>    private int serialVersionOnStream = currentSerialVersion;<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span><a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>    // Removed "implements Cloneable" clause.  Needs to update serialization<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>    // ID for backward compatibility.<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>    static final long serialVersionUID = -2308460125733713944L;<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span><a name="line.1019"></a>
+<span class="sourceLineNo">1020</span><a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>    //<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>    // class for AttributedCharacterIterator attributes<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>    //<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>    /**<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>     * Defines constants that are used as attribute keys in the<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>     * &lt;code&gt;AttributedCharacterIterator&lt;/code&gt; returned<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>     * from &lt;code&gt;NumberFormat.formatToCharacterIterator&lt;/code&gt; and as<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>     * field identifiers in &lt;code&gt;FieldPosition&lt;/code&gt;.<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>     *<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>     * @since 1.4<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>     */<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>    public static class Field extends Format.Field {<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span><a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>        // Proclaim serial compatibility with 1.4 FCS<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>        private static final long serialVersionUID = 7494728892700160890L;<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span><a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>        // table of all instances in this class, used by readResolve<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>        private static final Map instanceMap = new HashMap(11);<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span><a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>        /**<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>         * Creates a Field instance with the specified<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>         * name.<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>         *<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>         * @param name Name of the attribute<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>         */<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>        protected Field(String name) {<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>            super(name);<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>            if (this.getClass() == NumberFormat.Field.class) {<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>                instanceMap.put(name, this);<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>            }<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>        }<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span><a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>        /**<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>         * Resolves instances being deserialized to the predefined constants.<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>         *<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>         * @throws InvalidObjectException if the constant could not be resolved.<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>         * @return resolved NumberFormat.Field constant<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>         */<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>        protected Object readResolve() throws InvalidObjectException {<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>            if (this.getClass() != NumberFormat.Field.class) {<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>                throw new InvalidObjectException("subclass didn't correctly implement readResolve");<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>            }<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span><a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>            Object instance = instanceMap.get(getName());<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span>            if (instance != null) {<a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>                return instance;<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>            } else {<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>                throw new InvalidObjectException("unknown attribute name");<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>            }<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>        }<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span><a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>        /**<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>         * Constant identifying the integer field.<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>         */<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>        public static final Field INTEGER = new Field("integer");<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span><a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>        /**<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>         * Constant identifying the fraction field.<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>         */<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>        public static final Field FRACTION = new Field("fraction");<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span><a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>        /**<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>         * Constant identifying the exponent field.<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>         */<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>        public static final Field EXPONENT = new Field("exponent");<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span><a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>        /**<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>         * Constant identifying the decimal separator field.<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>         */<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>        public static final Field DECIMAL_SEPARATOR =<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>                            new Field("decimal separator");<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span><a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>        /**<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>         * Constant identifying the sign field.<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>         */<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>        public static final Field SIGN = new Field("sign");<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span><a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>        /**<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>         * Constant identifying the grouping separator field.<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>         */<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>        public static final Field GROUPING_SEPARATOR =<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>                            new Field("grouping separator");<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span><a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>        /**<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>         * Constant identifying the exponent symbol field.<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>         */<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>        public static final Field EXPONENT_SYMBOL = new<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>                            Field("exponent symbol");<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span><a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>        /**<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>         * Constant identifying the percent field.<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>         */<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>        public static final Field PERCENT = new Field("percent");<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span><a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>        /**<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>         * Constant identifying the permille field.<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>         */<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>        public static final Field PERMILLE = new Field("per mille");<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span><a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>        /**<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>         * Constant identifying the currency field.<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>         */<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>        public static final Field CURRENCY = new Field("currency");<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span><a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>        /**<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>         * Constant identifying the exponent sign field.<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>         */<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>        public static final Field EXPONENT_SIGN = new Field("exponent sign");<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>    }<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span><a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>    /**<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>     * Obtains a NumberFormat instance from a NumberFormatProvider implementation.<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>     */<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>    private static class NumberFormatGetter<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>        implements LocaleServiceProviderPool.LocalizedObjectGetter&lt;NumberFormatProvider,<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>                                                                   NumberFormat&gt; {<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>        private static final NumberFormatGetter INSTANCE = new NumberFormatGetter();<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span><a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>        public NumberFormat getObject(NumberFormatProvider numberFormatProvider,<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>                                Locale locale,<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>                                String key,<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>                                Object... params) {<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>            assert params.length == 1;<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>            int choice = (Integer)params[0];<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span><a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>            switch (choice) {<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>            case NUMBERSTYLE:<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>                return numberFormatProvider.getNumberInstance(locale);<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>            case PERCENTSTYLE:<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>                return numberFormatProvider.getPercentInstance(locale);<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>            case CURRENCYSTYLE:<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>                return numberFormatProvider.getCurrencyInstance(locale);<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>            case INTEGERSTYLE:<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>                return numberFormatProvider.getIntegerInstance(locale);<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>            default:<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>                assert false : choice;<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span>            }<a name="line.1157"></a>
+<span class="sourceLineNo">1158</span><a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>            return null;<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>        }<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>    }<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>}<a name="line.1162"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

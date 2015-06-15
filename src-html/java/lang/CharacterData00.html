@@ -1,0 +1,1532 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>// This file was generated AUTOMATICALLY from a template file Fri Apr 10 19:54:06 PDT 2015<a name="line.1"></a>
+<span class="sourceLineNo">002</span>/*<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> *<a name="line.24"></a>
+<span class="sourceLineNo">025</span> */<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>package java.lang;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>/** <a name="line.29"></a>
+<span class="sourceLineNo">030</span> * The CharacterData00 class encapsulates the large tables once found in<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * java.lang.Character<a name="line.31"></a>
+<span class="sourceLineNo">032</span>*/<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>class CharacterData00 extends CharacterData {<a name="line.34"></a>
+<span class="sourceLineNo">035</span>    /* The character properties are currently encoded into 32 bits in the following manner:<a name="line.35"></a>
+<span class="sourceLineNo">036</span>        1 bit   mirrored property<a name="line.36"></a>
+<span class="sourceLineNo">037</span>        4 bits  directionality property<a name="line.37"></a>
+<span class="sourceLineNo">038</span>        9 bits  signed offset used for converting case<a name="line.38"></a>
+<span class="sourceLineNo">039</span>        1 bit   if 1, adding the signed offset converts the character to lowercase<a name="line.39"></a>
+<span class="sourceLineNo">040</span>        1 bit   if 1, subtracting the signed offset converts the character to uppercase<a name="line.40"></a>
+<span class="sourceLineNo">041</span>        1 bit   if 1, this character has a titlecase equivalent (possibly itself)<a name="line.41"></a>
+<span class="sourceLineNo">042</span>        3 bits  0  may not be part of an identifier<a name="line.42"></a>
+<span class="sourceLineNo">043</span>                1  ignorable control; may continue a Unicode identifier or Java identifier<a name="line.43"></a>
+<span class="sourceLineNo">044</span>                2  may continue a Java identifier but not a Unicode identifier (unused)<a name="line.44"></a>
+<span class="sourceLineNo">045</span>                3  may continue a Unicode identifier or Java identifier<a name="line.45"></a>
+<span class="sourceLineNo">046</span>                4  is a Java whitespace character<a name="line.46"></a>
+<span class="sourceLineNo">047</span>                5  may start or continue a Java identifier;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>                   may continue but not start a Unicode identifier (underscores)<a name="line.48"></a>
+<span class="sourceLineNo">049</span>                6  may start or continue a Java identifier but not a Unicode identifier ($)<a name="line.49"></a>
+<span class="sourceLineNo">050</span>                7  may start or continue a Unicode identifier or Java identifier<a name="line.50"></a>
+<span class="sourceLineNo">051</span>                Thus:<a name="line.51"></a>
+<span class="sourceLineNo">052</span>                   5, 6, 7 may start a Java identifier<a name="line.52"></a>
+<span class="sourceLineNo">053</span>                   1, 2, 3, 5, 6, 7 may continue a Java identifier<a name="line.53"></a>
+<span class="sourceLineNo">054</span>                   7 may start a Unicode identifier<a name="line.54"></a>
+<span class="sourceLineNo">055</span>                   1, 3, 5, 7 may continue a Unicode identifier<a name="line.55"></a>
+<span class="sourceLineNo">056</span>                   1 is ignorable within an identifier<a name="line.56"></a>
+<span class="sourceLineNo">057</span>                   4 is Java whitespace<a name="line.57"></a>
+<span class="sourceLineNo">058</span>        2 bits  0  this character has no numeric property<a name="line.58"></a>
+<span class="sourceLineNo">059</span>                1  adding the digit offset to the character code and then<a name="line.59"></a>
+<span class="sourceLineNo">060</span>                   masking with 0x1F will produce the desired numeric value<a name="line.60"></a>
+<span class="sourceLineNo">061</span>                2  this character has a "strange" numeric value<a name="line.61"></a>
+<span class="sourceLineNo">062</span>                3  a Java supradecimal digit: adding the digit offset to the<a name="line.62"></a>
+<span class="sourceLineNo">063</span>                   character code, then masking with 0x1F, then adding 10<a name="line.63"></a>
+<span class="sourceLineNo">064</span>                   will produce the desired numeric value<a name="line.64"></a>
+<span class="sourceLineNo">065</span>        5 bits  digit offset<a name="line.65"></a>
+<span class="sourceLineNo">066</span>        5 bits  character type<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>        The encoding of character properties is subject to change at any time.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     */<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    int getProperties(int ch) {<a name="line.71"></a>
+<span class="sourceLineNo">072</span>        char offset = (char)ch;<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        int props = A[Y[X[offset&gt;&gt;5]|((offset&gt;&gt;1)&amp;0xF)]|(offset&amp;0x1)];<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        return props;<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    }<a name="line.75"></a>
+<span class="sourceLineNo">076</span><a name="line.76"></a>
+<span class="sourceLineNo">077</span>    int getPropertiesEx(int ch) {<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        char offset = (char)ch;<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        int props = B[Y[X[offset&gt;&gt;5]|((offset&gt;&gt;1)&amp;0xF)]|(offset&amp;0x1)];<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        return props;<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    }<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    int getType(int ch) {<a name="line.83"></a>
+<span class="sourceLineNo">084</span>        int props = getProperties(ch);<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        return (props &amp; 0x1F);<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    }<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>    boolean isOtherLowercase(int ch) {<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        int props = getPropertiesEx(ch);<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        return (props &amp; 0x0001) != 0;<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    }<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>    boolean isOtherUppercase(int ch) {<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        int props = getPropertiesEx(ch);<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        return (props &amp; 0x0002) != 0;<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    }<a name="line.96"></a>
+<span class="sourceLineNo">097</span><a name="line.97"></a>
+<span class="sourceLineNo">098</span>    boolean isOtherAlphabetic(int ch) {<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        int props = getPropertiesEx(ch);<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        return (props &amp; 0x0004) != 0;<a name="line.100"></a>
+<span class="sourceLineNo">101</span>    }<a name="line.101"></a>
+<span class="sourceLineNo">102</span><a name="line.102"></a>
+<span class="sourceLineNo">103</span>    boolean isIdeographic(int ch) {<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        int props = getPropertiesEx(ch);<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        return (props &amp; 0x0010) != 0;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    }<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    boolean isJavaIdentifierStart(int ch) {<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        int props = getProperties(ch);<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        return ((props &amp; 0x00007000) &gt;= 0x00005000);<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    }<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    boolean isJavaIdentifierPart(int ch) {<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        int props = getProperties(ch);<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        return ((props &amp; 0x00003000) != 0);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    }<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>    boolean isUnicodeIdentifierStart(int ch) {<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        int props = getProperties(ch);<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        return ((props &amp; 0x00007000) == 0x00007000);<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    }<a name="line.121"></a>
+<span class="sourceLineNo">122</span><a name="line.122"></a>
+<span class="sourceLineNo">123</span>    boolean isUnicodeIdentifierPart(int ch) {<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        int props = getProperties(ch);<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        return ((props &amp; 0x00001000) != 0);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    }<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span>    boolean isIdentifierIgnorable(int ch) {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        int props = getProperties(ch);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        return ((props &amp; 0x00007000) == 0x00001000);<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>    int toLowerCase(int ch) {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        int mapChar = ch;<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        int val = getProperties(ch);<a name="line.135"></a>
+<span class="sourceLineNo">136</span><a name="line.136"></a>
+<span class="sourceLineNo">137</span>        if ((val &amp; 0x00020000) != 0) {<a name="line.137"></a>
+<span class="sourceLineNo">138</span>          if ((val &amp; 0x07FC0000) == 0x07FC0000) {<a name="line.138"></a>
+<span class="sourceLineNo">139</span>            switch(ch) {<a name="line.139"></a>
+<span class="sourceLineNo">140</span>              // map the offset overflow chars<a name="line.140"></a>
+<span class="sourceLineNo">141</span>            case 0x0130 : mapChar = 0x0069; break;<a name="line.141"></a>
+<span class="sourceLineNo">142</span>            case 0x2126 : mapChar = 0x03C9; break;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>            case 0x212A : mapChar = 0x006B; break;<a name="line.143"></a>
+<span class="sourceLineNo">144</span>            case 0x212B : mapChar = 0x00E5; break;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>              // map the titlecase chars with both a 1:M uppercase map<a name="line.145"></a>
+<span class="sourceLineNo">146</span>              // and a lowercase map<a name="line.146"></a>
+<span class="sourceLineNo">147</span>            case 0x1F88 : mapChar = 0x1F80; break;<a name="line.147"></a>
+<span class="sourceLineNo">148</span>            case 0x1F89 : mapChar = 0x1F81; break;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>            case 0x1F8A : mapChar = 0x1F82; break;<a name="line.149"></a>
+<span class="sourceLineNo">150</span>            case 0x1F8B : mapChar = 0x1F83; break;<a name="line.150"></a>
+<span class="sourceLineNo">151</span>            case 0x1F8C : mapChar = 0x1F84; break;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>            case 0x1F8D : mapChar = 0x1F85; break;<a name="line.152"></a>
+<span class="sourceLineNo">153</span>            case 0x1F8E : mapChar = 0x1F86; break;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>            case 0x1F8F : mapChar = 0x1F87; break;<a name="line.154"></a>
+<span class="sourceLineNo">155</span>            case 0x1F98 : mapChar = 0x1F90; break;<a name="line.155"></a>
+<span class="sourceLineNo">156</span>            case 0x1F99 : mapChar = 0x1F91; break;<a name="line.156"></a>
+<span class="sourceLineNo">157</span>            case 0x1F9A : mapChar = 0x1F92; break;<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            case 0x1F9B : mapChar = 0x1F93; break;<a name="line.158"></a>
+<span class="sourceLineNo">159</span>            case 0x1F9C : mapChar = 0x1F94; break;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            case 0x1F9D : mapChar = 0x1F95; break;<a name="line.160"></a>
+<span class="sourceLineNo">161</span>            case 0x1F9E : mapChar = 0x1F96; break;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            case 0x1F9F : mapChar = 0x1F97; break;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>            case 0x1FA8 : mapChar = 0x1FA0; break;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            case 0x1FA9 : mapChar = 0x1FA1; break;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>            case 0x1FAA : mapChar = 0x1FA2; break;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            case 0x1FAB : mapChar = 0x1FA3; break;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            case 0x1FAC : mapChar = 0x1FA4; break;<a name="line.167"></a>
+<span class="sourceLineNo">168</span>            case 0x1FAD : mapChar = 0x1FA5; break;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>            case 0x1FAE : mapChar = 0x1FA6; break;<a name="line.169"></a>
+<span class="sourceLineNo">170</span>            case 0x1FAF : mapChar = 0x1FA7; break;<a name="line.170"></a>
+<span class="sourceLineNo">171</span>            case 0x1FBC : mapChar = 0x1FB3; break;<a name="line.171"></a>
+<span class="sourceLineNo">172</span>            case 0x1FCC : mapChar = 0x1FC3; break;<a name="line.172"></a>
+<span class="sourceLineNo">173</span>            case 0x1FFC : mapChar = 0x1FF3; break;<a name="line.173"></a>
+<span class="sourceLineNo">174</span><a name="line.174"></a>
+<span class="sourceLineNo">175</span>            case 0x023A : mapChar = 0x2C65; break;<a name="line.175"></a>
+<span class="sourceLineNo">176</span>            case 0x023E : mapChar = 0x2C66; break;<a name="line.176"></a>
+<span class="sourceLineNo">177</span>            case 0x10A0 : mapChar = 0x2D00; break;<a name="line.177"></a>
+<span class="sourceLineNo">178</span>            case 0x10A1 : mapChar = 0x2D01; break;<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            case 0x10A2 : mapChar = 0x2D02; break;<a name="line.179"></a>
+<span class="sourceLineNo">180</span>            case 0x10A3 : mapChar = 0x2D03; break;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            case 0x10A4 : mapChar = 0x2D04; break;<a name="line.181"></a>
+<span class="sourceLineNo">182</span>            case 0x10A5 : mapChar = 0x2D05; break;<a name="line.182"></a>
+<span class="sourceLineNo">183</span>            case 0x10A6 : mapChar = 0x2D06; break;<a name="line.183"></a>
+<span class="sourceLineNo">184</span>            case 0x10A7 : mapChar = 0x2D07; break;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            case 0x10A8 : mapChar = 0x2D08; break;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            case 0x10A9 : mapChar = 0x2D09; break;<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            case 0x10AA : mapChar = 0x2D0A; break;<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            case 0x10AB : mapChar = 0x2D0B; break;<a name="line.188"></a>
+<span class="sourceLineNo">189</span>            case 0x10AC : mapChar = 0x2D0C; break;<a name="line.189"></a>
+<span class="sourceLineNo">190</span>            case 0x10AD : mapChar = 0x2D0D; break;<a name="line.190"></a>
+<span class="sourceLineNo">191</span>            case 0x10AE : mapChar = 0x2D0E; break;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>            case 0x10AF : mapChar = 0x2D0F; break;<a name="line.192"></a>
+<span class="sourceLineNo">193</span>            case 0x10B0 : mapChar = 0x2D10; break;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>            case 0x10B1 : mapChar = 0x2D11; break;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>            case 0x10B2 : mapChar = 0x2D12; break;<a name="line.195"></a>
+<span class="sourceLineNo">196</span>            case 0x10B3 : mapChar = 0x2D13; break;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>            case 0x10B4 : mapChar = 0x2D14; break;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>            case 0x10B5 : mapChar = 0x2D15; break;<a name="line.198"></a>
+<span class="sourceLineNo">199</span>            case 0x10B6 : mapChar = 0x2D16; break;<a name="line.199"></a>
+<span class="sourceLineNo">200</span>            case 0x10B7 : mapChar = 0x2D17; break;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>            case 0x10B8 : mapChar = 0x2D18; break;<a name="line.201"></a>
+<span class="sourceLineNo">202</span>            case 0x10B9 : mapChar = 0x2D19; break;<a name="line.202"></a>
+<span class="sourceLineNo">203</span>            case 0x10BA : mapChar = 0x2D1A; break;<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            case 0x10BB : mapChar = 0x2D1B; break;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            case 0x10BC : mapChar = 0x2D1C; break;<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            case 0x10BD : mapChar = 0x2D1D; break;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>            case 0x10BE : mapChar = 0x2D1E; break;<a name="line.207"></a>
+<span class="sourceLineNo">208</span>            case 0x10BF : mapChar = 0x2D1F; break;<a name="line.208"></a>
+<span class="sourceLineNo">209</span>            case 0x10C0 : mapChar = 0x2D20; break;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>            case 0x10C1 : mapChar = 0x2D21; break;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>            case 0x10C2 : mapChar = 0x2D22; break;<a name="line.211"></a>
+<span class="sourceLineNo">212</span>            case 0x10C3 : mapChar = 0x2D23; break;<a name="line.212"></a>
+<span class="sourceLineNo">213</span>            case 0x10C4 : mapChar = 0x2D24; break;<a name="line.213"></a>
+<span class="sourceLineNo">214</span>            case 0x10C5 : mapChar = 0x2D25; break;<a name="line.214"></a>
+<span class="sourceLineNo">215</span>            case 0x1E9E : mapChar = 0x00DF; break;<a name="line.215"></a>
+<span class="sourceLineNo">216</span>            case 0x2C62 : mapChar = 0x026B; break;<a name="line.216"></a>
+<span class="sourceLineNo">217</span>            case 0x2C63 : mapChar = 0x1D7D; break;<a name="line.217"></a>
+<span class="sourceLineNo">218</span>            case 0x2C64 : mapChar = 0x027D; break;<a name="line.218"></a>
+<span class="sourceLineNo">219</span>            case 0x2C6D : mapChar = 0x0251; break;<a name="line.219"></a>
+<span class="sourceLineNo">220</span>            case 0x2C6E : mapChar = 0x0271; break;<a name="line.220"></a>
+<span class="sourceLineNo">221</span>            case 0x2C6F : mapChar = 0x0250; break;<a name="line.221"></a>
+<span class="sourceLineNo">222</span>            case 0x2C70 : mapChar = 0x0252; break;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            case 0x2C7E : mapChar = 0x023F; break;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>            case 0x2C7F : mapChar = 0x0240; break;<a name="line.224"></a>
+<span class="sourceLineNo">225</span>            case 0xA77D : mapChar = 0x1D79; break;<a name="line.225"></a>
+<span class="sourceLineNo">226</span>            case 0xA78D : mapChar = 0x0265; break;<a name="line.226"></a>
+<span class="sourceLineNo">227</span>              // default mapChar is already set, so no<a name="line.227"></a>
+<span class="sourceLineNo">228</span>              // need to redo it here.<a name="line.228"></a>
+<span class="sourceLineNo">229</span>              // default       : mapChar = ch;<a name="line.229"></a>
+<span class="sourceLineNo">230</span>            }<a name="line.230"></a>
+<span class="sourceLineNo">231</span>          }<a name="line.231"></a>
+<span class="sourceLineNo">232</span>          else {<a name="line.232"></a>
+<span class="sourceLineNo">233</span>            int offset = val &lt;&lt; 5 &gt;&gt; (5+18);<a name="line.233"></a>
+<span class="sourceLineNo">234</span>            mapChar = ch + offset;<a name="line.234"></a>
+<span class="sourceLineNo">235</span>          }<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        }<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        return mapChar;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>    }<a name="line.238"></a>
+<span class="sourceLineNo">239</span><a name="line.239"></a>
+<span class="sourceLineNo">240</span>    int toUpperCase(int ch) {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        int mapChar = ch;<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        int val = getProperties(ch);<a name="line.242"></a>
+<span class="sourceLineNo">243</span><a name="line.243"></a>
+<span class="sourceLineNo">244</span>        if ((val &amp; 0x00010000) != 0) {<a name="line.244"></a>
+<span class="sourceLineNo">245</span>          if ((val &amp; 0x07FC0000) == 0x07FC0000) {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            switch(ch) {<a name="line.246"></a>
+<span class="sourceLineNo">247</span>              // map chars with overflow offsets<a name="line.247"></a>
+<span class="sourceLineNo">248</span>            case 0x00B5 : mapChar = 0x039C; break;<a name="line.248"></a>
+<span class="sourceLineNo">249</span>            case 0x017F : mapChar = 0x0053; break;<a name="line.249"></a>
+<span class="sourceLineNo">250</span>            case 0x1FBE : mapChar = 0x0399; break;<a name="line.250"></a>
+<span class="sourceLineNo">251</span>              // map char that have both a 1:1 and 1:M map<a name="line.251"></a>
+<span class="sourceLineNo">252</span>            case 0x1F80 : mapChar = 0x1F88; break;<a name="line.252"></a>
+<span class="sourceLineNo">253</span>            case 0x1F81 : mapChar = 0x1F89; break;<a name="line.253"></a>
+<span class="sourceLineNo">254</span>            case 0x1F82 : mapChar = 0x1F8A; break;<a name="line.254"></a>
+<span class="sourceLineNo">255</span>            case 0x1F83 : mapChar = 0x1F8B; break;<a name="line.255"></a>
+<span class="sourceLineNo">256</span>            case 0x1F84 : mapChar = 0x1F8C; break;<a name="line.256"></a>
+<span class="sourceLineNo">257</span>            case 0x1F85 : mapChar = 0x1F8D; break;<a name="line.257"></a>
+<span class="sourceLineNo">258</span>            case 0x1F86 : mapChar = 0x1F8E; break;<a name="line.258"></a>
+<span class="sourceLineNo">259</span>            case 0x1F87 : mapChar = 0x1F8F; break;<a name="line.259"></a>
+<span class="sourceLineNo">260</span>            case 0x1F90 : mapChar = 0x1F98; break;<a name="line.260"></a>
+<span class="sourceLineNo">261</span>            case 0x1F91 : mapChar = 0x1F99; break;<a name="line.261"></a>
+<span class="sourceLineNo">262</span>            case 0x1F92 : mapChar = 0x1F9A; break;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            case 0x1F93 : mapChar = 0x1F9B; break;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>            case 0x1F94 : mapChar = 0x1F9C; break;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>            case 0x1F95 : mapChar = 0x1F9D; break;<a name="line.265"></a>
+<span class="sourceLineNo">266</span>            case 0x1F96 : mapChar = 0x1F9E; break;<a name="line.266"></a>
+<span class="sourceLineNo">267</span>            case 0x1F97 : mapChar = 0x1F9F; break;<a name="line.267"></a>
+<span class="sourceLineNo">268</span>            case 0x1FA0 : mapChar = 0x1FA8; break;<a name="line.268"></a>
+<span class="sourceLineNo">269</span>            case 0x1FA1 : mapChar = 0x1FA9; break;<a name="line.269"></a>
+<span class="sourceLineNo">270</span>            case 0x1FA2 : mapChar = 0x1FAA; break;<a name="line.270"></a>
+<span class="sourceLineNo">271</span>            case 0x1FA3 : mapChar = 0x1FAB; break;<a name="line.271"></a>
+<span class="sourceLineNo">272</span>            case 0x1FA4 : mapChar = 0x1FAC; break;<a name="line.272"></a>
+<span class="sourceLineNo">273</span>            case 0x1FA5 : mapChar = 0x1FAD; break;<a name="line.273"></a>
+<span class="sourceLineNo">274</span>            case 0x1FA6 : mapChar = 0x1FAE; break;<a name="line.274"></a>
+<span class="sourceLineNo">275</span>            case 0x1FA7 : mapChar = 0x1FAF; break;<a name="line.275"></a>
+<span class="sourceLineNo">276</span>            case 0x1FB3 : mapChar = 0x1FBC; break;<a name="line.276"></a>
+<span class="sourceLineNo">277</span>            case 0x1FC3 : mapChar = 0x1FCC; break;<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            case 0x1FF3 : mapChar = 0x1FFC; break;<a name="line.278"></a>
+<span class="sourceLineNo">279</span><a name="line.279"></a>
+<span class="sourceLineNo">280</span>            case 0x023F : mapChar = 0x2C7E; break;<a name="line.280"></a>
+<span class="sourceLineNo">281</span>            case 0x0240 : mapChar = 0x2C7F; break;<a name="line.281"></a>
+<span class="sourceLineNo">282</span>            case 0x0250 : mapChar = 0x2C6F; break;<a name="line.282"></a>
+<span class="sourceLineNo">283</span>            case 0x0251 : mapChar = 0x2C6D; break;<a name="line.283"></a>
+<span class="sourceLineNo">284</span>            case 0x0252 : mapChar = 0x2C70; break;<a name="line.284"></a>
+<span class="sourceLineNo">285</span>            case 0x0265 : mapChar = 0xA78D; break;<a name="line.285"></a>
+<span class="sourceLineNo">286</span>            case 0x026B : mapChar = 0x2C62; break;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>            case 0x0271 : mapChar = 0x2C6E; break;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>            case 0x027D : mapChar = 0x2C64; break;<a name="line.288"></a>
+<span class="sourceLineNo">289</span>            case 0x1D79 : mapChar = 0xA77D; break;<a name="line.289"></a>
+<span class="sourceLineNo">290</span>            case 0x1D7D : mapChar = 0x2C63; break;<a name="line.290"></a>
+<span class="sourceLineNo">291</span>            case 0x2C65 : mapChar = 0x023A; break;<a name="line.291"></a>
+<span class="sourceLineNo">292</span>            case 0x2C66 : mapChar = 0x023E; break;<a name="line.292"></a>
+<span class="sourceLineNo">293</span>            case 0x2D00 : mapChar = 0x10A0; break;<a name="line.293"></a>
+<span class="sourceLineNo">294</span>            case 0x2D01 : mapChar = 0x10A1; break;<a name="line.294"></a>
+<span class="sourceLineNo">295</span>            case 0x2D02 : mapChar = 0x10A2; break;<a name="line.295"></a>
+<span class="sourceLineNo">296</span>            case 0x2D03 : mapChar = 0x10A3; break;<a name="line.296"></a>
+<span class="sourceLineNo">297</span>            case 0x2D04 : mapChar = 0x10A4; break;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>            case 0x2D05 : mapChar = 0x10A5; break;<a name="line.298"></a>
+<span class="sourceLineNo">299</span>            case 0x2D06 : mapChar = 0x10A6; break;<a name="line.299"></a>
+<span class="sourceLineNo">300</span>            case 0x2D07 : mapChar = 0x10A7; break;<a name="line.300"></a>
+<span class="sourceLineNo">301</span>            case 0x2D08 : mapChar = 0x10A8; break;<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            case 0x2D09 : mapChar = 0x10A9; break;<a name="line.302"></a>
+<span class="sourceLineNo">303</span>            case 0x2D0A : mapChar = 0x10AA; break;<a name="line.303"></a>
+<span class="sourceLineNo">304</span>            case 0x2D0B : mapChar = 0x10AB; break;<a name="line.304"></a>
+<span class="sourceLineNo">305</span>            case 0x2D0C : mapChar = 0x10AC; break;<a name="line.305"></a>
+<span class="sourceLineNo">306</span>            case 0x2D0D : mapChar = 0x10AD; break;<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            case 0x2D0E : mapChar = 0x10AE; break;<a name="line.307"></a>
+<span class="sourceLineNo">308</span>            case 0x2D0F : mapChar = 0x10AF; break;<a name="line.308"></a>
+<span class="sourceLineNo">309</span>            case 0x2D10 : mapChar = 0x10B0; break;<a name="line.309"></a>
+<span class="sourceLineNo">310</span>            case 0x2D11 : mapChar = 0x10B1; break;<a name="line.310"></a>
+<span class="sourceLineNo">311</span>            case 0x2D12 : mapChar = 0x10B2; break;<a name="line.311"></a>
+<span class="sourceLineNo">312</span>            case 0x2D13 : mapChar = 0x10B3; break;<a name="line.312"></a>
+<span class="sourceLineNo">313</span>            case 0x2D14 : mapChar = 0x10B4; break;<a name="line.313"></a>
+<span class="sourceLineNo">314</span>            case 0x2D15 : mapChar = 0x10B5; break;<a name="line.314"></a>
+<span class="sourceLineNo">315</span>            case 0x2D16 : mapChar = 0x10B6; break;<a name="line.315"></a>
+<span class="sourceLineNo">316</span>            case 0x2D17 : mapChar = 0x10B7; break;<a name="line.316"></a>
+<span class="sourceLineNo">317</span>            case 0x2D18 : mapChar = 0x10B8; break;<a name="line.317"></a>
+<span class="sourceLineNo">318</span>            case 0x2D19 : mapChar = 0x10B9; break;<a name="line.318"></a>
+<span class="sourceLineNo">319</span>            case 0x2D1A : mapChar = 0x10BA; break;<a name="line.319"></a>
+<span class="sourceLineNo">320</span>            case 0x2D1B : mapChar = 0x10BB; break;<a name="line.320"></a>
+<span class="sourceLineNo">321</span>            case 0x2D1C : mapChar = 0x10BC; break;<a name="line.321"></a>
+<span class="sourceLineNo">322</span>            case 0x2D1D : mapChar = 0x10BD; break;<a name="line.322"></a>
+<span class="sourceLineNo">323</span>            case 0x2D1E : mapChar = 0x10BE; break;<a name="line.323"></a>
+<span class="sourceLineNo">324</span>            case 0x2D1F : mapChar = 0x10BF; break;<a name="line.324"></a>
+<span class="sourceLineNo">325</span>            case 0x2D20 : mapChar = 0x10C0; break;<a name="line.325"></a>
+<span class="sourceLineNo">326</span>            case 0x2D21 : mapChar = 0x10C1; break;<a name="line.326"></a>
+<span class="sourceLineNo">327</span>            case 0x2D22 : mapChar = 0x10C2; break;<a name="line.327"></a>
+<span class="sourceLineNo">328</span>            case 0x2D23 : mapChar = 0x10C3; break;<a name="line.328"></a>
+<span class="sourceLineNo">329</span>            case 0x2D24 : mapChar = 0x10C4; break;<a name="line.329"></a>
+<span class="sourceLineNo">330</span>            case 0x2D25 : mapChar = 0x10C5; break;<a name="line.330"></a>
+<span class="sourceLineNo">331</span>              // ch must have a 1:M case mapping, but we<a name="line.331"></a>
+<span class="sourceLineNo">332</span>              // can't handle it here. Return ch.<a name="line.332"></a>
+<span class="sourceLineNo">333</span>              // since mapChar is already set, no need<a name="line.333"></a>
+<span class="sourceLineNo">334</span>              // to redo it here.<a name="line.334"></a>
+<span class="sourceLineNo">335</span>              //default       : mapChar = ch;<a name="line.335"></a>
+<span class="sourceLineNo">336</span>            }<a name="line.336"></a>
+<span class="sourceLineNo">337</span>          }<a name="line.337"></a>
+<span class="sourceLineNo">338</span>          else {<a name="line.338"></a>
+<span class="sourceLineNo">339</span>            int offset = val  &lt;&lt; 5 &gt;&gt; (5+18);<a name="line.339"></a>
+<span class="sourceLineNo">340</span>            mapChar =  ch - offset;<a name="line.340"></a>
+<span class="sourceLineNo">341</span>          }<a name="line.341"></a>
+<span class="sourceLineNo">342</span>        }<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        return mapChar;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>    }<a name="line.344"></a>
+<span class="sourceLineNo">345</span><a name="line.345"></a>
+<span class="sourceLineNo">346</span>    int toTitleCase(int ch) {<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        int mapChar = ch;<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        int val = getProperties(ch);<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>        if ((val &amp; 0x00008000) != 0) {<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            // There is a titlecase equivalent.  Perform further checks:<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            if ((val &amp; 0x00010000) == 0) {<a name="line.352"></a>
+<span class="sourceLineNo">353</span>                // The character does not have an uppercase equivalent, so it must<a name="line.353"></a>
+<span class="sourceLineNo">354</span>                // already be uppercase; so add 1 to get the titlecase form.<a name="line.354"></a>
+<span class="sourceLineNo">355</span>                mapChar = ch + 1;<a name="line.355"></a>
+<span class="sourceLineNo">356</span>            }<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            else if ((val &amp; 0x00020000) == 0) {<a name="line.357"></a>
+<span class="sourceLineNo">358</span>                // The character does not have a lowercase equivalent, so it must<a name="line.358"></a>
+<span class="sourceLineNo">359</span>                // already be lowercase; so subtract 1 to get the titlecase form.<a name="line.359"></a>
+<span class="sourceLineNo">360</span>                mapChar = ch - 1;<a name="line.360"></a>
+<span class="sourceLineNo">361</span>            }<a name="line.361"></a>
+<span class="sourceLineNo">362</span>            // else {<a name="line.362"></a>
+<span class="sourceLineNo">363</span>            // The character has both an uppercase equivalent and a lowercase<a name="line.363"></a>
+<span class="sourceLineNo">364</span>            // equivalent, so it must itself be a titlecase form; return it.<a name="line.364"></a>
+<span class="sourceLineNo">365</span>            // return ch;<a name="line.365"></a>
+<span class="sourceLineNo">366</span>            //}<a name="line.366"></a>
+<span class="sourceLineNo">367</span>        }<a name="line.367"></a>
+<span class="sourceLineNo">368</span>        else if ((val &amp; 0x00010000) != 0) {<a name="line.368"></a>
+<span class="sourceLineNo">369</span>            // This character has no titlecase equivalent but it does have an<a name="line.369"></a>
+<span class="sourceLineNo">370</span>            // uppercase equivalent, so use that (subtract the signed case offset).<a name="line.370"></a>
+<span class="sourceLineNo">371</span>            mapChar = toUpperCase(ch);<a name="line.371"></a>
+<span class="sourceLineNo">372</span>        }<a name="line.372"></a>
+<span class="sourceLineNo">373</span>        return mapChar;<a name="line.373"></a>
+<span class="sourceLineNo">374</span>    }<a name="line.374"></a>
+<span class="sourceLineNo">375</span><a name="line.375"></a>
+<span class="sourceLineNo">376</span>    int digit(int ch, int radix) {<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        int value = -1;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        if (radix &gt;= Character.MIN_RADIX &amp;&amp; radix &lt;= Character.MAX_RADIX) {<a name="line.378"></a>
+<span class="sourceLineNo">379</span>            int val = getProperties(ch);<a name="line.379"></a>
+<span class="sourceLineNo">380</span>            int kind = val &amp; 0x1F;<a name="line.380"></a>
+<span class="sourceLineNo">381</span>            if (kind == Character.DECIMAL_DIGIT_NUMBER) {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>                value = ch + ((val &amp; 0x3E0) &gt;&gt; 5) &amp; 0x1F;<a name="line.382"></a>
+<span class="sourceLineNo">383</span>            }<a name="line.383"></a>
+<span class="sourceLineNo">384</span>            else if ((val &amp; 0xC00) == 0x00000C00) {<a name="line.384"></a>
+<span class="sourceLineNo">385</span>                // Java supradecimal digit<a name="line.385"></a>
+<span class="sourceLineNo">386</span>                value = (ch + ((val &amp; 0x3E0) &gt;&gt; 5) &amp; 0x1F) + 10;<a name="line.386"></a>
+<span class="sourceLineNo">387</span>            }<a name="line.387"></a>
+<span class="sourceLineNo">388</span>        }<a name="line.388"></a>
+<span class="sourceLineNo">389</span>        return (value &lt; radix) ? value : -1;<a name="line.389"></a>
+<span class="sourceLineNo">390</span>    }<a name="line.390"></a>
+<span class="sourceLineNo">391</span><a name="line.391"></a>
+<span class="sourceLineNo">392</span>    int getNumericValue(int ch) {<a name="line.392"></a>
+<span class="sourceLineNo">393</span>        int val = getProperties(ch);<a name="line.393"></a>
+<span class="sourceLineNo">394</span>        int retval = -1;<a name="line.394"></a>
+<span class="sourceLineNo">395</span><a name="line.395"></a>
+<span class="sourceLineNo">396</span>        switch (val &amp; 0xC00) {<a name="line.396"></a>
+<span class="sourceLineNo">397</span>        default: // cannot occur<a name="line.397"></a>
+<span class="sourceLineNo">398</span>        case (0x00000000):         // not numeric<a name="line.398"></a>
+<span class="sourceLineNo">399</span>            retval = -1;<a name="line.399"></a>
+<span class="sourceLineNo">400</span>            break;<a name="line.400"></a>
+<span class="sourceLineNo">401</span>        case (0x00000400):              // simple numeric<a name="line.401"></a>
+<span class="sourceLineNo">402</span>            retval = ch + ((val &amp; 0x3E0) &gt;&gt; 5) &amp; 0x1F;<a name="line.402"></a>
+<span class="sourceLineNo">403</span>            break;<a name="line.403"></a>
+<span class="sourceLineNo">404</span>        case (0x00000800)      :       // "strange" numeric<a name="line.404"></a>
+<span class="sourceLineNo">405</span>            switch (ch) {<a name="line.405"></a>
+<span class="sourceLineNo">406</span>                case 0x0BF1: retval = 100; break;         // TAMIL NUMBER ONE HUNDRED<a name="line.406"></a>
+<span class="sourceLineNo">407</span>                case 0x0BF2: retval = 1000; break;        // TAMIL NUMBER ONE THOUSAND<a name="line.407"></a>
+<span class="sourceLineNo">408</span>                case 0x1375: retval = 40; break;          // ETHIOPIC NUMBER FORTY<a name="line.408"></a>
+<span class="sourceLineNo">409</span>                case 0x1376: retval = 50; break;          // ETHIOPIC NUMBER FIFTY<a name="line.409"></a>
+<span class="sourceLineNo">410</span>                case 0x1377: retval = 60; break;          // ETHIOPIC NUMBER SIXTY<a name="line.410"></a>
+<span class="sourceLineNo">411</span>                case 0x1378: retval = 70; break;          // ETHIOPIC NUMBER SEVENTY<a name="line.411"></a>
+<span class="sourceLineNo">412</span>                case 0x1379: retval = 80; break;          // ETHIOPIC NUMBER EIGHTY<a name="line.412"></a>
+<span class="sourceLineNo">413</span>                case 0x137A: retval = 90; break;          // ETHIOPIC NUMBER NINETY<a name="line.413"></a>
+<span class="sourceLineNo">414</span>                case 0x137B: retval = 100; break;         // ETHIOPIC NUMBER HUNDRED<a name="line.414"></a>
+<span class="sourceLineNo">415</span>                case 0x137C: retval = 10000; break;       // ETHIOPIC NUMBER TEN THOUSAND<a name="line.415"></a>
+<span class="sourceLineNo">416</span>                case 0x215F: retval = 1; break;           // FRACTION NUMERATOR ONE<a name="line.416"></a>
+<span class="sourceLineNo">417</span>                case 0x216C: retval = 50; break;          // ROMAN NUMERAL FIFTY<a name="line.417"></a>
+<span class="sourceLineNo">418</span>                case 0x216D: retval = 100; break;         // ROMAN NUMERAL ONE HUNDRED<a name="line.418"></a>
+<span class="sourceLineNo">419</span>                case 0x216E: retval = 500; break;         // ROMAN NUMERAL FIVE HUNDRED<a name="line.419"></a>
+<span class="sourceLineNo">420</span>                case 0x216F: retval = 1000; break;        // ROMAN NUMERAL ONE THOUSAND<a name="line.420"></a>
+<span class="sourceLineNo">421</span>                case 0x217C: retval = 50; break;          // SMALL ROMAN NUMERAL FIFTY<a name="line.421"></a>
+<span class="sourceLineNo">422</span>                case 0x217D: retval = 100; break;         // SMALL ROMAN NUMERAL ONE HUNDRED<a name="line.422"></a>
+<span class="sourceLineNo">423</span>                case 0x217E: retval = 500; break;         // SMALL ROMAN NUMERAL FIVE HUNDRED<a name="line.423"></a>
+<span class="sourceLineNo">424</span>                case 0x217F: retval = 1000; break;        // SMALL ROMAN NUMERAL ONE THOUSAND<a name="line.424"></a>
+<span class="sourceLineNo">425</span>                case 0x2180: retval = 1000; break;        // ROMAN NUMERAL ONE THOUSAND C D<a name="line.425"></a>
+<span class="sourceLineNo">426</span>                case 0x2181: retval = 5000; break;        // ROMAN NUMERAL FIVE THOUSAND<a name="line.426"></a>
+<span class="sourceLineNo">427</span>                case 0x2182: retval = 10000; break;       // ROMAN NUMERAL TEN THOUSAND<a name="line.427"></a>
+<span class="sourceLineNo">428</span><a name="line.428"></a>
+<span class="sourceLineNo">429</span>                case 0x325C: retval = 32; break;<a name="line.429"></a>
+<span class="sourceLineNo">430</span><a name="line.430"></a>
+<span class="sourceLineNo">431</span>                case 0x325D: retval = 33; break;          // CIRCLED NUMBER THIRTY THREE<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                case 0x325E: retval = 34; break;          // CIRCLED NUMBER THIRTY FOUR<a name="line.432"></a>
+<span class="sourceLineNo">433</span>                case 0x325F: retval = 35; break;          // CIRCLED NUMBER THIRTY FIVE<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                case 0x32B1: retval = 36; break;          // CIRCLED NUMBER THIRTY SIX<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                case 0x32B2: retval = 37; break;          // CIRCLED NUMBER THIRTY SEVEN<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                case 0x32B3: retval = 38; break;          // CIRCLED NUMBER THIRTY EIGHT<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                case 0x32B4: retval = 39; break;          // CIRCLED NUMBER THIRTY NINE<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                case 0x32B5: retval = 40; break;          // CIRCLED NUMBER FORTY<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                case 0x32B6: retval = 41; break;          // CIRCLED NUMBER FORTY ONE<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                case 0x32B7: retval = 42; break;          // CIRCLED NUMBER FORTY TWO<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                case 0x32B8: retval = 43; break;          // CIRCLED NUMBER FORTY THREE<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                case 0x32B9: retval = 44; break;          // CIRCLED NUMBER FORTY FOUR<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                case 0x32BA: retval = 45; break;          // CIRCLED NUMBER FORTY FIVE<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                case 0x32BB: retval = 46; break;          // CIRCLED NUMBER FORTY SIX<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                case 0x32BC: retval = 47; break;          // CIRCLED NUMBER FORTY SEVEN<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                case 0x32BD: retval = 48; break;          // CIRCLED NUMBER FORTY EIGHT<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                case 0x32BE: retval = 49; break;          // CIRCLED NUMBER FORTY NINE<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                case 0x32BF: retval = 50; break;          // CIRCLED NUMBER FIFTY<a name="line.448"></a>
+<span class="sourceLineNo">449</span><a name="line.449"></a>
+<span class="sourceLineNo">450</span>                case 0x0D71: retval = 100; break;         // MALAYALAM NUMBER ONE HUNDRED<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                case 0x0D72: retval = 1000; break;        // MALAYALAM NUMBER ONE THOUSAND<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                case 0x2186: retval = 50; break;          // ROMAN NUMERAL FIFTY EARLY FORM<a name="line.452"></a>
+<span class="sourceLineNo">453</span>                case 0x2187: retval = 50000; break;       // ROMAN NUMERAL FIFTY THOUSAND<a name="line.453"></a>
+<span class="sourceLineNo">454</span>                case 0x2188: retval = 100000; break;      // ROMAN NUMERAL ONE HUNDRED THOUSAND<a name="line.454"></a>
+<span class="sourceLineNo">455</span><a name="line.455"></a>
+<span class="sourceLineNo">456</span>                default:       retval = -2; break;<a name="line.456"></a>
+<span class="sourceLineNo">457</span>            }<a name="line.457"></a>
+<span class="sourceLineNo">458</span>            break;<a name="line.458"></a>
+<span class="sourceLineNo">459</span>        case (0x00000C00):           // Java supradecimal<a name="line.459"></a>
+<span class="sourceLineNo">460</span>            retval = (ch + ((val &amp; 0x3E0) &gt;&gt; 5) &amp; 0x1F) + 10;<a name="line.460"></a>
+<span class="sourceLineNo">461</span>            break;<a name="line.461"></a>
+<span class="sourceLineNo">462</span>        }<a name="line.462"></a>
+<span class="sourceLineNo">463</span>        return retval;<a name="line.463"></a>
+<span class="sourceLineNo">464</span>    }<a name="line.464"></a>
+<span class="sourceLineNo">465</span><a name="line.465"></a>
+<span class="sourceLineNo">466</span>    boolean isWhitespace(int ch) {<a name="line.466"></a>
+<span class="sourceLineNo">467</span>        int props = getProperties(ch);<a name="line.467"></a>
+<span class="sourceLineNo">468</span>        return ((props &amp; 0x00007000) == 0x00004000);<a name="line.468"></a>
+<span class="sourceLineNo">469</span>    }<a name="line.469"></a>
+<span class="sourceLineNo">470</span><a name="line.470"></a>
+<span class="sourceLineNo">471</span>    byte getDirectionality(int ch) {<a name="line.471"></a>
+<span class="sourceLineNo">472</span>        int val = getProperties(ch);<a name="line.472"></a>
+<span class="sourceLineNo">473</span>        byte directionality = (byte)((val &amp; 0x78000000) &gt;&gt; 27);<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        if (directionality == 0xF ) {<a name="line.474"></a>
+<span class="sourceLineNo">475</span>            switch(ch) {<a name="line.475"></a>
+<span class="sourceLineNo">476</span>                case 0x202A :<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                    // This is the only char with LRE<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                    directionality = Character.DIRECTIONALITY_LEFT_TO_RIGHT_EMBEDDING;<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                    break;<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                case 0x202B :<a name="line.480"></a>
+<span class="sourceLineNo">481</span>                    // This is the only char with RLE<a name="line.481"></a>
+<span class="sourceLineNo">482</span>                    directionality = Character.DIRECTIONALITY_RIGHT_TO_LEFT_EMBEDDING;<a name="line.482"></a>
+<span class="sourceLineNo">483</span>                    break;<a name="line.483"></a>
+<span class="sourceLineNo">484</span>                case 0x202C :<a name="line.484"></a>
+<span class="sourceLineNo">485</span>                    // This is the only char with PDF<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                    directionality = Character.DIRECTIONALITY_POP_DIRECTIONAL_FORMAT;<a name="line.486"></a>
+<span class="sourceLineNo">487</span>                    break;<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                case 0x202D :<a name="line.488"></a>
+<span class="sourceLineNo">489</span>                    // This is the only char with LRO<a name="line.489"></a>
+<span class="sourceLineNo">490</span>                    directionality = Character.DIRECTIONALITY_LEFT_TO_RIGHT_OVERRIDE;<a name="line.490"></a>
+<span class="sourceLineNo">491</span>                    break;<a name="line.491"></a>
+<span class="sourceLineNo">492</span>                case 0x202E :<a name="line.492"></a>
+<span class="sourceLineNo">493</span>                    // This is the only char with RLO<a name="line.493"></a>
+<span class="sourceLineNo">494</span>                    directionality = Character.DIRECTIONALITY_RIGHT_TO_LEFT_OVERRIDE;<a name="line.494"></a>
+<span class="sourceLineNo">495</span>                    break;<a name="line.495"></a>
+<span class="sourceLineNo">496</span>                default :<a name="line.496"></a>
+<span class="sourceLineNo">497</span>                    directionality = Character.DIRECTIONALITY_UNDEFINED;<a name="line.497"></a>
+<span class="sourceLineNo">498</span>                    break;<a name="line.498"></a>
+<span class="sourceLineNo">499</span>            }<a name="line.499"></a>
+<span class="sourceLineNo">500</span>        }<a name="line.500"></a>
+<span class="sourceLineNo">501</span>        return directionality;<a name="line.501"></a>
+<span class="sourceLineNo">502</span>    }<a name="line.502"></a>
+<span class="sourceLineNo">503</span><a name="line.503"></a>
+<span class="sourceLineNo">504</span>    boolean isMirrored(int ch) {<a name="line.504"></a>
+<span class="sourceLineNo">505</span>        int props = getProperties(ch);<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        return ((props &amp; 0x80000000) != 0);<a name="line.506"></a>
+<span class="sourceLineNo">507</span>    }<a name="line.507"></a>
+<span class="sourceLineNo">508</span><a name="line.508"></a>
+<span class="sourceLineNo">509</span>    int toUpperCaseEx(int ch) {<a name="line.509"></a>
+<span class="sourceLineNo">510</span>        int mapChar = ch;<a name="line.510"></a>
+<span class="sourceLineNo">511</span>        int val = getProperties(ch);<a name="line.511"></a>
+<span class="sourceLineNo">512</span><a name="line.512"></a>
+<span class="sourceLineNo">513</span>        if ((val &amp; 0x00010000) != 0) {<a name="line.513"></a>
+<span class="sourceLineNo">514</span>            if ((val &amp; 0x07FC0000) != 0x07FC0000) {<a name="line.514"></a>
+<span class="sourceLineNo">515</span>                int offset = val  &lt;&lt; 5 &gt;&gt; (5+18);<a name="line.515"></a>
+<span class="sourceLineNo">516</span>                mapChar =  ch - offset;<a name="line.516"></a>
+<span class="sourceLineNo">517</span>            }<a name="line.517"></a>
+<span class="sourceLineNo">518</span>            else {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>                switch(ch) {<a name="line.519"></a>
+<span class="sourceLineNo">520</span>                    // map overflow characters<a name="line.520"></a>
+<span class="sourceLineNo">521</span>                    case 0x00B5 : mapChar = 0x039C; break;<a name="line.521"></a>
+<span class="sourceLineNo">522</span>                    case 0x017F : mapChar = 0x0053; break;<a name="line.522"></a>
+<span class="sourceLineNo">523</span>                    case 0x1FBE : mapChar = 0x0399; break;<a name="line.523"></a>
+<span class="sourceLineNo">524</span><a name="line.524"></a>
+<span class="sourceLineNo">525</span>                    case 0x023F : mapChar = 0x2C7E; break;<a name="line.525"></a>
+<span class="sourceLineNo">526</span>                    case 0x0240 : mapChar = 0x2C7F; break;<a name="line.526"></a>
+<span class="sourceLineNo">527</span>                    case 0x0250 : mapChar = 0x2C6F; break;<a name="line.527"></a>
+<span class="sourceLineNo">528</span>                    case 0x0251 : mapChar = 0x2C6D; break;<a name="line.528"></a>
+<span class="sourceLineNo">529</span>                    case 0x0252 : mapChar = 0x2C70; break;<a name="line.529"></a>
+<span class="sourceLineNo">530</span>                    case 0x0265 : mapChar = 0xA78D; break;<a name="line.530"></a>
+<span class="sourceLineNo">531</span>                    case 0x026B : mapChar = 0x2C62; break;<a name="line.531"></a>
+<span class="sourceLineNo">532</span>                    case 0x0271 : mapChar = 0x2C6E; break;<a name="line.532"></a>
+<span class="sourceLineNo">533</span>                    case 0x027D : mapChar = 0x2C64; break;<a name="line.533"></a>
+<span class="sourceLineNo">534</span>                    case 0x1D79 : mapChar = 0xA77D; break;<a name="line.534"></a>
+<span class="sourceLineNo">535</span>                    case 0x1D7D : mapChar = 0x2C63; break;<a name="line.535"></a>
+<span class="sourceLineNo">536</span>                    case 0x2C65 : mapChar = 0x023A; break;<a name="line.536"></a>
+<span class="sourceLineNo">537</span>                    case 0x2C66 : mapChar = 0x023E; break;<a name="line.537"></a>
+<span class="sourceLineNo">538</span>                    case 0x2D00 : mapChar = 0x10A0; break;<a name="line.538"></a>
+<span class="sourceLineNo">539</span>                    case 0x2D01 : mapChar = 0x10A1; break;<a name="line.539"></a>
+<span class="sourceLineNo">540</span>                    case 0x2D02 : mapChar = 0x10A2; break;<a name="line.540"></a>
+<span class="sourceLineNo">541</span>                    case 0x2D03 : mapChar = 0x10A3; break;<a name="line.541"></a>
+<span class="sourceLineNo">542</span>                    case 0x2D04 : mapChar = 0x10A4; break;<a name="line.542"></a>
+<span class="sourceLineNo">543</span>                    case 0x2D05 : mapChar = 0x10A5; break;<a name="line.543"></a>
+<span class="sourceLineNo">544</span>                    case 0x2D06 : mapChar = 0x10A6; break;<a name="line.544"></a>
+<span class="sourceLineNo">545</span>                    case 0x2D07 : mapChar = 0x10A7; break;<a name="line.545"></a>
+<span class="sourceLineNo">546</span>                    case 0x2D08 : mapChar = 0x10A8; break;<a name="line.546"></a>
+<span class="sourceLineNo">547</span>                    case 0x2D09 : mapChar = 0x10A9; break;<a name="line.547"></a>
+<span class="sourceLineNo">548</span>                    case 0x2D0A : mapChar = 0x10AA; break;<a name="line.548"></a>
+<span class="sourceLineNo">549</span>                    case 0x2D0B : mapChar = 0x10AB; break;<a name="line.549"></a>
+<span class="sourceLineNo">550</span>                    case 0x2D0C : mapChar = 0x10AC; break;<a name="line.550"></a>
+<span class="sourceLineNo">551</span>                    case 0x2D0D : mapChar = 0x10AD; break;<a name="line.551"></a>
+<span class="sourceLineNo">552</span>                    case 0x2D0E : mapChar = 0x10AE; break;<a name="line.552"></a>
+<span class="sourceLineNo">553</span>                    case 0x2D0F : mapChar = 0x10AF; break;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>                    case 0x2D10 : mapChar = 0x10B0; break;<a name="line.554"></a>
+<span class="sourceLineNo">555</span>                    case 0x2D11 : mapChar = 0x10B1; break;<a name="line.555"></a>
+<span class="sourceLineNo">556</span>                    case 0x2D12 : mapChar = 0x10B2; break;<a name="line.556"></a>
+<span class="sourceLineNo">557</span>                    case 0x2D13 : mapChar = 0x10B3; break;<a name="line.557"></a>
+<span class="sourceLineNo">558</span>                    case 0x2D14 : mapChar = 0x10B4; break;<a name="line.558"></a>
+<span class="sourceLineNo">559</span>                    case 0x2D15 : mapChar = 0x10B5; break;<a name="line.559"></a>
+<span class="sourceLineNo">560</span>                    case 0x2D16 : mapChar = 0x10B6; break;<a name="line.560"></a>
+<span class="sourceLineNo">561</span>                    case 0x2D17 : mapChar = 0x10B7; break;<a name="line.561"></a>
+<span class="sourceLineNo">562</span>                    case 0x2D18 : mapChar = 0x10B8; break;<a name="line.562"></a>
+<span class="sourceLineNo">563</span>                    case 0x2D19 : mapChar = 0x10B9; break;<a name="line.563"></a>
+<span class="sourceLineNo">564</span>                    case 0x2D1A : mapChar = 0x10BA; break;<a name="line.564"></a>
+<span class="sourceLineNo">565</span>                    case 0x2D1B : mapChar = 0x10BB; break;<a name="line.565"></a>
+<span class="sourceLineNo">566</span>                    case 0x2D1C : mapChar = 0x10BC; break;<a name="line.566"></a>
+<span class="sourceLineNo">567</span>                    case 0x2D1D : mapChar = 0x10BD; break;<a name="line.567"></a>
+<span class="sourceLineNo">568</span>                    case 0x2D1E : mapChar = 0x10BE; break;<a name="line.568"></a>
+<span class="sourceLineNo">569</span>                    case 0x2D1F : mapChar = 0x10BF; break;<a name="line.569"></a>
+<span class="sourceLineNo">570</span>                    case 0x2D20 : mapChar = 0x10C0; break;<a name="line.570"></a>
+<span class="sourceLineNo">571</span>                    case 0x2D21 : mapChar = 0x10C1; break;<a name="line.571"></a>
+<span class="sourceLineNo">572</span>                    case 0x2D22 : mapChar = 0x10C2; break;<a name="line.572"></a>
+<span class="sourceLineNo">573</span>                    case 0x2D23 : mapChar = 0x10C3; break;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>                    case 0x2D24 : mapChar = 0x10C4; break;<a name="line.574"></a>
+<span class="sourceLineNo">575</span>                    case 0x2D25 : mapChar = 0x10C5; break;<a name="line.575"></a>
+<span class="sourceLineNo">576</span>                    default       : mapChar = Character.ERROR; break;<a name="line.576"></a>
+<span class="sourceLineNo">577</span>                }<a name="line.577"></a>
+<span class="sourceLineNo">578</span>            }<a name="line.578"></a>
+<span class="sourceLineNo">579</span>        }<a name="line.579"></a>
+<span class="sourceLineNo">580</span>        return mapChar;<a name="line.580"></a>
+<span class="sourceLineNo">581</span>    }<a name="line.581"></a>
+<span class="sourceLineNo">582</span><a name="line.582"></a>
+<span class="sourceLineNo">583</span>    char[] toUpperCaseCharArray(int ch) {<a name="line.583"></a>
+<span class="sourceLineNo">584</span>        char[] upperMap = {(char)ch};<a name="line.584"></a>
+<span class="sourceLineNo">585</span>        int location = findInCharMap(ch);<a name="line.585"></a>
+<span class="sourceLineNo">586</span>        if (location != -1) {<a name="line.586"></a>
+<span class="sourceLineNo">587</span>            upperMap = charMap[location][1];<a name="line.587"></a>
+<span class="sourceLineNo">588</span>        }<a name="line.588"></a>
+<span class="sourceLineNo">589</span>        return upperMap;<a name="line.589"></a>
+<span class="sourceLineNo">590</span>    }<a name="line.590"></a>
+<span class="sourceLineNo">591</span><a name="line.591"></a>
+<span class="sourceLineNo">592</span><a name="line.592"></a>
+<span class="sourceLineNo">593</span>    /**<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * Finds the character in the uppercase mapping table.<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     *<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     * @param ch the &lt;code&gt;char&lt;/code&gt; to search<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     * @return the index location ch in the table or -1 if not found<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * @since 1.4<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     */<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     int findInCharMap(int ch) {<a name="line.600"></a>
+<span class="sourceLineNo">601</span>        if (charMap == null || charMap.length == 0) {<a name="line.601"></a>
+<span class="sourceLineNo">602</span>            return -1;<a name="line.602"></a>
+<span class="sourceLineNo">603</span>        }<a name="line.603"></a>
+<span class="sourceLineNo">604</span>        int top, bottom, current;<a name="line.604"></a>
+<span class="sourceLineNo">605</span>        bottom = 0;<a name="line.605"></a>
+<span class="sourceLineNo">606</span>        top = charMap.length;<a name="line.606"></a>
+<span class="sourceLineNo">607</span>        current = top/2;<a name="line.607"></a>
+<span class="sourceLineNo">608</span>        // invariant: top &gt; current &gt;= bottom &amp;&amp; ch &gt;= CharacterData.charMap[bottom][0]<a name="line.608"></a>
+<span class="sourceLineNo">609</span>        while (top - bottom &gt; 1) {<a name="line.609"></a>
+<span class="sourceLineNo">610</span>            if (ch &gt;= charMap[current][0][0]) {<a name="line.610"></a>
+<span class="sourceLineNo">611</span>                bottom = current;<a name="line.611"></a>
+<span class="sourceLineNo">612</span>            } else {<a name="line.612"></a>
+<span class="sourceLineNo">613</span>                top = current;<a name="line.613"></a>
+<span class="sourceLineNo">614</span>            }<a name="line.614"></a>
+<span class="sourceLineNo">615</span>            current = (top + bottom) / 2;<a name="line.615"></a>
+<span class="sourceLineNo">616</span>        }<a name="line.616"></a>
+<span class="sourceLineNo">617</span>        if (ch == charMap[current][0][0]) return current;<a name="line.617"></a>
+<span class="sourceLineNo">618</span>        else return -1;<a name="line.618"></a>
+<span class="sourceLineNo">619</span>    }<a name="line.619"></a>
+<span class="sourceLineNo">620</span><a name="line.620"></a>
+<span class="sourceLineNo">621</span>    static final CharacterData00 instance = new CharacterData00();<a name="line.621"></a>
+<span class="sourceLineNo">622</span>    private CharacterData00() {};<a name="line.622"></a>
+<span class="sourceLineNo">623</span><a name="line.623"></a>
+<span class="sourceLineNo">624</span>    // The following tables and code generated using:<a name="line.624"></a>
+<span class="sourceLineNo">625</span>  // java GenerateCharacter -plane 0 -template ../../tools/GenerateCharacter/CharacterData00.java.template -spec ../../tools/UnicodeData/UnicodeData.txt -specialcasing ../../tools/UnicodeData/SpecialCasing.txt -proplist ../../tools/UnicodeData/PropList.txt -o /HUDSON/workspace/7u-2-build-linux-amd64/jdk7u80/2329/build/linux-amd64/gensrc/java/lang/CharacterData00.java -string -usecharforbyte 11 4 1<a name="line.625"></a>
+<span class="sourceLineNo">626</span>      static final char[][][] charMap;<a name="line.626"></a>
+<span class="sourceLineNo">627</span>// The X table has 2048 entries for a total of 4096 bytes.<a name="line.627"></a>
+<span class="sourceLineNo">628</span><a name="line.628"></a>
+<span class="sourceLineNo">629</span>  static final char X[] = (<a name="line.629"></a>
+<span class="sourceLineNo">630</span>    "\000\020\040\060\100\120\140\160\200\220\240\260\300\320\340\360\200\u0100"+<a name="line.630"></a>
+<span class="sourceLineNo">631</span>    "\u0110\u0120\u0130\u0140\u0150\u0160\u0170\u0170\u0180\u0190\u01A0\u01B0\u01C0"+<a name="line.631"></a>
+<span class="sourceLineNo">632</span>    "\u01D0\u01E0\u01F0\u0200\200\u0210\200\u0220\200\200\u0230\u0240\u0250\u0260"+<a name="line.632"></a>
+<span class="sourceLineNo">633</span>    "\u0270\u0280\u0290\u02A0\u02B0\u02C0\u02D0\u02B0\u02B0\u02E0\u02F0\u0300\u0310"+<a name="line.633"></a>
+<span class="sourceLineNo">634</span>    "\u0320\u02B0\u02B0\u0330\u0340\u0350\u0360\u0370\u0380\u0390\u0390\u0390\u0390"+<a name="line.634"></a>
+<span class="sourceLineNo">635</span>    "\u0390\u03A0\u03B0\u03C0\u03D0\u03E0\u03F0\u0400\u0410\u0420\u0430\u0440\u0450"+<a name="line.635"></a>
+<span class="sourceLineNo">636</span>    "\u0460\u0470\u0480\u0490\u03E0\u04A0\u04B0\u04C0\u04D0\u04E0\u04F0\u0500\u0510"+<a name="line.636"></a>
+<span class="sourceLineNo">637</span>    "\u0520\u0530\u0540\u0550\u0560\u0570\u0580\u0550\u0590\u05A0\u05B0\u05C0\u05D0"+<a name="line.637"></a>
+<span class="sourceLineNo">638</span>    "\u05E0\u05F0\u0600\u0610\u0620\u0390\u0630\u0640\u0650\u0390\u0660\u0670\u0680"+<a name="line.638"></a>
+<span class="sourceLineNo">639</span>    "\u0690\u06A0\u06B0\u06C0\u0390\u06D0\u06E0\u06F0\u0700\u0710\u0720\u0730\u0740"+<a name="line.639"></a>
+<span class="sourceLineNo">640</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u0750\u06D0\u0760"+<a name="line.640"></a>
+<span class="sourceLineNo">641</span>    "\u0770\u0780\u06D0\u0790\u06D0\u07A0\u07B0\u07C0\u06D0\u06D0\u07D0\u07E0\u06D0"+<a name="line.641"></a>
+<span class="sourceLineNo">642</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.642"></a>
+<span class="sourceLineNo">643</span>    "\u06D0\u06D0\u06D0\u06D0\u07F0\u0800\u06D0\u06D0\u0810\u0820\u0830\u0840\u0850"+<a name="line.643"></a>
+<span class="sourceLineNo">644</span>    "\u06D0\u0860\u0870\u0880\u0890\u06D0\u08A0\u08B0\u06D0\u08C0\u06D0\u08D0\u08E0"+<a name="line.644"></a>
+<span class="sourceLineNo">645</span>    "\u08F0\u0900\u0910\u06D0\u0920\u0930\u0940\u0950\u06D0\u0960\u0970\u0980\u0990"+<a name="line.645"></a>
+<span class="sourceLineNo">646</span>    "\u0390\u0390\u09A0\u09B0\u09C0\u09D0\u09E0\u09F0\u06D0\u0A00\u06D0\u0A10\u0A20"+<a name="line.646"></a>
+<span class="sourceLineNo">647</span>    "\u0A30\u0390\u0390\u0A40\u0A50\u0A60\u0A70\u0A80\u0A90\u0AA0\u0A80\u0170\u0AB0"+<a name="line.647"></a>
+<span class="sourceLineNo">648</span>    "\200\200\200\200\u0AC0\200\200\200\u0AD0\u0AE0\u0AF0\u0B00\u0B10\u0B20\u0B30"+<a name="line.648"></a>
+<span class="sourceLineNo">649</span>    "\u0B40\u0B50\u0B60\u0B70\u0B80\u0B90\u0BA0\u0BB0\u0BC0\u0BD0\u0BE0\u0BF0\u0C00"+<a name="line.649"></a>
+<span class="sourceLineNo">650</span>    "\u0C10\u0C20\u0C30\u0C40\u0C50\u0C60\u0C70\u0C80\u0C90\u0CA0\u0CB0\u0CC0\u0CD0"+<a name="line.650"></a>
+<span class="sourceLineNo">651</span>    "\u0CE0\u0CF0\u0D00\u0D10\u0D20\u0D30\u0D40\u0940\u0D50\u0D60\u0D70\u0D80\u0D90"+<a name="line.651"></a>
+<span class="sourceLineNo">652</span>    "\u0DA0\u0DB0\u0940\u0940\u0940\u0940\u0940\u0DC0\u0DD0\u0DE0\u0940\u0940\u0940"+<a name="line.652"></a>
+<span class="sourceLineNo">653</span>    "\u0DF0\u0940\u0E00\u0940\u0940\u0E10\u0940\u0940\u0E20\u0E30\u0940\u0E40\u0E50"+<a name="line.653"></a>
+<span class="sourceLineNo">654</span>    "\u0CF0\u0CF0\u0CF0\u0CF0\u0CF0\u0CF0\u0CF0\u0CF0\u0E60\u0E60\u0E60\u0E60\u0E70"+<a name="line.654"></a>
+<span class="sourceLineNo">655</span>    "\u0E80\u0E90\u0EA0\u0EB0\u0EC0\u0ED0\u0EE0\u0EF0\u0F00\u0F10\u0F20\u0940\u0F30"+<a name="line.655"></a>
+<span class="sourceLineNo">656</span>    "\u0F40\u0390\u0390\u0390\u0390\u0390\u0F50\u0F60\u0F70\u0F80\200\200\200\u0F90"+<a name="line.656"></a>
+<span class="sourceLineNo">657</span>    "\u0FA0\u0FB0\u06D0\u0FC0\u0FD0\u0FE0\u0FE0\u0FF0\u1000\u1010\u0390\u0390\u1020"+<a name="line.657"></a>
+<span class="sourceLineNo">658</span>    "\u0940\u0940\u1030\u0940\u0940\u0940\u0940\u0940\u0940\u1040\u1050\u1060\u1070"+<a name="line.658"></a>
+<span class="sourceLineNo">659</span>    "\u0600\u06D0\u1080\u07E0\u06D0\u1090\u10A0\u10B0\u06D0\u06D0\u10C0\u10D0\u0940"+<a name="line.659"></a>
+<span class="sourceLineNo">660</span>    "\u10E0\u10F0\u1100\u1110\u1120\u1100\u1130\u1140\u1150\u0CF0\u0CF0\u0CF0\u1160"+<a name="line.660"></a>
+<span class="sourceLineNo">661</span>    "\u0CF0\u0CF0\u1170\u1180\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.661"></a>
+<span class="sourceLineNo">662</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.662"></a>
+<span class="sourceLineNo">663</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.663"></a>
+<span class="sourceLineNo">664</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.664"></a>
+<span class="sourceLineNo">665</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.665"></a>
+<span class="sourceLineNo">666</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.666"></a>
+<span class="sourceLineNo">667</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.667"></a>
+<span class="sourceLineNo">668</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.668"></a>
+<span class="sourceLineNo">669</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.669"></a>
+<span class="sourceLineNo">670</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.670"></a>
+<span class="sourceLineNo">671</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.671"></a>
+<span class="sourceLineNo">672</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.672"></a>
+<span class="sourceLineNo">673</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.673"></a>
+<span class="sourceLineNo">674</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.674"></a>
+<span class="sourceLineNo">675</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.675"></a>
+<span class="sourceLineNo">676</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.676"></a>
+<span class="sourceLineNo">677</span>    "\u1190\u11A0\u0940\u0940\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.677"></a>
+<span class="sourceLineNo">678</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.678"></a>
+<span class="sourceLineNo">679</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.679"></a>
+<span class="sourceLineNo">680</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.680"></a>
+<span class="sourceLineNo">681</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.681"></a>
+<span class="sourceLineNo">682</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.682"></a>
+<span class="sourceLineNo">683</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.683"></a>
+<span class="sourceLineNo">684</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.684"></a>
+<span class="sourceLineNo">685</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.685"></a>
+<span class="sourceLineNo">686</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.686"></a>
+<span class="sourceLineNo">687</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.687"></a>
+<span class="sourceLineNo">688</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.688"></a>
+<span class="sourceLineNo">689</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.689"></a>
+<span class="sourceLineNo">690</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.690"></a>
+<span class="sourceLineNo">691</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.691"></a>
+<span class="sourceLineNo">692</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.692"></a>
+<span class="sourceLineNo">693</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.693"></a>
+<span class="sourceLineNo">694</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.694"></a>
+<span class="sourceLineNo">695</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.695"></a>
+<span class="sourceLineNo">696</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.696"></a>
+<span class="sourceLineNo">697</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.697"></a>
+<span class="sourceLineNo">698</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.698"></a>
+<span class="sourceLineNo">699</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.699"></a>
+<span class="sourceLineNo">700</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.700"></a>
+<span class="sourceLineNo">701</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.701"></a>
+<span class="sourceLineNo">702</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.702"></a>
+<span class="sourceLineNo">703</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.703"></a>
+<span class="sourceLineNo">704</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.704"></a>
+<span class="sourceLineNo">705</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.705"></a>
+<span class="sourceLineNo">706</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.706"></a>
+<span class="sourceLineNo">707</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.707"></a>
+<span class="sourceLineNo">708</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.708"></a>
+<span class="sourceLineNo">709</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.709"></a>
+<span class="sourceLineNo">710</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.710"></a>
+<span class="sourceLineNo">711</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.711"></a>
+<span class="sourceLineNo">712</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.712"></a>
+<span class="sourceLineNo">713</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.713"></a>
+<span class="sourceLineNo">714</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.714"></a>
+<span class="sourceLineNo">715</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.715"></a>
+<span class="sourceLineNo">716</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.716"></a>
+<span class="sourceLineNo">717</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.717"></a>
+<span class="sourceLineNo">718</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.718"></a>
+<span class="sourceLineNo">719</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.719"></a>
+<span class="sourceLineNo">720</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.720"></a>
+<span class="sourceLineNo">721</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.721"></a>
+<span class="sourceLineNo">722</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.722"></a>
+<span class="sourceLineNo">723</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.723"></a>
+<span class="sourceLineNo">724</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.724"></a>
+<span class="sourceLineNo">725</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.725"></a>
+<span class="sourceLineNo">726</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190"+<a name="line.726"></a>
+<span class="sourceLineNo">727</span>    "\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u1190\u11B0\u0390\u11C0\u06D0\u06D0"+<a name="line.727"></a>
+<span class="sourceLineNo">728</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.728"></a>
+<span class="sourceLineNo">729</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.729"></a>
+<span class="sourceLineNo">730</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u11D0\u0940\u11E0\u0A30\u06D0\u06D0"+<a name="line.730"></a>
+<span class="sourceLineNo">731</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u11F0\u1200\200\u1210\u1220\u06D0\u06D0"+<a name="line.731"></a>
+<span class="sourceLineNo">732</span>    "\u1230\u1240\u1250\200\u1260\u1270\u1280\u0390\u1290\u12A0\u12B0\u06D0\u12C0"+<a name="line.732"></a>
+<span class="sourceLineNo">733</span>    "\u12D0\u12E0\u12F0\u1300\u1310\u1320\u1330\u08E0\u03A0\u1340\u1350\u0390\u06D0"+<a name="line.733"></a>
+<span class="sourceLineNo">734</span>    "\u1360\u1370\u1380\u06D0\u1390\u13A0\u0390\u13B0\u13C0\u0390\u0390\u0390\u0390"+<a name="line.734"></a>
+<span class="sourceLineNo">735</span>    "\u06D0\u13D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.735"></a>
+<span class="sourceLineNo">736</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.736"></a>
+<span class="sourceLineNo">737</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.737"></a>
+<span class="sourceLineNo">738</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.738"></a>
+<span class="sourceLineNo">739</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.739"></a>
+<span class="sourceLineNo">740</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.740"></a>
+<span class="sourceLineNo">741</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.741"></a>
+<span class="sourceLineNo">742</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.742"></a>
+<span class="sourceLineNo">743</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.743"></a>
+<span class="sourceLineNo">744</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.744"></a>
+<span class="sourceLineNo">745</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.745"></a>
+<span class="sourceLineNo">746</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.746"></a>
+<span class="sourceLineNo">747</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.747"></a>
+<span class="sourceLineNo">748</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.748"></a>
+<span class="sourceLineNo">749</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.749"></a>
+<span class="sourceLineNo">750</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.750"></a>
+<span class="sourceLineNo">751</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.751"></a>
+<span class="sourceLineNo">752</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.752"></a>
+<span class="sourceLineNo">753</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.753"></a>
+<span class="sourceLineNo">754</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.754"></a>
+<span class="sourceLineNo">755</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.755"></a>
+<span class="sourceLineNo">756</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.756"></a>
+<span class="sourceLineNo">757</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.757"></a>
+<span class="sourceLineNo">758</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.758"></a>
+<span class="sourceLineNo">759</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.759"></a>
+<span class="sourceLineNo">760</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.760"></a>
+<span class="sourceLineNo">761</span>    "\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0\u06D0"+<a name="line.761"></a>
+<span class="sourceLineNo">762</span>    "\u13E0\u13F0\u1400\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410"+<a name="line.762"></a>
+<span class="sourceLineNo">763</span>    "\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410"+<a name="line.763"></a>
+<span class="sourceLineNo">764</span>    "\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410"+<a name="line.764"></a>
+<span class="sourceLineNo">765</span>    "\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410"+<a name="line.765"></a>
+<span class="sourceLineNo">766</span>    "\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410\u1410"+<a name="line.766"></a>
+<span class="sourceLineNo">767</span>    "\u1410\u1410\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.767"></a>
+<span class="sourceLineNo">768</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.768"></a>
+<span class="sourceLineNo">769</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.769"></a>
+<span class="sourceLineNo">770</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.770"></a>
+<span class="sourceLineNo">771</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.771"></a>
+<span class="sourceLineNo">772</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.772"></a>
+<span class="sourceLineNo">773</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.773"></a>
+<span class="sourceLineNo">774</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.774"></a>
+<span class="sourceLineNo">775</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.775"></a>
+<span class="sourceLineNo">776</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.776"></a>
+<span class="sourceLineNo">777</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.777"></a>
+<span class="sourceLineNo">778</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.778"></a>
+<span class="sourceLineNo">779</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.779"></a>
+<span class="sourceLineNo">780</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.780"></a>
+<span class="sourceLineNo">781</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1420"+<a name="line.781"></a>
+<span class="sourceLineNo">782</span>    "\u1420\u1420\u1420\u1420\u1420\u1420\u1420\u1190\u1190\u1190\u1430\u1190\u1440"+<a name="line.782"></a>
+<span class="sourceLineNo">783</span>    "\u1450\u1460\u1190\u1470\u1190\u1470\u1190\u1190\u1480\u0390\u1490\u14A0\u14B0"+<a name="line.783"></a>
+<span class="sourceLineNo">784</span>    "\u02B0\u02B0\u14C0\u14D0\u02B0\u02B0\u02B0\u02B0\u02B0\u02B0\u02B0\u02B0\u02B0"+<a name="line.784"></a>
+<span class="sourceLineNo">785</span>    "\u02B0\u14E0\u14F0\u02B0\u1500\u02B0\u1510\u1520\u1530\u1540\u1550\u1560\u02B0"+<a name="line.785"></a>
+<span class="sourceLineNo">786</span>    "\u02B0\u02B0\u1570\u1580\040\u1590\u15A0\u15B0\u15C0\u15D0\u15E0").toCharArray();<a name="line.786"></a>
+<span class="sourceLineNo">787</span><a name="line.787"></a>
+<span class="sourceLineNo">788</span>  // The Y table has 5616 entries for a total of 11232 bytes.<a name="line.788"></a>
+<span class="sourceLineNo">789</span><a name="line.789"></a>
+<span class="sourceLineNo">790</span>  static final char Y[] = (<a name="line.790"></a>
+<span class="sourceLineNo">791</span>    "\000\000\000\000\002\004\006\000\000\000\000\000\000\000\010\004\012\014\016"+<a name="line.791"></a>
+<span class="sourceLineNo">792</span>    "\020\022\024\026\030\032\032\032\032\032\034\036\040\042\044\044\044\044\044"+<a name="line.792"></a>
+<span class="sourceLineNo">793</span>    "\044\044\044\044\044\044\044\046\050\052\054\056\056\056\056\056\056\056\056"+<a name="line.793"></a>
+<span class="sourceLineNo">794</span>    "\056\056\056\056\060\062\064\000\000\066\000\000\000\000\000\000\000\000\000"+<a name="line.794"></a>
+<span class="sourceLineNo">795</span>    "\000\000\000\000\070\072\072\074\076\100\102\104\106\110\112\114\116\120\122"+<a name="line.795"></a>
+<span class="sourceLineNo">796</span>    "\124\126\126\126\126\126\126\126\126\126\126\126\130\126\126\126\132\134\134"+<a name="line.796"></a>
+<span class="sourceLineNo">797</span>    "\134\134\134\134\134\134\134\134\134\136\134\134\134\140\142\142\142\142\142"+<a name="line.797"></a>
+<span class="sourceLineNo">798</span>    "\142\142\142\142\142\142\142\142\142\142\142\142\142\142\142\142\142\142\142"+<a name="line.798"></a>
+<span class="sourceLineNo">799</span>    "\144\142\142\142\146\150\150\150\150\150\150\150\152\142\142\142\142\142\142"+<a name="line.799"></a>
+<span class="sourceLineNo">800</span>    "\142\142\142\142\142\142\142\142\142\142\142\142\142\142\142\142\142\154\150"+<a name="line.800"></a>
+<span class="sourceLineNo">801</span>    "\150\152\156\142\142\160\162\164\166\170\172\162\174\176\142\200\202\204\142"+<a name="line.801"></a>
+<span class="sourceLineNo">802</span>    "\142\142\206\210\212\142\206\214\216\150\220\142\222\142\224\226\226\230\232"+<a name="line.802"></a>
+<span class="sourceLineNo">803</span>    "\234\230\236\150\150\150\150\150\150\150\240\142\142\142\142\142\142\142\142"+<a name="line.803"></a>
+<span class="sourceLineNo">804</span>    "\142\242\234\142\244\142\142\142\142\246\142\142\142\142\142\142\142\142\142"+<a name="line.804"></a>
+<span class="sourceLineNo">805</span>    "\212\212\212\250\252\254\256\260\262\142\142\142\142\142\264\266\270\272\274"+<a name="line.805"></a>
+<span class="sourceLineNo">806</span>    "\276\212\212\300\302\304\212\306\304\212\310\304\312\314\212\212\212\304\212"+<a name="line.806"></a>
+<span class="sourceLineNo">807</span>    "\316\320\212\212\322\324\326\212\212\330\332\212\212\212\212\212\212\212\212"+<a name="line.807"></a>
+<span class="sourceLineNo">808</span>    "\212\212\212\212\212\334\334\334\334\336\340\342\342\334\344\344\346\346\346"+<a name="line.808"></a>
+<span class="sourceLineNo">809</span>    "\346\346\342\344\344\344\344\344\344\344\334\334\350\344\344\344\352\354\344"+<a name="line.809"></a>
+<span class="sourceLineNo">810</span>    "\344\344\344\344\344\344\344\356\356\356\356\356\356\356\356\356\356\356\356"+<a name="line.810"></a>
+<span class="sourceLineNo">811</span>    "\356\356\356\356\356\356\360\356\356\356\356\356\356\356\356\356\356\356\356"+<a name="line.811"></a>
+<span class="sourceLineNo">812</span>    "\356\356\356\356\356\356\356\356\356\142\142\352\142\362\364\366\370\362\362"+<a name="line.812"></a>
+<span class="sourceLineNo">813</span>    "\344\372\374\376\u0100\u0102\u0104\126\126\126\126\126\126\126\126\u0106\126"+<a name="line.813"></a>
+<span class="sourceLineNo">814</span>    "\126\126\126\u0108\u010A\u010C\134\134\134\134\134\134\134\134\u010E\134\134"+<a name="line.814"></a>
+<span class="sourceLineNo">815</span>    "\134\134\u0110\u0112\u0114\u0116\u0118\u011A\142\142\142\142\142\142\142\142"+<a name="line.815"></a>
+<span class="sourceLineNo">816</span>    "\142\142\142\142\u011C\u011E\u0120\u0122\u0124\142\u0126\u0128\u012A\u012A"+<a name="line.816"></a>
+<span class="sourceLineNo">817</span>    "\u012A\u012A\u012A\u012A\u012A\u012A\126\126\126\126\126\126\126\126\126\126"+<a name="line.817"></a>
+<span class="sourceLineNo">818</span>    "\126\126\126\126\126\126\134\134\134\134\134\134\134\134\134\134\134\134\134"+<a name="line.818"></a>
+<span class="sourceLineNo">819</span>    "\134\134\134\u012C\u012C\u012C\u012C\u012C\u012C\u012C\u012C\142\u012E\356"+<a name="line.819"></a>
+<span class="sourceLineNo">820</span>    "\356\u0130\142\142\142\142\142\142\142\142\142\142\142\u0132\150\150\150\150"+<a name="line.820"></a>
+<span class="sourceLineNo">821</span>    "\150\150\u0134\142\142\142\142\142\142\142\142\142\142\142\142\362\362\362"+<a name="line.821"></a>
+<span class="sourceLineNo">822</span>    "\362\u0136\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138"+<a name="line.822"></a>
+<span class="sourceLineNo">823</span>    "\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u013A\u013C\u013E\u013E\u013E\u0140"+<a name="line.823"></a>
+<span class="sourceLineNo">824</span>    "\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142"+<a name="line.824"></a>
+<span class="sourceLineNo">825</span>    "\u0142\u0142\u0142\u0142\u0142\u0144\u0146\u0148\362\362\u014A\356\356\356"+<a name="line.825"></a>
+<span class="sourceLineNo">826</span>    "\356\356\356\356\356\356\356\356\356\356\356\356\u014C\u014C\u014C\u014C\u014C"+<a name="line.826"></a>
+<span class="sourceLineNo">827</span>    "\u014C\u014C\u014E\u0150\u0152\u014C\u0150\362\362\362\362\u0154\u0154\u0154"+<a name="line.827"></a>
+<span class="sourceLineNo">828</span>    "\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0156\362\362"+<a name="line.828"></a>
+<span class="sourceLineNo">829</span>    "\u0154\u0158\u015A\362\362\362\362\362\u015C\u015C\362\u015E\u0160\u0162\u0164"+<a name="line.829"></a>
+<span class="sourceLineNo">830</span>    "\074\u014C\u014C\u014C\u014C\u014C\u0166\362\u0168\u016A\u016A\u016A\u016A"+<a name="line.830"></a>
+<span class="sourceLineNo">831</span>    "\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016C"+<a name="line.831"></a>
+<span class="sourceLineNo">832</span>    "\u016A\u016A\u016A\u016A\u016E\u014C\u014C\u014C\u014C\u014C\u014C\u0170\u014C"+<a name="line.832"></a>
+<span class="sourceLineNo">833</span>    "\u014C\u014C\u0172\u0172\u0172\u0172\u0172\u0174\u0176\u016A\u0178\u016A\u016A"+<a name="line.833"></a>
+<span class="sourceLineNo">834</span>    "\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A"+<a name="line.834"></a>
+<span class="sourceLineNo">835</span>    "\u016A\u016A\u017A\u014C\u014C\u014C\u017C\u017E\u0170\u014C\u0180\u0182\u0184"+<a name="line.835"></a>
+<span class="sourceLineNo">836</span>    "\356\u0170\u016A\032\032\032\032\032\u016A\u0186\u0188\u0168\u0168\u0168\u0168"+<a name="line.836"></a>
+<span class="sourceLineNo">837</span>    "\u0168\u0168\u0168\u018A\u016E\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A"+<a name="line.837"></a>
+<span class="sourceLineNo">838</span>    "\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u014C\u014C\u014C\u014C\u014C\u014C"+<a name="line.838"></a>
+<span class="sourceLineNo">839</span>    "\u014C\u014C\356\356\356\356\356\u018C\u018E\u016A\u016A\u016A\u016A\u016A"+<a name="line.839"></a>
+<span class="sourceLineNo">840</span>    "\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u014C\u014C\u014C\u014C\u014C\u0178"+<a name="line.840"></a>
+<span class="sourceLineNo">841</span>    "\362\362\362\362\362\362\362\u0190\u0190\u0190\u0190\u0190\u0154\u0154\u0154"+<a name="line.841"></a>
+<span class="sourceLineNo">842</span>    "\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154"+<a name="line.842"></a>
+<span class="sourceLineNo">843</span>    "\u0192\356\356\356\356\u0194\114\020\u0196\362\362\u0154\u0154\u0154\u0154"+<a name="line.843"></a>
+<span class="sourceLineNo">844</span>    "\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u014C\356\u0198\u014C\u014C\u014C"+<a name="line.844"></a>
+<span class="sourceLineNo">845</span>    "\u014C\u0198\u014C\u0198\u014C\u019A\362\u019C\u019C\u019C\u019C\u019C\u019C"+<a name="line.845"></a>
+<span class="sourceLineNo">846</span>    "\u019C\u015A\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154\u0154"+<a name="line.846"></a>
+<span class="sourceLineNo">847</span>    "\u0154\u0192\356\362\u015A\362\362\362\362\362\362\362\362\362\362\362\362"+<a name="line.847"></a>
+<span class="sourceLineNo">848</span>    "\362\362\362\362\u014C\u019E\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.848"></a>
+<span class="sourceLineNo">849</span>    "\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\u019E\u01A0\u01A2"+<a name="line.849"></a>
+<span class="sourceLineNo">850</span>    "\u01A4\u014C\u014C\u014C\u019E\u01A2\u01A6\u01A2\u01A8\356\u0170\u014C\226"+<a name="line.850"></a>
+<span class="sourceLineNo">851</span>    "\226\226\226\226\u014C\u013E\u01AA\u01AA\u01AA\u01AA\u01AA\u01AC\226\226\226"+<a name="line.851"></a>
+<span class="sourceLineNo">852</span>    "\u01AE\226\226\226\u01B0\u01A2\u01AE\226\226\226\u01B2\u01AE\u01B2\u01AE\226"+<a name="line.852"></a>
+<span class="sourceLineNo">853</span>    "\226\226\226\226\226\226\226\226\226\u01B2\226\226\226\u01B2\u01B2\362\226"+<a name="line.853"></a>
+<span class="sourceLineNo">854</span>    "\226\362\u01A0\u01A2\u01A4\u014C\u01B4\u01B6\u01B8\u01B6\u01A6\u01B2\362\362"+<a name="line.854"></a>
+<span class="sourceLineNo">855</span>    "\362\u01B6\362\362\226\u01AE\226\u014C\362\u01AA\u01AA\u01AA\u01AA\u01AA\226"+<a name="line.855"></a>
+<span class="sourceLineNo">856</span>    "\072\u01BA\u01BA\u01BC\u01BE\362\362\u01B0\u019E\u01AE\226\226\u01B2\362\u01AE"+<a name="line.856"></a>
+<span class="sourceLineNo">857</span>    "\u01B2\u01AE\226\226\226\226\226\226\226\226\226\226\u01B2\226\226\226\u01B2"+<a name="line.857"></a>
+<span class="sourceLineNo">858</span>    "\226\u01AE\u01B2\226\362\u018C\u01A2\u01A4\u01B4\362\u01B0\u01B4\u01B0\u019A"+<a name="line.858"></a>
+<span class="sourceLineNo">859</span>    "\362\u01B0\362\362\362\u01AE\226\u01B2\u01B2\362\362\362\u01AA\u01AA\u01AA"+<a name="line.859"></a>
+<span class="sourceLineNo">860</span>    "\u01AA\u01AA\u014C\226\u01C0\362\362\362\362\362\u01B0\u019E\u01AE\226\226"+<a name="line.860"></a>
+<span class="sourceLineNo">861</span>    "\226\226\u01AE\226\u01AE\226\226\226\226\226\226\226\226\226\226\u01B2\226"+<a name="line.861"></a>
+<span class="sourceLineNo">862</span>    "\226\226\u01B2\226\u01AE\226\226\362\u01A0\u01A2\u01A4\u014C\u014C\u01B0\u019E"+<a name="line.862"></a>
+<span class="sourceLineNo">863</span>    "\u01B6\u01A6\362\u01B2\362\362\362\362\362\362\362\226\u014C\362\u01AA\u01AA"+<a name="line.863"></a>
+<span class="sourceLineNo">864</span>    "\u01AA\u01AA\u01AA\u01C2\362\362\362\362\362\362\362\226\226\226\226\u01B2"+<a name="line.864"></a>
+<span class="sourceLineNo">865</span>    "\226\226\226\u01B2\226\u01AE\226\226\362\u01A0\u01A4\u01A4\u014C\u01B4\u01B6"+<a name="line.865"></a>
+<span class="sourceLineNo">866</span>    "\u01B8\u01B6\u01A6\362\362\362\362\u019E\362\362\226\u01AE\226\u014C\362\u01AA"+<a name="line.866"></a>
+<span class="sourceLineNo">867</span>    "\u01AA\u01AA\u01AA\u01AA\u01C4\u01BA\u01BA\u01BA\362\362\362\362\362\u01C6"+<a name="line.867"></a>
+<span class="sourceLineNo">868</span>    "\u01AE\226\226\u01B2\362\226\u01B2\226\226\362\u01AE\u01B2\u01B2\226\362\u01AE"+<a name="line.868"></a>
+<span class="sourceLineNo">869</span>    "\u01B2\362\226\u01B2\362\226\226\226\226\226\226\362\362\u01A2\u019E\u01B8"+<a name="line.869"></a>
+<span class="sourceLineNo">870</span>    "\362\u01A2\u01B8\u01A2\u01A6\362\u01B2\362\362\u01B6\362\362\362\362\362\362"+<a name="line.870"></a>
+<span class="sourceLineNo">871</span>    "\362\u01AA\u01AA\u01AA\u01AA\u01AA\u01C8\u01CA\074\074\u01CC\u01CE\362\362"+<a name="line.871"></a>
+<span class="sourceLineNo">872</span>    "\u01B6\u01A2\u01AE\226\226\226\u01B2\226\u01B2\226\226\226\226\226\226\226"+<a name="line.872"></a>
+<span class="sourceLineNo">873</span>    "\226\226\226\226\u01B2\226\226\226\226\226\u01AE\226\226\362\u01AE\u014C\u019E"+<a name="line.873"></a>
+<span class="sourceLineNo">874</span>    "\u01A2\u01B8\u014C\u01B4\u014C\u019A\362\362\362\u01B0\u01B4\226\362\362\362"+<a name="line.874"></a>
+<span class="sourceLineNo">875</span>    "\226\u014C\362\u01AA\u01AA\u01AA\u01AA\u01AA\362\362\362\362\u01D0\u01D0\u01D2"+<a name="line.875"></a>
+<span class="sourceLineNo">876</span>    "\u01D4\362\u01A2\u01AE\226\226\226\u01B2\226\u01B2\226\226\226\226\226\226"+<a name="line.876"></a>
+<span class="sourceLineNo">877</span>    "\226\226\226\226\226\u01B2\226\226\226\226\226\u01AE\226\226\362\u01A0\u01D6"+<a name="line.877"></a>
+<span class="sourceLineNo">878</span>    "\u01A2\u01A2\u01B8\u01D8\u01B8\u01A2\u019A\362\362\362\u01B6\u01B8\362\362"+<a name="line.878"></a>
+<span class="sourceLineNo">879</span>    "\362\u01B2\226\u014C\362\u01AA\u01AA\u01AA\u01AA\u01AA\u01AE\u01B2\362\362"+<a name="line.879"></a>
+<span class="sourceLineNo">880</span>    "\362\362\362\362\226\226\226\226\226\226\226\226\226\226\226\226\226\u01B2"+<a name="line.880"></a>
+<span class="sourceLineNo">881</span>    "\u01AE\u01A2\u01A4\u014C\u01B4\u01A2\u01B8\u01A2\u01A6\u01B2\362\362\362\u01B6"+<a name="line.881"></a>
+<span class="sourceLineNo">882</span>    "\362\362\362\362\226\u014C\362\u01AA\u01AA\u01AA\u01AA\u01AA\u01C8\u01BA\u01BA"+<a name="line.882"></a>
+<span class="sourceLineNo">883</span>    "\362\u01DA\226\226\226\362\u01A2\u01AE\226\226\226\226\226\226\226\226\u01B2"+<a name="line.883"></a>
+<span class="sourceLineNo">884</span>    "\362\226\226\226\226\226\226\226\226\226\226\226\226\u01AE\226\226\226\226"+<a name="line.884"></a>
+<span class="sourceLineNo">885</span>    "\u01AE\362\226\226\226\u01B2\362\u018C\362\u01B6\u01A2\u014C\u01B4\u01B4\u01A2"+<a name="line.885"></a>
+<span class="sourceLineNo">886</span>    "\u01A2\u01A2\u01A2\362\362\362\362\362\362\362\362\362\u01A2\u01DC\362\362"+<a name="line.886"></a>
+<span class="sourceLineNo">887</span>    "\362\362\362\u01AE\226\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.887"></a>
+<span class="sourceLineNo">888</span>    "\226\226\226\226\226\226\226\226\226\u01C0\226\u014C\u014C\u014C\u01B4\362"+<a name="line.888"></a>
+<span class="sourceLineNo">889</span>    "\u01C2\226\226\226\u01DE\356\356\u0170\u01E0\u01E2\u01E2\u01E2\u01E2\u01E2"+<a name="line.889"></a>
+<span class="sourceLineNo">890</span>    "\u013E\362\362\u01AE\u01B2\u01B2\u01AE\u01B2\u01B2\u01AE\362\362\362\226\226"+<a name="line.890"></a>
+<span class="sourceLineNo">891</span>    "\u01AE\226\226\226\u01AE\226\u01AE\u01AE\362\226\u01AE\226\u01C0\226\u014C"+<a name="line.891"></a>
+<span class="sourceLineNo">892</span>    "\u014C\u014C\u01B0\u01C6\362\226\226\u01B2\u01E4\356\356\u0170\362\u01E2\u01E2"+<a name="line.892"></a>
+<span class="sourceLineNo">893</span>    "\u01E2\u01E2\u01E2\362\226\362\u01E6\u01E8\u013E\u013E\u013E\u013E\u013E\u013E"+<a name="line.893"></a>
+<span class="sourceLineNo">894</span>    "\u013E\u01EA\u01E8\u01E8\356\u01E8\u01E8\u01E8\u01EC\u01EC\u01EC\u01EC\u01EC"+<a name="line.894"></a>
+<span class="sourceLineNo">895</span>    "\u01BA\u01BA\u01BA\u01BA\u01BA\u012E\u012E\u012E\022\022\u01EE\226\226\226"+<a name="line.895"></a>
+<span class="sourceLineNo">896</span>    "\226\u01AE\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.896"></a>
+<span class="sourceLineNo">897</span>    "\226\u01B2\362\u01B0\u014C\u014C\u014C\u014C\u014C\u014C\u019E\u014C\356\u01E0"+<a name="line.897"></a>
+<span class="sourceLineNo">898</span>    "\356\226\226\u01C0\u014C\u014C\u014C\u014C\u014C\u01B0\u014C\u014C\u014C\u014C"+<a name="line.898"></a>
+<span class="sourceLineNo">899</span>    "\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C"+<a name="line.899"></a>
+<span class="sourceLineNo">900</span>    "\u01B4\u01E8\u01E8\u01E8\u01E8\u01F0\u01E8\u01E8\u01F2\u01E8\u013E\u013E\u01EA"+<a name="line.900"></a>
+<span class="sourceLineNo">901</span>    "\u01E8\u01F4\u01DC\362\362\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.901"></a>
+<span class="sourceLineNo">902</span>    "\226\226\226\226\226\226\226\226\226\u01F6\u01A4\u014C\u019E\u014C\u014C\u019A"+<a name="line.902"></a>
+<span class="sourceLineNo">903</span>    "\u01A6\u01F8\u01A4\u01C6\u01EC\u01EC\u01EC\u01EC\u01EC\u013E\u013E\u013E\226"+<a name="line.903"></a>
+<span class="sourceLineNo">904</span>    "\226\226\u01A2\u014C\226\226\u014C\u01C6\u01FA\u01FC\u01F6\u01FA\u01EE\u01EE"+<a name="line.904"></a>
+<span class="sourceLineNo">905</span>    "\226\u01C0\u014C\u01C6\226\226\226\226\226\226\u019E\u01A4\u01FE\u01EE\u01EE"+<a name="line.905"></a>
+<span class="sourceLineNo">906</span>    "\u0200\u0202\u01E2\u01E2\u01E2\u01E2\u01E2\u01EE\u01A4\u01E8\u0204\u0204\u0204"+<a name="line.906"></a>
+<span class="sourceLineNo">907</span>    "\u0204\u0204\u0204\u0204\u0204\u0204\u0204\u0204\u0204\u0204\u0204\u0204\u0204"+<a name="line.907"></a>
+<span class="sourceLineNo">908</span>    "\u0204\u0204\u0204\362\362\362\362\362\226\226\226\226\226\226\226\226\226"+<a name="line.908"></a>
+<span class="sourceLineNo">909</span>    "\226\226\226\226\226\226\226\226\226\226\226\226\u0206\u01E4\362\226\226\226"+<a name="line.909"></a>
+<span class="sourceLineNo">910</span>    "\226\u01B2\226\226\362\226\226\226\u01B2\u01B2\226\226\362\226\226\226\226"+<a name="line.910"></a>
+<span class="sourceLineNo">911</span>    "\u01B2\226\226\362\226\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.911"></a>
+<span class="sourceLineNo">912</span>    "\226\226\u01B2\226\226\362\226\226\226\u01B2\u01B2\226\226\362\226\226\226"+<a name="line.912"></a>
+<span class="sourceLineNo">913</span>    "\226\226\226\226\u01B2\226\226\226\226\226\226\226\226\226\226\226\226\u01B2"+<a name="line.913"></a>
+<span class="sourceLineNo">914</span>    "\226\226\362\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.914"></a>
+<span class="sourceLineNo">915</span>    "\226\u01B2\u014A\u0170\u01F4\u013E\u013E\u013E\u0208\u020A\u020A\u020A\u020A"+<a name="line.915"></a>
+<span class="sourceLineNo">916</span>    "\u020C\u020E\u01BA\u01BA\u01BA\u0210\362\226\226\226\226\226\226\226\226\074"+<a name="line.916"></a>
+<span class="sourceLineNo">917</span>    "\074\074\074\074\362\362\362\226\226\226\226\226\226\226\226\226\226\u01B2"+<a name="line.917"></a>
+<span class="sourceLineNo">918</span>    "\362\362\362\362\362\u0212\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.918"></a>
+<span class="sourceLineNo">919</span>    "\226\226\226\226\226\226\226\226\226\u0206\u0214\226\226\226\226\226\226\226"+<a name="line.919"></a>
+<span class="sourceLineNo">920</span>    "\226\u0216\226\226\226\226\226\226\226\226\226\226\226\226\u0218\u021A\362"+<a name="line.920"></a>
+<span class="sourceLineNo">921</span>    "\226\226\226\226\226\u0206\u013E\u021C\u021E\362\362\362\362\362\362\362\226"+<a name="line.921"></a>
+<span class="sourceLineNo">922</span>    "\226\226\226\226\226\u01B2\226\226\u014C\u018C\362\362\362\362\362\226\226"+<a name="line.922"></a>
+<span class="sourceLineNo">923</span>    "\226\226\226\226\226\226\226\u014C\u01E0\u01DC\362\362\362\362\226\226\226"+<a name="line.923"></a>
+<span class="sourceLineNo">924</span>    "\226\226\226\226\226\226\u014C\362\362\362\362\362\362\226\226\226\226\226"+<a name="line.924"></a>
+<span class="sourceLineNo">925</span>    "\226\u01B2\226\u01B2\u014C\362\362\362\362\362\362\226\226\226\226\226\226"+<a name="line.925"></a>
+<span class="sourceLineNo">926</span>    "\226\226\226\226\u0220\u01A4\u014C\u014C\u014C\u01A2\u01A2\u01A2\u01A2\u019E"+<a name="line.926"></a>
+<span class="sourceLineNo">927</span>    "\u01A6\356\356\356\356\356\u013E\u01AC\u013E\u0222\u01A8\362\u01EC\u01EC\u01EC"+<a name="line.927"></a>
+<span class="sourceLineNo">928</span>    "\u01EC\u01EC\362\362\362\u0224\u0224\u0224\u0224\u0224\362\362\362\020\020"+<a name="line.928"></a>
+<span class="sourceLineNo">929</span>    "\020\u0226\020\u0228\356\u022A\u01E2\u01E2\u01E2\u01E2\u01E2\362\362\362\226"+<a name="line.929"></a>
+<span class="sourceLineNo">930</span>    "\u022C\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.930"></a>
+<span class="sourceLineNo">931</span>    "\226\226\226\226\226\226\226\226\226\362\362\362\362\226\226\226\226\u01C0"+<a name="line.931"></a>
+<span class="sourceLineNo">932</span>    "\u01B2\362\362\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.932"></a>
+<span class="sourceLineNo">933</span>    "\226\226\226\226\362\362\362\362\362\226\226\226\226\226\226\226\226\226\226"+<a name="line.933"></a>
+<span class="sourceLineNo">934</span>    "\226\226\226\226\u01B2\362\u014C\u019E\u01A2\u01A4\u019E\u01A2\362\362\u01A2"+<a name="line.934"></a>
+<span class="sourceLineNo">935</span>    "\u019E\u01A2\u01A2\u01A6\356\362\362\u01CE\362\020\u01AA\u01AA\u01AA\u01AA"+<a name="line.935"></a>
+<span class="sourceLineNo">936</span>    "\u01AA\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\362\226"+<a name="line.936"></a>
+<span class="sourceLineNo">937</span>    "\226\u01B2\362\362\362\362\362\226\226\226\226\226\226\362\362\u01A2\u01A2"+<a name="line.937"></a>
+<span class="sourceLineNo">938</span>    "\u01A2\u01A2\u01A2\u01A2\u01A2\u01A2\u022E\226\226\226\u01A2\362\362\362\u01E2"+<a name="line.938"></a>
+<span class="sourceLineNo">939</span>    "\u01E2\u01E2\u01E2\u01E2\u0230\362\074\074\074\074\074\074\074\074\074\074"+<a name="line.939"></a>
+<span class="sourceLineNo">940</span>    "\074\074\074\074\074\074\074\226\226\226\226\226\226\226\226\226\226\226\u01C0"+<a name="line.940"></a>
+<span class="sourceLineNo">941</span>    "\u019E\u01A2\362\u013E\226\226\226\226\226\226\226\226\226\226\u01F6\u019E"+<a name="line.941"></a>
+<span class="sourceLineNo">942</span>    "\u014C\u014C\u014C\u01B4\u01F8\u019E\u01A4\u014C\u014C\u014C\u019E\u01A2\u01A2"+<a name="line.942"></a>
+<span class="sourceLineNo">943</span>    "\u01A4\u019A\356\356\356\u018C\u014A\u01EC\u01EC\u01EC\u01EC\u01EC\362\362"+<a name="line.943"></a>
+<span class="sourceLineNo">944</span>    "\362\u01E2\u01E2\u01E2\u01E2\u01E2\362\362\362\u013E\u013E\u013E\u01AC\u013E"+<a name="line.944"></a>
+<span class="sourceLineNo">945</span>    "\u013E\u013E\362\362\362\362\362\362\362\362\362\u014C\u014C\u022E\226\226"+<a name="line.945"></a>
+<span class="sourceLineNo">946</span>    "\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.946"></a>
+<span class="sourceLineNo">947</span>    "\226\226\u01F8\u014C\u014C\u019E\u019E\u01A2\u01A2\u019E\u01FC\226\226\226"+<a name="line.947"></a>
+<span class="sourceLineNo">948</span>    "\362\362\u01E2\u01E2\u01E2\u01E2\u01E2\u013E\u013E\u013E\u01EA\u01E8\u01E8"+<a name="line.948"></a>
+<span class="sourceLineNo">949</span>    "\u01E8\u01E8\u012E\356\356\356\356\u01E8\u01E8\u01E8\u01E8\u01F2\362\u014C"+<a name="line.949"></a>
+<span class="sourceLineNo">950</span>    "\u022E\226\226\226\226\226\226\226\226\226\226\226\226\226\226\u01F6\u014C"+<a name="line.950"></a>
+<span class="sourceLineNo">951</span>    "\u014C\u01A2\u014C\u0232\362\226\u01E2\u01E2\u01E2\u01E2\u01E2\362\362\362"+<a name="line.951"></a>
+<span class="sourceLineNo">952</span>    "\226\226\226\u01F8\u014C\u01A2\u01A4\u01A4\u014C\u01EE\362\362\362\362\u013E"+<a name="line.952"></a>
+<span class="sourceLineNo">953</span>    "\u013E\226\226\u01A2\u01A2\u01A2\u01A2\u014C\u014C\u014C\u014C\u01A2\356\362"+<a name="line.953"></a>
+<span class="sourceLineNo">954</span>    "\u0146\u013E\u013E\u01EC\u01EC\u01EC\u01EC\u01EC\362\u01AE\226\u01E2\u01E2"+<a name="line.954"></a>
+<span class="sourceLineNo">955</span>    "\u01E2\u01E2\u01E2\226\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.955"></a>
+<span class="sourceLineNo">956</span>    "\226\342\342\342\u013E\362\362\362\362\362\362\362\362\356\u01E0\356\356\356"+<a name="line.956"></a>
+<span class="sourceLineNo">957</span>    "\356\356\356\u0234\356\356\356\u01A0\226\u01A8\226\226\u01B8\362\362\362\362"+<a name="line.957"></a>
+<span class="sourceLineNo">958</span>    "\362\362\212\212\212\212\212\212\212\212\212\212\212\212\212\212\212\212\212"+<a name="line.958"></a>
+<span class="sourceLineNo">959</span>    "\212\212\212\212\212\334\334\334\334\334\334\334\334\334\334\334\334\334\334"+<a name="line.959"></a>
+<span class="sourceLineNo">960</span>    "\334\334\334\334\334\334\334\334\334\334\334\334\334\212\212\212\212\212\212"+<a name="line.960"></a>
+<span class="sourceLineNo">961</span>    "\212\212\212\212\212\u0236\212\304\212\212\212\212\212\212\212\212\212\212"+<a name="line.961"></a>
+<span class="sourceLineNo">962</span>    "\212\212\212\212\u0238\334\334\356\356\356\u018C\362\362\362\362\362\362\362"+<a name="line.962"></a>
+<span class="sourceLineNo">963</span>    "\362\362\362\356\356\142\142\142\142\142\142\142\142\142\142\142\264\264\u023A"+<a name="line.963"></a>
+<span class="sourceLineNo">964</span>    "\212\u023C\u023E\u023E\u023E\u023E\u0240\u0240\u0240\u0240\u023E\u023E\u023E"+<a name="line.964"></a>
+<span class="sourceLineNo">965</span>    "\362\u0240\u0240\u0240\362\u023E\u023E\u023E\u023E\u0240\u0240\u0240\u0240"+<a name="line.965"></a>
+<span class="sourceLineNo">966</span>    "\u023E\u023E\u023E\u023E\u0240\u0240\u0240\u0240\u023E\u023E\u023E\362\u0240"+<a name="line.966"></a>
+<span class="sourceLineNo">967</span>    "\u0240\u0240\362\u0242\u0242\u0242\u0242\u0244\u0244\u0244\u0244\u023E\u023E"+<a name="line.967"></a>
+<span class="sourceLineNo">968</span>    "\u023E\u023E\u0240\u0240\u0240\u0240\u0246\u0248\u0248\u024A\u024C\u024E\u0250"+<a name="line.968"></a>
+<span class="sourceLineNo">969</span>    "\362\264\264\264\264\u0252\u0252\u0252\u0252\264\264\264\264\u0252\u0252\u0252"+<a name="line.969"></a>
+<span class="sourceLineNo">970</span>    "\u0252\264\264\264\264\u0252\u0252\u0252\u0252\u023E\264\u0254\264\u0240\u0256"+<a name="line.970"></a>
+<span class="sourceLineNo">971</span>    "\u0258\u025A\344\264\u0254\264\u025C\u025C\u0258\344\u023E\264\362\264\u0240"+<a name="line.971"></a>
+<span class="sourceLineNo">972</span>    "\u025E\u0260\344\u023E\264\u0262\264\u0240\u0264\u0266\344\362\264\u0254\264"+<a name="line.972"></a>
+<span class="sourceLineNo">973</span>    "\u0268\u026A\u0258\u026C\u026E\u026E\u026E\u0270\u026E\u0272\u0274\u0276\u0278"+<a name="line.973"></a>
+<span class="sourceLineNo">974</span>    "\u0278\u0278\020\u027A\u027C\u027A\u027C\020\020\020\020\u027E\u0280\u0280"+<a name="line.974"></a>
+<span class="sourceLineNo">975</span>    "\u0282\u0284\u0284\u0286\020\u0288\u028A\020\u028C\u028E\020\u0290\u0292\020"+<a name="line.975"></a>
+<span class="sourceLineNo">976</span>    "\020\020\020\020\u0294\u028E\020\020\020\020\u0296\u0274\u0274\u0298\362\362"+<a name="line.976"></a>
+<span class="sourceLineNo">977</span>    "\u0274\u0274\u0274\u029A\362\110\110\110\u029C\u029E\u02A0\u02A2\u02A2\u02A2"+<a name="line.977"></a>
+<span class="sourceLineNo">978</span>    "\u02A2\u02A2\u029C\u029E\u021A\334\334\u02A4\342\342\342\u01E4\362\072\072"+<a name="line.978"></a>
+<span class="sourceLineNo">979</span>    "\072\072\072\072\072\072\072\072\072\072\072\362\362\362\362\362\362\362\362"+<a name="line.979"></a>
+<span class="sourceLineNo">980</span>    "\362\362\362\356\356\356\356\356\356\u02A6\u0130\u02A8\u0130\u02A8\356\356"+<a name="line.980"></a>
+<span class="sourceLineNo">981</span>    "\356\356\356\u018C\362\362\362\362\362\362\362\074\u02AA\074\u02AC\074\u02AE"+<a name="line.981"></a>
+<span class="sourceLineNo">982</span>    "\u0116\212\u0116\u02B0\u02AC\074\u02B2\u0116\u0116\074\074\074\u02AA\u02B4"+<a name="line.982"></a>
+<span class="sourceLineNo">983</span>    "\u02AA\u0204\u0116\u02B6\u0116\u02B8\222\226\332\074\212\u0116\036\u015E\u02B2"+<a name="line.983"></a>
+<span class="sourceLineNo">984</span>    "\212\212\u02BA\074\u02BC\122\122\122\122\122\122\122\122\u02BE\u02BE\u02BE"+<a name="line.984"></a>
+<span class="sourceLineNo">985</span>    "\u02BE\u02BE\u02BE\u02C0\u02C0\u02C2\u02C2\u02C2\u02C2\u02C2\u02C2\u02C4\u02C4"+<a name="line.985"></a>
+<span class="sourceLineNo">986</span>    "\u02C6\u02C8\u02CA\u02C6\u02CC\362\362\362\u015E\u015E\u02CE\074\074\u015E"+<a name="line.986"></a>
+<span class="sourceLineNo">987</span>    "\074\074\u02CE\u02BA\074\u02CE\074\074\074\u02CE\074\074\074\074\074\074\074"+<a name="line.987"></a>
+<span class="sourceLineNo">988</span>    "\074\074\074\074\074\074\074\074\u015E\074\u02CE\u02CE\074\074\074\074\074"+<a name="line.988"></a>
+<span class="sourceLineNo">989</span>    "\074\074\074\074\074\074\074\074\074\074\u015E\u015E\u015E\u015E\u015E\u015E"+<a name="line.989"></a>
+<span class="sourceLineNo">990</span>    "\u02D0\u02D2\036\u015E\u02D2\u02D2\u02D2\u015E\u02D0\u02D4\u02D0\036\u015E"+<a name="line.990"></a>
+<span class="sourceLineNo">991</span>    "\u02D2\u02D2\u02D0\u02D2\036\036\036\u015E\u02D0\u02D2\u02D2\u02D2\u02D2\u015E"+<a name="line.991"></a>
+<span class="sourceLineNo">992</span>    "\u015E\u02D0\u02D0\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\036\u015E"+<a name="line.992"></a>
+<span class="sourceLineNo">993</span>    "\u015E\u02D2\u02D2\u015E\u015E\u015E\u015E\u02D0\036\036\u02D2\u02D2\u02D2"+<a name="line.993"></a>
+<span class="sourceLineNo">994</span>    "\u02D2\u015E\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2"+<a name="line.994"></a>
+<span class="sourceLineNo">995</span>    "\u02D2\u02D2\u02D2\u02D2\036\u02D0\u02D2\036\u015E\u015E\036\u015E\u015E\u015E"+<a name="line.995"></a>
+<span class="sourceLineNo">996</span>    "\u015E\u02D2\u015E\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\036"+<a name="line.996"></a>
+<span class="sourceLineNo">997</span>    "\u015E\u015E\u02D2\u015E\u015E\u015E\u015E\u02D0\u02D2\u02D2\u015E\u02D2\u015E"+<a name="line.997"></a>
+<span class="sourceLineNo">998</span>    "\u015E\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2"+<a name="line.998"></a>
+<span class="sourceLineNo">999</span>    "\u015E\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\074\074\074\074\u02D2"+<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>    "\u02D2\074\074\074\074\074\074\074\074\074\074\u02D2\074\074\074\u02D6\u02D8"+<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>    "\074\074\074\074\074\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>    "\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>    "\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u02DA"+<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>    "\u02CE\074\074\074\074\074\074\074\074\074\074\074\u02DC\074\074\u02BA\u015E"+<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>    "\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\074\074"+<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>    "\074\074\074\074\074\074\074\074\074\074\074\074\074\074\074\074\074\074\u015E"+<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>    "\u015E\u015E\074\074\074\074\074\074\074\074\074\362\362\362\362\362\362\074"+<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>    "\074\074\u01CE\362\362\362\362\362\362\362\362\362\362\362\362\074\074\074"+<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>    "\074\074\u01CE\362\362\362\362\362\362\362\362\362\362\u02DE\u02DE\u02DE\u02DE"+<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>    "\u02DE\u02DE\u02DE\u02DE\u02DE\u02DE\u02E0\u02E0\u02E0\u02E0\u02E0\u02E0\u02E0"+<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>    "\u02E0\u02E0\u02E0\u02E2\u02E2\u02E2\u02E2\u02E2\u02E2\u02E2\u02E2\u02E2\u02E2"+<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>    "\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>    "\u02E4\u02E4\u02E4\u02E4\u02E4\u02E4\u02E4\u02E4\u02E4\u02E4\u02E4\u02E4\u02E4"+<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>    "\u02E6\u02E6\u02E6\u02E6\u02E6\u02E6\u02E6\u02E6\u02E6\u02E6\u02E6\u02E6\u02E6"+<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>    "\u02E8\u02EA\u02EA\u02EA\u02EA\u02EC\u02EE\u02EE\u02EE\u02EE\u02F0\074\074"+<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>    "\074\074\074\074\074\074\074\074\074\u02BA\074\074\074\074\u02BA\074\074\074"+<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>    "\074\074\074\074\074\074\074\074\074\074\074\074\074\074\074\074\074\074\074"+<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>    "\074\074\074\074\074\u015E\u015E\u015E\u015E\074\074\074\074\074\074\074\u02BA"+<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>    "\074\074\074\074\074\074\074\074\074\074\074\074\074\074\u02DA\074\074\074"+<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>    "\074\074\074\074\074\074\u02F2\074\074\074\074\074\074\074\074\074\074\074"+<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>    "\074\074\074\074\074\074\074\074\022\022\022\022\022\022\022\u02F4\u02F4\u02F4"+<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>    "\u02F4\u02F4\u02DE\u02DE\u02DE\u02DE\u02DE\u02F6\u02F6\u02F6\u02F6\u02F6\074"+<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>    "\074\074\074\074\074\036\u02D0\u02F8\u02FA\u02D2\u02FC\u02FE\u015E\u015E\u02D0"+<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>    "\u02D2\036\u015E\u015E\u02D2\036\u015E\u02D2\u02D2\022\022\022\022\022\u015E"+<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>    "\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E"+<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>    "\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u029E\u0300"+<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>    "\u0300\u0300\u0300\u0300\u0300\u0300\u0300\u0300\u0300\u02FA\u02D0\u02D2\u02D2"+<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>    "\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u015E\u015E\u015E\u015E\036"+<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>    "\u015E\u015E\u015E\u02D2\u02D2\u02D2\u015E\u02D0\u015E\u015E\u02D2\u02D2\036"+<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>    "\u02D2\u015E\022\022\036\u015E\u02D0\u02D0\u02D2\u015E\u02D2\u015E\u015E\u015E"+<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>    "\u015E\u015E\u02D2\u02D2\u02D2\u015E\022\u015E\u015E\u015E\u015E\u015E\u015E"+<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>    "\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\036\u02D2\u02D2\u015E"+<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>    "\036\036\u02D0\u02D0\u02D2\036\u015E\u015E\u02D2\u015E\u015E\u015E\u02D2\036"+<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>    "\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u02D0\036"+<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>    "\u015E\u015E\u015E\u015E\u015E\u02D2\u015E\u015E\u02D2\u02D2\u02D0\036\u02D0"+<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>    "\036\u015E\u02D0\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2"+<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>    "\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u015E\u02D2"+<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>    "\u02D2\u02D2\u02D2\u02D0\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2"+<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>    "\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\u02D2\036\u015E\u015E"+<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>    "\036\036\u015E\u02D2\u02D2\036\u015E\u015E\u02D2\036\u015E\u02D0\u015E\u02D0"+<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>    "\u02D2\u02D2\u02D0\u015E\074\074\074\074\074\074\074\074\u015E\u015E\u015E"+<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>    "\u015E\u015E\u015E\u015E\u015E\u015E\u015E\u02CE\u02BA\u015E\u015E\u02FC\362"+<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>    "\074\074\074\074\074\362\362\362\u0138\u0138\u0138\u0138\u0138\u0138\u0138"+<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>    "\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138\u0138"+<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>    "\u0138\u0138\u0138\u013A\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142"+<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>    "\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142\u0142"+<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>    "\u0142\u0302\142\u0204\254\256\150\150\u0304\u0204\u023C\142\146\166\212\212"+<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>    "\u0238\u0204\142\142\u0306\074\074\u0308\150\u030A\356\362\362\362\u030C\020"+<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>    "\u030E\020\264\264\264\264\264\264\264\264\264\264\264\264\264\264\264\264"+<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>    "\264\264\264\362\362\362\362\362\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>    "\362\362\362\362\u013C\u01DC\362\362\362\362\362\362\u014A\226\226\226\226"+<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>    "\226\226\226\226\226\226\226\u01B2\362\362\362\362\226\226\226\u01B2\226\226"+<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>    "\226\u01B2\226\226\226\u01B2\226\226\226\u01B2\u014C\u014C\u014C\u014C\u014C"+<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>    "\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C\u014C\020\u0310"+<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>    "\u0310\020\u0288\u028A\u0310\020\020\020\020\u0312\020\u0226\u0310\020\u0310"+<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>    "\022\022\022\022\020\020\u0314\020\362\362\362\362\362\362\362\074\074\074"+<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>    "\074\074\074\074\074\074\074\074\074\074\u02F2\074\074\074\074\074\074\074"+<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>    "\074\074\074\074\074\362\362\362\362\362\362\074\074\074\074\074\074\074\074"+<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>    "\074\074\074\362\362\362\362\362\362\362\362\362\362\362\362\362\074\074\074"+<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>    "\074\074\074\362\362\012\020\u0316\u0318\022\022\022\022\022\074\022\022\022"+<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>    "\022\u031A\u031C\u031E\u0320\u0320\u0320\u0320\356\356\356\u0322\342\342\074"+<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>    "\u0324\u0326\u0328\074\226\226\226\226\226\226\226\226\226\226\226\u01B2\u014A"+<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>    "\u032A\u032C\u032E\226\226\226\226\226\226\226\226\226\226\226\226\226\u0328"+<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>    "\342\u032E\362\362\u01AE\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span>    "\226\226\226\226\226\226\226\362\u01AE\226\226\226\226\226\226\226\226\226"+<a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>    "\226\226\226\226\226\u01B2\u01E8\u0330\u0330\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>    "\226\226\226\226\226\226\226\226\226\226\226\226\226\u01B2\362\362\074\074"+<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>    "\362\362\362\362\362\362\226\226\226\226\226\226\226\226\u01E8\u01E8\u01E8"+<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>    "\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u02DA\u01CE"+<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>    "\u0332\u0332\u0332\u0332\u0332\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>    "\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u0334\u0336"+<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>    "\u0336\u0336\u0336\u0336\122\122\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>    "\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\074\u02DC\u01E8\u01E8\u01E8\u01E8"+<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>    "\u01E8\u01E8\u01E8\u01E8\u0338\122\122\122\122\122\122\122\u01E8\u01E8\u01E8"+<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>    "\u01E8\u01E8\u01E8\074\074\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>    "\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>    "\u01E8\u01E8\u01F2\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>    "\u01E8\u02DA\074\u02DC\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8"+<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>    "\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\074\u01E8\u01E8\u01E8\u01E8"+<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>    "\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u01E8\u02DA\u033A"+<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>    "\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A"+<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>    "\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A"+<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>    "\362\362\362\362\362\u033A\u033A\u033A\u033A\u033A\u033A\362\362\362\362\362"+<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>    "\362\362\362\362\362\226\226\226\226\226\226\226\226\226\226\u022C\226\226"+<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>    "\226\226\226\226\226\226\226\226\226\u01B2\362\074\074\074\074\074\074\074"+<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>    "\074\074\074\074\u01CE\362\362\362\362\226\226\226\226\226\226\226\226\226"+<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>    "\226\226\226\226\226\u033C\020\226\226\226\226\226\226\226\226\u01EC\u01EC"+<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>    "\u01EC\u01EC\u01EC\226\362\362\362\362\362\362\362\362\362\362\142\142\142"+<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>    "\142\142\142\142\u01A8\u0130\u033E\362\362\362\362\356\u0314\142\142\142\142"+<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>    "\142\142\142\142\142\142\142\142\362\362\362\362\226\226\226\u0340\u0340\u0340"+<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>    "\u0340\u0342\356\u013E\u013E\u013E\362\362\362\362\344\344\344\344\344\344"+<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>    "\344\344\344\344\344\u0344\346\346\346\346\344\142\142\142\142\142\142\142"+<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>    "\212\142\142\142\142\142\142\142\142\142\142\142\142\142\142\142\u0346\212"+<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>    "\212\212\146\150\u0304\142\142\142\142\142\u0348\u034A\u0304\u034C\142\362"+<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>    "\362\362\362\362\362\362\142\142\142\142\142\362\362\362\362\362\362\362\362"+<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>    "\362\362\362\362\362\362\362\362\362\362\362\362\362\362\362\362\222\226\226"+<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>    "\226\u01A0\226\u01A0\226\u01A8\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>    "\u01F6\u01A4\u019E\074\074\362\362\u01BA\u01BA\u01BA\u01E8\u034E\362\362\362"+<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>    "\226\226\226\226\226\226\226\226\226\226\020\020\362\362\362\362\u01A2\226"+<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>    "\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>    "\226\226\226\226\226\u01A2\u01A2\u01A2\u01A2\u01A2\u01A2\u01A2\u01A2\u018C"+<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>    "\362\362\362\362\u013E\u01E2\u01E2\u01E2\u01E2\u01E2\362\362\362\356\356\356"+<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>    "\356\356\356\356\356\356\226\226\226\u013E\u0214\362\362\u01EC\u01EC\u01EC"+<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>    "\u01EC\u01EC\226\226\226\226\226\226\226\226\226\226\226\226\226\226\u014C"+<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>    "\u014C\u019A\356\u013E\226\226\226\226\226\226\226\226\226\226\226\u01C0\u014C"+<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>    "\u014C\u014C\u014C\u014C\u01FA\362\362\362\362\362\u0146\226\226\226\226\226"+<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>    "\226\226\226\226\u01A8\u01A2\u014C\u014C\u01A2\u019E\u01A2\u0350\u013E\u013E"+<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>    "\u013E\u013E\u013E\u013E\u013C\u01E2\u01E2\u01E2\u01E2\u01E2\362\362\u013E"+<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>    "\226\226\226\226\u01C0\u014C\u014C\u019E\u01A4\u019E\u01A4\u01B4\362\362\362"+<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>    "\362\226\u01C0\226\226\226\226\u019E\362\u01E2\u01E2\u01E2\u01E2\u01E2\362"+<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>    "\u013E\u013E\226\226\226\226\226\226\226\226\u032E\226\226\u01E6\u01E8\u0202"+<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>    "\362\362\226\226\226\226\226\226\226\226\u01C6\u014C\u01C6\u01C0\u01C6\226"+<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>    "\226\u019A\u01A8\u01B2\362\362\362\362\362\362\362\362\362\362\362\u01AE\u022C"+<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>    "\u013E\u01AE\226\226\u01B2\u01AE\226\226\u01B2\u01AE\226\226\u01B2\362\362"+<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>    "\362\362\226\226\226\u01B2\226\226\226\u01B2\362\362\362\362\362\362\362\362"+<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>    "\226\u01F6\u01A4\u01A2\u019E\u0352\u0200\362\u01E2\u01E2\u01E2\u01E2\u01E2"+<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>    "\362\362\362\226\226\362\362\362\362\362\362\226\226\226\226\226\226\226\226"+<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>    "\226\226\226\u01B2\362\u01AE\226\226\226\226\226\226\226\226\226\226\226\226"+<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>    "\226\226\226\226\226\226\226\226\226\226\226\226\362\362\u0354\u0354\u0354"+<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>    "\u0354\u0354\u0354\u0354\u0354\u0354\u0354\u0354\u0354\u0354\u0354\u0354\u0354"+<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>    "\u0356\u0356\u0356\u0356\u0356\u0356\u0356\u0356\u0356\u0356\u0356\u0356\u0356"+<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>    "\u0356\u0356\u0356\u033A\u033A\u033A\u033A\u033A\u0358\u033A\u033A\u033A\u035A"+<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>    "\u033A\u033A\u035C\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A"+<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>    "\u033A\u033A\u035E\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A"+<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>    "\u033A\u033A\u033A\u033A\u0360\u0362\u033A\u033A\u033A\u033A\u033A\u033A\u033A"+<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>    "\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A"+<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>    "\u0364\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\362\u033A\u033A\u033A"+<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>    "\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A\u033A"+<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>    "\u033A\u033A\u033A\u033A\u033A\362\362\362\264\264\264\u0254\362\362\362\362"+<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>    "\362\u0366\264\264\362\362\u0368\u036A\u0154\u0154\u0154\u0154\u036C\u0154"+<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>    "\u0154\u0154\u0154\u0154\u0154\u0156\u0154\u0154\u0156\u0156\u0154\u0368\u0156"+<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>    "\u0154\u0154\u0154\u0154\u0154\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A"+<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>    "\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u036E\u036E\u036E\u036E"+<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>    "\u036E\u036E\u036E\u036E\362\362\362\362\362\362\362\362\u018E\u016A\u016A"+<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>    "\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A"+<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>    "\u016A\u016A\u016A\u016A\u016A\u016A\u0370\362\362\362\362\362\362\362\362"+<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>    "\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A"+<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>    "\u016A\u016A\u016A\362\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A"+<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>    "\u016A\u016A\362\362\362\362\362\362\362\362\362\362\362\362\362\362\362\362"+<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>    "\362\362\362\362\u016A\u016A\u016A\u016A\u016A\u016A\u0372\362\356\356\356"+<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>    "\356\356\356\356\356\020\020\020\u0374\u0376\362\362\362\356\356\356\u018C"+<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>    "\362\362\362\362\u0312\u0378\u037A\u037C\u037C\u037C\u037C\u037C\u037C\u037C"+<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>    "\u0376\u0374\u0376\020\u028C\u037E\034\u0380\u0382\020\u0384\u0300\u0300\u0386"+<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>    "\020\u0388\u02D2\u02FC\u038A\u0286\362\362\u016A\u016A\u038C\u016A\u016A\u016A"+<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>    "\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A\u016A"+<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>    "\u016A\u016A\u016A\u038C\u038E\u030C\014\016\020\022\024\026\030\032\032\032"+<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>    "\032\032\034\036\040\054\056\056\056\056\056\056\056\056\056\056\056\056\060"+<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>    "\062\u029E\u0292\022\020\226\226\226\226\226\u032E\226\226\226\226\226\226"+<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>    "\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\226\342\226\226"+<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>    "\226\226\226\226\226\226\226\226\226\226\226\226\226\u01B2\362\226\226\226"+<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>    "\362\226\226\226\362\226\226\226\362\226\u01B2\362\072\u0390\u01CC\u0392\u02BA"+<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>    "\u015E\u02CE\u01CE\362\362\362\362\u0394\u0396\074\362").toCharArray();<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span><a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>  // The A table has 920 entries for a total of 3680 bytes.<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span><a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>  static final int A[] = new int[920];<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span>  static final String A_DATA =<a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>    "\u4800\u100F\u4800\u100F\u4800\u100F\u5800\u400F\u5000\u400F\u5800\u400F\u6000"+<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>    "\u400F\u5000\u400F\u5000\u400F\u5000\u400F\u6000\u400C\u6800\030\u6800\030"+<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>    "\u2800\030\u2800\u601A\u2800\030\u6800\030\u6800\030\uE800\025\uE800\026\u6800"+<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>    "\030\u2000\031\u3800\030\u2000\024\u3800\030\u3800\030\u1800\u3609\u1800\u3609"+<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>    "\u3800\030\u6800\030\uE800\031\u6800\031\uE800\031\u6800\030\u6800\030\202"+<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>    "\u7FE1\202\u7FE1\202\u7FE1\202\u7FE1\uE800\025\u6800\030\uE800\026\u6800\033"+<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>    "\u6800\u5017\u6800\033\201\u7FE2\201\u7FE2\201\u7FE2\201\u7FE2\uE800\025\u6800"+<a name="line.1164"></a>
+<span class="sourceLineNo">1165</span>    "\031\uE800\026\u6800\031\u4800\u100F\u4800\u100F\u5000\u100F\u3800\014\u6800"+<a name="line.1165"></a>
+<span class="sourceLineNo">1166</span>    "\030\u2800\u601A\u2800\u601A\u6800\034\u6800\034\u6800\033\u6800\034\000\u7002"+<a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>    "\uE800\035\u6800\031\u4800\u1010\u6800\034\u6800\033\u2800\034\u2800\031\u1800"+<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>    "\u060B\u1800\u060B\u6800\033\u07FD\u7002\u6800\034\u6800\030\u6800\033\u1800"+<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>    "\u050B\000\u7002\uE800\036\u6800\u080B\u6800\u080B\u6800\u080B\u6800\030\202"+<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>    "\u7001\202\u7001\202\u7001\u6800\031\202\u7001\u07FD\u7002\201\u7002\201\u7002"+<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>    "\201\u7002\u6800\031\201\u7002\u061D\u7002\006\u7001\005\u7002\u07FF\uF001"+<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>    "\u03A1\u7002\000\u7002\006\u7001\005\u7002\006\u7001\005\u7002\u07FD\u7002"+<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span>    "\u061E\u7001\006\u7001\u04F5\u7002\u034A\u7001\u033A\u7001\006\u7001\005\u7002"+<a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>    "\u0336\u7001\u0336\u7001\006\u7001\005\u7002\000\u7002\u013E\u7001\u032A\u7001"+<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>    "\u032E\u7001\006\u7001\u033E\u7001\u067D\u7002\u034E\u7001\u0346\u7001\u0575"+<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>    "\u7002\000\u7002\u034E\u7001\u0356\u7001\u05F9\u7002\u035A\u7001\u036A\u7001"+<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>    "\006\u7001\005\u7002\u036A\u7001\000\u7002\000\u7002\005\u7002\u0366\u7001"+<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>    "\u0366\u7001\006\u7001\005\u7002\u036E\u7001\000\u7002\000\u7005\000\u7002"+<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span>    "\u0721\u7002\000\u7005\000\u7005\012\uF001\007\uF003\011\uF002\012\uF001\007"+<a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>    "\uF003\011\uF002\011\uF002\006\u7001\005\u7002\u013D\u7002\u07FD\u7002\012"+<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>    "\uF001\u067E\u7001\u0722\u7001\u05FA\u7001\000\u7002\u07FE\u7001\006\u7001"+<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span>    "\005\u7002\u0576\u7001\u07FE\u7001\u07FD\u7002\u07FD\u7002\006\u7001\005\u7002"+<a name="line.1182"></a>
+<span class="sourceLineNo">1183</span>    "\u04F6\u7001\u0116\u7001\u011E\u7001\u07FD\u7002\u07FD\u7002\u07FD\u7002\u0349"+<a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>    "\u7002\u0339\u7002\000\u7002\u0335\u7002\u0335\u7002\000\u7002\u0329\u7002"+<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>    "\000\u7002\u032D\u7002\u0335\u7002\000\u7002\000\u7002\u033D\u7002\000\u7002"+<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>    "\u07FD\u7002\u0345\u7002\u034D\u7002\000\u7002\u034D\u7002\u0355\u7002\000"+<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>    "\u7002\000\u7002\u0359\u7002\u0369\u7002\000\u7002\000\u7002\u0369\u7002\u0369"+<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>    "\u7002\u0115\u7002\u0365\u7002\u0365\u7002\u011D\u7002\000\u7002\u036D\u7002"+<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span>    "\000\u7002\000\u7005\000\u7002\000\u7004\000\u7004\000\u7004\u6800\u7004\u6800"+<a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>    "\u7004\000\u7004\000\u7004\000\u7004\u6800\033\u6800\033\u6800\u7004\u6800"+<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>    "\u7004\000\u7004\u6800\033\u6800\u7004\u6800\033\000\u7004\u6800\033\u4000"+<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>    "\u3006\u4000\u3006\u4000\u3006\u46B1\u3006\u7800\000\u7800\000\000\u7004\u05F9"+<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span>    "\u7002\u05F9\u7002\u05F9\u7002\u6800\030\u7800\000\232\u7001\u6800\030\226"+<a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>    "\u7001\226\u7001\226\u7001\u7800\000\u0102\u7001\u7800\000\376\u7001\376\u7001"+<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>    "\u07FD\u7002\202\u7001\u7800\000\202\u7001\231\u7002\225\u7002\225\u7002\225"+<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>    "\u7002\u07FD\u7002\201\u7002\175\u7002\201\u7002\u0101\u7002\375\u7002\375"+<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>    "\u7002\042\u7001\371\u7002\345\u7002\000\u7001\000\u7001\000\u7001\275\u7002"+<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>    "\331\u7002\041\u7002\u0159\u7002\u0141\u7002\u07E5\u7002\000\u7002\u0712\u7001"+<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>    "\u0181\u7002\u6800\031\006\u7001\005\u7002\u07E6\u7001\000\u7002\u05FA\u7001"+<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>    "\u05FA\u7001\u05FA\u7001\u0142\u7001\u0142\u7001\u0141\u7002\u0141\u7002\000"+<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>    "\034\u4000\u3006\u4000\007\u4000\007\076\u7001\006\u7001\005\u7002\075\u7002"+<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span>    "\u7800\000\302\u7001\302\u7001\302\u7001\302\u7001\u7800\000\u7800\000\000"+<a name="line.1202"></a>
+<span class="sourceLineNo">1203</span>    "\u7004\000\030\000\030\u7800\000\301\u7002\301\u7002\301\u7002\301\u7002\u07FD"+<a name="line.1203"></a>
+<span class="sourceLineNo">1204</span>    "\u7002\u7800\000\000\030\u6800\024\u7800\000\u7800\000\u4000\u3006\u4000\u3006"+<a name="line.1204"></a>
+<span class="sourceLineNo">1205</span>    "\u4000\u3006\u0800\024\u4000\u3006\u0800\030\u4000\u3006\u4000\u3006\u0800"+<a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>    "\030\u0800\u7005\u0800\u7005\u0800\u7005\u7800\000\u0800\u7005\u0800\030\u0800"+<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span>    "\030\u7800\000\u3000\u1010\u3000\u1010\u6800\031\u6800\031\u1000\031\u2800"+<a name="line.1207"></a>
+<span class="sourceLineNo">1208</span>    "\030\u2800\030\u1000\u601A\u3800\030\u1000\030\u4000\u3006\u1000\030\u1000"+<a name="line.1208"></a>
+<span class="sourceLineNo">1209</span>    "\030\u1000\030\u1000\u7005\u1000\u7005\u1000\u7004\u1000\u7005\u1000\u7005"+<a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>    "\u4000\u3006\u4000\u3006\u4000\u3006\u3000\u3409\u3000\u3409\u2800\030\u3000"+<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span>    "\030\u3000\030\u1000\030\u4000\u3006\u1000\u7005\u1000\030\u1000\u7005\u4000"+<a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>    "\u3006\u3000\u1010\u6800\034\u4000\u3006\u4000\u3006\u1000\u7004\u1000\u7004"+<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span>    "\u4000\u3006\u4000\u3006\u6800\034\u1000\u7005\u1000\034\u1000\034\u1000\u7005"+<a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>    "\u7800\000\u1000\u1010\u4000\u3006\u7800\000\u7800\000\u1000\u7005\u0800\u3409"+<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>    "\u0800\u3409\u0800\u7005\u4000\u3006\u0800\u7004\u0800\u7004\u0800\u7004\u7800"+<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>    "\000\u0800\u7004\u4000\u3006\u4000\u3006\u4000\u3006\u0800\030\u0800\030\u4000"+<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>    "\u3006\000\u3008\u4000\u3006\000\u7005\000\u3008\000\u3008\000\u3008\u4000"+<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span>    "\u3006\000\u3008\u4000\u3006\000\u7005\u4000\u3006\000\u3749\000\u3749\000"+<a name="line.1218"></a>
+<span class="sourceLineNo">1219</span>    "\030\000\u7004\u7800\000\000\u7005\u7800\000\u4000\u3006\000\u7005\u7800\000"+<a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>    "\u4000\u3006\u7800\000\u7800\000\000\u3008\000\u3008\u7800\000\000\u080B\000"+<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span>    "\u080B\000\u080B\000\u06EB\000\034\u2800\u601A\000\u7005\u4000\u3006\u7800"+<a name="line.1221"></a>
+<span class="sourceLineNo">1222</span>    "\000\u2800\u601A\000\034\000\u7005\u4000\u3006\000\u7005\000\u074B\000\u080B"+<a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>    "\000\u080B\u6800\034\u6800\034\u2800\u601A\u6800\034\u7800\000\u6800\u050B"+<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>    "\u6800\u050B\u6800\u04AB\u6800\u04AB\u6800\u04AB\000\034\000\u3008\000\u3006"+<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span>    "\000\u3006\000\u3008\u7800\000\000\034\000\030\u7800\000\000\u7004\u4000\u3006"+<a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>    "\u4000\u3006\000\030\000\u3609\000\u3609\000\u7004\u7800\000\000\u7005\000"+<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span>    "\034\000\034\000\034\000\030\000\034\000\u3409\000\u3409\000\u3008\000\u3008"+<a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>    "\u4000\u3006\000\034\000\034\u7800\000\000\034\000\030\000\u7005\000\u3008"+<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span>    "\u4000\u3006\000\u3008\000\u3008\000\u3008\000\u3008\000\u7005\u4000\u3006"+<a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>    "\000\u3008\000\u3008\u4000\u3006\000\u7005\000\u3008\u07FE\u7001\u07FE\u7001"+<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span>    "\000\u7005\000\030\000\030\000\u070B\000\u070B\000\u070B\000\u070B\000\u042B"+<a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>    "\000\u054B\000\u080B\000\u080B\u7800\000\u6800\024\000\u7005\000\030\000\u7005"+<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>    "\u6000\u400C\000\u7005\000\u7005\uE800\025\uE800\026\u7800\000\000\u746A\000"+<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>    "\u746A\000\u746A\u7800\000\000\u1010\000\u1010\000\030\u2800\u601A\u6800\u060B"+<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span>    "\u6800\u060B\u6800\024\u6800\030\u6800\030\u4000\u3006\u6000\u400C\u7800\000"+<a name="line.1235"></a>
+<span class="sourceLineNo">1236</span>    "\000\u7005\000\u7004\000\u3008\000\u7005\000\u04EB\u7800\000\000\u3008\u7800"+<a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>    "\000\u4000\u3006\000\u3008\000\u7004\u07FD\u7002\000\u7002\000\u7004\u07FD"+<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span>    "\u7002\355\u7002\u07FE\u7001\000\u7002\u07E1\u7002\u07E1\u7002\u07E2\u7001"+<a name="line.1238"></a>
+<span class="sourceLineNo">1239</span>    "\u07E2\u7001\u07FD\u7002\u07E1\u7002\u7800\000\u07E2\u7001\u06D9\u7002\u06D9"+<a name="line.1239"></a>
+<span class="sourceLineNo">1240</span>    "\u7002\u06A9\u7002\u06A9\u7002\u0671\u7002\u0671\u7002\u0601\u7002\u0601\u7002"+<a name="line.1240"></a>
+<span class="sourceLineNo">1241</span>    "\u0641\u7002\u0641\u7002\u0609\u7002\u0609\u7002\u07FF\uF003\u07FF\uF003\u07FD"+<a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>    "\u7002\u7800\000\u06DA\u7001\u06DA\u7001\u07FF\uF003\u6800\033\u07FD\u7002"+<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>    "\u6800\033\u06AA\u7001\u06AA\u7001\u0672\u7001\u0672\u7001\u7800\000\u6800"+<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span>    "\033\u07FD\u7002\u07E5\u7002\u0642\u7001\u0642\u7001\u07E6\u7001\u6800\033"+<a name="line.1244"></a>
+<span class="sourceLineNo">1245</span>    "\u0602\u7001\u0602\u7001\u060A\u7001\u060A\u7001\u6800\033\u7800\000\u6000"+<a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>    "\u400C\u6000\u400C\u6000\u400C\u6000\014\u6000\u400C\u4800\u1010\u4800\u1010"+<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span>    "\u4800\u1010\000\u1010\u0800\u1010\u6800\024\u6800\024\u6800\035\u6800\036"+<a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>    "\u6800\025\u6800\035\u6000\u400D\u5000\u400E\u7800\u1010\u7800\u1010\u7800"+<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>    "\u1010\u3800\014\u2800\030\u2800\030\u2800\030\u6800\030\u6800\030\uE800\035"+<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>    "\uE800\036\u6800\030\u6800\030\u6800\u5017\u6800\u5017\u6800\030\u3800\031"+<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span>    "\uE800\025\uE800\026\u6800\030\u6800\031\u6800\030\u6800\030\u6000\u400C\u4800"+<a name="line.1251"></a>
+<span class="sourceLineNo">1252</span>    "\u1010\u7800\000\u1800\u060B\000\u7004\u2000\031\u2000\031\u6800\031\uE800"+<a name="line.1252"></a>
+<span class="sourceLineNo">1253</span>    "\025\uE800\026\000\u7004\u1800\u040B\u1800\u040B\000\u7004\000\u7004\u4000"+<a name="line.1253"></a>
+<span class="sourceLineNo">1254</span>    "\u3006\u4000\007\u4000\007\u4000\u3006\000\u7001\u6800\034\u6800\034\000\u7001"+<a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>    "\000\u7002\000\u7001\000\u7001\000\u7002\u6800\031\000\u7001\u07FE\u7001\u6800"+<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span>    "\034\u2800\034\000\u7002\162\u7001\000\u7001\u6800\034\u6800\031\161\u7002"+<a name="line.1256"></a>
+<span class="sourceLineNo">1257</span>    "\000\034\102\u742A\102\u742A\102\u780A\102\u780A\101\u762A\101\u762A\101\u780A"+<a name="line.1257"></a>
+<span class="sourceLineNo">1258</span>    "\101\u780A\000\u780A\000\u780A\000\u780A\006\u7001\005\u7002\000\u742A\000"+<a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>    "\u780A\u6800\u06EB\u6800\031\u6800\034\u6800\031\uE800\031\uE800\031\uE800"+<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span>    "\031\u2000\031\u2800\031\u6800\034\uE800\025\uE800\026\u6800\034\000\034\u6800"+<a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>    "\034\u6800\034\000\034\u6800\u042B\u6800\u042B\u6800\u05AB\u6800\u05AB\u1800"+<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>    "\u072B\u1800\u072B\152\034\152\034\151\034\151\034\u6800\u06CB\u6800\u040B"+<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>    "\u6800\u040B\u6800\u040B\u6800\u040B\u6800\u058B\u6800\u058B\u6800\u058B\u6800"+<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>    "\u058B\u6800\u042B\u7800\000\u6800\034\u6800\u056B\u6800\u056B\u6800\u06EB"+<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span>    "\u6800\u06EB\uE800\031\uE800\025\uE800\026\u6800\031\u6800\031\u7800\000\uE800"+<a name="line.1265"></a>
+<span class="sourceLineNo">1266</span>    "\031\u7800\000\uE800\026\uE800\025\301\u7002\u7800\000\005\u7002\u07FE\u7001"+<a name="line.1266"></a>
+<span class="sourceLineNo">1267</span>    "\000\u7002\u6800\034\u6800\034\006\u7001\005\u7002\u4000\u3006\u7800\000\u6800"+<a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>    "\030\u6800\030\u6800\u080B\uE800\035\uE800\036\u6800\030\u6800\024\u6800\030"+<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span>    "\u6800\u7004\u6800\034\000\u7004\000\u7005\000\u772A\u6800\024\u6800\025\u6800"+<a name="line.1269"></a>
+<span class="sourceLineNo">1270</span>    "\026\u6800\026\u6800\034\000\u740A\000\u740A\000\u740A\u6800\024\000\u7004"+<a name="line.1270"></a>
+<span class="sourceLineNo">1271</span>    "\000\u764A\000\u776A\000\u748A\000\u7004\000\u7005\u6800\030\u4000\u3006\u6800"+<a name="line.1271"></a>
+<span class="sourceLineNo">1272</span>    "\033\u6800\033\000\u7004\000\u7004\000\u7005\000\u05EB\000\u05EB\000\u042B"+<a name="line.1272"></a>
+<span class="sourceLineNo">1273</span>    "\000\u042B\u6800\034\u6800\u048B\u6800\u048B\u6800\u048B\000\034\u6800\u080B"+<a name="line.1273"></a>
+<span class="sourceLineNo">1274</span>    "\000\u7005\000\u7005\000\u7004\u6800\030\u4000\007\u6800\030\000\u776A\000"+<a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>    "\u776A\000\u776A\000\u762A\u6800\033\u6800\u7004\000\u7004\000\u7002\u6800"+<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span>    "\u7004\000\033\000\033\006\u7001\000\u7002\u7800\000\u2800\u601A\u2800\034"+<a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>    "\000\u3008\000\030\000\u3008\000\030\000\023\000\023\000\022\000\022\000\u7005"+<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span>    "\000\u7705\000\u7005\000\u76E5\000\u7545\000\u7005\000\u75C5\000\u7005\000"+<a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>    "\u7005\000\u76A5\000\u7005\000\u7665\000\u7005\000\u75A5\u7800\000\u07FD\u7002"+<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span>    "\u7800\000\u0800\u7005\u4000\u3006\u0800\u7005\u0800\u7005\u2000\031\u1000"+<a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>    "\033\u1000\033\u6800\025\u6800\026\u1000\u601A\u6800\034\u6800\030\u6800\025"+<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span>    "\u6800\026\u6800\030\u6800\024\u6800\u5017\u6800\u5017\u6800\025\u6800\026"+<a name="line.1282"></a>
+<span class="sourceLineNo">1283</span>    "\u6800\025\u6800\u5017\u6800\u5017\u3800\030\u7800\000\u6800\030\u3800\030"+<a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>    "\u6800\024\uE800\025\uE800\026\u2800\030\u2000\031\u2000\024\u6800\030\u2800"+<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span>    "\u601A\u1000\u7005\u7800\000\u7800\000\u4800\u1010\u6800\031\u6800\033\u2800"+<a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>    "\u601A\u7800\000\u7800\000\u6800\u1010\u6800\u1010\u6800\u1010";<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span><a name="line.1287"></a>
+<span class="sourceLineNo">1288</span>  // The B table has 920 entries for a total of 1840 bytes.<a name="line.1288"></a>
+<span class="sourceLineNo">1289</span><a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>  static final char B[] = (<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1291"></a>
+<span class="sourceLineNo">1292</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1292"></a>
+<span class="sourceLineNo">1293</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1293"></a>
+<span class="sourceLineNo">1294</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1294"></a>
+<span class="sourceLineNo">1295</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1295"></a>
+<span class="sourceLineNo">1296</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1298"></a>
+<span class="sourceLineNo">1299</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1299"></a>
+<span class="sourceLineNo">1300</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>    "\000\000\000\000\000\000\000\000\000\000\000\001\001\001\000\000\000\000\000"+<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>    "\000\000\000\000\001\000\000\000\000\000\000\000\000\005\000\000\001\000\000"+<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1304"></a>
+<span class="sourceLineNo">1305</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1307"></a>
+<span class="sourceLineNo">1308</span>    "\000\000\000\000\000\000\000\000\000\004\004\000\004\000\004\004\000\000\000"+<a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\004\000\000"+<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span>    "\000\000\000\000\000\000\004\000\004\000\000\000\000\000\000\004\000\000\000"+<a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>    "\004\000\000\000\004\000\000\004\004\000\000\000\000\000\000\000\000\000\000"+<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>    "\000\000\000\000\000\000\000\000\000\000\004\004\000\000\000\004\004\000\000"+<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span>    "\004\004\004\004\004\000\000\000\000\000\000\000\000\000\000\004\000\000\004"+<a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>    "\000\000\004\004\000\000\000\000\000\000\000\000\004\000\000\000\000\004\000"+<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\004\004\004\004\000"+<a name="line.1315"></a>
+<span class="sourceLineNo">1316</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1316"></a>
+<span class="sourceLineNo">1317</span>    "\000\000\000\000\000\000\000\000\000\004\000\004\004\000\000\000\004\000\000"+<a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>    "\000\000\000\000\000\000\000\004\000\000\000\000\000\000\000\001\000\000\001"+<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1321"></a>
+<span class="sourceLineNo">1322</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span>    "\000\000\000\000\000\000\000\000\000\000\000\001\000\000\000\000\000\000\000"+<a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\002"+<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span>    "\002\002\002\001\001\001\001\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\006"+<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>    "\006\005\005\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\020\020\000\000\000\000"+<a name="line.1332"></a>
+<span class="sourceLineNo">1333</span>    "\000\020\020\020\000\000\020\020\020\000\000\000\000\000\000\000\000\000\000"+<a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>    "\000\000\000\000\000\000\000\000\000\020\020\000\000\000\000\000\000\000\000"+<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span>    "\000\000\001\000\000\000\000\000\000\000\000\000\000\000\004\000\000\000\000"+<a name="line.1335"></a>
+<span class="sourceLineNo">1336</span>    "\000\020\020\020\020\020\020\020\020\020\020\020\020\020\020\000\000\000\000"+<a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>    "\004\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span>    "\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000"+<a name="line.1338"></a>
+<span class="sourceLineNo">1339</span>    "\000\000\000\000\000\000\000\000").toCharArray();<a name="line.1339"></a>
+<span class="sourceLineNo">1340</span><a name="line.1340"></a>
+<span class="sourceLineNo">1341</span>  // In all, the character property tables require 19008 bytes.<a name="line.1341"></a>
+<span class="sourceLineNo">1342</span><a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>    static {<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span>            charMap = new char[][][] {<a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>        { {'\u00DF'}, {'\u0053', '\u0053', } },<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>        { {'\u0130'}, {'\u0130', } },<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>        { {'\u0149'}, {'\u02BC', '\u004E', } },<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span>        { {'\u01F0'}, {'\u004A', '\u030C', } },<a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>        { {'\u0390'}, {'\u0399', '\u0308', '\u0301', } },<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>        { {'\u03B0'}, {'\u03A5', '\u0308', '\u0301', } },<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span>        { {'\u0587'}, {'\u0535', '\u0552', } },<a name="line.1351"></a>
+<span class="sourceLineNo">1352</span>        { {'\u1E96'}, {'\u0048', '\u0331', } },<a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>        { {'\u1E97'}, {'\u0054', '\u0308', } },<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span>        { {'\u1E98'}, {'\u0057', '\u030A', } },<a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>        { {'\u1E99'}, {'\u0059', '\u030A', } },<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span>        { {'\u1E9A'}, {'\u0041', '\u02BE', } },<a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>        { {'\u1F50'}, {'\u03A5', '\u0313', } },<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span>        { {'\u1F52'}, {'\u03A5', '\u0313', '\u0300', } },<a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>        { {'\u1F54'}, {'\u03A5', '\u0313', '\u0301', } },<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span>        { {'\u1F56'}, {'\u03A5', '\u0313', '\u0342', } },<a name="line.1360"></a>
+<span class="sourceLineNo">1361</span>        { {'\u1F80'}, {'\u1F08', '\u0399', } },<a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>        { {'\u1F81'}, {'\u1F09', '\u0399', } },<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span>        { {'\u1F82'}, {'\u1F0A', '\u0399', } },<a name="line.1363"></a>
+<span class="sourceLineNo">1364</span>        { {'\u1F83'}, {'\u1F0B', '\u0399', } },<a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>        { {'\u1F84'}, {'\u1F0C', '\u0399', } },<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span>        { {'\u1F85'}, {'\u1F0D', '\u0399', } },<a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>        { {'\u1F86'}, {'\u1F0E', '\u0399', } },<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span>        { {'\u1F87'}, {'\u1F0F', '\u0399', } },<a name="line.1368"></a>
+<span class="sourceLineNo">1369</span>        { {'\u1F88'}, {'\u1F08', '\u0399', } },<a name="line.1369"></a>
+<span class="sourceLineNo">1370</span>        { {'\u1F89'}, {'\u1F09', '\u0399', } },<a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>        { {'\u1F8A'}, {'\u1F0A', '\u0399', } },<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span>        { {'\u1F8B'}, {'\u1F0B', '\u0399', } },<a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>        { {'\u1F8C'}, {'\u1F0C', '\u0399', } },<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>        { {'\u1F8D'}, {'\u1F0D', '\u0399', } },<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span>        { {'\u1F8E'}, {'\u1F0E', '\u0399', } },<a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>        { {'\u1F8F'}, {'\u1F0F', '\u0399', } },<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>        { {'\u1F90'}, {'\u1F28', '\u0399', } },<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>        { {'\u1F91'}, {'\u1F29', '\u0399', } },<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span>        { {'\u1F92'}, {'\u1F2A', '\u0399', } },<a name="line.1379"></a>
+<span class="sourceLineNo">1380</span>        { {'\u1F93'}, {'\u1F2B', '\u0399', } },<a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>        { {'\u1F94'}, {'\u1F2C', '\u0399', } },<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span>        { {'\u1F95'}, {'\u1F2D', '\u0399', } },<a name="line.1382"></a>
+<span class="sourceLineNo">1383</span>        { {'\u1F96'}, {'\u1F2E', '\u0399', } },<a name="line.1383"></a>
+<span class="sourceLineNo">1384</span>        { {'\u1F97'}, {'\u1F2F', '\u0399', } },<a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>        { {'\u1F98'}, {'\u1F28', '\u0399', } },<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span>        { {'\u1F99'}, {'\u1F29', '\u0399', } },<a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>        { {'\u1F9A'}, {'\u1F2A', '\u0399', } },<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span>        { {'\u1F9B'}, {'\u1F2B', '\u0399', } },<a name="line.1388"></a>
+<span class="sourceLineNo">1389</span>        { {'\u1F9C'}, {'\u1F2C', '\u0399', } },<a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>        { {'\u1F9D'}, {'\u1F2D', '\u0399', } },<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>        { {'\u1F9E'}, {'\u1F2E', '\u0399', } },<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span>        { {'\u1F9F'}, {'\u1F2F', '\u0399', } },<a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>        { {'\u1FA0'}, {'\u1F68', '\u0399', } },<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span>        { {'\u1FA1'}, {'\u1F69', '\u0399', } },<a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>        { {'\u1FA2'}, {'\u1F6A', '\u0399', } },<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span>        { {'\u1FA3'}, {'\u1F6B', '\u0399', } },<a name="line.1396"></a>
+<span class="sourceLineNo">1397</span>        { {'\u1FA4'}, {'\u1F6C', '\u0399', } },<a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>        { {'\u1FA5'}, {'\u1F6D', '\u0399', } },<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span>        { {'\u1FA6'}, {'\u1F6E', '\u0399', } },<a name="line.1399"></a>
+<span class="sourceLineNo">1400</span>        { {'\u1FA7'}, {'\u1F6F', '\u0399', } },<a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>        { {'\u1FA8'}, {'\u1F68', '\u0399', } },<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span>        { {'\u1FA9'}, {'\u1F69', '\u0399', } },<a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>        { {'\u1FAA'}, {'\u1F6A', '\u0399', } },<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span>        { {'\u1FAB'}, {'\u1F6B', '\u0399', } },<a name="line.1404"></a>
+<span class="sourceLineNo">1405</span>        { {'\u1FAC'}, {'\u1F6C', '\u0399', } },<a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>        { {'\u1FAD'}, {'\u1F6D', '\u0399', } },<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>        { {'\u1FAE'}, {'\u1F6E', '\u0399', } },<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span>        { {'\u1FAF'}, {'\u1F6F', '\u0399', } },<a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>        { {'\u1FB2'}, {'\u1FBA', '\u0399', } },<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span>        { {'\u1FB3'}, {'\u0391', '\u0399', } },<a name="line.1410"></a>
+<span class="sourceLineNo">1411</span>        { {'\u1FB4'}, {'\u0386', '\u0399', } },<a name="line.1411"></a>
+<span class="sourceLineNo">1412</span>        { {'\u1FB6'}, {'\u0391', '\u0342', } },<a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>        { {'\u1FB7'}, {'\u0391', '\u0342', '\u0399', } },<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span>        { {'\u1FBC'}, {'\u0391', '\u0399', } },<a name="line.1414"></a>
+<span class="sourceLineNo">1415</span>        { {'\u1FC2'}, {'\u1FCA', '\u0399', } },<a name="line.1415"></a>
+<span class="sourceLineNo">1416</span>        { {'\u1FC3'}, {'\u0397', '\u0399', } },<a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>        { {'\u1FC4'}, {'\u0389', '\u0399', } },<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span>        { {'\u1FC6'}, {'\u0397', '\u0342', } },<a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>        { {'\u1FC7'}, {'\u0397', '\u0342', '\u0399', } },<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span>        { {'\u1FCC'}, {'\u0397', '\u0399', } },<a name="line.1420"></a>
+<span class="sourceLineNo">1421</span>        { {'\u1FD2'}, {'\u0399', '\u0308', '\u0300', } },<a name="line.1421"></a>
+<span class="sourceLineNo">1422</span>        { {'\u1FD3'}, {'\u0399', '\u0308', '\u0301', } },<a name="line.1422"></a>
+<span class="sourceLineNo">1423</span>        { {'\u1FD6'}, {'\u0399', '\u0342', } },<a name="line.1423"></a>
+<span class="sourceLineNo">1424</span>        { {'\u1FD7'}, {'\u0399', '\u0308', '\u0342', } },<a name="line.1424"></a>
+<span class="sourceLineNo">1425</span>        { {'\u1FE2'}, {'\u03A5', '\u0308', '\u0300', } },<a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>        { {'\u1FE3'}, {'\u03A5', '\u0308', '\u0301', } },<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span>        { {'\u1FE4'}, {'\u03A1', '\u0313', } },<a name="line.1427"></a>
+<span class="sourceLineNo">1428</span>        { {'\u1FE6'}, {'\u03A5', '\u0342', } },<a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>        { {'\u1FE7'}, {'\u03A5', '\u0308', '\u0342', } },<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span>        { {'\u1FF2'}, {'\u1FFA', '\u0399', } },<a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>        { {'\u1FF3'}, {'\u03A9', '\u0399', } },<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span>        { {'\u1FF4'}, {'\u038F', '\u0399', } },<a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>        { {'\u1FF6'}, {'\u03A9', '\u0342', } },<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span>        { {'\u1FF7'}, {'\u03A9', '\u0342', '\u0399', } },<a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>        { {'\u1FFC'}, {'\u03A9', '\u0399', } },<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span>        { {'\uFB00'}, {'\u0046', '\u0046', } },<a name="line.1436"></a>
+<span class="sourceLineNo">1437</span>        { {'\uFB01'}, {'\u0046', '\u0049', } },<a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>        { {'\uFB02'}, {'\u0046', '\u004C', } },<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>        { {'\uFB03'}, {'\u0046', '\u0046', '\u0049', } },<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>        { {'\uFB04'}, {'\u0046', '\u0046', '\u004C', } },<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>        { {'\uFB05'}, {'\u0053', '\u0054', } },<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span>        { {'\uFB06'}, {'\u0053', '\u0054', } },<a name="line.1442"></a>
+<span class="sourceLineNo">1443</span>        { {'\uFB13'}, {'\u0544', '\u0546', } },<a name="line.1443"></a>
+<span class="sourceLineNo">1444</span>        { {'\uFB14'}, {'\u0544', '\u0535', } },<a name="line.1444"></a>
+<span class="sourceLineNo">1445</span>        { {'\uFB15'}, {'\u0544', '\u053B', } },<a name="line.1445"></a>
+<span class="sourceLineNo">1446</span>        { {'\uFB16'}, {'\u054E', '\u0546', } },<a name="line.1446"></a>
+<span class="sourceLineNo">1447</span>        { {'\uFB17'}, {'\u0544', '\u053D', } },<a name="line.1447"></a>
+<span class="sourceLineNo">1448</span>    };<a name="line.1448"></a>
+<span class="sourceLineNo">1449</span>        { // THIS CODE WAS AUTOMATICALLY CREATED BY GenerateCharacter:<a name="line.1449"></a>
+<span class="sourceLineNo">1450</span>            char[] data = A_DATA.toCharArray();<a name="line.1450"></a>
+<span class="sourceLineNo">1451</span>            assert (data.length == (920 * 2));<a name="line.1451"></a>
+<span class="sourceLineNo">1452</span>            int i = 0, j = 0;<a name="line.1452"></a>
+<span class="sourceLineNo">1453</span>            while (i &lt; (920 * 2)) {<a name="line.1453"></a>
+<span class="sourceLineNo">1454</span>                int entry = data[i++] &lt;&lt; 16;<a name="line.1454"></a>
+<span class="sourceLineNo">1455</span>                A[j++] = entry | data[i++];<a name="line.1455"></a>
+<span class="sourceLineNo">1456</span>            }<a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>        }<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span><a name="line.1458"></a>
+<span class="sourceLineNo">1459</span>    }        <a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>}<a name="line.1460"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.imageio.spi;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.AbstractSet;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.HashMap;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.Iterator;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.LinkedList;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.Map;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.Set;<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>/**<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * A set of &lt;code&gt;Object&lt;/code&gt;s with pairwise orderings between them.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * The &lt;code&gt;iterator&lt;/code&gt; method provides the elements in<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * topologically sorted order.  Elements participating in a cycle<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * are not returned.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * Unlike the &lt;code&gt;SortedSet&lt;/code&gt; and &lt;code&gt;SortedMap&lt;/code&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * interfaces, which require their elements to implement the<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;code&gt;Comparable&lt;/code&gt; interface, this class receives ordering<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * information via its &lt;code&gt;setOrdering&lt;/code&gt; and<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;code&gt;unsetPreference&lt;/code&gt; methods.  This difference is due to<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * the fact that the relevant ordering between elements is unlikely to<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * be inherent in the elements themselves; rather, it is set<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * dynamically accoring to application policy.  For example, in a<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * service provider registry situation, an application might allow the<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * user to set a preference order for service provider objects<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * supplied by a trusted vendor over those supplied by another.<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *<a name="line.52"></a>
+<span class="sourceLineNo">053</span> */<a name="line.53"></a>
+<span class="sourceLineNo">054</span>class PartiallyOrderedSet extends AbstractSet {<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>    // The topological sort (roughly) follows the algorithm described in<a name="line.56"></a>
+<span class="sourceLineNo">057</span>    // Horowitz and Sahni, _Fundamentals of Data Structures_ (1976),<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    // p. 315.<a name="line.58"></a>
+<span class="sourceLineNo">059</span><a name="line.59"></a>
+<span class="sourceLineNo">060</span>    // Maps Objects to DigraphNodes that contain them<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    private Map poNodes = new HashMap();<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    // The set of Objects<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    private Set nodes = poNodes.keySet();<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>    /**<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * Constructs a &lt;code&gt;PartiallyOrderedSet&lt;/code&gt;.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     */<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    public PartiallyOrderedSet() {}<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    public int size() {<a name="line.71"></a>
+<span class="sourceLineNo">072</span>        return nodes.size();<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    }<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    public boolean contains(Object o) {<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        return nodes.contains(o);<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    }<a name="line.77"></a>
+<span class="sourceLineNo">078</span><a name="line.78"></a>
+<span class="sourceLineNo">079</span>    /**<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * Returns an iterator over the elements contained in this<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * collection, with an ordering that respects the orderings set<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * by the &lt;code&gt;setOrdering&lt;/code&gt; method.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     */<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    public Iterator iterator() {<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        return new PartialOrderIterator(poNodes.values().iterator());<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    }<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>    /**<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * Adds an &lt;code&gt;Object&lt;/code&gt; to this<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * &lt;code&gt;PartiallyOrderedSet&lt;/code&gt;.<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     */<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    public boolean add(Object o) {<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        if (nodes.contains(o)) {<a name="line.93"></a>
+<span class="sourceLineNo">094</span>            return false;<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        }<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>        DigraphNode node = new DigraphNode(o);<a name="line.97"></a>
+<span class="sourceLineNo">098</span>        poNodes.put(o, node);<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        return true;<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    }<a name="line.100"></a>
+<span class="sourceLineNo">101</span><a name="line.101"></a>
+<span class="sourceLineNo">102</span>    /**<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * Removes an &lt;code&gt;Object&lt;/code&gt; from this<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * &lt;code&gt;PartiallyOrderedSet&lt;/code&gt;.<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     */<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    public boolean remove(Object o) {<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        DigraphNode node = (DigraphNode)poNodes.get(o);<a name="line.107"></a>
+<span class="sourceLineNo">108</span>        if (node == null) {<a name="line.108"></a>
+<span class="sourceLineNo">109</span>            return false;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        }<a name="line.110"></a>
+<span class="sourceLineNo">111</span><a name="line.111"></a>
+<span class="sourceLineNo">112</span>        poNodes.remove(o);<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        node.dispose();<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        return true;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    }<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>    public void clear() {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        poNodes.clear();<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    }<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>    /**<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * Sets an ordering between two nodes.  When an iterator is<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * requested, the first node will appear earlier in the<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * sequence than the second node.  If a prior ordering existed<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * between the nodes in the opposite order, it is removed.<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     *<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * @return &lt;code&gt;true&lt;/code&gt; if no prior ordering existed<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * between the nodes, &lt;code&gt;false&lt;/code&gt;otherwise.<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     */<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    public boolean setOrdering(Object first, Object second) {<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        DigraphNode firstPONode =<a name="line.131"></a>
+<span class="sourceLineNo">132</span>            (DigraphNode)poNodes.get(first);<a name="line.132"></a>
+<span class="sourceLineNo">133</span>        DigraphNode secondPONode =<a name="line.133"></a>
+<span class="sourceLineNo">134</span>            (DigraphNode)poNodes.get(second);<a name="line.134"></a>
+<span class="sourceLineNo">135</span><a name="line.135"></a>
+<span class="sourceLineNo">136</span>        secondPONode.removeEdge(firstPONode);<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        return firstPONode.addEdge(secondPONode);<a name="line.137"></a>
+<span class="sourceLineNo">138</span>    }<a name="line.138"></a>
+<span class="sourceLineNo">139</span><a name="line.139"></a>
+<span class="sourceLineNo">140</span>    /**<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * Removes any ordering between two nodes.<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @return true if a prior prefence existed between the nodes.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     */<a name="line.144"></a>
+<span class="sourceLineNo">145</span>    public boolean unsetOrdering(Object first, Object second) {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        DigraphNode firstPONode =<a name="line.146"></a>
+<span class="sourceLineNo">147</span>            (DigraphNode)poNodes.get(first);<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        DigraphNode secondPONode =<a name="line.148"></a>
+<span class="sourceLineNo">149</span>            (DigraphNode)poNodes.get(second);<a name="line.149"></a>
+<span class="sourceLineNo">150</span><a name="line.150"></a>
+<span class="sourceLineNo">151</span>        return firstPONode.removeEdge(secondPONode) ||<a name="line.151"></a>
+<span class="sourceLineNo">152</span>            secondPONode.removeEdge(firstPONode);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    }<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    /**<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * Returns &lt;code&gt;true&lt;/code&gt; if an ordering exists between two<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * nodes.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     */<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    public boolean hasOrdering(Object preferred, Object other) {<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        DigraphNode preferredPONode =<a name="line.160"></a>
+<span class="sourceLineNo">161</span>            (DigraphNode)poNodes.get(preferred);<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        DigraphNode otherPONode =<a name="line.162"></a>
+<span class="sourceLineNo">163</span>            (DigraphNode)poNodes.get(other);<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>        return preferredPONode.hasEdge(otherPONode);<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    }<a name="line.166"></a>
+<span class="sourceLineNo">167</span>}<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>class PartialOrderIterator implements Iterator {<a name="line.169"></a>
+<span class="sourceLineNo">170</span><a name="line.170"></a>
+<span class="sourceLineNo">171</span>    LinkedList zeroList = new LinkedList();<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    Map inDegrees = new HashMap(); // DigraphNode -&gt; Integer<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>    public PartialOrderIterator(Iterator iter) {<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        // Initialize scratch in-degree values, zero list<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        while (iter.hasNext()) {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>            DigraphNode node = (DigraphNode)iter.next();<a name="line.177"></a>
+<span class="sourceLineNo">178</span>            int inDegree = node.getInDegree();<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            inDegrees.put(node, new Integer(inDegree));<a name="line.179"></a>
+<span class="sourceLineNo">180</span><a name="line.180"></a>
+<span class="sourceLineNo">181</span>            // Add nodes with zero in-degree to the zero list<a name="line.181"></a>
+<span class="sourceLineNo">182</span>            if (inDegree == 0) {<a name="line.182"></a>
+<span class="sourceLineNo">183</span>                zeroList.add(node);<a name="line.183"></a>
+<span class="sourceLineNo">184</span>            }<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        }<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    }<a name="line.186"></a>
+<span class="sourceLineNo">187</span><a name="line.187"></a>
+<span class="sourceLineNo">188</span>    public boolean hasNext() {<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        return !zeroList.isEmpty();<a name="line.189"></a>
+<span class="sourceLineNo">190</span>    }<a name="line.190"></a>
+<span class="sourceLineNo">191</span><a name="line.191"></a>
+<span class="sourceLineNo">192</span>    public Object next() {<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        DigraphNode first = (DigraphNode)zeroList.removeFirst();<a name="line.193"></a>
+<span class="sourceLineNo">194</span><a name="line.194"></a>
+<span class="sourceLineNo">195</span>        // For each out node of the output node, decrement its in-degree<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        Iterator outNodes = first.getOutNodes();<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        while (outNodes.hasNext()) {<a name="line.197"></a>
+<span class="sourceLineNo">198</span>            DigraphNode node = (DigraphNode)outNodes.next();<a name="line.198"></a>
+<span class="sourceLineNo">199</span>            int inDegree = ((Integer)inDegrees.get(node)).intValue() - 1;<a name="line.199"></a>
+<span class="sourceLineNo">200</span>            inDegrees.put(node, new Integer(inDegree));<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>            // If the in-degree has fallen to 0, place the node on the list<a name="line.202"></a>
+<span class="sourceLineNo">203</span>            if (inDegree == 0) {<a name="line.203"></a>
+<span class="sourceLineNo">204</span>                zeroList.add(node);<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            }<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        }<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>        return first.getData();<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    }<a name="line.209"></a>
+<span class="sourceLineNo">210</span><a name="line.210"></a>
+<span class="sourceLineNo">211</span>    public void remove() {<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        throw new UnsupportedOperationException();<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    }<a name="line.213"></a>
+<span class="sourceLineNo">214</span>}<a name="line.214"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

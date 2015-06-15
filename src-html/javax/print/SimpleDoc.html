@@ -1,0 +1,326 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.print;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.ByteArrayInputStream;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.CharArrayReader;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.StringReader;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.io.InputStream;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.io.IOException;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.io.Reader;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import javax.print.attribute.AttributeSetUtilities;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.print.attribute.DocAttributeSet;<a name="line.35"></a>
+<span class="sourceLineNo">036</span><a name="line.36"></a>
+<span class="sourceLineNo">037</span>/**<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * This class is an implementation of interface &lt;code&gt;Doc&lt;/code&gt; that can<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * be used in many common printing requests.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * It can handle all of the presently defined "pre-defined" doc flavors<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * defined as static variables in the DocFlavor class.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * In particular this class implements certain required semantics of the<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * Doc specification as follows:<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;ul&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;li&gt;constructs a stream for the service if requested and appropriate.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;li&gt;ensures the same object is returned for each call on a method.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;li&gt;ensures multiple threads can access the Doc<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;li&gt;performs some validation of that the data matches the doc flavor.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;/ul&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * Clients who want to re-use the doc object in other jobs,<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * or need a MultiDoc will not want to use this class.<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;p&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * If the print data is a stream, or a print job requests data as a<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * stream, then &lt;code&gt;SimpleDoc&lt;/code&gt; does not monitor if the service<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * properly closes the stream after data transfer completion or job<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * termination.<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * Clients may prefer to use provide their own implementation of doc that<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * adds a listener to monitor job completion and to validate that<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * resources such as streams are freed (ie closed).<a name="line.60"></a>
+<span class="sourceLineNo">061</span> */<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>public final class SimpleDoc implements Doc {<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>    private DocFlavor flavor;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    private DocAttributeSet attributes;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>    private Object printData;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    private Reader reader;<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    private InputStream inStream;<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    /**<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * Constructs a &lt;code&gt;SimpleDoc&lt;/code&gt; with the specified<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * print data, doc flavor and doc attribute set.<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * @param printData the print data object<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * @param flavor the &lt;code&gt;DocFlavor&lt;/code&gt; object<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * @param attributes a &lt;code&gt;DocAttributeSet&lt;/code&gt;, which can<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     *                   be &lt;code&gt;null&lt;/code&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * @throws IllegalArgumentException if &lt;code&gt;flavor&lt;/code&gt; or<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     *         &lt;code&gt;printData&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;, or the<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     *         &lt;code&gt;printData&lt;/code&gt; does not correspond<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     *         to the specified doc flavor--for example, the data is<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     *         not of the type specified as the representation in the<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     *         &lt;code&gt;DocFlavor&lt;/code&gt;.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     */<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    public SimpleDoc(Object printData,<a name="line.85"></a>
+<span class="sourceLineNo">086</span>                     DocFlavor flavor, DocAttributeSet attributes) {<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>       if (flavor == null || printData == null) {<a name="line.88"></a>
+<span class="sourceLineNo">089</span>           throw new IllegalArgumentException("null argument(s)");<a name="line.89"></a>
+<span class="sourceLineNo">090</span>       }<a name="line.90"></a>
+<span class="sourceLineNo">091</span><a name="line.91"></a>
+<span class="sourceLineNo">092</span>       Class repClass = null;<a name="line.92"></a>
+<span class="sourceLineNo">093</span>       try {<a name="line.93"></a>
+<span class="sourceLineNo">094</span>            String className = flavor.getRepresentationClassName();<a name="line.94"></a>
+<span class="sourceLineNo">095</span>            sun.reflect.misc.ReflectUtil.checkPackageAccess(className);<a name="line.95"></a>
+<span class="sourceLineNo">096</span>            repClass = Class.forName(className, false,<a name="line.96"></a>
+<span class="sourceLineNo">097</span>                              Thread.currentThread().getContextClassLoader());<a name="line.97"></a>
+<span class="sourceLineNo">098</span>       } catch (Throwable e) {<a name="line.98"></a>
+<span class="sourceLineNo">099</span>           throw new IllegalArgumentException("unknown representation class");<a name="line.99"></a>
+<span class="sourceLineNo">100</span>       }<a name="line.100"></a>
+<span class="sourceLineNo">101</span><a name="line.101"></a>
+<span class="sourceLineNo">102</span>       if (!repClass.isInstance(printData)) {<a name="line.102"></a>
+<span class="sourceLineNo">103</span>           throw new IllegalArgumentException("data is not of declared type");<a name="line.103"></a>
+<span class="sourceLineNo">104</span>       }<a name="line.104"></a>
+<span class="sourceLineNo">105</span><a name="line.105"></a>
+<span class="sourceLineNo">106</span>       this.flavor = flavor;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>       if (attributes != null) {<a name="line.107"></a>
+<span class="sourceLineNo">108</span>           this.attributes = AttributeSetUtilities.unmodifiableView(attributes);<a name="line.108"></a>
+<span class="sourceLineNo">109</span>       }<a name="line.109"></a>
+<span class="sourceLineNo">110</span>       this.printData = printData;<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    }<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>   /**<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * Determines the doc flavor in which this doc object will supply its<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * piece of print data.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @return  Doc flavor.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     */<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    public DocFlavor getDocFlavor() {<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        return flavor;<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    }<a name="line.121"></a>
+<span class="sourceLineNo">122</span><a name="line.122"></a>
+<span class="sourceLineNo">123</span>    /**<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * Obtains the set of printing attributes for this doc object. If the<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * returned attribute set includes an instance of a particular attribute<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * &lt;I&gt;X,&lt;/I&gt; the printer must use that attribute value for this doc,<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * overriding any value of attribute &lt;I&gt;X&lt;/I&gt; in the job's attribute set.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * If the returned attribute set does not include an instance<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * of a particular attribute &lt;I&gt;X&lt;/I&gt; or if null is returned, the printer<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * must consult the job's attribute set to obtain the value for<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * attribute &lt;I&gt;X,&lt;/I&gt; and if not found there, the printer must use an<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * implementation-dependent default value. The returned attribute set is<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * unmodifiable.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * @return  Unmodifiable set of printing attributes for this doc, or null<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     *          to obtain all attribute values from the job's attribute<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *          set.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     */<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    public DocAttributeSet getAttributes() {<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        return attributes;<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    }<a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span>    /*<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * Obtains the print data representation object that contains this doc<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * object's piece of print data in the format corresponding to the<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * supported doc flavor.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * The &lt;CODE&gt;getPrintData()&lt;/CODE&gt; method returns an instance of<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * the representation class whose name is given by<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * {@link DocFlavor#getRepresentationClassName() getRepresentationClassName},<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * and the return value can be cast<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * from class Object to that representation class.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @return  Print data representation object.<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @exception  IOException if the representation class is a stream and<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *     there was an I/O error while constructing the stream.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     */<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    public Object getPrintData() throws IOException {<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        return printData;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    }<a name="line.160"></a>
+<span class="sourceLineNo">161</span><a name="line.161"></a>
+<span class="sourceLineNo">162</span>    /**<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * Obtains a reader for extracting character print data from this doc.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * The &lt;code&gt;Doc&lt;/code&gt; implementation is required to support this<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * method if the &lt;code&gt;DocFlavor&lt;/code&gt; has one of the following print<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * data representation classes, and return &lt;code&gt;null&lt;/code&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * otherwise:<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * &lt;UL&gt;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * &lt;LI&gt; &lt;code&gt;char[]&lt;/code&gt;<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * &lt;LI&gt; &lt;code&gt;java.lang.String&lt;/code&gt;<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * &lt;LI&gt; &lt;code&gt;java.io.Reader&lt;/code&gt;<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * &lt;/UL&gt;<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * The doc's print data representation object is used to construct and<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * return a &lt;code&gt;Reader&lt;/code&gt; for reading the print data as a stream<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * of characters from the print data representation object.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * However, if the print data representation object is itself a<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * &lt;code&gt;Reader&lt;/code&gt; then the print data representation object is<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * simply returned.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * &lt;P&gt;<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @return  a &lt;code&gt;Reader&lt;/code&gt; for reading the print data<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     *          characters from this doc.<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     *          If a reader cannot be provided because this doc does not meet<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     *          the criteria stated above, &lt;code&gt;null&lt;/code&gt; is returned.<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     *<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * @exception  IOException if there was an I/O error while creating<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *             the reader.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     */<a name="line.187"></a>
+<span class="sourceLineNo">188</span>    public Reader getReaderForText() throws IOException {<a name="line.188"></a>
+<span class="sourceLineNo">189</span><a name="line.189"></a>
+<span class="sourceLineNo">190</span>        if (printData instanceof Reader) {<a name="line.190"></a>
+<span class="sourceLineNo">191</span>            return (Reader)printData;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        }<a name="line.192"></a>
+<span class="sourceLineNo">193</span><a name="line.193"></a>
+<span class="sourceLineNo">194</span>        synchronized (this) {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>            if (reader != null) {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>                return reader;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>            }<a name="line.197"></a>
+<span class="sourceLineNo">198</span><a name="line.198"></a>
+<span class="sourceLineNo">199</span>            if (printData instanceof char[]) {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>               reader = new CharArrayReader((char[])printData);<a name="line.200"></a>
+<span class="sourceLineNo">201</span>            }<a name="line.201"></a>
+<span class="sourceLineNo">202</span>            else if (printData instanceof String) {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>                reader = new StringReader((String)printData);<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            }<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        }<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        return reader;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>    }<a name="line.207"></a>
+<span class="sourceLineNo">208</span><a name="line.208"></a>
+<span class="sourceLineNo">209</span>    /**<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * Obtains an input stream for extracting byte print data from<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * this doc.<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * The &lt;code&gt;Doc&lt;/code&gt; implementation is required to support this<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * method if the &lt;code&gt;DocFlavor&lt;/code&gt; has one of the following print<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * data representation classes; otherwise this method<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * returns &lt;code&gt;null&lt;/code&gt;:<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * &lt;UL&gt;<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * &lt;LI&gt; &lt;code&gt;byte[]&lt;/code&gt;<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * &lt;LI&gt; &lt;code&gt;java.io.InputStream&lt;/code&gt;<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * &lt;/UL&gt;<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * The doc's print data representation object is obtained.  Then, an<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * input stream for reading the print data<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * from the print data representation object as a stream of bytes is<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * created and returned.<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * However, if the print data representation object is itself an<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * input stream then the print data representation object is simply<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * returned.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * &lt;P&gt;<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * @return  an &lt;code&gt;InputStream&lt;/code&gt; for reading the print data<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     *          bytes from this doc.  If an input stream cannot be<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     *          provided because this doc does not meet<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     *          the criteria stated above, &lt;code&gt;null&lt;/code&gt; is returned.<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     *<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @exception  IOException<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     *     if there was an I/O error while creating the input stream.<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     */<a name="line.235"></a>
+<span class="sourceLineNo">236</span>    public InputStream getStreamForBytes() throws IOException {<a name="line.236"></a>
+<span class="sourceLineNo">237</span><a name="line.237"></a>
+<span class="sourceLineNo">238</span>        if (printData instanceof InputStream) {<a name="line.238"></a>
+<span class="sourceLineNo">239</span>            return (InputStream)printData;<a name="line.239"></a>
+<span class="sourceLineNo">240</span>        }<a name="line.240"></a>
+<span class="sourceLineNo">241</span><a name="line.241"></a>
+<span class="sourceLineNo">242</span>        synchronized (this) {<a name="line.242"></a>
+<span class="sourceLineNo">243</span>            if (inStream != null) {<a name="line.243"></a>
+<span class="sourceLineNo">244</span>                return inStream;<a name="line.244"></a>
+<span class="sourceLineNo">245</span>            }<a name="line.245"></a>
+<span class="sourceLineNo">246</span><a name="line.246"></a>
+<span class="sourceLineNo">247</span>            if (printData instanceof byte[]) {<a name="line.247"></a>
+<span class="sourceLineNo">248</span>               inStream = new ByteArrayInputStream((byte[])printData);<a name="line.248"></a>
+<span class="sourceLineNo">249</span>            }<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        }<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        return inStream;<a name="line.251"></a>
+<span class="sourceLineNo">252</span>    }<a name="line.252"></a>
+<span class="sourceLineNo">253</span><a name="line.253"></a>
+<span class="sourceLineNo">254</span>}<a name="line.254"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

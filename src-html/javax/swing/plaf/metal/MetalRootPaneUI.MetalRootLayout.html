@@ -1,0 +1,1061 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.swing.plaf.metal;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.event.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.beans.PropertyChangeEvent;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.beans.PropertyChangeListener;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.swing.*;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import javax.swing.border.*;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import javax.swing.event.*;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import javax.swing.plaf.*;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.swing.plaf.basic.*;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.awt.*;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.io.*;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.security.*;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>/**<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * Provides the metal look and feel implementation of &lt;code&gt;RootPaneUI&lt;/code&gt;.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;code&gt;MetalRootPaneUI&lt;/code&gt; provides support for the<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;code&gt;windowDecorationStyle&lt;/code&gt; property of &lt;code&gt;JRootPane&lt;/code&gt;.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;code&gt;MetalRootPaneUI&lt;/code&gt; does this by way of installing a custom<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;code&gt;LayoutManager&lt;/code&gt;, a private &lt;code&gt;Component&lt;/code&gt; to render<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * the appropriate widgets, and a private &lt;code&gt;Border&lt;/code&gt;. The<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;code&gt;LayoutManager&lt;/code&gt; is always installed, regardless of the value of<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * the &lt;code&gt;windowDecorationStyle&lt;/code&gt; property, but the<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;code&gt;Border&lt;/code&gt; and &lt;code&gt;Component&lt;/code&gt; are only installed/added if<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * the &lt;code&gt;windowDecorationStyle&lt;/code&gt; is other than<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;code&gt;JRootPane.NONE&lt;/code&gt;.<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;p&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;strong&gt;Warning:&lt;/strong&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * Serialized objects of this class will not be compatible with<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * future Swing releases. The current serialization support is<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * appropriate for short term storage or RMI between applications running<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * the same version of Swing.  As of 1.4, support for long term storage<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * of all JavaBeans&lt;sup&gt;&lt;font size="-2"&gt;TM&lt;/font&gt;&lt;/sup&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * has been added to the &lt;code&gt;java.beans&lt;/code&gt; package.<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * Please see {@link java.beans.XMLEncoder}.<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * @author Terry Kellerman<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * @since 1.4<a name="line.64"></a>
+<span class="sourceLineNo">065</span> */<a name="line.65"></a>
+<span class="sourceLineNo">066</span>public class MetalRootPaneUI extends BasicRootPaneUI<a name="line.66"></a>
+<span class="sourceLineNo">067</span>{<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    /**<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * Keys to lookup borders in defaults table.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    private static final String[] borderKeys = new String[] {<a name="line.71"></a>
+<span class="sourceLineNo">072</span>        null, "RootPane.frameBorder", "RootPane.plainDialogBorder",<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        "RootPane.informationDialogBorder",<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        "RootPane.errorDialogBorder", "RootPane.colorChooserDialogBorder",<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        "RootPane.fileChooserDialogBorder", "RootPane.questionDialogBorder",<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        "RootPane.warningDialogBorder"<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    };<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    /**<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * The amount of space (in pixels) that the cursor is changed on.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     */<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    private static final int CORNER_DRAG_WIDTH = 16;<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    /**<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * Region from edges that dragging is active from.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     */<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    private static final int BORDER_DRAG_THICKNESS = 5;<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>    /**<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * Window the &lt;code&gt;JRootPane&lt;/code&gt; is in.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     */<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    private Window window;<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>    /**<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * &lt;code&gt;JComponent&lt;/code&gt; providing window decorations. This will be<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * null if not providing window decorations.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     */<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    private JComponent titlePane;<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * &lt;code&gt;MouseInputListener&lt;/code&gt; that is added to the parent<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * &lt;code&gt;Window&lt;/code&gt; the &lt;code&gt;JRootPane&lt;/code&gt; is contained in.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     */<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    private MouseInputListener mouseInputListener;<a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span>    /**<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * The &lt;code&gt;LayoutManager&lt;/code&gt; that is set on the<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * &lt;code&gt;JRootPane&lt;/code&gt;.<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     */<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    private LayoutManager layoutManager;<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>    /**<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * &lt;code&gt;LayoutManager&lt;/code&gt; of the &lt;code&gt;JRootPane&lt;/code&gt; before we<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * replaced it.<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     */<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    private LayoutManager savedOldLayout;<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>    /**<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * &lt;code&gt;JRootPane&lt;/code&gt; providing the look and feel for.<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     */<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    private JRootPane root;<a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>    /**<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * &lt;code&gt;Cursor&lt;/code&gt; used to track the cursor set by the user.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * This is initially &lt;code&gt;Cursor.DEFAULT_CURSOR&lt;/code&gt;.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     */<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    private Cursor lastCursor =<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>    /**<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * Creates a UI for a &lt;code&gt;JRootPane&lt;/code&gt;.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @param c the JRootPane the RootPaneUI will be created for<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * @return the RootPaneUI implementation for the passed in JRootPane<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     */<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    public static ComponentUI createUI(JComponent c) {<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        return new MetalRootPaneUI();<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    }<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    /**<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * Invokes supers implementation of &lt;code&gt;installUI&lt;/code&gt; to install<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * the necessary state onto the passed in &lt;code&gt;JRootPane&lt;/code&gt;<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * to render the metal look and feel implementation of<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * &lt;code&gt;RootPaneUI&lt;/code&gt;. If<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * the &lt;code&gt;windowDecorationStyle&lt;/code&gt; property of the<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * &lt;code&gt;JRootPane&lt;/code&gt; is other than &lt;code&gt;JRootPane.NONE&lt;/code&gt;,<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * this will add a custom &lt;code&gt;Component&lt;/code&gt; to render the widgets to<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * &lt;code&gt;JRootPane&lt;/code&gt;, as well as installing a custom<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * &lt;code&gt;Border&lt;/code&gt; and &lt;code&gt;LayoutManager&lt;/code&gt; on the<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * &lt;code&gt;JRootPane&lt;/code&gt;.<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @param c the JRootPane to install state onto<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    public void installUI(JComponent c) {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        super.installUI(c);<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        root = (JRootPane)c;<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        int style = root.getWindowDecorationStyle();<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        if (style != JRootPane.NONE) {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            installClientDecorations(root);<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        }<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    }<a name="line.160"></a>
+<span class="sourceLineNo">161</span><a name="line.161"></a>
+<span class="sourceLineNo">162</span><a name="line.162"></a>
+<span class="sourceLineNo">163</span>    /**<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * Invokes supers implementation to uninstall any of its state. This will<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * also reset the &lt;code&gt;LayoutManager&lt;/code&gt; of the &lt;code&gt;JRootPane&lt;/code&gt;.<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * If a &lt;code&gt;Component&lt;/code&gt; has been added to the &lt;code&gt;JRootPane&lt;/code&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * to render the window decoration style, this method will remove it.<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * Similarly, this will revert the Border and LayoutManager of the<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * &lt;code&gt;JRootPane&lt;/code&gt; to what it was before &lt;code&gt;installUI&lt;/code&gt;<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * was invoked.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @param c the JRootPane to uninstall state from<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     */<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    public void uninstallUI(JComponent c) {<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        super.uninstallUI(c);<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        uninstallClientDecorations(root);<a name="line.176"></a>
+<span class="sourceLineNo">177</span><a name="line.177"></a>
+<span class="sourceLineNo">178</span>        layoutManager = null;<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        mouseInputListener = null;<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        root = null;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    }<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Installs the appropriate &lt;code&gt;Border&lt;/code&gt; onto the<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * &lt;code&gt;JRootPane&lt;/code&gt;.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     */<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    void installBorder(JRootPane root) {<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        int style = root.getWindowDecorationStyle();<a name="line.188"></a>
+<span class="sourceLineNo">189</span><a name="line.189"></a>
+<span class="sourceLineNo">190</span>        if (style == JRootPane.NONE) {<a name="line.190"></a>
+<span class="sourceLineNo">191</span>            LookAndFeel.uninstallBorder(root);<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        }<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        else {<a name="line.193"></a>
+<span class="sourceLineNo">194</span>            LookAndFeel.installBorder(root, borderKeys[style]);<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        }<a name="line.195"></a>
+<span class="sourceLineNo">196</span>    }<a name="line.196"></a>
+<span class="sourceLineNo">197</span><a name="line.197"></a>
+<span class="sourceLineNo">198</span>    /**<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * Removes any border that may have been installed.<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     */<a name="line.200"></a>
+<span class="sourceLineNo">201</span>    private void uninstallBorder(JRootPane root) {<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        LookAndFeel.uninstallBorder(root);<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    }<a name="line.203"></a>
+<span class="sourceLineNo">204</span><a name="line.204"></a>
+<span class="sourceLineNo">205</span>    /**<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * Installs the necessary Listeners on the parent &lt;code&gt;Window&lt;/code&gt;,<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * if there is one.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * &lt;p&gt;<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * This takes the parent so that cleanup can be done from<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * &lt;code&gt;removeNotify&lt;/code&gt;, at which point the parent hasn't been<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * reset yet.<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     *<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * @param parent The parent of the JRootPane<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     */<a name="line.214"></a>
+<span class="sourceLineNo">215</span>    private void installWindowListeners(JRootPane root, Component parent) {<a name="line.215"></a>
+<span class="sourceLineNo">216</span>        if (parent instanceof Window) {<a name="line.216"></a>
+<span class="sourceLineNo">217</span>            window = (Window)parent;<a name="line.217"></a>
+<span class="sourceLineNo">218</span>        }<a name="line.218"></a>
+<span class="sourceLineNo">219</span>        else {<a name="line.219"></a>
+<span class="sourceLineNo">220</span>            window = SwingUtilities.getWindowAncestor(parent);<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        }<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        if (window != null) {<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            if (mouseInputListener == null) {<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                mouseInputListener = createWindowMouseInputListener(root);<a name="line.224"></a>
+<span class="sourceLineNo">225</span>            }<a name="line.225"></a>
+<span class="sourceLineNo">226</span>            window.addMouseListener(mouseInputListener);<a name="line.226"></a>
+<span class="sourceLineNo">227</span>            window.addMouseMotionListener(mouseInputListener);<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        }<a name="line.228"></a>
+<span class="sourceLineNo">229</span>    }<a name="line.229"></a>
+<span class="sourceLineNo">230</span><a name="line.230"></a>
+<span class="sourceLineNo">231</span>    /**<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * Uninstalls the necessary Listeners on the &lt;code&gt;Window&lt;/code&gt; the<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * Listeners were last installed on.<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     */<a name="line.234"></a>
+<span class="sourceLineNo">235</span>    private void uninstallWindowListeners(JRootPane root) {<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        if (window != null) {<a name="line.236"></a>
+<span class="sourceLineNo">237</span>            window.removeMouseListener(mouseInputListener);<a name="line.237"></a>
+<span class="sourceLineNo">238</span>            window.removeMouseMotionListener(mouseInputListener);<a name="line.238"></a>
+<span class="sourceLineNo">239</span>        }<a name="line.239"></a>
+<span class="sourceLineNo">240</span>    }<a name="line.240"></a>
+<span class="sourceLineNo">241</span><a name="line.241"></a>
+<span class="sourceLineNo">242</span>    /**<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * Installs the appropriate LayoutManager on the &lt;code&gt;JRootPane&lt;/code&gt;<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * to render the window decorations.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     */<a name="line.245"></a>
+<span class="sourceLineNo">246</span>    private void installLayout(JRootPane root) {<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        if (layoutManager == null) {<a name="line.247"></a>
+<span class="sourceLineNo">248</span>            layoutManager = createLayoutManager();<a name="line.248"></a>
+<span class="sourceLineNo">249</span>        }<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        savedOldLayout = root.getLayout();<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        root.setLayout(layoutManager);<a name="line.251"></a>
+<span class="sourceLineNo">252</span>    }<a name="line.252"></a>
+<span class="sourceLineNo">253</span><a name="line.253"></a>
+<span class="sourceLineNo">254</span>    /**<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * Uninstalls the previously installed &lt;code&gt;LayoutManager&lt;/code&gt;.<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     */<a name="line.256"></a>
+<span class="sourceLineNo">257</span>    private void uninstallLayout(JRootPane root) {<a name="line.257"></a>
+<span class="sourceLineNo">258</span>        if (savedOldLayout != null) {<a name="line.258"></a>
+<span class="sourceLineNo">259</span>            root.setLayout(savedOldLayout);<a name="line.259"></a>
+<span class="sourceLineNo">260</span>            savedOldLayout = null;<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        }<a name="line.261"></a>
+<span class="sourceLineNo">262</span>    }<a name="line.262"></a>
+<span class="sourceLineNo">263</span><a name="line.263"></a>
+<span class="sourceLineNo">264</span>    /**<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * Installs the necessary state onto the JRootPane to render client<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * decorations. This is ONLY invoked if the &lt;code&gt;JRootPane&lt;/code&gt;<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * has a decoration style other than &lt;code&gt;JRootPane.NONE&lt;/code&gt;.<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     */<a name="line.268"></a>
+<span class="sourceLineNo">269</span>    private void installClientDecorations(JRootPane root) {<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        installBorder(root);<a name="line.270"></a>
+<span class="sourceLineNo">271</span><a name="line.271"></a>
+<span class="sourceLineNo">272</span>        JComponent titlePane = createTitlePane(root);<a name="line.272"></a>
+<span class="sourceLineNo">273</span><a name="line.273"></a>
+<span class="sourceLineNo">274</span>        setTitlePane(root, titlePane);<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        installWindowListeners(root, root.getParent());<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        installLayout(root);<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        if (window != null) {<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            root.revalidate();<a name="line.278"></a>
+<span class="sourceLineNo">279</span>            root.repaint();<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        }<a name="line.280"></a>
+<span class="sourceLineNo">281</span>    }<a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>    /**<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * Uninstalls any state that &lt;code&gt;installClientDecorations&lt;/code&gt; has<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * installed.<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * &lt;p&gt;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * NOTE: This may be called if you haven't installed client decorations<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * yet (ie before &lt;code&gt;installClientDecorations&lt;/code&gt; has been invoked).<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     */<a name="line.289"></a>
+<span class="sourceLineNo">290</span>    private void uninstallClientDecorations(JRootPane root) {<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        uninstallBorder(root);<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        uninstallWindowListeners(root);<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        setTitlePane(root, null);<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        uninstallLayout(root);<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        // We have to revalidate/repaint root if the style is JRootPane.NONE<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        // only. When we needs to call revalidate/repaint with other styles<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        // the installClientDecorations is always called after this method<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        // imediatly and it will cause the revalidate/repaint at the proper<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        // time.<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        int style = root.getWindowDecorationStyle();<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        if (style == JRootPane.NONE) {<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            root.repaint();<a name="line.302"></a>
+<span class="sourceLineNo">303</span>            root.revalidate();<a name="line.303"></a>
+<span class="sourceLineNo">304</span>        }<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        // Reset the cursor, as we may have changed it to a resize cursor<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        if (window != null) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            window.setCursor(Cursor.getPredefinedCursor<a name="line.307"></a>
+<span class="sourceLineNo">308</span>                             (Cursor.DEFAULT_CURSOR));<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        }<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        window = null;<a name="line.310"></a>
+<span class="sourceLineNo">311</span>    }<a name="line.311"></a>
+<span class="sourceLineNo">312</span><a name="line.312"></a>
+<span class="sourceLineNo">313</span>    /**<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * Returns the &lt;code&gt;JComponent&lt;/code&gt; to render the window decoration<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * style.<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     */<a name="line.316"></a>
+<span class="sourceLineNo">317</span>    private JComponent createTitlePane(JRootPane root) {<a name="line.317"></a>
+<span class="sourceLineNo">318</span>        return new MetalTitlePane(root, this);<a name="line.318"></a>
+<span class="sourceLineNo">319</span>    }<a name="line.319"></a>
+<span class="sourceLineNo">320</span><a name="line.320"></a>
+<span class="sourceLineNo">321</span>    /**<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * Returns a &lt;code&gt;MouseListener&lt;/code&gt; that will be added to the<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * &lt;code&gt;Window&lt;/code&gt; containing the &lt;code&gt;JRootPane&lt;/code&gt;.<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     */<a name="line.324"></a>
+<span class="sourceLineNo">325</span>    private MouseInputListener createWindowMouseInputListener(JRootPane root) {<a name="line.325"></a>
+<span class="sourceLineNo">326</span>        return new MouseInputHandler();<a name="line.326"></a>
+<span class="sourceLineNo">327</span>    }<a name="line.327"></a>
+<span class="sourceLineNo">328</span><a name="line.328"></a>
+<span class="sourceLineNo">329</span>    /**<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * Returns a &lt;code&gt;LayoutManager&lt;/code&gt; that will be set on the<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * &lt;code&gt;JRootPane&lt;/code&gt;.<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     */<a name="line.332"></a>
+<span class="sourceLineNo">333</span>    private LayoutManager createLayoutManager() {<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        return new MetalRootLayout();<a name="line.334"></a>
+<span class="sourceLineNo">335</span>    }<a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span>    /**<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * Sets the window title pane -- the JComponent used to provide a plaf a<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * way to override the native operating system's window title pane with<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * one whose look and feel are controlled by the plaf.  The plaf creates<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * and sets this value; the default is null, implying a native operating<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * system window title pane.<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     *<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * @param content the &lt;code&gt;JComponent&lt;/code&gt; to use for the window title pane.<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     */<a name="line.345"></a>
+<span class="sourceLineNo">346</span>    private void setTitlePane(JRootPane root, JComponent titlePane) {<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        JLayeredPane layeredPane = root.getLayeredPane();<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        JComponent oldTitlePane = getTitlePane();<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>        if (oldTitlePane != null) {<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            oldTitlePane.setVisible(false);<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            layeredPane.remove(oldTitlePane);<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        }<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        if (titlePane != null) {<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            layeredPane.add(titlePane, JLayeredPane.FRAME_CONTENT_LAYER);<a name="line.355"></a>
+<span class="sourceLineNo">356</span>            titlePane.setVisible(true);<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        }<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        this.titlePane = titlePane;<a name="line.358"></a>
+<span class="sourceLineNo">359</span>    }<a name="line.359"></a>
+<span class="sourceLineNo">360</span><a name="line.360"></a>
+<span class="sourceLineNo">361</span>    /**<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * Returns the &lt;code&gt;JComponent&lt;/code&gt; rendering the title pane. If this<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * returns null, it implies there is no need to render window decorations.<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     *<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * @return the current window title pane, or null<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * @see #setTitlePane<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     */<a name="line.367"></a>
+<span class="sourceLineNo">368</span>    private JComponent getTitlePane() {<a name="line.368"></a>
+<span class="sourceLineNo">369</span>        return titlePane;<a name="line.369"></a>
+<span class="sourceLineNo">370</span>    }<a name="line.370"></a>
+<span class="sourceLineNo">371</span><a name="line.371"></a>
+<span class="sourceLineNo">372</span>    /**<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * Returns the &lt;code&gt;JRootPane&lt;/code&gt; we're providing the look and<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * feel for.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     */<a name="line.375"></a>
+<span class="sourceLineNo">376</span>    private JRootPane getRootPane() {<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        return root;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>    }<a name="line.378"></a>
+<span class="sourceLineNo">379</span><a name="line.379"></a>
+<span class="sourceLineNo">380</span>    /**<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * Invoked when a property changes. &lt;code&gt;MetalRootPaneUI&lt;/code&gt; is<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     * primarily interested in events originating from the<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * &lt;code&gt;JRootPane&lt;/code&gt; it has been installed on identifying the<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     * property &lt;code&gt;windowDecorationStyle&lt;/code&gt;. If the<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * &lt;code&gt;windowDecorationStyle&lt;/code&gt; has changed to a value other<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * than &lt;code&gt;JRootPane.NONE&lt;/code&gt;, this will add a &lt;code&gt;Component&lt;/code&gt;<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * to the &lt;code&gt;JRootPane&lt;/code&gt; to render the window decorations, as well<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * as installing a &lt;code&gt;Border&lt;/code&gt; on the &lt;code&gt;JRootPane&lt;/code&gt;.<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * On the other hand, if the &lt;code&gt;windowDecorationStyle&lt;/code&gt; has<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * changed to &lt;code&gt;JRootPane.NONE&lt;/code&gt;, this will remove the<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * &lt;code&gt;Component&lt;/code&gt; that has been added to the &lt;code&gt;JRootPane&lt;/code&gt;<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * as well resetting the Border to what it was before<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * &lt;code&gt;installUI&lt;/code&gt; was invoked.<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     *<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * @param e A PropertyChangeEvent object describing the event source<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     *          and the property that has changed.<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     */<a name="line.397"></a>
+<span class="sourceLineNo">398</span>    public void propertyChange(PropertyChangeEvent e) {<a name="line.398"></a>
+<span class="sourceLineNo">399</span>        super.propertyChange(e);<a name="line.399"></a>
+<span class="sourceLineNo">400</span><a name="line.400"></a>
+<span class="sourceLineNo">401</span>        String propertyName = e.getPropertyName();<a name="line.401"></a>
+<span class="sourceLineNo">402</span>        if(propertyName == null) {<a name="line.402"></a>
+<span class="sourceLineNo">403</span>            return;<a name="line.403"></a>
+<span class="sourceLineNo">404</span>        }<a name="line.404"></a>
+<span class="sourceLineNo">405</span><a name="line.405"></a>
+<span class="sourceLineNo">406</span>        if(propertyName.equals("windowDecorationStyle")) {<a name="line.406"></a>
+<span class="sourceLineNo">407</span>            JRootPane root = (JRootPane) e.getSource();<a name="line.407"></a>
+<span class="sourceLineNo">408</span>            int style = root.getWindowDecorationStyle();<a name="line.408"></a>
+<span class="sourceLineNo">409</span><a name="line.409"></a>
+<span class="sourceLineNo">410</span>            // This is potentially more than needs to be done,<a name="line.410"></a>
+<span class="sourceLineNo">411</span>            // but it rarely happens and makes the install/uninstall process<a name="line.411"></a>
+<span class="sourceLineNo">412</span>            // simpler. MetalTitlePane also assumes it will be recreated if<a name="line.412"></a>
+<span class="sourceLineNo">413</span>            // the decoration style changes.<a name="line.413"></a>
+<span class="sourceLineNo">414</span>            uninstallClientDecorations(root);<a name="line.414"></a>
+<span class="sourceLineNo">415</span>            if (style != JRootPane.NONE) {<a name="line.415"></a>
+<span class="sourceLineNo">416</span>                installClientDecorations(root);<a name="line.416"></a>
+<span class="sourceLineNo">417</span>            }<a name="line.417"></a>
+<span class="sourceLineNo">418</span>        }<a name="line.418"></a>
+<span class="sourceLineNo">419</span>        else if (propertyName.equals("ancestor")) {<a name="line.419"></a>
+<span class="sourceLineNo">420</span>            uninstallWindowListeners(root);<a name="line.420"></a>
+<span class="sourceLineNo">421</span>            if (((JRootPane)e.getSource()).getWindowDecorationStyle() !=<a name="line.421"></a>
+<span class="sourceLineNo">422</span>                                           JRootPane.NONE) {<a name="line.422"></a>
+<span class="sourceLineNo">423</span>                installWindowListeners(root, root.getParent());<a name="line.423"></a>
+<span class="sourceLineNo">424</span>            }<a name="line.424"></a>
+<span class="sourceLineNo">425</span>        }<a name="line.425"></a>
+<span class="sourceLineNo">426</span>        return;<a name="line.426"></a>
+<span class="sourceLineNo">427</span>    }<a name="line.427"></a>
+<span class="sourceLineNo">428</span><a name="line.428"></a>
+<span class="sourceLineNo">429</span>    /**<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * A custom layout manager that is responsible for the layout of<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * layeredPane, glassPane, menuBar and titlePane, if one has been<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     * installed.<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     */<a name="line.433"></a>
+<span class="sourceLineNo">434</span>    // NOTE: Ideally this would extends JRootPane.RootLayout, but that<a name="line.434"></a>
+<span class="sourceLineNo">435</span>    //       would force this to be non-static.<a name="line.435"></a>
+<span class="sourceLineNo">436</span>    private static class MetalRootLayout implements LayoutManager2 {<a name="line.436"></a>
+<span class="sourceLineNo">437</span>        /**<a name="line.437"></a>
+<span class="sourceLineNo">438</span>         * Returns the amount of space the layout would like to have.<a name="line.438"></a>
+<span class="sourceLineNo">439</span>         *<a name="line.439"></a>
+<span class="sourceLineNo">440</span>         * @param the Container for which this layout manager is being used<a name="line.440"></a>
+<span class="sourceLineNo">441</span>         * @return a Dimension object containing the layout's preferred size<a name="line.441"></a>
+<span class="sourceLineNo">442</span>         */<a name="line.442"></a>
+<span class="sourceLineNo">443</span>        public Dimension preferredLayoutSize(Container parent) {<a name="line.443"></a>
+<span class="sourceLineNo">444</span>            Dimension cpd, mbd, tpd;<a name="line.444"></a>
+<span class="sourceLineNo">445</span>            int cpWidth = 0;<a name="line.445"></a>
+<span class="sourceLineNo">446</span>            int cpHeight = 0;<a name="line.446"></a>
+<span class="sourceLineNo">447</span>            int mbWidth = 0;<a name="line.447"></a>
+<span class="sourceLineNo">448</span>            int mbHeight = 0;<a name="line.448"></a>
+<span class="sourceLineNo">449</span>            int tpWidth = 0;<a name="line.449"></a>
+<span class="sourceLineNo">450</span>            int tpHeight = 0;<a name="line.450"></a>
+<span class="sourceLineNo">451</span>            Insets i = parent.getInsets();<a name="line.451"></a>
+<span class="sourceLineNo">452</span>            JRootPane root = (JRootPane) parent;<a name="line.452"></a>
+<span class="sourceLineNo">453</span><a name="line.453"></a>
+<span class="sourceLineNo">454</span>            if(root.getContentPane() != null) {<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                cpd = root.getContentPane().getPreferredSize();<a name="line.455"></a>
+<span class="sourceLineNo">456</span>            } else {<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                cpd = root.getSize();<a name="line.457"></a>
+<span class="sourceLineNo">458</span>            }<a name="line.458"></a>
+<span class="sourceLineNo">459</span>            if (cpd != null) {<a name="line.459"></a>
+<span class="sourceLineNo">460</span>                cpWidth = cpd.width;<a name="line.460"></a>
+<span class="sourceLineNo">461</span>                cpHeight = cpd.height;<a name="line.461"></a>
+<span class="sourceLineNo">462</span>            }<a name="line.462"></a>
+<span class="sourceLineNo">463</span><a name="line.463"></a>
+<span class="sourceLineNo">464</span>            if(root.getMenuBar() != null) {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                mbd = root.getMenuBar().getPreferredSize();<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                if (mbd != null) {<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                    mbWidth = mbd.width;<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                    mbHeight = mbd.height;<a name="line.468"></a>
+<span class="sourceLineNo">469</span>                }<a name="line.469"></a>
+<span class="sourceLineNo">470</span>            }<a name="line.470"></a>
+<span class="sourceLineNo">471</span><a name="line.471"></a>
+<span class="sourceLineNo">472</span>            if (root.getWindowDecorationStyle() != JRootPane.NONE &amp;&amp;<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                     (root.getUI() instanceof MetalRootPaneUI)) {<a name="line.473"></a>
+<span class="sourceLineNo">474</span>                JComponent titlePane = ((MetalRootPaneUI)root.getUI()).<a name="line.474"></a>
+<span class="sourceLineNo">475</span>                                       getTitlePane();<a name="line.475"></a>
+<span class="sourceLineNo">476</span>                if (titlePane != null) {<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                    tpd = titlePane.getPreferredSize();<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                    if (tpd != null) {<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                        tpWidth = tpd.width;<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                        tpHeight = tpd.height;<a name="line.480"></a>
+<span class="sourceLineNo">481</span>                    }<a name="line.481"></a>
+<span class="sourceLineNo">482</span>                }<a name="line.482"></a>
+<span class="sourceLineNo">483</span>            }<a name="line.483"></a>
+<span class="sourceLineNo">484</span><a name="line.484"></a>
+<span class="sourceLineNo">485</span>            return new Dimension(Math.max(Math.max(cpWidth, mbWidth), tpWidth) + i.left + i.right,<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                                 cpHeight + mbHeight + tpWidth + i.top + i.bottom);<a name="line.486"></a>
+<span class="sourceLineNo">487</span>        }<a name="line.487"></a>
+<span class="sourceLineNo">488</span><a name="line.488"></a>
+<span class="sourceLineNo">489</span>        /**<a name="line.489"></a>
+<span class="sourceLineNo">490</span>         * Returns the minimum amount of space the layout needs.<a name="line.490"></a>
+<span class="sourceLineNo">491</span>         *<a name="line.491"></a>
+<span class="sourceLineNo">492</span>         * @param the Container for which this layout manager is being used<a name="line.492"></a>
+<span class="sourceLineNo">493</span>         * @return a Dimension object containing the layout's minimum size<a name="line.493"></a>
+<span class="sourceLineNo">494</span>         */<a name="line.494"></a>
+<span class="sourceLineNo">495</span>        public Dimension minimumLayoutSize(Container parent) {<a name="line.495"></a>
+<span class="sourceLineNo">496</span>            Dimension cpd, mbd, tpd;<a name="line.496"></a>
+<span class="sourceLineNo">497</span>            int cpWidth = 0;<a name="line.497"></a>
+<span class="sourceLineNo">498</span>            int cpHeight = 0;<a name="line.498"></a>
+<span class="sourceLineNo">499</span>            int mbWidth = 0;<a name="line.499"></a>
+<span class="sourceLineNo">500</span>            int mbHeight = 0;<a name="line.500"></a>
+<span class="sourceLineNo">501</span>            int tpWidth = 0;<a name="line.501"></a>
+<span class="sourceLineNo">502</span>            int tpHeight = 0;<a name="line.502"></a>
+<span class="sourceLineNo">503</span>            Insets i = parent.getInsets();<a name="line.503"></a>
+<span class="sourceLineNo">504</span>            JRootPane root = (JRootPane) parent;<a name="line.504"></a>
+<span class="sourceLineNo">505</span><a name="line.505"></a>
+<span class="sourceLineNo">506</span>            if(root.getContentPane() != null) {<a name="line.506"></a>
+<span class="sourceLineNo">507</span>                cpd = root.getContentPane().getMinimumSize();<a name="line.507"></a>
+<span class="sourceLineNo">508</span>            } else {<a name="line.508"></a>
+<span class="sourceLineNo">509</span>                cpd = root.getSize();<a name="line.509"></a>
+<span class="sourceLineNo">510</span>            }<a name="line.510"></a>
+<span class="sourceLineNo">511</span>            if (cpd != null) {<a name="line.511"></a>
+<span class="sourceLineNo">512</span>                cpWidth = cpd.width;<a name="line.512"></a>
+<span class="sourceLineNo">513</span>                cpHeight = cpd.height;<a name="line.513"></a>
+<span class="sourceLineNo">514</span>            }<a name="line.514"></a>
+<span class="sourceLineNo">515</span><a name="line.515"></a>
+<span class="sourceLineNo">516</span>            if(root.getMenuBar() != null) {<a name="line.516"></a>
+<span class="sourceLineNo">517</span>                mbd = root.getMenuBar().getMinimumSize();<a name="line.517"></a>
+<span class="sourceLineNo">518</span>                if (mbd != null) {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>                    mbWidth = mbd.width;<a name="line.519"></a>
+<span class="sourceLineNo">520</span>                    mbHeight = mbd.height;<a name="line.520"></a>
+<span class="sourceLineNo">521</span>                }<a name="line.521"></a>
+<span class="sourceLineNo">522</span>            }<a name="line.522"></a>
+<span class="sourceLineNo">523</span>            if (root.getWindowDecorationStyle() != JRootPane.NONE &amp;&amp;<a name="line.523"></a>
+<span class="sourceLineNo">524</span>                     (root.getUI() instanceof MetalRootPaneUI)) {<a name="line.524"></a>
+<span class="sourceLineNo">525</span>                JComponent titlePane = ((MetalRootPaneUI)root.getUI()).<a name="line.525"></a>
+<span class="sourceLineNo">526</span>                                       getTitlePane();<a name="line.526"></a>
+<span class="sourceLineNo">527</span>                if (titlePane != null) {<a name="line.527"></a>
+<span class="sourceLineNo">528</span>                    tpd = titlePane.getMinimumSize();<a name="line.528"></a>
+<span class="sourceLineNo">529</span>                    if (tpd != null) {<a name="line.529"></a>
+<span class="sourceLineNo">530</span>                        tpWidth = tpd.width;<a name="line.530"></a>
+<span class="sourceLineNo">531</span>                        tpHeight = tpd.height;<a name="line.531"></a>
+<span class="sourceLineNo">532</span>                    }<a name="line.532"></a>
+<span class="sourceLineNo">533</span>                }<a name="line.533"></a>
+<span class="sourceLineNo">534</span>            }<a name="line.534"></a>
+<span class="sourceLineNo">535</span><a name="line.535"></a>
+<span class="sourceLineNo">536</span>            return new Dimension(Math.max(Math.max(cpWidth, mbWidth), tpWidth) + i.left + i.right,<a name="line.536"></a>
+<span class="sourceLineNo">537</span>                                 cpHeight + mbHeight + tpWidth + i.top + i.bottom);<a name="line.537"></a>
+<span class="sourceLineNo">538</span>        }<a name="line.538"></a>
+<span class="sourceLineNo">539</span><a name="line.539"></a>
+<span class="sourceLineNo">540</span>        /**<a name="line.540"></a>
+<span class="sourceLineNo">541</span>         * Returns the maximum amount of space the layout can use.<a name="line.541"></a>
+<span class="sourceLineNo">542</span>         *<a name="line.542"></a>
+<span class="sourceLineNo">543</span>         * @param the Container for which this layout manager is being used<a name="line.543"></a>
+<span class="sourceLineNo">544</span>         * @return a Dimension object containing the layout's maximum size<a name="line.544"></a>
+<span class="sourceLineNo">545</span>         */<a name="line.545"></a>
+<span class="sourceLineNo">546</span>        public Dimension maximumLayoutSize(Container target) {<a name="line.546"></a>
+<span class="sourceLineNo">547</span>            Dimension cpd, mbd, tpd;<a name="line.547"></a>
+<span class="sourceLineNo">548</span>            int cpWidth = Integer.MAX_VALUE;<a name="line.548"></a>
+<span class="sourceLineNo">549</span>            int cpHeight = Integer.MAX_VALUE;<a name="line.549"></a>
+<span class="sourceLineNo">550</span>            int mbWidth = Integer.MAX_VALUE;<a name="line.550"></a>
+<span class="sourceLineNo">551</span>            int mbHeight = Integer.MAX_VALUE;<a name="line.551"></a>
+<span class="sourceLineNo">552</span>            int tpWidth = Integer.MAX_VALUE;<a name="line.552"></a>
+<span class="sourceLineNo">553</span>            int tpHeight = Integer.MAX_VALUE;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>            Insets i = target.getInsets();<a name="line.554"></a>
+<span class="sourceLineNo">555</span>            JRootPane root = (JRootPane) target;<a name="line.555"></a>
+<span class="sourceLineNo">556</span><a name="line.556"></a>
+<span class="sourceLineNo">557</span>            if(root.getContentPane() != null) {<a name="line.557"></a>
+<span class="sourceLineNo">558</span>                cpd = root.getContentPane().getMaximumSize();<a name="line.558"></a>
+<span class="sourceLineNo">559</span>                if (cpd != null) {<a name="line.559"></a>
+<span class="sourceLineNo">560</span>                    cpWidth = cpd.width;<a name="line.560"></a>
+<span class="sourceLineNo">561</span>                    cpHeight = cpd.height;<a name="line.561"></a>
+<span class="sourceLineNo">562</span>                }<a name="line.562"></a>
+<span class="sourceLineNo">563</span>            }<a name="line.563"></a>
+<span class="sourceLineNo">564</span><a name="line.564"></a>
+<span class="sourceLineNo">565</span>            if(root.getMenuBar() != null) {<a name="line.565"></a>
+<span class="sourceLineNo">566</span>                mbd = root.getMenuBar().getMaximumSize();<a name="line.566"></a>
+<span class="sourceLineNo">567</span>                if (mbd != null) {<a name="line.567"></a>
+<span class="sourceLineNo">568</span>                    mbWidth = mbd.width;<a name="line.568"></a>
+<span class="sourceLineNo">569</span>                    mbHeight = mbd.height;<a name="line.569"></a>
+<span class="sourceLineNo">570</span>                }<a name="line.570"></a>
+<span class="sourceLineNo">571</span>            }<a name="line.571"></a>
+<span class="sourceLineNo">572</span><a name="line.572"></a>
+<span class="sourceLineNo">573</span>            if (root.getWindowDecorationStyle() != JRootPane.NONE &amp;&amp;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>                     (root.getUI() instanceof MetalRootPaneUI)) {<a name="line.574"></a>
+<span class="sourceLineNo">575</span>                JComponent titlePane = ((MetalRootPaneUI)root.getUI()).<a name="line.575"></a>
+<span class="sourceLineNo">576</span>                                       getTitlePane();<a name="line.576"></a>
+<span class="sourceLineNo">577</span>                if (titlePane != null)<a name="line.577"></a>
+<span class="sourceLineNo">578</span>                {<a name="line.578"></a>
+<span class="sourceLineNo">579</span>                    tpd = titlePane.getMaximumSize();<a name="line.579"></a>
+<span class="sourceLineNo">580</span>                    if (tpd != null) {<a name="line.580"></a>
+<span class="sourceLineNo">581</span>                        tpWidth = tpd.width;<a name="line.581"></a>
+<span class="sourceLineNo">582</span>                        tpHeight = tpd.height;<a name="line.582"></a>
+<span class="sourceLineNo">583</span>                    }<a name="line.583"></a>
+<span class="sourceLineNo">584</span>                }<a name="line.584"></a>
+<span class="sourceLineNo">585</span>            }<a name="line.585"></a>
+<span class="sourceLineNo">586</span><a name="line.586"></a>
+<span class="sourceLineNo">587</span>            int maxHeight = Math.max(Math.max(cpHeight, mbHeight), tpHeight);<a name="line.587"></a>
+<span class="sourceLineNo">588</span>            // Only overflows if 3 real non-MAX_VALUE heights, sum to &gt; MAX_VALUE<a name="line.588"></a>
+<span class="sourceLineNo">589</span>            // Only will happen if sums to more than 2 billion units.  Not likely.<a name="line.589"></a>
+<span class="sourceLineNo">590</span>            if (maxHeight != Integer.MAX_VALUE) {<a name="line.590"></a>
+<span class="sourceLineNo">591</span>                maxHeight = cpHeight + mbHeight + tpHeight + i.top + i.bottom;<a name="line.591"></a>
+<span class="sourceLineNo">592</span>            }<a name="line.592"></a>
+<span class="sourceLineNo">593</span><a name="line.593"></a>
+<span class="sourceLineNo">594</span>            int maxWidth = Math.max(Math.max(cpWidth, mbWidth), tpWidth);<a name="line.594"></a>
+<span class="sourceLineNo">595</span>            // Similar overflow comment as above<a name="line.595"></a>
+<span class="sourceLineNo">596</span>            if (maxWidth != Integer.MAX_VALUE) {<a name="line.596"></a>
+<span class="sourceLineNo">597</span>                maxWidth += i.left + i.right;<a name="line.597"></a>
+<span class="sourceLineNo">598</span>            }<a name="line.598"></a>
+<span class="sourceLineNo">599</span><a name="line.599"></a>
+<span class="sourceLineNo">600</span>            return new Dimension(maxWidth, maxHeight);<a name="line.600"></a>
+<span class="sourceLineNo">601</span>        }<a name="line.601"></a>
+<span class="sourceLineNo">602</span><a name="line.602"></a>
+<span class="sourceLineNo">603</span>        /**<a name="line.603"></a>
+<span class="sourceLineNo">604</span>         * Instructs the layout manager to perform the layout for the specified<a name="line.604"></a>
+<span class="sourceLineNo">605</span>         * container.<a name="line.605"></a>
+<span class="sourceLineNo">606</span>         *<a name="line.606"></a>
+<span class="sourceLineNo">607</span>         * @param the Container for which this layout manager is being used<a name="line.607"></a>
+<span class="sourceLineNo">608</span>         */<a name="line.608"></a>
+<span class="sourceLineNo">609</span>        public void layoutContainer(Container parent) {<a name="line.609"></a>
+<span class="sourceLineNo">610</span>            JRootPane root = (JRootPane) parent;<a name="line.610"></a>
+<span class="sourceLineNo">611</span>            Rectangle b = root.getBounds();<a name="line.611"></a>
+<span class="sourceLineNo">612</span>            Insets i = root.getInsets();<a name="line.612"></a>
+<span class="sourceLineNo">613</span>            int nextY = 0;<a name="line.613"></a>
+<span class="sourceLineNo">614</span>            int w = b.width - i.right - i.left;<a name="line.614"></a>
+<span class="sourceLineNo">615</span>            int h = b.height - i.top - i.bottom;<a name="line.615"></a>
+<span class="sourceLineNo">616</span><a name="line.616"></a>
+<span class="sourceLineNo">617</span>            if(root.getLayeredPane() != null) {<a name="line.617"></a>
+<span class="sourceLineNo">618</span>                root.getLayeredPane().setBounds(i.left, i.top, w, h);<a name="line.618"></a>
+<span class="sourceLineNo">619</span>            }<a name="line.619"></a>
+<span class="sourceLineNo">620</span>            if(root.getGlassPane() != null) {<a name="line.620"></a>
+<span class="sourceLineNo">621</span>                root.getGlassPane().setBounds(i.left, i.top, w, h);<a name="line.621"></a>
+<span class="sourceLineNo">622</span>            }<a name="line.622"></a>
+<span class="sourceLineNo">623</span>            // Note: This is laying out the children in the layeredPane,<a name="line.623"></a>
+<span class="sourceLineNo">624</span>            // technically, these are not our children.<a name="line.624"></a>
+<span class="sourceLineNo">625</span>            if (root.getWindowDecorationStyle() != JRootPane.NONE &amp;&amp;<a name="line.625"></a>
+<span class="sourceLineNo">626</span>                     (root.getUI() instanceof MetalRootPaneUI)) {<a name="line.626"></a>
+<span class="sourceLineNo">627</span>                JComponent titlePane = ((MetalRootPaneUI)root.getUI()).<a name="line.627"></a>
+<span class="sourceLineNo">628</span>                                       getTitlePane();<a name="line.628"></a>
+<span class="sourceLineNo">629</span>                if (titlePane != null) {<a name="line.629"></a>
+<span class="sourceLineNo">630</span>                    Dimension tpd = titlePane.getPreferredSize();<a name="line.630"></a>
+<span class="sourceLineNo">631</span>                    if (tpd != null) {<a name="line.631"></a>
+<span class="sourceLineNo">632</span>                        int tpHeight = tpd.height;<a name="line.632"></a>
+<span class="sourceLineNo">633</span>                        titlePane.setBounds(0, 0, w, tpHeight);<a name="line.633"></a>
+<span class="sourceLineNo">634</span>                        nextY += tpHeight;<a name="line.634"></a>
+<span class="sourceLineNo">635</span>                    }<a name="line.635"></a>
+<span class="sourceLineNo">636</span>                }<a name="line.636"></a>
+<span class="sourceLineNo">637</span>            }<a name="line.637"></a>
+<span class="sourceLineNo">638</span>            if(root.getMenuBar() != null) {<a name="line.638"></a>
+<span class="sourceLineNo">639</span>                Dimension mbd = root.getMenuBar().getPreferredSize();<a name="line.639"></a>
+<span class="sourceLineNo">640</span>                root.getMenuBar().setBounds(0, nextY, w, mbd.height);<a name="line.640"></a>
+<span class="sourceLineNo">641</span>                nextY += mbd.height;<a name="line.641"></a>
+<span class="sourceLineNo">642</span>            }<a name="line.642"></a>
+<span class="sourceLineNo">643</span>            if(root.getContentPane() != null) {<a name="line.643"></a>
+<span class="sourceLineNo">644</span>                Dimension cpd = root.getContentPane().getPreferredSize();<a name="line.644"></a>
+<span class="sourceLineNo">645</span>                root.getContentPane().setBounds(0, nextY, w,<a name="line.645"></a>
+<span class="sourceLineNo">646</span>                h &lt; nextY ? 0 : h - nextY);<a name="line.646"></a>
+<span class="sourceLineNo">647</span>            }<a name="line.647"></a>
+<span class="sourceLineNo">648</span>        }<a name="line.648"></a>
+<span class="sourceLineNo">649</span><a name="line.649"></a>
+<span class="sourceLineNo">650</span>        public void addLayoutComponent(String name, Component comp) {}<a name="line.650"></a>
+<span class="sourceLineNo">651</span>        public void removeLayoutComponent(Component comp) {}<a name="line.651"></a>
+<span class="sourceLineNo">652</span>        public void addLayoutComponent(Component comp, Object constraints) {}<a name="line.652"></a>
+<span class="sourceLineNo">653</span>        public float getLayoutAlignmentX(Container target) { return 0.0f; }<a name="line.653"></a>
+<span class="sourceLineNo">654</span>        public float getLayoutAlignmentY(Container target) { return 0.0f; }<a name="line.654"></a>
+<span class="sourceLineNo">655</span>        public void invalidateLayout(Container target) {}<a name="line.655"></a>
+<span class="sourceLineNo">656</span>    }<a name="line.656"></a>
+<span class="sourceLineNo">657</span><a name="line.657"></a>
+<span class="sourceLineNo">658</span><a name="line.658"></a>
+<span class="sourceLineNo">659</span>    /**<a name="line.659"></a>
+<span class="sourceLineNo">660</span>     * Maps from positions to cursor type. Refer to calculateCorner and<a name="line.660"></a>
+<span class="sourceLineNo">661</span>     * calculatePosition for details of this.<a name="line.661"></a>
+<span class="sourceLineNo">662</span>     */<a name="line.662"></a>
+<span class="sourceLineNo">663</span>    private static final int[] cursorMapping = new int[]<a name="line.663"></a>
+<span class="sourceLineNo">664</span>    { Cursor.NW_RESIZE_CURSOR, Cursor.NW_RESIZE_CURSOR, Cursor.N_RESIZE_CURSOR,<a name="line.664"></a>
+<span class="sourceLineNo">665</span>             Cursor.NE_RESIZE_CURSOR, Cursor.NE_RESIZE_CURSOR,<a name="line.665"></a>
+<span class="sourceLineNo">666</span>      Cursor.NW_RESIZE_CURSOR, 0, 0, 0, Cursor.NE_RESIZE_CURSOR,<a name="line.666"></a>
+<span class="sourceLineNo">667</span>      Cursor.W_RESIZE_CURSOR, 0, 0, 0, Cursor.E_RESIZE_CURSOR,<a name="line.667"></a>
+<span class="sourceLineNo">668</span>      Cursor.SW_RESIZE_CURSOR, 0, 0, 0, Cursor.SE_RESIZE_CURSOR,<a name="line.668"></a>
+<span class="sourceLineNo">669</span>      Cursor.SW_RESIZE_CURSOR, Cursor.SW_RESIZE_CURSOR, Cursor.S_RESIZE_CURSOR,<a name="line.669"></a>
+<span class="sourceLineNo">670</span>             Cursor.SE_RESIZE_CURSOR, Cursor.SE_RESIZE_CURSOR<a name="line.670"></a>
+<span class="sourceLineNo">671</span>    };<a name="line.671"></a>
+<span class="sourceLineNo">672</span><a name="line.672"></a>
+<span class="sourceLineNo">673</span>    /**<a name="line.673"></a>
+<span class="sourceLineNo">674</span>     * MouseInputHandler is responsible for handling resize/moving of<a name="line.674"></a>
+<span class="sourceLineNo">675</span>     * the Window. It sets the cursor directly on the Window when then<a name="line.675"></a>
+<span class="sourceLineNo">676</span>     * mouse moves over a hot spot.<a name="line.676"></a>
+<span class="sourceLineNo">677</span>     */<a name="line.677"></a>
+<span class="sourceLineNo">678</span>    private class MouseInputHandler implements MouseInputListener {<a name="line.678"></a>
+<span class="sourceLineNo">679</span>        /**<a name="line.679"></a>
+<span class="sourceLineNo">680</span>         * Set to true if the drag operation is moving the window.<a name="line.680"></a>
+<span class="sourceLineNo">681</span>         */<a name="line.681"></a>
+<span class="sourceLineNo">682</span>        private boolean isMovingWindow;<a name="line.682"></a>
+<span class="sourceLineNo">683</span><a name="line.683"></a>
+<span class="sourceLineNo">684</span>        /**<a name="line.684"></a>
+<span class="sourceLineNo">685</span>         * Used to determine the corner the resize is occuring from.<a name="line.685"></a>
+<span class="sourceLineNo">686</span>         */<a name="line.686"></a>
+<span class="sourceLineNo">687</span>        private int dragCursor;<a name="line.687"></a>
+<span class="sourceLineNo">688</span><a name="line.688"></a>
+<span class="sourceLineNo">689</span>        /**<a name="line.689"></a>
+<span class="sourceLineNo">690</span>         * X location the mouse went down on for a drag operation.<a name="line.690"></a>
+<span class="sourceLineNo">691</span>         */<a name="line.691"></a>
+<span class="sourceLineNo">692</span>        private int dragOffsetX;<a name="line.692"></a>
+<span class="sourceLineNo">693</span><a name="line.693"></a>
+<span class="sourceLineNo">694</span>        /**<a name="line.694"></a>
+<span class="sourceLineNo">695</span>         * Y location the mouse went down on for a drag operation.<a name="line.695"></a>
+<span class="sourceLineNo">696</span>         */<a name="line.696"></a>
+<span class="sourceLineNo">697</span>        private int dragOffsetY;<a name="line.697"></a>
+<span class="sourceLineNo">698</span><a name="line.698"></a>
+<span class="sourceLineNo">699</span>        /**<a name="line.699"></a>
+<span class="sourceLineNo">700</span>         * Width of the window when the drag started.<a name="line.700"></a>
+<span class="sourceLineNo">701</span>         */<a name="line.701"></a>
+<span class="sourceLineNo">702</span>        private int dragWidth;<a name="line.702"></a>
+<span class="sourceLineNo">703</span><a name="line.703"></a>
+<span class="sourceLineNo">704</span>        /**<a name="line.704"></a>
+<span class="sourceLineNo">705</span>         * Height of the window when the drag started.<a name="line.705"></a>
+<span class="sourceLineNo">706</span>         */<a name="line.706"></a>
+<span class="sourceLineNo">707</span>        private int dragHeight;<a name="line.707"></a>
+<span class="sourceLineNo">708</span><a name="line.708"></a>
+<span class="sourceLineNo">709</span>        public void mousePressed(MouseEvent ev) {<a name="line.709"></a>
+<span class="sourceLineNo">710</span>            JRootPane rootPane = getRootPane();<a name="line.710"></a>
+<span class="sourceLineNo">711</span><a name="line.711"></a>
+<span class="sourceLineNo">712</span>            if (rootPane.getWindowDecorationStyle() == JRootPane.NONE) {<a name="line.712"></a>
+<span class="sourceLineNo">713</span>                return;<a name="line.713"></a>
+<span class="sourceLineNo">714</span>            }<a name="line.714"></a>
+<span class="sourceLineNo">715</span>            Point dragWindowOffset = ev.getPoint();<a name="line.715"></a>
+<span class="sourceLineNo">716</span>            Window w = (Window)ev.getSource();<a name="line.716"></a>
+<span class="sourceLineNo">717</span>            if (w != null) {<a name="line.717"></a>
+<span class="sourceLineNo">718</span>                w.toFront();<a name="line.718"></a>
+<span class="sourceLineNo">719</span>            }<a name="line.719"></a>
+<span class="sourceLineNo">720</span>            Point convertedDragWindowOffset = SwingUtilities.convertPoint(<a name="line.720"></a>
+<span class="sourceLineNo">721</span>                           w, dragWindowOffset, getTitlePane());<a name="line.721"></a>
+<span class="sourceLineNo">722</span><a name="line.722"></a>
+<span class="sourceLineNo">723</span>            Frame f = null;<a name="line.723"></a>
+<span class="sourceLineNo">724</span>            Dialog d = null;<a name="line.724"></a>
+<span class="sourceLineNo">725</span><a name="line.725"></a>
+<span class="sourceLineNo">726</span>            if (w instanceof Frame) {<a name="line.726"></a>
+<span class="sourceLineNo">727</span>                f = (Frame)w;<a name="line.727"></a>
+<span class="sourceLineNo">728</span>            } else if (w instanceof Dialog) {<a name="line.728"></a>
+<span class="sourceLineNo">729</span>                d = (Dialog)w;<a name="line.729"></a>
+<span class="sourceLineNo">730</span>            }<a name="line.730"></a>
+<span class="sourceLineNo">731</span><a name="line.731"></a>
+<span class="sourceLineNo">732</span>            int frameState = (f != null) ? f.getExtendedState() : 0;<a name="line.732"></a>
+<span class="sourceLineNo">733</span><a name="line.733"></a>
+<span class="sourceLineNo">734</span>            if (getTitlePane() != null &amp;&amp;<a name="line.734"></a>
+<span class="sourceLineNo">735</span>                        getTitlePane().contains(convertedDragWindowOffset)) {<a name="line.735"></a>
+<span class="sourceLineNo">736</span>                if ((f != null &amp;&amp; ((frameState &amp; Frame.MAXIMIZED_BOTH) == 0)<a name="line.736"></a>
+<span class="sourceLineNo">737</span>                        || (d != null))<a name="line.737"></a>
+<span class="sourceLineNo">738</span>                        &amp;&amp; dragWindowOffset.y &gt;= BORDER_DRAG_THICKNESS<a name="line.738"></a>
+<span class="sourceLineNo">739</span>                        &amp;&amp; dragWindowOffset.x &gt;= BORDER_DRAG_THICKNESS<a name="line.739"></a>
+<span class="sourceLineNo">740</span>                        &amp;&amp; dragWindowOffset.x &lt; w.getWidth()<a name="line.740"></a>
+<span class="sourceLineNo">741</span>                            - BORDER_DRAG_THICKNESS) {<a name="line.741"></a>
+<span class="sourceLineNo">742</span>                    isMovingWindow = true;<a name="line.742"></a>
+<span class="sourceLineNo">743</span>                    dragOffsetX = dragWindowOffset.x;<a name="line.743"></a>
+<span class="sourceLineNo">744</span>                    dragOffsetY = dragWindowOffset.y;<a name="line.744"></a>
+<span class="sourceLineNo">745</span>                }<a name="line.745"></a>
+<span class="sourceLineNo">746</span>            }<a name="line.746"></a>
+<span class="sourceLineNo">747</span>            else if (f != null &amp;&amp; f.isResizable()<a name="line.747"></a>
+<span class="sourceLineNo">748</span>                    &amp;&amp; ((frameState &amp; Frame.MAXIMIZED_BOTH) == 0)<a name="line.748"></a>
+<span class="sourceLineNo">749</span>                    || (d != null &amp;&amp; d.isResizable())) {<a name="line.749"></a>
+<span class="sourceLineNo">750</span>                dragOffsetX = dragWindowOffset.x;<a name="line.750"></a>
+<span class="sourceLineNo">751</span>                dragOffsetY = dragWindowOffset.y;<a name="line.751"></a>
+<span class="sourceLineNo">752</span>                dragWidth = w.getWidth();<a name="line.752"></a>
+<span class="sourceLineNo">753</span>                dragHeight = w.getHeight();<a name="line.753"></a>
+<span class="sourceLineNo">754</span>                dragCursor = getCursor(calculateCorner(<a name="line.754"></a>
+<span class="sourceLineNo">755</span>                             w, dragWindowOffset.x, dragWindowOffset.y));<a name="line.755"></a>
+<span class="sourceLineNo">756</span>            }<a name="line.756"></a>
+<span class="sourceLineNo">757</span>        }<a name="line.757"></a>
+<span class="sourceLineNo">758</span><a name="line.758"></a>
+<span class="sourceLineNo">759</span>        public void mouseReleased(MouseEvent ev) {<a name="line.759"></a>
+<span class="sourceLineNo">760</span>            if (dragCursor != 0 &amp;&amp; window != null &amp;&amp; !window.isValid()) {<a name="line.760"></a>
+<span class="sourceLineNo">761</span>                // Some Window systems validate as you resize, others won't,<a name="line.761"></a>
+<span class="sourceLineNo">762</span>                // thus the check for validity before repainting.<a name="line.762"></a>
+<span class="sourceLineNo">763</span>                window.validate();<a name="line.763"></a>
+<span class="sourceLineNo">764</span>                getRootPane().repaint();<a name="line.764"></a>
+<span class="sourceLineNo">765</span>            }<a name="line.765"></a>
+<span class="sourceLineNo">766</span>            isMovingWindow = false;<a name="line.766"></a>
+<span class="sourceLineNo">767</span>            dragCursor = 0;<a name="line.767"></a>
+<span class="sourceLineNo">768</span>        }<a name="line.768"></a>
+<span class="sourceLineNo">769</span><a name="line.769"></a>
+<span class="sourceLineNo">770</span>        public void mouseMoved(MouseEvent ev) {<a name="line.770"></a>
+<span class="sourceLineNo">771</span>            JRootPane root = getRootPane();<a name="line.771"></a>
+<span class="sourceLineNo">772</span><a name="line.772"></a>
+<span class="sourceLineNo">773</span>            if (root.getWindowDecorationStyle() == JRootPane.NONE) {<a name="line.773"></a>
+<span class="sourceLineNo">774</span>                return;<a name="line.774"></a>
+<span class="sourceLineNo">775</span>            }<a name="line.775"></a>
+<span class="sourceLineNo">776</span><a name="line.776"></a>
+<span class="sourceLineNo">777</span>            Window w = (Window)ev.getSource();<a name="line.777"></a>
+<span class="sourceLineNo">778</span><a name="line.778"></a>
+<span class="sourceLineNo">779</span>            Frame f = null;<a name="line.779"></a>
+<span class="sourceLineNo">780</span>            Dialog d = null;<a name="line.780"></a>
+<span class="sourceLineNo">781</span><a name="line.781"></a>
+<span class="sourceLineNo">782</span>            if (w instanceof Frame) {<a name="line.782"></a>
+<span class="sourceLineNo">783</span>                f = (Frame)w;<a name="line.783"></a>
+<span class="sourceLineNo">784</span>            } else if (w instanceof Dialog) {<a name="line.784"></a>
+<span class="sourceLineNo">785</span>                d = (Dialog)w;<a name="line.785"></a>
+<span class="sourceLineNo">786</span>            }<a name="line.786"></a>
+<span class="sourceLineNo">787</span><a name="line.787"></a>
+<span class="sourceLineNo">788</span>            // Update the cursor<a name="line.788"></a>
+<span class="sourceLineNo">789</span>            int cursor = getCursor(calculateCorner(w, ev.getX(), ev.getY()));<a name="line.789"></a>
+<span class="sourceLineNo">790</span><a name="line.790"></a>
+<span class="sourceLineNo">791</span>            if (cursor != 0 &amp;&amp; ((f != null &amp;&amp; (f.isResizable() &amp;&amp;<a name="line.791"></a>
+<span class="sourceLineNo">792</span>                    (f.getExtendedState() &amp; Frame.MAXIMIZED_BOTH) == 0))<a name="line.792"></a>
+<span class="sourceLineNo">793</span>                    || (d != null &amp;&amp; d.isResizable()))) {<a name="line.793"></a>
+<span class="sourceLineNo">794</span>                w.setCursor(Cursor.getPredefinedCursor(cursor));<a name="line.794"></a>
+<span class="sourceLineNo">795</span>            }<a name="line.795"></a>
+<span class="sourceLineNo">796</span>            else {<a name="line.796"></a>
+<span class="sourceLineNo">797</span>                w.setCursor(lastCursor);<a name="line.797"></a>
+<span class="sourceLineNo">798</span>            }<a name="line.798"></a>
+<span class="sourceLineNo">799</span>        }<a name="line.799"></a>
+<span class="sourceLineNo">800</span><a name="line.800"></a>
+<span class="sourceLineNo">801</span>        private void adjust(Rectangle bounds, Dimension min, int deltaX,<a name="line.801"></a>
+<span class="sourceLineNo">802</span>                            int deltaY, int deltaWidth, int deltaHeight) {<a name="line.802"></a>
+<span class="sourceLineNo">803</span>            bounds.x += deltaX;<a name="line.803"></a>
+<span class="sourceLineNo">804</span>            bounds.y += deltaY;<a name="line.804"></a>
+<span class="sourceLineNo">805</span>            bounds.width += deltaWidth;<a name="line.805"></a>
+<span class="sourceLineNo">806</span>            bounds.height += deltaHeight;<a name="line.806"></a>
+<span class="sourceLineNo">807</span>            if (min != null) {<a name="line.807"></a>
+<span class="sourceLineNo">808</span>                if (bounds.width &lt; min.width) {<a name="line.808"></a>
+<span class="sourceLineNo">809</span>                    int correction = min.width - bounds.width;<a name="line.809"></a>
+<span class="sourceLineNo">810</span>                    if (deltaX != 0) {<a name="line.810"></a>
+<span class="sourceLineNo">811</span>                        bounds.x -= correction;<a name="line.811"></a>
+<span class="sourceLineNo">812</span>                    }<a name="line.812"></a>
+<span class="sourceLineNo">813</span>                    bounds.width = min.width;<a name="line.813"></a>
+<span class="sourceLineNo">814</span>                }<a name="line.814"></a>
+<span class="sourceLineNo">815</span>                if (bounds.height &lt; min.height) {<a name="line.815"></a>
+<span class="sourceLineNo">816</span>                    int correction = min.height - bounds.height;<a name="line.816"></a>
+<span class="sourceLineNo">817</span>                    if (deltaY != 0) {<a name="line.817"></a>
+<span class="sourceLineNo">818</span>                        bounds.y -= correction;<a name="line.818"></a>
+<span class="sourceLineNo">819</span>                    }<a name="line.819"></a>
+<span class="sourceLineNo">820</span>                    bounds.height = min.height;<a name="line.820"></a>
+<span class="sourceLineNo">821</span>                }<a name="line.821"></a>
+<span class="sourceLineNo">822</span>            }<a name="line.822"></a>
+<span class="sourceLineNo">823</span>        }<a name="line.823"></a>
+<span class="sourceLineNo">824</span><a name="line.824"></a>
+<span class="sourceLineNo">825</span>        public void mouseDragged(MouseEvent ev) {<a name="line.825"></a>
+<span class="sourceLineNo">826</span>            Window w = (Window)ev.getSource();<a name="line.826"></a>
+<span class="sourceLineNo">827</span>            Point pt = ev.getPoint();<a name="line.827"></a>
+<span class="sourceLineNo">828</span><a name="line.828"></a>
+<span class="sourceLineNo">829</span>            if (isMovingWindow) {<a name="line.829"></a>
+<span class="sourceLineNo">830</span>                Point eventLocationOnScreen = ev.getLocationOnScreen();<a name="line.830"></a>
+<span class="sourceLineNo">831</span>                w.setLocation(eventLocationOnScreen.x - dragOffsetX,<a name="line.831"></a>
+<span class="sourceLineNo">832</span>                              eventLocationOnScreen.y - dragOffsetY);<a name="line.832"></a>
+<span class="sourceLineNo">833</span>            }<a name="line.833"></a>
+<span class="sourceLineNo">834</span>            else if (dragCursor != 0) {<a name="line.834"></a>
+<span class="sourceLineNo">835</span>                Rectangle r = w.getBounds();<a name="line.835"></a>
+<span class="sourceLineNo">836</span>                Rectangle startBounds = new Rectangle(r);<a name="line.836"></a>
+<span class="sourceLineNo">837</span>                Dimension min = w.getMinimumSize();<a name="line.837"></a>
+<span class="sourceLineNo">838</span><a name="line.838"></a>
+<span class="sourceLineNo">839</span>                switch (dragCursor) {<a name="line.839"></a>
+<span class="sourceLineNo">840</span>                case Cursor.E_RESIZE_CURSOR:<a name="line.840"></a>
+<span class="sourceLineNo">841</span>                    adjust(r, min, 0, 0, pt.x + (dragWidth - dragOffsetX) -<a name="line.841"></a>
+<span class="sourceLineNo">842</span>                           r.width, 0);<a name="line.842"></a>
+<span class="sourceLineNo">843</span>                    break;<a name="line.843"></a>
+<span class="sourceLineNo">844</span>                case Cursor.S_RESIZE_CURSOR:<a name="line.844"></a>
+<span class="sourceLineNo">845</span>                    adjust(r, min, 0, 0, 0, pt.y + (dragHeight - dragOffsetY) -<a name="line.845"></a>
+<span class="sourceLineNo">846</span>                           r.height);<a name="line.846"></a>
+<span class="sourceLineNo">847</span>                    break;<a name="line.847"></a>
+<span class="sourceLineNo">848</span>                case Cursor.N_RESIZE_CURSOR:<a name="line.848"></a>
+<span class="sourceLineNo">849</span>                    adjust(r, min, 0, pt.y -dragOffsetY, 0,<a name="line.849"></a>
+<span class="sourceLineNo">850</span>                           -(pt.y - dragOffsetY));<a name="line.850"></a>
+<span class="sourceLineNo">851</span>                    break;<a name="line.851"></a>
+<span class="sourceLineNo">852</span>                case Cursor.W_RESIZE_CURSOR:<a name="line.852"></a>
+<span class="sourceLineNo">853</span>                    adjust(r, min, pt.x - dragOffsetX, 0,<a name="line.853"></a>
+<span class="sourceLineNo">854</span>                           -(pt.x - dragOffsetX), 0);<a name="line.854"></a>
+<span class="sourceLineNo">855</span>                    break;<a name="line.855"></a>
+<span class="sourceLineNo">856</span>                case Cursor.NE_RESIZE_CURSOR:<a name="line.856"></a>
+<span class="sourceLineNo">857</span>                    adjust(r, min, 0, pt.y - dragOffsetY,<a name="line.857"></a>
+<span class="sourceLineNo">858</span>                           pt.x + (dragWidth - dragOffsetX) - r.width,<a name="line.858"></a>
+<span class="sourceLineNo">859</span>                           -(pt.y - dragOffsetY));<a name="line.859"></a>
+<span class="sourceLineNo">860</span>                    break;<a name="line.860"></a>
+<span class="sourceLineNo">861</span>                case Cursor.SE_RESIZE_CURSOR:<a name="line.861"></a>
+<span class="sourceLineNo">862</span>                    adjust(r, min, 0, 0,<a name="line.862"></a>
+<span class="sourceLineNo">863</span>                           pt.x + (dragWidth - dragOffsetX) - r.width,<a name="line.863"></a>
+<span class="sourceLineNo">864</span>                           pt.y + (dragHeight - dragOffsetY) -<a name="line.864"></a>
+<span class="sourceLineNo">865</span>                           r.height);<a name="line.865"></a>
+<span class="sourceLineNo">866</span>                    break;<a name="line.866"></a>
+<span class="sourceLineNo">867</span>                case Cursor.NW_RESIZE_CURSOR:<a name="line.867"></a>
+<span class="sourceLineNo">868</span>                    adjust(r, min, pt.x - dragOffsetX,<a name="line.868"></a>
+<span class="sourceLineNo">869</span>                           pt.y - dragOffsetY,<a name="line.869"></a>
+<span class="sourceLineNo">870</span>                           -(pt.x - dragOffsetX),<a name="line.870"></a>
+<span class="sourceLineNo">871</span>                           -(pt.y - dragOffsetY));<a name="line.871"></a>
+<span class="sourceLineNo">872</span>                    break;<a name="line.872"></a>
+<span class="sourceLineNo">873</span>                case Cursor.SW_RESIZE_CURSOR:<a name="line.873"></a>
+<span class="sourceLineNo">874</span>                    adjust(r, min, pt.x - dragOffsetX, 0,<a name="line.874"></a>
+<span class="sourceLineNo">875</span>                           -(pt.x - dragOffsetX),<a name="line.875"></a>
+<span class="sourceLineNo">876</span>                           pt.y + (dragHeight - dragOffsetY) - r.height);<a name="line.876"></a>
+<span class="sourceLineNo">877</span>                    break;<a name="line.877"></a>
+<span class="sourceLineNo">878</span>                default:<a name="line.878"></a>
+<span class="sourceLineNo">879</span>                    break;<a name="line.879"></a>
+<span class="sourceLineNo">880</span>                }<a name="line.880"></a>
+<span class="sourceLineNo">881</span>                if (!r.equals(startBounds)) {<a name="line.881"></a>
+<span class="sourceLineNo">882</span>                    w.setBounds(r);<a name="line.882"></a>
+<span class="sourceLineNo">883</span>                    // Defer repaint/validate on mouseReleased unless dynamic<a name="line.883"></a>
+<span class="sourceLineNo">884</span>                    // layout is active.<a name="line.884"></a>
+<span class="sourceLineNo">885</span>                    if (Toolkit.getDefaultToolkit().isDynamicLayoutActive()) {<a name="line.885"></a>
+<span class="sourceLineNo">886</span>                        w.validate();<a name="line.886"></a>
+<span class="sourceLineNo">887</span>                        getRootPane().repaint();<a name="line.887"></a>
+<span class="sourceLineNo">888</span>                    }<a name="line.888"></a>
+<span class="sourceLineNo">889</span>                }<a name="line.889"></a>
+<span class="sourceLineNo">890</span>            }<a name="line.890"></a>
+<span class="sourceLineNo">891</span>        }<a name="line.891"></a>
+<span class="sourceLineNo">892</span><a name="line.892"></a>
+<span class="sourceLineNo">893</span>        public void mouseEntered(MouseEvent ev) {<a name="line.893"></a>
+<span class="sourceLineNo">894</span>            Window w = (Window)ev.getSource();<a name="line.894"></a>
+<span class="sourceLineNo">895</span>            lastCursor = w.getCursor();<a name="line.895"></a>
+<span class="sourceLineNo">896</span>            mouseMoved(ev);<a name="line.896"></a>
+<span class="sourceLineNo">897</span>        }<a name="line.897"></a>
+<span class="sourceLineNo">898</span><a name="line.898"></a>
+<span class="sourceLineNo">899</span>        public void mouseExited(MouseEvent ev) {<a name="line.899"></a>
+<span class="sourceLineNo">900</span>            Window w = (Window)ev.getSource();<a name="line.900"></a>
+<span class="sourceLineNo">901</span>            w.setCursor(lastCursor);<a name="line.901"></a>
+<span class="sourceLineNo">902</span>        }<a name="line.902"></a>
+<span class="sourceLineNo">903</span><a name="line.903"></a>
+<span class="sourceLineNo">904</span>        public void mouseClicked(MouseEvent ev) {<a name="line.904"></a>
+<span class="sourceLineNo">905</span>            Window w = (Window)ev.getSource();<a name="line.905"></a>
+<span class="sourceLineNo">906</span>            Frame f = null;<a name="line.906"></a>
+<span class="sourceLineNo">907</span><a name="line.907"></a>
+<span class="sourceLineNo">908</span>            if (w instanceof Frame) {<a name="line.908"></a>
+<span class="sourceLineNo">909</span>                f = (Frame)w;<a name="line.909"></a>
+<span class="sourceLineNo">910</span>            } else {<a name="line.910"></a>
+<span class="sourceLineNo">911</span>                return;<a name="line.911"></a>
+<span class="sourceLineNo">912</span>            }<a name="line.912"></a>
+<span class="sourceLineNo">913</span><a name="line.913"></a>
+<span class="sourceLineNo">914</span>            Point convertedPoint = SwingUtilities.convertPoint(<a name="line.914"></a>
+<span class="sourceLineNo">915</span>                           w, ev.getPoint(), getTitlePane());<a name="line.915"></a>
+<span class="sourceLineNo">916</span><a name="line.916"></a>
+<span class="sourceLineNo">917</span>            int state = f.getExtendedState();<a name="line.917"></a>
+<span class="sourceLineNo">918</span>            if (getTitlePane() != null &amp;&amp;<a name="line.918"></a>
+<span class="sourceLineNo">919</span>                    getTitlePane().contains(convertedPoint)) {<a name="line.919"></a>
+<span class="sourceLineNo">920</span>                if ((ev.getClickCount() % 2) == 0 &amp;&amp;<a name="line.920"></a>
+<span class="sourceLineNo">921</span>                        ((ev.getModifiers() &amp; InputEvent.BUTTON1_MASK) != 0)) {<a name="line.921"></a>
+<span class="sourceLineNo">922</span>                    if (f.isResizable()) {<a name="line.922"></a>
+<span class="sourceLineNo">923</span>                        if ((state &amp; Frame.MAXIMIZED_BOTH) != 0) {<a name="line.923"></a>
+<span class="sourceLineNo">924</span>                            f.setExtendedState(state &amp; ~Frame.MAXIMIZED_BOTH);<a name="line.924"></a>
+<span class="sourceLineNo">925</span>                        }<a name="line.925"></a>
+<span class="sourceLineNo">926</span>                        else {<a name="line.926"></a>
+<span class="sourceLineNo">927</span>                            f.setExtendedState(state | Frame.MAXIMIZED_BOTH);<a name="line.927"></a>
+<span class="sourceLineNo">928</span>                        }<a name="line.928"></a>
+<span class="sourceLineNo">929</span>                        return;<a name="line.929"></a>
+<span class="sourceLineNo">930</span>                    }<a name="line.930"></a>
+<span class="sourceLineNo">931</span>                }<a name="line.931"></a>
+<span class="sourceLineNo">932</span>            }<a name="line.932"></a>
+<span class="sourceLineNo">933</span>        }<a name="line.933"></a>
+<span class="sourceLineNo">934</span><a name="line.934"></a>
+<span class="sourceLineNo">935</span>        /**<a name="line.935"></a>
+<span class="sourceLineNo">936</span>         * Returns the corner that contains the point &lt;code&gt;x&lt;/code&gt;,<a name="line.936"></a>
+<span class="sourceLineNo">937</span>         * &lt;code&gt;y&lt;/code&gt;, or -1 if the position doesn't match a corner.<a name="line.937"></a>
+<span class="sourceLineNo">938</span>         */<a name="line.938"></a>
+<span class="sourceLineNo">939</span>        private int calculateCorner(Window w, int x, int y) {<a name="line.939"></a>
+<span class="sourceLineNo">940</span>            Insets insets = w.getInsets();<a name="line.940"></a>
+<span class="sourceLineNo">941</span>            int xPosition = calculatePosition(x - insets.left,<a name="line.941"></a>
+<span class="sourceLineNo">942</span>                    w.getWidth() - insets.left - insets.right);<a name="line.942"></a>
+<span class="sourceLineNo">943</span>            int yPosition = calculatePosition(y - insets.top,<a name="line.943"></a>
+<span class="sourceLineNo">944</span>                    w.getHeight() - insets.top - insets.bottom);<a name="line.944"></a>
+<span class="sourceLineNo">945</span><a name="line.945"></a>
+<span class="sourceLineNo">946</span>            if (xPosition == -1 || yPosition == -1) {<a name="line.946"></a>
+<span class="sourceLineNo">947</span>                return -1;<a name="line.947"></a>
+<span class="sourceLineNo">948</span>            }<a name="line.948"></a>
+<span class="sourceLineNo">949</span>            return yPosition * 5 + xPosition;<a name="line.949"></a>
+<span class="sourceLineNo">950</span>        }<a name="line.950"></a>
+<span class="sourceLineNo">951</span><a name="line.951"></a>
+<span class="sourceLineNo">952</span>        /**<a name="line.952"></a>
+<span class="sourceLineNo">953</span>         * Returns the Cursor to render for the specified corner. This returns<a name="line.953"></a>
+<span class="sourceLineNo">954</span>         * 0 if the corner doesn't map to a valid Cursor<a name="line.954"></a>
+<span class="sourceLineNo">955</span>         */<a name="line.955"></a>
+<span class="sourceLineNo">956</span>        private int getCursor(int corner) {<a name="line.956"></a>
+<span class="sourceLineNo">957</span>            if (corner == -1) {<a name="line.957"></a>
+<span class="sourceLineNo">958</span>                return 0;<a name="line.958"></a>
+<span class="sourceLineNo">959</span>            }<a name="line.959"></a>
+<span class="sourceLineNo">960</span>            return cursorMapping[corner];<a name="line.960"></a>
+<span class="sourceLineNo">961</span>        }<a name="line.961"></a>
+<span class="sourceLineNo">962</span><a name="line.962"></a>
+<span class="sourceLineNo">963</span>        /**<a name="line.963"></a>
+<span class="sourceLineNo">964</span>         * Returns an integer indicating the position of &lt;code&gt;spot&lt;/code&gt;<a name="line.964"></a>
+<span class="sourceLineNo">965</span>         * in &lt;code&gt;width&lt;/code&gt;. The return value will be:<a name="line.965"></a>
+<span class="sourceLineNo">966</span>         * 0 if &lt; BORDER_DRAG_THICKNESS<a name="line.966"></a>
+<span class="sourceLineNo">967</span>         * 1 if &lt; CORNER_DRAG_WIDTH<a name="line.967"></a>
+<span class="sourceLineNo">968</span>         * 2 if &gt;= CORNER_DRAG_WIDTH &amp;&amp; &lt; width - BORDER_DRAG_THICKNESS<a name="line.968"></a>
+<span class="sourceLineNo">969</span>         * 3 if &gt;= width - CORNER_DRAG_WIDTH<a name="line.969"></a>
+<span class="sourceLineNo">970</span>         * 4 if &gt;= width - BORDER_DRAG_THICKNESS<a name="line.970"></a>
+<span class="sourceLineNo">971</span>         * 5 otherwise<a name="line.971"></a>
+<span class="sourceLineNo">972</span>         */<a name="line.972"></a>
+<span class="sourceLineNo">973</span>        private int calculatePosition(int spot, int width) {<a name="line.973"></a>
+<span class="sourceLineNo">974</span>            if (spot &lt; BORDER_DRAG_THICKNESS) {<a name="line.974"></a>
+<span class="sourceLineNo">975</span>                return 0;<a name="line.975"></a>
+<span class="sourceLineNo">976</span>            }<a name="line.976"></a>
+<span class="sourceLineNo">977</span>            if (spot &lt; CORNER_DRAG_WIDTH) {<a name="line.977"></a>
+<span class="sourceLineNo">978</span>                return 1;<a name="line.978"></a>
+<span class="sourceLineNo">979</span>            }<a name="line.979"></a>
+<span class="sourceLineNo">980</span>            if (spot &gt;= (width - BORDER_DRAG_THICKNESS)) {<a name="line.980"></a>
+<span class="sourceLineNo">981</span>                return 4;<a name="line.981"></a>
+<span class="sourceLineNo">982</span>            }<a name="line.982"></a>
+<span class="sourceLineNo">983</span>            if (spot &gt;= (width - CORNER_DRAG_WIDTH)) {<a name="line.983"></a>
+<span class="sourceLineNo">984</span>                return 3;<a name="line.984"></a>
+<span class="sourceLineNo">985</span>            }<a name="line.985"></a>
+<span class="sourceLineNo">986</span>            return 2;<a name="line.986"></a>
+<span class="sourceLineNo">987</span>        }<a name="line.987"></a>
+<span class="sourceLineNo">988</span>    }<a name="line.988"></a>
+<span class="sourceLineNo">989</span>}<a name="line.989"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

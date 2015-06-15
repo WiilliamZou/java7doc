@@ -1,0 +1,1273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1994, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.util;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.io.*;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>/**<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * This class implements a hash table, which maps keys to values. Any<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * non-&lt;code&gt;null&lt;/code&gt; object can be used as a key or as a value. &lt;p&gt;<a name="line.31"></a>
+<span class="sourceLineNo">032</span> *<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * To successfully store and retrieve objects from a hashtable, the<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * objects used as keys must implement the &lt;code&gt;hashCode&lt;/code&gt;<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * method and the &lt;code&gt;equals&lt;/code&gt; method. &lt;p&gt;<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * An instance of &lt;code&gt;Hashtable&lt;/code&gt; has two parameters that affect its<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * performance: &lt;i&gt;initial capacity&lt;/i&gt; and &lt;i&gt;load factor&lt;/i&gt;.  The<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;i&gt;capacity&lt;/i&gt; is the number of &lt;i&gt;buckets&lt;/i&gt; in the hash table, and the<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * &lt;i&gt;initial capacity&lt;/i&gt; is simply the capacity at the time the hash table<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * is created.  Note that the hash table is &lt;i&gt;open&lt;/i&gt;: in the case of a "hash<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * collision", a single bucket stores multiple entries, which must be searched<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * sequentially.  The &lt;i&gt;load factor&lt;/i&gt; is a measure of how full the hash<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * table is allowed to get before its capacity is automatically increased.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * The initial capacity and load factor parameters are merely hints to<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * the implementation.  The exact details as to when and whether the rehash<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * method is invoked are implementation-dependent.&lt;p&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * Generally, the default load factor (.75) offers a good tradeoff between<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * time and space costs.  Higher values decrease the space overhead but<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * increase the time cost to look up an entry (which is reflected in most<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;tt&gt;Hashtable&lt;/tt&gt; operations, including &lt;tt&gt;get&lt;/tt&gt; and &lt;tt&gt;put&lt;/tt&gt;).&lt;p&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * The initial capacity controls a tradeoff between wasted space and the<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * need for &lt;code&gt;rehash&lt;/code&gt; operations, which are time-consuming.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * No &lt;code&gt;rehash&lt;/code&gt; operations will &lt;i&gt;ever&lt;/i&gt; occur if the initial<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * capacity is greater than the maximum number of entries the<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;tt&gt;Hashtable&lt;/tt&gt; will contain divided by its load factor.  However,<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * setting the initial capacity too high can waste space.&lt;p&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * If many entries are to be made into a &lt;code&gt;Hashtable&lt;/code&gt;,<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * creating it with a sufficiently large capacity may allow the<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * entries to be inserted more efficiently than letting it perform<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * automatic rehashing as needed to grow the table. &lt;p&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * This example creates a hashtable of numbers. It uses the names of<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * the numbers as keys:<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;pre&gt;   {@code<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *   Hashtable&lt;String, Integer&gt; numbers<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *     = new Hashtable&lt;String, Integer&gt;();<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *   numbers.put("one", 1);<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *   numbers.put("two", 2);<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *   numbers.put("three", 3);}&lt;/pre&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;p&gt;To retrieve a number, use the following code:<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * &lt;pre&gt;   {@code<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *   Integer n = numbers.get("two");<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *   if (n != null) {<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *     System.out.println("two = " + n);<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *   }}&lt;/pre&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;p&gt;The iterators returned by the &lt;tt&gt;iterator&lt;/tt&gt; method of the collections<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * returned by all of this class's "collection view methods" are<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * &lt;em&gt;fail-fast&lt;/em&gt;: if the Hashtable is structurally modified at any time<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * after the iterator is created, in any way except through the iterator's own<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;tt&gt;remove&lt;/tt&gt; method, the iterator will throw a {@link<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * ConcurrentModificationException}.  Thus, in the face of concurrent<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * modification, the iterator fails quickly and cleanly, rather than risking<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * arbitrary, non-deterministic behavior at an undetermined time in the future.<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * The Enumerations returned by Hashtable's keys and elements methods are<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;em&gt;not&lt;/em&gt; fail-fast.<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;p&gt;Note that the fail-fast behavior of an iterator cannot be guaranteed<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * as it is, generally speaking, impossible to make any hard guarantees in the<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * presence of unsynchronized concurrent modification.  Fail-fast iterators<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * throw &lt;tt&gt;ConcurrentModificationException&lt;/tt&gt; on a best-effort basis.<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * Therefore, it would be wrong to write a program that depended on this<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * exception for its correctness: &lt;i&gt;the fail-fast behavior of iterators<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * should be used only to detect bugs.&lt;/i&gt;<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * &lt;p&gt;As of the Java 2 platform v1.2, this class was retrofitted to<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * implement the {@link Map} interface, making it a member of the<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * &lt;a href="{@docRoot}/../technotes/guides/collections/index.html"&gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * Java Collections Framework&lt;/a&gt;.  Unlike the new collection<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * implementations, {@code Hashtable} is synchronized.  If a<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * thread-safe implementation is not needed, it is recommended to use<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * {@link HashMap} in place of {@code Hashtable}.  If a thread-safe<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * highly-concurrent implementation is desired, then it is recommended<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * to use {@link java.util.concurrent.ConcurrentHashMap} in place of<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * {@code Hashtable}.<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * @author  Arthur van Hoff<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * @author  Josh Bloch<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * @author  Neal Gafter<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * @see     Object#equals(java.lang.Object)<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * @see     Object#hashCode()<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * @see     Hashtable#rehash()<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * @see     Collection<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * @see     Map<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * @see     HashMap<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * @see     TreeMap<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * @since JDK1.0<a name="line.123"></a>
+<span class="sourceLineNo">124</span> */<a name="line.124"></a>
+<span class="sourceLineNo">125</span>public class Hashtable&lt;K,V&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    extends Dictionary&lt;K,V&gt;<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    implements Map&lt;K,V&gt;, Cloneable, java.io.Serializable {<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>    /**<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * The hash table data.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     */<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    private transient Entry&lt;K,V&gt;[] table;<a name="line.132"></a>
+<span class="sourceLineNo">133</span><a name="line.133"></a>
+<span class="sourceLineNo">134</span>    /**<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * The total number of entries in the hash table.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     */<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    private transient int count;<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    /**<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * The table is rehashed when its size exceeds this threshold.  (The<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * value of this field is (int)(capacity * loadFactor).)<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @serial<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     */<a name="line.144"></a>
+<span class="sourceLineNo">145</span>    private int threshold;<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>    /**<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * The load factor for the hashtable.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * @serial<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     */<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    private float loadFactor;<a name="line.152"></a>
+<span class="sourceLineNo">153</span><a name="line.153"></a>
+<span class="sourceLineNo">154</span>    /**<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * The number of times this Hashtable has been structurally modified<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * Structural modifications are those that change the number of entries in<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * the Hashtable or otherwise modify its internal structure (e.g.,<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * rehash).  This field is used to make iterators on Collection-views of<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * the Hashtable fail-fast.  (See ConcurrentModificationException).<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     */<a name="line.160"></a>
+<span class="sourceLineNo">161</span>    private transient int modCount = 0;<a name="line.161"></a>
+<span class="sourceLineNo">162</span><a name="line.162"></a>
+<span class="sourceLineNo">163</span>    /** use serialVersionUID from JDK 1.0.2 for interoperability */<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    private static final long serialVersionUID = 1421746759512286392L;<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>    /**<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * The default threshold of map capacity above which alternative hashing is<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * used for String keys. Alternative hashing reduces the incidence of<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * collisions due to weak hash code calculation for String keys.<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * &lt;p&gt;<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * This value may be overridden by defining the system property<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * {@code jdk.map.althashing.threshold}. A property value of {@code 1}<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * forces alternative hashing to be used at all times whereas<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * {@code -1} value ensures that alternative hashing is never used.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     */<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    static final int ALTERNATIVE_HASHING_THRESHOLD_DEFAULT = Integer.MAX_VALUE;<a name="line.176"></a>
+<span class="sourceLineNo">177</span><a name="line.177"></a>
+<span class="sourceLineNo">178</span>    /**<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * holds values which can't be initialized until after VM is booted.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    private static class Holder {<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>        /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>         * Table capacity above which to switch to use alternative hashing.<a name="line.184"></a>
+<span class="sourceLineNo">185</span>         */<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        static final int ALTERNATIVE_HASHING_THRESHOLD;<a name="line.186"></a>
+<span class="sourceLineNo">187</span><a name="line.187"></a>
+<span class="sourceLineNo">188</span>        static {<a name="line.188"></a>
+<span class="sourceLineNo">189</span>            String altThreshold = java.security.AccessController.doPrivileged(<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                new sun.security.action.GetPropertyAction(<a name="line.190"></a>
+<span class="sourceLineNo">191</span>                    "jdk.map.althashing.threshold"));<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>            int threshold;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>            try {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>                threshold = (null != altThreshold)<a name="line.195"></a>
+<span class="sourceLineNo">196</span>                        ? Integer.parseInt(altThreshold)<a name="line.196"></a>
+<span class="sourceLineNo">197</span>                        : ALTERNATIVE_HASHING_THRESHOLD_DEFAULT;<a name="line.197"></a>
+<span class="sourceLineNo">198</span><a name="line.198"></a>
+<span class="sourceLineNo">199</span>                // disable alternative hashing if -1<a name="line.199"></a>
+<span class="sourceLineNo">200</span>                if (threshold == -1) {<a name="line.200"></a>
+<span class="sourceLineNo">201</span>                    threshold = Integer.MAX_VALUE;<a name="line.201"></a>
+<span class="sourceLineNo">202</span>                }<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>                if (threshold &lt; 0) {<a name="line.204"></a>
+<span class="sourceLineNo">205</span>                    throw new IllegalArgumentException("value must be positive integer.");<a name="line.205"></a>
+<span class="sourceLineNo">206</span>                }<a name="line.206"></a>
+<span class="sourceLineNo">207</span>            } catch(IllegalArgumentException failed) {<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                throw new Error("Illegal value for 'jdk.map.althashing.threshold'", failed);<a name="line.208"></a>
+<span class="sourceLineNo">209</span>            }<a name="line.209"></a>
+<span class="sourceLineNo">210</span><a name="line.210"></a>
+<span class="sourceLineNo">211</span>            ALTERNATIVE_HASHING_THRESHOLD = threshold;<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        }<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    }<a name="line.213"></a>
+<span class="sourceLineNo">214</span><a name="line.214"></a>
+<span class="sourceLineNo">215</span>    /**<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * A randomizing value associated with this instance that is applied to<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * hash code of keys to make hash collisions harder to find.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     */<a name="line.218"></a>
+<span class="sourceLineNo">219</span>    transient int hashSeed;<a name="line.219"></a>
+<span class="sourceLineNo">220</span><a name="line.220"></a>
+<span class="sourceLineNo">221</span>    /**<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * Initialize the hashing mask value.<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     */<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    final boolean initHashSeedAsNeeded(int capacity) {<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        boolean currentAltHashing = hashSeed != 0;<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        boolean useAltHashing = sun.misc.VM.isBooted() &amp;&amp;<a name="line.226"></a>
+<span class="sourceLineNo">227</span>                (capacity &gt;= Holder.ALTERNATIVE_HASHING_THRESHOLD);<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        boolean switching = currentAltHashing ^ useAltHashing;<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        if (switching) {<a name="line.229"></a>
+<span class="sourceLineNo">230</span>            hashSeed = useAltHashing<a name="line.230"></a>
+<span class="sourceLineNo">231</span>                ? sun.misc.Hashing.randomHashSeed(this)<a name="line.231"></a>
+<span class="sourceLineNo">232</span>                : 0;<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        }<a name="line.233"></a>
+<span class="sourceLineNo">234</span>        return switching;<a name="line.234"></a>
+<span class="sourceLineNo">235</span>    }<a name="line.235"></a>
+<span class="sourceLineNo">236</span><a name="line.236"></a>
+<span class="sourceLineNo">237</span>    private int hash(Object k) {<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        // hashSeed will be zero if alternative hashing is disabled.<a name="line.238"></a>
+<span class="sourceLineNo">239</span>        return hashSeed ^ k.hashCode();<a name="line.239"></a>
+<span class="sourceLineNo">240</span>    }<a name="line.240"></a>
+<span class="sourceLineNo">241</span><a name="line.241"></a>
+<span class="sourceLineNo">242</span>    /**<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * Constructs a new, empty hashtable with the specified initial<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * capacity and the specified load factor.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     *<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * @param      initialCapacity   the initial capacity of the hashtable.<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * @param      loadFactor        the load factor of the hashtable.<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * @exception  IllegalArgumentException  if the initial capacity is less<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     *             than zero, or if the load factor is nonpositive.<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     */<a name="line.250"></a>
+<span class="sourceLineNo">251</span>    public Hashtable(int initialCapacity, float loadFactor) {<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        if (initialCapacity &lt; 0)<a name="line.252"></a>
+<span class="sourceLineNo">253</span>            throw new IllegalArgumentException("Illegal Capacity: "+<a name="line.253"></a>
+<span class="sourceLineNo">254</span>                                               initialCapacity);<a name="line.254"></a>
+<span class="sourceLineNo">255</span>        if (loadFactor &lt;= 0 || Float.isNaN(loadFactor))<a name="line.255"></a>
+<span class="sourceLineNo">256</span>            throw new IllegalArgumentException("Illegal Load: "+loadFactor);<a name="line.256"></a>
+<span class="sourceLineNo">257</span><a name="line.257"></a>
+<span class="sourceLineNo">258</span>        if (initialCapacity==0)<a name="line.258"></a>
+<span class="sourceLineNo">259</span>            initialCapacity = 1;<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        this.loadFactor = loadFactor;<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        table = new Entry[initialCapacity];<a name="line.261"></a>
+<span class="sourceLineNo">262</span>        threshold = (int)Math.min(initialCapacity * loadFactor, MAX_ARRAY_SIZE + 1);<a name="line.262"></a>
+<span class="sourceLineNo">263</span>        initHashSeedAsNeeded(initialCapacity);<a name="line.263"></a>
+<span class="sourceLineNo">264</span>    }<a name="line.264"></a>
+<span class="sourceLineNo">265</span><a name="line.265"></a>
+<span class="sourceLineNo">266</span>    /**<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * Constructs a new, empty hashtable with the specified initial capacity<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * and default load factor (0.75).<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     *<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * @param     initialCapacity   the initial capacity of the hashtable.<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * @exception IllegalArgumentException if the initial capacity is less<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     *              than zero.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     */<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    public Hashtable(int initialCapacity) {<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        this(initialCapacity, 0.75f);<a name="line.275"></a>
+<span class="sourceLineNo">276</span>    }<a name="line.276"></a>
+<span class="sourceLineNo">277</span><a name="line.277"></a>
+<span class="sourceLineNo">278</span>    /**<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * Constructs a new, empty hashtable with a default initial capacity (11)<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * and load factor (0.75).<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     */<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    public Hashtable() {<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        this(11, 0.75f);<a name="line.283"></a>
+<span class="sourceLineNo">284</span>    }<a name="line.284"></a>
+<span class="sourceLineNo">285</span><a name="line.285"></a>
+<span class="sourceLineNo">286</span>    /**<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * Constructs a new hashtable with the same mappings as the given<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * Map.  The hashtable is created with an initial capacity sufficient to<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * hold the mappings in the given Map and a default load factor (0.75).<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     *<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * @param t the map whose mappings are to be placed in this map.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * @throws NullPointerException if the specified map is null.<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * @since   1.2<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     */<a name="line.294"></a>
+<span class="sourceLineNo">295</span>    public Hashtable(Map&lt;? extends K, ? extends V&gt; t) {<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        this(Math.max(2*t.size(), 11), 0.75f);<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        putAll(t);<a name="line.297"></a>
+<span class="sourceLineNo">298</span>    }<a name="line.298"></a>
+<span class="sourceLineNo">299</span><a name="line.299"></a>
+<span class="sourceLineNo">300</span>    /**<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * Returns the number of keys in this hashtable.<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     *<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * @return  the number of keys in this hashtable.<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     */<a name="line.304"></a>
+<span class="sourceLineNo">305</span>    public synchronized int size() {<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        return count;<a name="line.306"></a>
+<span class="sourceLineNo">307</span>    }<a name="line.307"></a>
+<span class="sourceLineNo">308</span><a name="line.308"></a>
+<span class="sourceLineNo">309</span>    /**<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * Tests if this hashtable maps no keys to values.<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     *<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * @return  &lt;code&gt;true&lt;/code&gt; if this hashtable maps no keys to values;<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     *          &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     */<a name="line.314"></a>
+<span class="sourceLineNo">315</span>    public synchronized boolean isEmpty() {<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        return count == 0;<a name="line.316"></a>
+<span class="sourceLineNo">317</span>    }<a name="line.317"></a>
+<span class="sourceLineNo">318</span><a name="line.318"></a>
+<span class="sourceLineNo">319</span>    /**<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * Returns an enumeration of the keys in this hashtable.<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     *<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * @return  an enumeration of the keys in this hashtable.<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * @see     Enumeration<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * @see     #elements()<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * @see     #keySet()<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * @see     Map<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     */<a name="line.327"></a>
+<span class="sourceLineNo">328</span>    public synchronized Enumeration&lt;K&gt; keys() {<a name="line.328"></a>
+<span class="sourceLineNo">329</span>        return this.&lt;K&gt;getEnumeration(KEYS);<a name="line.329"></a>
+<span class="sourceLineNo">330</span>    }<a name="line.330"></a>
+<span class="sourceLineNo">331</span><a name="line.331"></a>
+<span class="sourceLineNo">332</span>    /**<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * Returns an enumeration of the values in this hashtable.<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * Use the Enumeration methods on the returned object to fetch the elements<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * sequentially.<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     *<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * @return  an enumeration of the values in this hashtable.<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * @see     java.util.Enumeration<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * @see     #keys()<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * @see     #values()<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * @see     Map<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     */<a name="line.342"></a>
+<span class="sourceLineNo">343</span>    public synchronized Enumeration&lt;V&gt; elements() {<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        return this.&lt;V&gt;getEnumeration(VALUES);<a name="line.344"></a>
+<span class="sourceLineNo">345</span>    }<a name="line.345"></a>
+<span class="sourceLineNo">346</span><a name="line.346"></a>
+<span class="sourceLineNo">347</span>    /**<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * Tests if some key maps into the specified value in this hashtable.<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     * This operation is more expensive than the {@link #containsKey<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     * containsKey} method.<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     *<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     * &lt;p&gt;Note that this method is identical in functionality to<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * {@link #containsValue containsValue}, (which is part of the<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * {@link Map} interface in the collections framework).<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     *<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * @param      value   a value to search for<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * @return     &lt;code&gt;true&lt;/code&gt; if and only if some key maps to the<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     *             &lt;code&gt;value&lt;/code&gt; argument in this hashtable as<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     *             determined by the &lt;tt&gt;equals&lt;/tt&gt; method;<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     *             &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * @exception  NullPointerException  if the value is &lt;code&gt;null&lt;/code&gt;<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     */<a name="line.362"></a>
+<span class="sourceLineNo">363</span>    public synchronized boolean contains(Object value) {<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        if (value == null) {<a name="line.364"></a>
+<span class="sourceLineNo">365</span>            throw new NullPointerException();<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        }<a name="line.366"></a>
+<span class="sourceLineNo">367</span><a name="line.367"></a>
+<span class="sourceLineNo">368</span>        Entry tab[] = table;<a name="line.368"></a>
+<span class="sourceLineNo">369</span>        for (int i = tab.length ; i-- &gt; 0 ;) {<a name="line.369"></a>
+<span class="sourceLineNo">370</span>            for (Entry&lt;K,V&gt; e = tab[i] ; e != null ; e = e.next) {<a name="line.370"></a>
+<span class="sourceLineNo">371</span>                if (e.value.equals(value)) {<a name="line.371"></a>
+<span class="sourceLineNo">372</span>                    return true;<a name="line.372"></a>
+<span class="sourceLineNo">373</span>                }<a name="line.373"></a>
+<span class="sourceLineNo">374</span>            }<a name="line.374"></a>
+<span class="sourceLineNo">375</span>        }<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        return false;<a name="line.376"></a>
+<span class="sourceLineNo">377</span>    }<a name="line.377"></a>
+<span class="sourceLineNo">378</span><a name="line.378"></a>
+<span class="sourceLineNo">379</span>    /**<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * Returns true if this hashtable maps one or more keys to this value.<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     *<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     * &lt;p&gt;Note that this method is identical in functionality to {@link<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * #contains contains} (which predates the {@link Map} interface).<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     *<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * @param value value whose presence in this hashtable is to be tested<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this map maps one or more keys to the<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     *         specified value<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * @throws NullPointerException  if the value is &lt;code&gt;null&lt;/code&gt;<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * @since 1.2<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     */<a name="line.390"></a>
+<span class="sourceLineNo">391</span>    public boolean containsValue(Object value) {<a name="line.391"></a>
+<span class="sourceLineNo">392</span>        return contains(value);<a name="line.392"></a>
+<span class="sourceLineNo">393</span>    }<a name="line.393"></a>
+<span class="sourceLineNo">394</span><a name="line.394"></a>
+<span class="sourceLineNo">395</span>    /**<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * Tests if the specified object is a key in this hashtable.<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     *<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * @param   key   possible key<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * @return  &lt;code&gt;true&lt;/code&gt; if and only if the specified object<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     *          is a key in this hashtable, as determined by the<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     *          &lt;tt&gt;equals&lt;/tt&gt; method; &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * @throws  NullPointerException  if the key is &lt;code&gt;null&lt;/code&gt;<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * @see     #contains(Object)<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     */<a name="line.404"></a>
+<span class="sourceLineNo">405</span>    public synchronized boolean containsKey(Object key) {<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        Entry tab[] = table;<a name="line.406"></a>
+<span class="sourceLineNo">407</span>        int hash = hash(key);<a name="line.407"></a>
+<span class="sourceLineNo">408</span>        int index = (hash &amp; 0x7FFFFFFF) % tab.length;<a name="line.408"></a>
+<span class="sourceLineNo">409</span>        for (Entry&lt;K,V&gt; e = tab[index] ; e != null ; e = e.next) {<a name="line.409"></a>
+<span class="sourceLineNo">410</span>            if ((e.hash == hash) &amp;&amp; e.key.equals(key)) {<a name="line.410"></a>
+<span class="sourceLineNo">411</span>                return true;<a name="line.411"></a>
+<span class="sourceLineNo">412</span>            }<a name="line.412"></a>
+<span class="sourceLineNo">413</span>        }<a name="line.413"></a>
+<span class="sourceLineNo">414</span>        return false;<a name="line.414"></a>
+<span class="sourceLineNo">415</span>    }<a name="line.415"></a>
+<span class="sourceLineNo">416</span><a name="line.416"></a>
+<span class="sourceLineNo">417</span>    /**<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * Returns the value to which the specified key is mapped,<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * or {@code null} if this map contains no mapping for the key.<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     *<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * &lt;p&gt;More formally, if this map contains a mapping from a key<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     * {@code k} to a value {@code v} such that {@code (key.equals(k))},<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     * then this method returns {@code v}; otherwise it returns<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * {@code null}.  (There can be at most one such mapping.)<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     *<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     * @param key the key whose associated value is to be returned<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * @return the value to which the specified key is mapped, or<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     *         {@code null} if this map contains no mapping for the key<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * @throws NullPointerException if the specified key is null<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * @see     #put(Object, Object)<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     */<a name="line.431"></a>
+<span class="sourceLineNo">432</span>    public synchronized V get(Object key) {<a name="line.432"></a>
+<span class="sourceLineNo">433</span>        Entry tab[] = table;<a name="line.433"></a>
+<span class="sourceLineNo">434</span>        int hash = hash(key);<a name="line.434"></a>
+<span class="sourceLineNo">435</span>        int index = (hash &amp; 0x7FFFFFFF) % tab.length;<a name="line.435"></a>
+<span class="sourceLineNo">436</span>        for (Entry&lt;K,V&gt; e = tab[index] ; e != null ; e = e.next) {<a name="line.436"></a>
+<span class="sourceLineNo">437</span>            if ((e.hash == hash) &amp;&amp; e.key.equals(key)) {<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                return e.value;<a name="line.438"></a>
+<span class="sourceLineNo">439</span>            }<a name="line.439"></a>
+<span class="sourceLineNo">440</span>        }<a name="line.440"></a>
+<span class="sourceLineNo">441</span>        return null;<a name="line.441"></a>
+<span class="sourceLineNo">442</span>    }<a name="line.442"></a>
+<span class="sourceLineNo">443</span><a name="line.443"></a>
+<span class="sourceLineNo">444</span>    /**<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     * The maximum size of array to allocate.<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     * Some VMs reserve some header words in an array.<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     * Attempts to allocate larger arrays may result in<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * OutOfMemoryError: Requested array size exceeds VM limit<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     */<a name="line.449"></a>
+<span class="sourceLineNo">450</span>    private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;<a name="line.450"></a>
+<span class="sourceLineNo">451</span><a name="line.451"></a>
+<span class="sourceLineNo">452</span>    /**<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     * Increases the capacity of and internally reorganizes this<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     * hashtable, in order to accommodate and access its entries more<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * efficiently.  This method is called automatically when the<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     * number of keys in the hashtable exceeds this hashtable's capacity<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     * and load factor.<a name="line.457"></a>
+<span class="sourceLineNo">458</span>     */<a name="line.458"></a>
+<span class="sourceLineNo">459</span>    protected void rehash() {<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        int oldCapacity = table.length;<a name="line.460"></a>
+<span class="sourceLineNo">461</span>        Entry&lt;K,V&gt;[] oldMap = table;<a name="line.461"></a>
+<span class="sourceLineNo">462</span><a name="line.462"></a>
+<span class="sourceLineNo">463</span>        // overflow-conscious code<a name="line.463"></a>
+<span class="sourceLineNo">464</span>        int newCapacity = (oldCapacity &lt;&lt; 1) + 1;<a name="line.464"></a>
+<span class="sourceLineNo">465</span>        if (newCapacity - MAX_ARRAY_SIZE &gt; 0) {<a name="line.465"></a>
+<span class="sourceLineNo">466</span>            if (oldCapacity == MAX_ARRAY_SIZE)<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                // Keep running with MAX_ARRAY_SIZE buckets<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                return;<a name="line.468"></a>
+<span class="sourceLineNo">469</span>            newCapacity = MAX_ARRAY_SIZE;<a name="line.469"></a>
+<span class="sourceLineNo">470</span>        }<a name="line.470"></a>
+<span class="sourceLineNo">471</span>        Entry&lt;K,V&gt;[] newMap = new Entry[newCapacity];<a name="line.471"></a>
+<span class="sourceLineNo">472</span><a name="line.472"></a>
+<span class="sourceLineNo">473</span>        modCount++;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        threshold = (int)Math.min(newCapacity * loadFactor, MAX_ARRAY_SIZE + 1);<a name="line.474"></a>
+<span class="sourceLineNo">475</span>        boolean rehash = initHashSeedAsNeeded(newCapacity);<a name="line.475"></a>
+<span class="sourceLineNo">476</span><a name="line.476"></a>
+<span class="sourceLineNo">477</span>        table = newMap;<a name="line.477"></a>
+<span class="sourceLineNo">478</span><a name="line.478"></a>
+<span class="sourceLineNo">479</span>        for (int i = oldCapacity ; i-- &gt; 0 ;) {<a name="line.479"></a>
+<span class="sourceLineNo">480</span>            for (Entry&lt;K,V&gt; old = oldMap[i] ; old != null ; ) {<a name="line.480"></a>
+<span class="sourceLineNo">481</span>                Entry&lt;K,V&gt; e = old;<a name="line.481"></a>
+<span class="sourceLineNo">482</span>                old = old.next;<a name="line.482"></a>
+<span class="sourceLineNo">483</span><a name="line.483"></a>
+<span class="sourceLineNo">484</span>                if (rehash) {<a name="line.484"></a>
+<span class="sourceLineNo">485</span>                    e.hash = hash(e.key);<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                }<a name="line.486"></a>
+<span class="sourceLineNo">487</span>                int index = (e.hash &amp; 0x7FFFFFFF) % newCapacity;<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                e.next = newMap[index];<a name="line.488"></a>
+<span class="sourceLineNo">489</span>                newMap[index] = e;<a name="line.489"></a>
+<span class="sourceLineNo">490</span>            }<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        }<a name="line.491"></a>
+<span class="sourceLineNo">492</span>    }<a name="line.492"></a>
+<span class="sourceLineNo">493</span><a name="line.493"></a>
+<span class="sourceLineNo">494</span>    /**<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     * Maps the specified &lt;code&gt;key&lt;/code&gt; to the specified<a name="line.495"></a>
+<span class="sourceLineNo">496</span>     * &lt;code&gt;value&lt;/code&gt; in this hashtable. Neither the key nor the<a name="line.496"></a>
+<span class="sourceLineNo">497</span>     * value can be &lt;code&gt;null&lt;/code&gt;. &lt;p&gt;<a name="line.497"></a>
+<span class="sourceLineNo">498</span>     *<a name="line.498"></a>
+<span class="sourceLineNo">499</span>     * The value can be retrieved by calling the &lt;code&gt;get&lt;/code&gt; method<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     * with a key that is equal to the original key.<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     *<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * @param      key     the hashtable key<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * @param      value   the value<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * @return     the previous value of the specified key in this hashtable,<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     *             or &lt;code&gt;null&lt;/code&gt; if it did not have one<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     * @exception  NullPointerException  if the key or value is<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     *               &lt;code&gt;null&lt;/code&gt;<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     * @see     Object#equals(Object)<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     * @see     #get(Object)<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     */<a name="line.510"></a>
+<span class="sourceLineNo">511</span>    public synchronized V put(K key, V value) {<a name="line.511"></a>
+<span class="sourceLineNo">512</span>        // Make sure the value is not null<a name="line.512"></a>
+<span class="sourceLineNo">513</span>        if (value == null) {<a name="line.513"></a>
+<span class="sourceLineNo">514</span>            throw new NullPointerException();<a name="line.514"></a>
+<span class="sourceLineNo">515</span>        }<a name="line.515"></a>
+<span class="sourceLineNo">516</span><a name="line.516"></a>
+<span class="sourceLineNo">517</span>        // Makes sure the key is not already in the hashtable.<a name="line.517"></a>
+<span class="sourceLineNo">518</span>        Entry tab[] = table;<a name="line.518"></a>
+<span class="sourceLineNo">519</span>        int hash = hash(key);<a name="line.519"></a>
+<span class="sourceLineNo">520</span>        int index = (hash &amp; 0x7FFFFFFF) % tab.length;<a name="line.520"></a>
+<span class="sourceLineNo">521</span>        for (Entry&lt;K,V&gt; e = tab[index] ; e != null ; e = e.next) {<a name="line.521"></a>
+<span class="sourceLineNo">522</span>            if ((e.hash == hash) &amp;&amp; e.key.equals(key)) {<a name="line.522"></a>
+<span class="sourceLineNo">523</span>                V old = e.value;<a name="line.523"></a>
+<span class="sourceLineNo">524</span>                e.value = value;<a name="line.524"></a>
+<span class="sourceLineNo">525</span>                return old;<a name="line.525"></a>
+<span class="sourceLineNo">526</span>            }<a name="line.526"></a>
+<span class="sourceLineNo">527</span>        }<a name="line.527"></a>
+<span class="sourceLineNo">528</span><a name="line.528"></a>
+<span class="sourceLineNo">529</span>        modCount++;<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        if (count &gt;= threshold) {<a name="line.530"></a>
+<span class="sourceLineNo">531</span>            // Rehash the table if the threshold is exceeded<a name="line.531"></a>
+<span class="sourceLineNo">532</span>            rehash();<a name="line.532"></a>
+<span class="sourceLineNo">533</span><a name="line.533"></a>
+<span class="sourceLineNo">534</span>            tab = table;<a name="line.534"></a>
+<span class="sourceLineNo">535</span>            hash = hash(key);<a name="line.535"></a>
+<span class="sourceLineNo">536</span>            index = (hash &amp; 0x7FFFFFFF) % tab.length;<a name="line.536"></a>
+<span class="sourceLineNo">537</span>        }<a name="line.537"></a>
+<span class="sourceLineNo">538</span><a name="line.538"></a>
+<span class="sourceLineNo">539</span>        // Creates the new entry.<a name="line.539"></a>
+<span class="sourceLineNo">540</span>        Entry&lt;K,V&gt; e = tab[index];<a name="line.540"></a>
+<span class="sourceLineNo">541</span>        tab[index] = new Entry&lt;&gt;(hash, key, value, e);<a name="line.541"></a>
+<span class="sourceLineNo">542</span>        count++;<a name="line.542"></a>
+<span class="sourceLineNo">543</span>        return null;<a name="line.543"></a>
+<span class="sourceLineNo">544</span>    }<a name="line.544"></a>
+<span class="sourceLineNo">545</span><a name="line.545"></a>
+<span class="sourceLineNo">546</span>    /**<a name="line.546"></a>
+<span class="sourceLineNo">547</span>     * Removes the key (and its corresponding value) from this<a name="line.547"></a>
+<span class="sourceLineNo">548</span>     * hashtable. This method does nothing if the key is not in the hashtable.<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     *<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     * @param   key   the key that needs to be removed<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     * @return  the value to which the key had been mapped in this hashtable,<a name="line.551"></a>
+<span class="sourceLineNo">552</span>     *          or &lt;code&gt;null&lt;/code&gt; if the key did not have a mapping<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     * @throws  NullPointerException  if the key is &lt;code&gt;null&lt;/code&gt;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>     */<a name="line.554"></a>
+<span class="sourceLineNo">555</span>    public synchronized V remove(Object key) {<a name="line.555"></a>
+<span class="sourceLineNo">556</span>        Entry tab[] = table;<a name="line.556"></a>
+<span class="sourceLineNo">557</span>        int hash = hash(key);<a name="line.557"></a>
+<span class="sourceLineNo">558</span>        int index = (hash &amp; 0x7FFFFFFF) % tab.length;<a name="line.558"></a>
+<span class="sourceLineNo">559</span>        for (Entry&lt;K,V&gt; e = tab[index], prev = null ; e != null ; prev = e, e = e.next) {<a name="line.559"></a>
+<span class="sourceLineNo">560</span>            if ((e.hash == hash) &amp;&amp; e.key.equals(key)) {<a name="line.560"></a>
+<span class="sourceLineNo">561</span>                modCount++;<a name="line.561"></a>
+<span class="sourceLineNo">562</span>                if (prev != null) {<a name="line.562"></a>
+<span class="sourceLineNo">563</span>                    prev.next = e.next;<a name="line.563"></a>
+<span class="sourceLineNo">564</span>                } else {<a name="line.564"></a>
+<span class="sourceLineNo">565</span>                    tab[index] = e.next;<a name="line.565"></a>
+<span class="sourceLineNo">566</span>                }<a name="line.566"></a>
+<span class="sourceLineNo">567</span>                count--;<a name="line.567"></a>
+<span class="sourceLineNo">568</span>                V oldValue = e.value;<a name="line.568"></a>
+<span class="sourceLineNo">569</span>                e.value = null;<a name="line.569"></a>
+<span class="sourceLineNo">570</span>                return oldValue;<a name="line.570"></a>
+<span class="sourceLineNo">571</span>            }<a name="line.571"></a>
+<span class="sourceLineNo">572</span>        }<a name="line.572"></a>
+<span class="sourceLineNo">573</span>        return null;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>    }<a name="line.574"></a>
+<span class="sourceLineNo">575</span><a name="line.575"></a>
+<span class="sourceLineNo">576</span>    /**<a name="line.576"></a>
+<span class="sourceLineNo">577</span>     * Copies all of the mappings from the specified map to this hashtable.<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     * These mappings will replace any mappings that this hashtable had for any<a name="line.578"></a>
+<span class="sourceLineNo">579</span>     * of the keys currently in the specified map.<a name="line.579"></a>
+<span class="sourceLineNo">580</span>     *<a name="line.580"></a>
+<span class="sourceLineNo">581</span>     * @param t mappings to be stored in this map<a name="line.581"></a>
+<span class="sourceLineNo">582</span>     * @throws NullPointerException if the specified map is null<a name="line.582"></a>
+<span class="sourceLineNo">583</span>     * @since 1.2<a name="line.583"></a>
+<span class="sourceLineNo">584</span>     */<a name="line.584"></a>
+<span class="sourceLineNo">585</span>    public synchronized void putAll(Map&lt;? extends K, ? extends V&gt; t) {<a name="line.585"></a>
+<span class="sourceLineNo">586</span>        for (Map.Entry&lt;? extends K, ? extends V&gt; e : t.entrySet())<a name="line.586"></a>
+<span class="sourceLineNo">587</span>            put(e.getKey(), e.getValue());<a name="line.587"></a>
+<span class="sourceLineNo">588</span>    }<a name="line.588"></a>
+<span class="sourceLineNo">589</span><a name="line.589"></a>
+<span class="sourceLineNo">590</span>    /**<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * Clears this hashtable so that it contains no keys.<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     */<a name="line.592"></a>
+<span class="sourceLineNo">593</span>    public synchronized void clear() {<a name="line.593"></a>
+<span class="sourceLineNo">594</span>        Entry tab[] = table;<a name="line.594"></a>
+<span class="sourceLineNo">595</span>        modCount++;<a name="line.595"></a>
+<span class="sourceLineNo">596</span>        for (int index = tab.length; --index &gt;= 0; )<a name="line.596"></a>
+<span class="sourceLineNo">597</span>            tab[index] = null;<a name="line.597"></a>
+<span class="sourceLineNo">598</span>        count = 0;<a name="line.598"></a>
+<span class="sourceLineNo">599</span>    }<a name="line.599"></a>
+<span class="sourceLineNo">600</span><a name="line.600"></a>
+<span class="sourceLineNo">601</span>    /**<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     * Creates a shallow copy of this hashtable. All the structure of the<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * hashtable itself is copied, but the keys and values are not cloned.<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * This is a relatively expensive operation.<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     *<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * @return  a clone of the hashtable<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     */<a name="line.607"></a>
+<span class="sourceLineNo">608</span>    public synchronized Object clone() {<a name="line.608"></a>
+<span class="sourceLineNo">609</span>        try {<a name="line.609"></a>
+<span class="sourceLineNo">610</span>            Hashtable&lt;K,V&gt; t = (Hashtable&lt;K,V&gt;) super.clone();<a name="line.610"></a>
+<span class="sourceLineNo">611</span>            t.table = new Entry[table.length];<a name="line.611"></a>
+<span class="sourceLineNo">612</span>            for (int i = table.length ; i-- &gt; 0 ; ) {<a name="line.612"></a>
+<span class="sourceLineNo">613</span>                t.table[i] = (table[i] != null)<a name="line.613"></a>
+<span class="sourceLineNo">614</span>                    ? (Entry&lt;K,V&gt;) table[i].clone() : null;<a name="line.614"></a>
+<span class="sourceLineNo">615</span>            }<a name="line.615"></a>
+<span class="sourceLineNo">616</span>            t.keySet = null;<a name="line.616"></a>
+<span class="sourceLineNo">617</span>            t.entrySet = null;<a name="line.617"></a>
+<span class="sourceLineNo">618</span>            t.values = null;<a name="line.618"></a>
+<span class="sourceLineNo">619</span>            t.modCount = 0;<a name="line.619"></a>
+<span class="sourceLineNo">620</span>            return t;<a name="line.620"></a>
+<span class="sourceLineNo">621</span>        } catch (CloneNotSupportedException e) {<a name="line.621"></a>
+<span class="sourceLineNo">622</span>            // this shouldn't happen, since we are Cloneable<a name="line.622"></a>
+<span class="sourceLineNo">623</span>            throw new InternalError();<a name="line.623"></a>
+<span class="sourceLineNo">624</span>        }<a name="line.624"></a>
+<span class="sourceLineNo">625</span>    }<a name="line.625"></a>
+<span class="sourceLineNo">626</span><a name="line.626"></a>
+<span class="sourceLineNo">627</span>    /**<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     * Returns a string representation of this &lt;tt&gt;Hashtable&lt;/tt&gt; object<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     * in the form of a set of entries, enclosed in braces and separated<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     * by the ASCII characters "&lt;tt&gt;,&amp;nbsp;&lt;/tt&gt;" (comma and space). Each<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * entry is rendered as the key, an equals sign &lt;tt&gt;=&lt;/tt&gt;, and the<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * associated element, where the &lt;tt&gt;toString&lt;/tt&gt; method is used to<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     * convert the key and element to strings.<a name="line.633"></a>
+<span class="sourceLineNo">634</span>     *<a name="line.634"></a>
+<span class="sourceLineNo">635</span>     * @return  a string representation of this hashtable<a name="line.635"></a>
+<span class="sourceLineNo">636</span>     */<a name="line.636"></a>
+<span class="sourceLineNo">637</span>    public synchronized String toString() {<a name="line.637"></a>
+<span class="sourceLineNo">638</span>        int max = size() - 1;<a name="line.638"></a>
+<span class="sourceLineNo">639</span>        if (max == -1)<a name="line.639"></a>
+<span class="sourceLineNo">640</span>            return "{}";<a name="line.640"></a>
+<span class="sourceLineNo">641</span><a name="line.641"></a>
+<span class="sourceLineNo">642</span>        StringBuilder sb = new StringBuilder();<a name="line.642"></a>
+<span class="sourceLineNo">643</span>        Iterator&lt;Map.Entry&lt;K,V&gt;&gt; it = entrySet().iterator();<a name="line.643"></a>
+<span class="sourceLineNo">644</span><a name="line.644"></a>
+<span class="sourceLineNo">645</span>        sb.append('{');<a name="line.645"></a>
+<span class="sourceLineNo">646</span>        for (int i = 0; ; i++) {<a name="line.646"></a>
+<span class="sourceLineNo">647</span>            Map.Entry&lt;K,V&gt; e = it.next();<a name="line.647"></a>
+<span class="sourceLineNo">648</span>            K key = e.getKey();<a name="line.648"></a>
+<span class="sourceLineNo">649</span>            V value = e.getValue();<a name="line.649"></a>
+<span class="sourceLineNo">650</span>            sb.append(key   == this ? "(this Map)" : key.toString());<a name="line.650"></a>
+<span class="sourceLineNo">651</span>            sb.append('=');<a name="line.651"></a>
+<span class="sourceLineNo">652</span>            sb.append(value == this ? "(this Map)" : value.toString());<a name="line.652"></a>
+<span class="sourceLineNo">653</span><a name="line.653"></a>
+<span class="sourceLineNo">654</span>            if (i == max)<a name="line.654"></a>
+<span class="sourceLineNo">655</span>                return sb.append('}').toString();<a name="line.655"></a>
+<span class="sourceLineNo">656</span>            sb.append(", ");<a name="line.656"></a>
+<span class="sourceLineNo">657</span>        }<a name="line.657"></a>
+<span class="sourceLineNo">658</span>    }<a name="line.658"></a>
+<span class="sourceLineNo">659</span><a name="line.659"></a>
+<span class="sourceLineNo">660</span><a name="line.660"></a>
+<span class="sourceLineNo">661</span>    private &lt;T&gt; Enumeration&lt;T&gt; getEnumeration(int type) {<a name="line.661"></a>
+<span class="sourceLineNo">662</span>        if (count == 0) {<a name="line.662"></a>
+<span class="sourceLineNo">663</span>            return Collections.emptyEnumeration();<a name="line.663"></a>
+<span class="sourceLineNo">664</span>        } else {<a name="line.664"></a>
+<span class="sourceLineNo">665</span>            return new Enumerator&lt;&gt;(type, false);<a name="line.665"></a>
+<span class="sourceLineNo">666</span>        }<a name="line.666"></a>
+<span class="sourceLineNo">667</span>    }<a name="line.667"></a>
+<span class="sourceLineNo">668</span><a name="line.668"></a>
+<span class="sourceLineNo">669</span>    private &lt;T&gt; Iterator&lt;T&gt; getIterator(int type) {<a name="line.669"></a>
+<span class="sourceLineNo">670</span>        if (count == 0) {<a name="line.670"></a>
+<span class="sourceLineNo">671</span>            return Collections.emptyIterator();<a name="line.671"></a>
+<span class="sourceLineNo">672</span>        } else {<a name="line.672"></a>
+<span class="sourceLineNo">673</span>            return new Enumerator&lt;&gt;(type, true);<a name="line.673"></a>
+<span class="sourceLineNo">674</span>        }<a name="line.674"></a>
+<span class="sourceLineNo">675</span>    }<a name="line.675"></a>
+<span class="sourceLineNo">676</span><a name="line.676"></a>
+<span class="sourceLineNo">677</span>    // Views<a name="line.677"></a>
+<span class="sourceLineNo">678</span><a name="line.678"></a>
+<span class="sourceLineNo">679</span>    /**<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     * Each of these fields are initialized to contain an instance of the<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     * appropriate view the first time this view is requested.  The views are<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     * stateless, so there's no reason to create more than one of each.<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     */<a name="line.683"></a>
+<span class="sourceLineNo">684</span>    private transient volatile Set&lt;K&gt; keySet = null;<a name="line.684"></a>
+<span class="sourceLineNo">685</span>    private transient volatile Set&lt;Map.Entry&lt;K,V&gt;&gt; entrySet = null;<a name="line.685"></a>
+<span class="sourceLineNo">686</span>    private transient volatile Collection&lt;V&gt; values = null;<a name="line.686"></a>
+<span class="sourceLineNo">687</span><a name="line.687"></a>
+<span class="sourceLineNo">688</span>    /**<a name="line.688"></a>
+<span class="sourceLineNo">689</span>     * Returns a {@link Set} view of the keys contained in this map.<a name="line.689"></a>
+<span class="sourceLineNo">690</span>     * The set is backed by the map, so changes to the map are<a name="line.690"></a>
+<span class="sourceLineNo">691</span>     * reflected in the set, and vice-versa.  If the map is modified<a name="line.691"></a>
+<span class="sourceLineNo">692</span>     * while an iteration over the set is in progress (except through<a name="line.692"></a>
+<span class="sourceLineNo">693</span>     * the iterator's own &lt;tt&gt;remove&lt;/tt&gt; operation), the results of<a name="line.693"></a>
+<span class="sourceLineNo">694</span>     * the iteration are undefined.  The set supports element removal,<a name="line.694"></a>
+<span class="sourceLineNo">695</span>     * which removes the corresponding mapping from the map, via the<a name="line.695"></a>
+<span class="sourceLineNo">696</span>     * &lt;tt&gt;Iterator.remove&lt;/tt&gt;, &lt;tt&gt;Set.remove&lt;/tt&gt;,<a name="line.696"></a>
+<span class="sourceLineNo">697</span>     * &lt;tt&gt;removeAll&lt;/tt&gt;, &lt;tt&gt;retainAll&lt;/tt&gt;, and &lt;tt&gt;clear&lt;/tt&gt;<a name="line.697"></a>
+<span class="sourceLineNo">698</span>     * operations.  It does not support the &lt;tt&gt;add&lt;/tt&gt; or &lt;tt&gt;addAll&lt;/tt&gt;<a name="line.698"></a>
+<span class="sourceLineNo">699</span>     * operations.<a name="line.699"></a>
+<span class="sourceLineNo">700</span>     *<a name="line.700"></a>
+<span class="sourceLineNo">701</span>     * @since 1.2<a name="line.701"></a>
+<span class="sourceLineNo">702</span>     */<a name="line.702"></a>
+<span class="sourceLineNo">703</span>    public Set&lt;K&gt; keySet() {<a name="line.703"></a>
+<span class="sourceLineNo">704</span>        if (keySet == null)<a name="line.704"></a>
+<span class="sourceLineNo">705</span>            keySet = Collections.synchronizedSet(new KeySet(), this);<a name="line.705"></a>
+<span class="sourceLineNo">706</span>        return keySet;<a name="line.706"></a>
+<span class="sourceLineNo">707</span>    }<a name="line.707"></a>
+<span class="sourceLineNo">708</span><a name="line.708"></a>
+<span class="sourceLineNo">709</span>    private class KeySet extends AbstractSet&lt;K&gt; {<a name="line.709"></a>
+<span class="sourceLineNo">710</span>        public Iterator&lt;K&gt; iterator() {<a name="line.710"></a>
+<span class="sourceLineNo">711</span>            return getIterator(KEYS);<a name="line.711"></a>
+<span class="sourceLineNo">712</span>        }<a name="line.712"></a>
+<span class="sourceLineNo">713</span>        public int size() {<a name="line.713"></a>
+<span class="sourceLineNo">714</span>            return count;<a name="line.714"></a>
+<span class="sourceLineNo">715</span>        }<a name="line.715"></a>
+<span class="sourceLineNo">716</span>        public boolean contains(Object o) {<a name="line.716"></a>
+<span class="sourceLineNo">717</span>            return containsKey(o);<a name="line.717"></a>
+<span class="sourceLineNo">718</span>        }<a name="line.718"></a>
+<span class="sourceLineNo">719</span>        public boolean remove(Object o) {<a name="line.719"></a>
+<span class="sourceLineNo">720</span>            return Hashtable.this.remove(o) != null;<a name="line.720"></a>
+<span class="sourceLineNo">721</span>        }<a name="line.721"></a>
+<span class="sourceLineNo">722</span>        public void clear() {<a name="line.722"></a>
+<span class="sourceLineNo">723</span>            Hashtable.this.clear();<a name="line.723"></a>
+<span class="sourceLineNo">724</span>        }<a name="line.724"></a>
+<span class="sourceLineNo">725</span>    }<a name="line.725"></a>
+<span class="sourceLineNo">726</span><a name="line.726"></a>
+<span class="sourceLineNo">727</span>    /**<a name="line.727"></a>
+<span class="sourceLineNo">728</span>     * Returns a {@link Set} view of the mappings contained in this map.<a name="line.728"></a>
+<span class="sourceLineNo">729</span>     * The set is backed by the map, so changes to the map are<a name="line.729"></a>
+<span class="sourceLineNo">730</span>     * reflected in the set, and vice-versa.  If the map is modified<a name="line.730"></a>
+<span class="sourceLineNo">731</span>     * while an iteration over the set is in progress (except through<a name="line.731"></a>
+<span class="sourceLineNo">732</span>     * the iterator's own &lt;tt&gt;remove&lt;/tt&gt; operation, or through the<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     * &lt;tt&gt;setValue&lt;/tt&gt; operation on a map entry returned by the<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     * iterator) the results of the iteration are undefined.  The set<a name="line.734"></a>
+<span class="sourceLineNo">735</span>     * supports element removal, which removes the corresponding<a name="line.735"></a>
+<span class="sourceLineNo">736</span>     * mapping from the map, via the &lt;tt&gt;Iterator.remove&lt;/tt&gt;,<a name="line.736"></a>
+<span class="sourceLineNo">737</span>     * &lt;tt&gt;Set.remove&lt;/tt&gt;, &lt;tt&gt;removeAll&lt;/tt&gt;, &lt;tt&gt;retainAll&lt;/tt&gt; and<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * &lt;tt&gt;clear&lt;/tt&gt; operations.  It does not support the<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     * &lt;tt&gt;add&lt;/tt&gt; or &lt;tt&gt;addAll&lt;/tt&gt; operations.<a name="line.739"></a>
+<span class="sourceLineNo">740</span>     *<a name="line.740"></a>
+<span class="sourceLineNo">741</span>     * @since 1.2<a name="line.741"></a>
+<span class="sourceLineNo">742</span>     */<a name="line.742"></a>
+<span class="sourceLineNo">743</span>    public Set&lt;Map.Entry&lt;K,V&gt;&gt; entrySet() {<a name="line.743"></a>
+<span class="sourceLineNo">744</span>        if (entrySet==null)<a name="line.744"></a>
+<span class="sourceLineNo">745</span>            entrySet = Collections.synchronizedSet(new EntrySet(), this);<a name="line.745"></a>
+<span class="sourceLineNo">746</span>        return entrySet;<a name="line.746"></a>
+<span class="sourceLineNo">747</span>    }<a name="line.747"></a>
+<span class="sourceLineNo">748</span><a name="line.748"></a>
+<span class="sourceLineNo">749</span>    private class EntrySet extends AbstractSet&lt;Map.Entry&lt;K,V&gt;&gt; {<a name="line.749"></a>
+<span class="sourceLineNo">750</span>        public Iterator&lt;Map.Entry&lt;K,V&gt;&gt; iterator() {<a name="line.750"></a>
+<span class="sourceLineNo">751</span>            return getIterator(ENTRIES);<a name="line.751"></a>
+<span class="sourceLineNo">752</span>        }<a name="line.752"></a>
+<span class="sourceLineNo">753</span><a name="line.753"></a>
+<span class="sourceLineNo">754</span>        public boolean add(Map.Entry&lt;K,V&gt; o) {<a name="line.754"></a>
+<span class="sourceLineNo">755</span>            return super.add(o);<a name="line.755"></a>
+<span class="sourceLineNo">756</span>        }<a name="line.756"></a>
+<span class="sourceLineNo">757</span><a name="line.757"></a>
+<span class="sourceLineNo">758</span>        public boolean contains(Object o) {<a name="line.758"></a>
+<span class="sourceLineNo">759</span>            if (!(o instanceof Map.Entry))<a name="line.759"></a>
+<span class="sourceLineNo">760</span>                return false;<a name="line.760"></a>
+<span class="sourceLineNo">761</span>            Map.Entry entry = (Map.Entry)o;<a name="line.761"></a>
+<span class="sourceLineNo">762</span>            Object key = entry.getKey();<a name="line.762"></a>
+<span class="sourceLineNo">763</span>            Entry[] tab = table;<a name="line.763"></a>
+<span class="sourceLineNo">764</span>            int hash = hash(key);<a name="line.764"></a>
+<span class="sourceLineNo">765</span>            int index = (hash &amp; 0x7FFFFFFF) % tab.length;<a name="line.765"></a>
+<span class="sourceLineNo">766</span><a name="line.766"></a>
+<span class="sourceLineNo">767</span>            for (Entry e = tab[index]; e != null; e = e.next)<a name="line.767"></a>
+<span class="sourceLineNo">768</span>                if (e.hash==hash &amp;&amp; e.equals(entry))<a name="line.768"></a>
+<span class="sourceLineNo">769</span>                    return true;<a name="line.769"></a>
+<span class="sourceLineNo">770</span>            return false;<a name="line.770"></a>
+<span class="sourceLineNo">771</span>        }<a name="line.771"></a>
+<span class="sourceLineNo">772</span><a name="line.772"></a>
+<span class="sourceLineNo">773</span>        public boolean remove(Object o) {<a name="line.773"></a>
+<span class="sourceLineNo">774</span>            if (!(o instanceof Map.Entry))<a name="line.774"></a>
+<span class="sourceLineNo">775</span>                return false;<a name="line.775"></a>
+<span class="sourceLineNo">776</span>            Map.Entry&lt;K,V&gt; entry = (Map.Entry&lt;K,V&gt;) o;<a name="line.776"></a>
+<span class="sourceLineNo">777</span>            K key = entry.getKey();<a name="line.777"></a>
+<span class="sourceLineNo">778</span>            Entry[] tab = table;<a name="line.778"></a>
+<span class="sourceLineNo">779</span>            int hash = hash(key);<a name="line.779"></a>
+<span class="sourceLineNo">780</span>            int index = (hash &amp; 0x7FFFFFFF) % tab.length;<a name="line.780"></a>
+<span class="sourceLineNo">781</span><a name="line.781"></a>
+<span class="sourceLineNo">782</span>            for (Entry&lt;K,V&gt; e = tab[index], prev = null; e != null;<a name="line.782"></a>
+<span class="sourceLineNo">783</span>                 prev = e, e = e.next) {<a name="line.783"></a>
+<span class="sourceLineNo">784</span>                if (e.hash==hash &amp;&amp; e.equals(entry)) {<a name="line.784"></a>
+<span class="sourceLineNo">785</span>                    modCount++;<a name="line.785"></a>
+<span class="sourceLineNo">786</span>                    if (prev != null)<a name="line.786"></a>
+<span class="sourceLineNo">787</span>                        prev.next = e.next;<a name="line.787"></a>
+<span class="sourceLineNo">788</span>                    else<a name="line.788"></a>
+<span class="sourceLineNo">789</span>                        tab[index] = e.next;<a name="line.789"></a>
+<span class="sourceLineNo">790</span><a name="line.790"></a>
+<span class="sourceLineNo">791</span>                    count--;<a name="line.791"></a>
+<span class="sourceLineNo">792</span>                    e.value = null;<a name="line.792"></a>
+<span class="sourceLineNo">793</span>                    return true;<a name="line.793"></a>
+<span class="sourceLineNo">794</span>                }<a name="line.794"></a>
+<span class="sourceLineNo">795</span>            }<a name="line.795"></a>
+<span class="sourceLineNo">796</span>            return false;<a name="line.796"></a>
+<span class="sourceLineNo">797</span>        }<a name="line.797"></a>
+<span class="sourceLineNo">798</span><a name="line.798"></a>
+<span class="sourceLineNo">799</span>        public int size() {<a name="line.799"></a>
+<span class="sourceLineNo">800</span>            return count;<a name="line.800"></a>
+<span class="sourceLineNo">801</span>        }<a name="line.801"></a>
+<span class="sourceLineNo">802</span><a name="line.802"></a>
+<span class="sourceLineNo">803</span>        public void clear() {<a name="line.803"></a>
+<span class="sourceLineNo">804</span>            Hashtable.this.clear();<a name="line.804"></a>
+<span class="sourceLineNo">805</span>        }<a name="line.805"></a>
+<span class="sourceLineNo">806</span>    }<a name="line.806"></a>
+<span class="sourceLineNo">807</span><a name="line.807"></a>
+<span class="sourceLineNo">808</span>    /**<a name="line.808"></a>
+<span class="sourceLineNo">809</span>     * Returns a {@link Collection} view of the values contained in this map.<a name="line.809"></a>
+<span class="sourceLineNo">810</span>     * The collection is backed by the map, so changes to the map are<a name="line.810"></a>
+<span class="sourceLineNo">811</span>     * reflected in the collection, and vice-versa.  If the map is<a name="line.811"></a>
+<span class="sourceLineNo">812</span>     * modified while an iteration over the collection is in progress<a name="line.812"></a>
+<span class="sourceLineNo">813</span>     * (except through the iterator's own &lt;tt&gt;remove&lt;/tt&gt; operation),<a name="line.813"></a>
+<span class="sourceLineNo">814</span>     * the results of the iteration are undefined.  The collection<a name="line.814"></a>
+<span class="sourceLineNo">815</span>     * supports element removal, which removes the corresponding<a name="line.815"></a>
+<span class="sourceLineNo">816</span>     * mapping from the map, via the &lt;tt&gt;Iterator.remove&lt;/tt&gt;,<a name="line.816"></a>
+<span class="sourceLineNo">817</span>     * &lt;tt&gt;Collection.remove&lt;/tt&gt;, &lt;tt&gt;removeAll&lt;/tt&gt;,<a name="line.817"></a>
+<span class="sourceLineNo">818</span>     * &lt;tt&gt;retainAll&lt;/tt&gt; and &lt;tt&gt;clear&lt;/tt&gt; operations.  It does not<a name="line.818"></a>
+<span class="sourceLineNo">819</span>     * support the &lt;tt&gt;add&lt;/tt&gt; or &lt;tt&gt;addAll&lt;/tt&gt; operations.<a name="line.819"></a>
+<span class="sourceLineNo">820</span>     *<a name="line.820"></a>
+<span class="sourceLineNo">821</span>     * @since 1.2<a name="line.821"></a>
+<span class="sourceLineNo">822</span>     */<a name="line.822"></a>
+<span class="sourceLineNo">823</span>    public Collection&lt;V&gt; values() {<a name="line.823"></a>
+<span class="sourceLineNo">824</span>        if (values==null)<a name="line.824"></a>
+<span class="sourceLineNo">825</span>            values = Collections.synchronizedCollection(new ValueCollection(),<a name="line.825"></a>
+<span class="sourceLineNo">826</span>                                                        this);<a name="line.826"></a>
+<span class="sourceLineNo">827</span>        return values;<a name="line.827"></a>
+<span class="sourceLineNo">828</span>    }<a name="line.828"></a>
+<span class="sourceLineNo">829</span><a name="line.829"></a>
+<span class="sourceLineNo">830</span>    private class ValueCollection extends AbstractCollection&lt;V&gt; {<a name="line.830"></a>
+<span class="sourceLineNo">831</span>        public Iterator&lt;V&gt; iterator() {<a name="line.831"></a>
+<span class="sourceLineNo">832</span>            return getIterator(VALUES);<a name="line.832"></a>
+<span class="sourceLineNo">833</span>        }<a name="line.833"></a>
+<span class="sourceLineNo">834</span>        public int size() {<a name="line.834"></a>
+<span class="sourceLineNo">835</span>            return count;<a name="line.835"></a>
+<span class="sourceLineNo">836</span>        }<a name="line.836"></a>
+<span class="sourceLineNo">837</span>        public boolean contains(Object o) {<a name="line.837"></a>
+<span class="sourceLineNo">838</span>            return containsValue(o);<a name="line.838"></a>
+<span class="sourceLineNo">839</span>        }<a name="line.839"></a>
+<span class="sourceLineNo">840</span>        public void clear() {<a name="line.840"></a>
+<span class="sourceLineNo">841</span>            Hashtable.this.clear();<a name="line.841"></a>
+<span class="sourceLineNo">842</span>        }<a name="line.842"></a>
+<span class="sourceLineNo">843</span>    }<a name="line.843"></a>
+<span class="sourceLineNo">844</span><a name="line.844"></a>
+<span class="sourceLineNo">845</span>    // Comparison and hashing<a name="line.845"></a>
+<span class="sourceLineNo">846</span><a name="line.846"></a>
+<span class="sourceLineNo">847</span>    /**<a name="line.847"></a>
+<span class="sourceLineNo">848</span>     * Compares the specified Object with this Map for equality,<a name="line.848"></a>
+<span class="sourceLineNo">849</span>     * as per the definition in the Map interface.<a name="line.849"></a>
+<span class="sourceLineNo">850</span>     *<a name="line.850"></a>
+<span class="sourceLineNo">851</span>     * @param  o object to be compared for equality with this hashtable<a name="line.851"></a>
+<span class="sourceLineNo">852</span>     * @return true if the specified Object is equal to this Map<a name="line.852"></a>
+<span class="sourceLineNo">853</span>     * @see Map#equals(Object)<a name="line.853"></a>
+<span class="sourceLineNo">854</span>     * @since 1.2<a name="line.854"></a>
+<span class="sourceLineNo">855</span>     */<a name="line.855"></a>
+<span class="sourceLineNo">856</span>    public synchronized boolean equals(Object o) {<a name="line.856"></a>
+<span class="sourceLineNo">857</span>        if (o == this)<a name="line.857"></a>
+<span class="sourceLineNo">858</span>            return true;<a name="line.858"></a>
+<span class="sourceLineNo">859</span><a name="line.859"></a>
+<span class="sourceLineNo">860</span>        if (!(o instanceof Map))<a name="line.860"></a>
+<span class="sourceLineNo">861</span>            return false;<a name="line.861"></a>
+<span class="sourceLineNo">862</span>        Map&lt;K,V&gt; t = (Map&lt;K,V&gt;) o;<a name="line.862"></a>
+<span class="sourceLineNo">863</span>        if (t.size() != size())<a name="line.863"></a>
+<span class="sourceLineNo">864</span>            return false;<a name="line.864"></a>
+<span class="sourceLineNo">865</span><a name="line.865"></a>
+<span class="sourceLineNo">866</span>        try {<a name="line.866"></a>
+<span class="sourceLineNo">867</span>            Iterator&lt;Map.Entry&lt;K,V&gt;&gt; i = entrySet().iterator();<a name="line.867"></a>
+<span class="sourceLineNo">868</span>            while (i.hasNext()) {<a name="line.868"></a>
+<span class="sourceLineNo">869</span>                Map.Entry&lt;K,V&gt; e = i.next();<a name="line.869"></a>
+<span class="sourceLineNo">870</span>                K key = e.getKey();<a name="line.870"></a>
+<span class="sourceLineNo">871</span>                V value = e.getValue();<a name="line.871"></a>
+<span class="sourceLineNo">872</span>                if (value == null) {<a name="line.872"></a>
+<span class="sourceLineNo">873</span>                    if (!(t.get(key)==null &amp;&amp; t.containsKey(key)))<a name="line.873"></a>
+<span class="sourceLineNo">874</span>                        return false;<a name="line.874"></a>
+<span class="sourceLineNo">875</span>                } else {<a name="line.875"></a>
+<span class="sourceLineNo">876</span>                    if (!value.equals(t.get(key)))<a name="line.876"></a>
+<span class="sourceLineNo">877</span>                        return false;<a name="line.877"></a>
+<span class="sourceLineNo">878</span>                }<a name="line.878"></a>
+<span class="sourceLineNo">879</span>            }<a name="line.879"></a>
+<span class="sourceLineNo">880</span>        } catch (ClassCastException unused)   {<a name="line.880"></a>
+<span class="sourceLineNo">881</span>            return false;<a name="line.881"></a>
+<span class="sourceLineNo">882</span>        } catch (NullPointerException unused) {<a name="line.882"></a>
+<span class="sourceLineNo">883</span>            return false;<a name="line.883"></a>
+<span class="sourceLineNo">884</span>        }<a name="line.884"></a>
+<span class="sourceLineNo">885</span><a name="line.885"></a>
+<span class="sourceLineNo">886</span>        return true;<a name="line.886"></a>
+<span class="sourceLineNo">887</span>    }<a name="line.887"></a>
+<span class="sourceLineNo">888</span><a name="line.888"></a>
+<span class="sourceLineNo">889</span>    /**<a name="line.889"></a>
+<span class="sourceLineNo">890</span>     * Returns the hash code value for this Map as per the definition in the<a name="line.890"></a>
+<span class="sourceLineNo">891</span>     * Map interface.<a name="line.891"></a>
+<span class="sourceLineNo">892</span>     *<a name="line.892"></a>
+<span class="sourceLineNo">893</span>     * @see Map#hashCode()<a name="line.893"></a>
+<span class="sourceLineNo">894</span>     * @since 1.2<a name="line.894"></a>
+<span class="sourceLineNo">895</span>     */<a name="line.895"></a>
+<span class="sourceLineNo">896</span>    public synchronized int hashCode() {<a name="line.896"></a>
+<span class="sourceLineNo">897</span>        /*<a name="line.897"></a>
+<span class="sourceLineNo">898</span>         * This code detects the recursion caused by computing the hash code<a name="line.898"></a>
+<span class="sourceLineNo">899</span>         * of a self-referential hash table and prevents the stack overflow<a name="line.899"></a>
+<span class="sourceLineNo">900</span>         * that would otherwise result.  This allows certain 1.1-era<a name="line.900"></a>
+<span class="sourceLineNo">901</span>         * applets with self-referential hash tables to work.  This code<a name="line.901"></a>
+<span class="sourceLineNo">902</span>         * abuses the loadFactor field to do double-duty as a hashCode<a name="line.902"></a>
+<span class="sourceLineNo">903</span>         * in progress flag, so as not to worsen the space performance.<a name="line.903"></a>
+<span class="sourceLineNo">904</span>         * A negative load factor indicates that hash code computation is<a name="line.904"></a>
+<span class="sourceLineNo">905</span>         * in progress.<a name="line.905"></a>
+<span class="sourceLineNo">906</span>         */<a name="line.906"></a>
+<span class="sourceLineNo">907</span>        int h = 0;<a name="line.907"></a>
+<span class="sourceLineNo">908</span>        if (count == 0 || loadFactor &lt; 0)<a name="line.908"></a>
+<span class="sourceLineNo">909</span>            return h;  // Returns zero<a name="line.909"></a>
+<span class="sourceLineNo">910</span><a name="line.910"></a>
+<span class="sourceLineNo">911</span>        loadFactor = -loadFactor;  // Mark hashCode computation in progress<a name="line.911"></a>
+<span class="sourceLineNo">912</span>        Entry[] tab = table;<a name="line.912"></a>
+<span class="sourceLineNo">913</span>        for (Entry&lt;K,V&gt; entry : tab)<a name="line.913"></a>
+<span class="sourceLineNo">914</span>            while (entry != null) {<a name="line.914"></a>
+<span class="sourceLineNo">915</span>                h += entry.hashCode();<a name="line.915"></a>
+<span class="sourceLineNo">916</span>                entry = entry.next;<a name="line.916"></a>
+<span class="sourceLineNo">917</span>            }<a name="line.917"></a>
+<span class="sourceLineNo">918</span>        loadFactor = -loadFactor;  // Mark hashCode computation complete<a name="line.918"></a>
+<span class="sourceLineNo">919</span><a name="line.919"></a>
+<span class="sourceLineNo">920</span>        return h;<a name="line.920"></a>
+<span class="sourceLineNo">921</span>    }<a name="line.921"></a>
+<span class="sourceLineNo">922</span><a name="line.922"></a>
+<span class="sourceLineNo">923</span>    /**<a name="line.923"></a>
+<span class="sourceLineNo">924</span>     * Save the state of the Hashtable to a stream (i.e., serialize it).<a name="line.924"></a>
+<span class="sourceLineNo">925</span>     *<a name="line.925"></a>
+<span class="sourceLineNo">926</span>     * @serialData The &lt;i&gt;capacity&lt;/i&gt; of the Hashtable (the length of the<a name="line.926"></a>
+<span class="sourceLineNo">927</span>     *             bucket array) is emitted (int), followed by the<a name="line.927"></a>
+<span class="sourceLineNo">928</span>     *             &lt;i&gt;size&lt;/i&gt; of the Hashtable (the number of key-value<a name="line.928"></a>
+<span class="sourceLineNo">929</span>     *             mappings), followed by the key (Object) and value (Object)<a name="line.929"></a>
+<span class="sourceLineNo">930</span>     *             for each key-value mapping represented by the Hashtable<a name="line.930"></a>
+<span class="sourceLineNo">931</span>     *             The key-value mappings are emitted in no particular order.<a name="line.931"></a>
+<span class="sourceLineNo">932</span>     */<a name="line.932"></a>
+<span class="sourceLineNo">933</span>    private void writeObject(java.io.ObjectOutputStream s)<a name="line.933"></a>
+<span class="sourceLineNo">934</span>            throws IOException {<a name="line.934"></a>
+<span class="sourceLineNo">935</span>        Entry&lt;K, V&gt; entryStack = null;<a name="line.935"></a>
+<span class="sourceLineNo">936</span><a name="line.936"></a>
+<span class="sourceLineNo">937</span>        synchronized (this) {<a name="line.937"></a>
+<span class="sourceLineNo">938</span>            // Write out the length, threshold, loadfactor<a name="line.938"></a>
+<span class="sourceLineNo">939</span>            s.defaultWriteObject();<a name="line.939"></a>
+<span class="sourceLineNo">940</span><a name="line.940"></a>
+<span class="sourceLineNo">941</span>            // Write out length, count of elements<a name="line.941"></a>
+<span class="sourceLineNo">942</span>            s.writeInt(table.length);<a name="line.942"></a>
+<span class="sourceLineNo">943</span>            s.writeInt(count);<a name="line.943"></a>
+<span class="sourceLineNo">944</span><a name="line.944"></a>
+<span class="sourceLineNo">945</span>            // Stack copies of the entries in the table<a name="line.945"></a>
+<span class="sourceLineNo">946</span>            for (int index = 0; index &lt; table.length; index++) {<a name="line.946"></a>
+<span class="sourceLineNo">947</span>                Entry&lt;K,V&gt; entry = table[index];<a name="line.947"></a>
+<span class="sourceLineNo">948</span><a name="line.948"></a>
+<span class="sourceLineNo">949</span>                while (entry != null) {<a name="line.949"></a>
+<span class="sourceLineNo">950</span>                    entryStack =<a name="line.950"></a>
+<span class="sourceLineNo">951</span>                        new Entry&lt;&gt;(0, entry.key, entry.value, entryStack);<a name="line.951"></a>
+<span class="sourceLineNo">952</span>                    entry = entry.next;<a name="line.952"></a>
+<span class="sourceLineNo">953</span>                }<a name="line.953"></a>
+<span class="sourceLineNo">954</span>            }<a name="line.954"></a>
+<span class="sourceLineNo">955</span>        }<a name="line.955"></a>
+<span class="sourceLineNo">956</span><a name="line.956"></a>
+<span class="sourceLineNo">957</span>        // Write out the key/value objects from the stacked entries<a name="line.957"></a>
+<span class="sourceLineNo">958</span>        while (entryStack != null) {<a name="line.958"></a>
+<span class="sourceLineNo">959</span>            s.writeObject(entryStack.key);<a name="line.959"></a>
+<span class="sourceLineNo">960</span>            s.writeObject(entryStack.value);<a name="line.960"></a>
+<span class="sourceLineNo">961</span>            entryStack = entryStack.next;<a name="line.961"></a>
+<span class="sourceLineNo">962</span>        }<a name="line.962"></a>
+<span class="sourceLineNo">963</span>    }<a name="line.963"></a>
+<span class="sourceLineNo">964</span><a name="line.964"></a>
+<span class="sourceLineNo">965</span>    /**<a name="line.965"></a>
+<span class="sourceLineNo">966</span>     * Reconstitute the Hashtable from a stream (i.e., deserialize it).<a name="line.966"></a>
+<span class="sourceLineNo">967</span>     */<a name="line.967"></a>
+<span class="sourceLineNo">968</span>    private void readObject(java.io.ObjectInputStream s)<a name="line.968"></a>
+<span class="sourceLineNo">969</span>         throws IOException, ClassNotFoundException<a name="line.969"></a>
+<span class="sourceLineNo">970</span>    {<a name="line.970"></a>
+<span class="sourceLineNo">971</span>        // Read in the length, threshold, and loadfactor<a name="line.971"></a>
+<span class="sourceLineNo">972</span>        s.defaultReadObject();<a name="line.972"></a>
+<span class="sourceLineNo">973</span><a name="line.973"></a>
+<span class="sourceLineNo">974</span>        // Read the original length of the array and number of elements<a name="line.974"></a>
+<span class="sourceLineNo">975</span>        int origlength = s.readInt();<a name="line.975"></a>
+<span class="sourceLineNo">976</span>        int elements = s.readInt();<a name="line.976"></a>
+<span class="sourceLineNo">977</span><a name="line.977"></a>
+<span class="sourceLineNo">978</span>        // Compute new size with a bit of room 5% to grow but<a name="line.978"></a>
+<span class="sourceLineNo">979</span>        // no larger than the original size.  Make the length<a name="line.979"></a>
+<span class="sourceLineNo">980</span>        // odd if it's large enough, this helps distribute the entries.<a name="line.980"></a>
+<span class="sourceLineNo">981</span>        // Guard against the length ending up zero, that's not valid.<a name="line.981"></a>
+<span class="sourceLineNo">982</span>        int length = (int)(elements * loadFactor) + (elements / 20) + 3;<a name="line.982"></a>
+<span class="sourceLineNo">983</span>        if (length &gt; elements &amp;&amp; (length &amp; 1) == 0)<a name="line.983"></a>
+<span class="sourceLineNo">984</span>            length--;<a name="line.984"></a>
+<span class="sourceLineNo">985</span>        if (origlength &gt; 0 &amp;&amp; length &gt; origlength)<a name="line.985"></a>
+<span class="sourceLineNo">986</span>            length = origlength;<a name="line.986"></a>
+<span class="sourceLineNo">987</span><a name="line.987"></a>
+<span class="sourceLineNo">988</span>        Entry&lt;K,V&gt;[] newTable = new Entry[length];<a name="line.988"></a>
+<span class="sourceLineNo">989</span>        threshold = (int) Math.min(length * loadFactor, MAX_ARRAY_SIZE + 1);<a name="line.989"></a>
+<span class="sourceLineNo">990</span>        count = 0;<a name="line.990"></a>
+<span class="sourceLineNo">991</span>        initHashSeedAsNeeded(length);<a name="line.991"></a>
+<span class="sourceLineNo">992</span><a name="line.992"></a>
+<span class="sourceLineNo">993</span>        // Read the number of elements and then all the key/value objects<a name="line.993"></a>
+<span class="sourceLineNo">994</span>        for (; elements &gt; 0; elements--) {<a name="line.994"></a>
+<span class="sourceLineNo">995</span>            K key = (K)s.readObject();<a name="line.995"></a>
+<span class="sourceLineNo">996</span>            V value = (V)s.readObject();<a name="line.996"></a>
+<span class="sourceLineNo">997</span>            // synch could be eliminated for performance<a name="line.997"></a>
+<span class="sourceLineNo">998</span>            reconstitutionPut(newTable, key, value);<a name="line.998"></a>
+<span class="sourceLineNo">999</span>        }<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>        this.table = newTable;<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>    }<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span><a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>    /**<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>     * The put method used by readObject. This is provided because put<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>     * is overridable and should not be called in readObject since the<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>     * subclass will not yet be initialized.<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>     *<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>     * &lt;p&gt;This differs from the regular put method in several ways. No<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>     * checking for rehashing is necessary since the number of elements<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>     * initially in the table is known. The modCount is not incremented<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>     * because we are creating a new instance. Also, no return value<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>     * is needed.<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>     */<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>    private void reconstitutionPut(Entry&lt;K,V&gt;[] tab, K key, V value)<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>        throws StreamCorruptedException<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>    {<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>        if (value == null) {<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>            throw new java.io.StreamCorruptedException();<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>        }<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>        // Makes sure the key is not already in the hashtable.<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>        // This should not happen in deserialized version.<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>        int hash = hash(key);<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>        int index = (hash &amp; 0x7FFFFFFF) % tab.length;<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>        for (Entry&lt;K,V&gt; e = tab[index] ; e != null ; e = e.next) {<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>            if ((e.hash == hash) &amp;&amp; e.key.equals(key)) {<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>                throw new java.io.StreamCorruptedException();<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>            }<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>        }<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>        // Creates the new entry.<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>        Entry&lt;K,V&gt; e = tab[index];<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>        tab[index] = new Entry&lt;&gt;(hash, key, value, e);<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>        count++;<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>    }<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span><a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>    /**<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>     * Hashtable bucket collision list entry<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>     */<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>    private static class Entry&lt;K,V&gt; implements Map.Entry&lt;K,V&gt; {<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>        int hash;<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>        final K key;<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>        V value;<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>        Entry&lt;K,V&gt; next;<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span><a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>        protected Entry(int hash, K key, V value, Entry&lt;K,V&gt; next) {<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>            this.hash = hash;<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>            this.key =  key;<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>            this.value = value;<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>            this.next = next;<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>        }<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span><a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>        protected Object clone() {<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>            return new Entry&lt;&gt;(hash, key, value,<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>                                  (next==null ? null : (Entry&lt;K,V&gt;) next.clone()));<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>        }<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span><a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>        // Map.Entry Ops<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span><a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>        public K getKey() {<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>            return key;<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>        }<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span><a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>        public V getValue() {<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>            return value;<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>        }<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span><a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>        public V setValue(V value) {<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>            if (value == null)<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>                throw new NullPointerException();<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span><a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>            V oldValue = this.value;<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>            this.value = value;<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>            return oldValue;<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>        }<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span><a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>        public boolean equals(Object o) {<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>            if (!(o instanceof Map.Entry))<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>                return false;<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>            Map.Entry&lt;?,?&gt; e = (Map.Entry)o;<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span><a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>            return key.equals(e.getKey()) &amp;&amp; value.equals(e.getValue());<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>        }<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span><a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>        public int hashCode() {<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>            return (Objects.hashCode(key) ^ Objects.hashCode(value));<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>        }<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span><a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>        public String toString() {<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>            return key.toString()+"="+value.toString();<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>        }<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>    }<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span><a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>    // Types of Enumerations/Iterations<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>    private static final int KEYS = 0;<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>    private static final int VALUES = 1;<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>    private static final int ENTRIES = 2;<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span><a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>    /**<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>     * A hashtable enumerator class.  This class implements both the<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>     * Enumeration and Iterator interfaces, but individual instances<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>     * can be created with the Iterator methods disabled.  This is necessary<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>     * to avoid unintentionally increasing the capabilities granted a user<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>     * by passing an Enumeration.<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>     */<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>    private class Enumerator&lt;T&gt; implements Enumeration&lt;T&gt;, Iterator&lt;T&gt; {<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>        Entry[] table = Hashtable.this.table;<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>        int index = table.length;<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>        Entry&lt;K,V&gt; entry = null;<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>        Entry&lt;K,V&gt; lastReturned = null;<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>        int type;<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span><a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>        /**<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>         * Indicates whether this Enumerator is serving as an Iterator<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>         * or an Enumeration.  (true -&gt; Iterator).<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>         */<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>        boolean iterator;<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span><a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>        /**<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>         * The modCount value that the iterator believes that the backing<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>         * Hashtable should have.  If this expectation is violated, the iterator<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>         * has detected concurrent modification.<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>         */<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>        protected int expectedModCount = modCount;<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span><a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>        Enumerator(int type, boolean iterator) {<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>            this.type = type;<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>            this.iterator = iterator;<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>        }<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span><a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>        public boolean hasMoreElements() {<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>            Entry&lt;K,V&gt; e = entry;<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>            int i = index;<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>            Entry[] t = table;<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>            /* Use locals for faster loop iteration */<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>            while (e == null &amp;&amp; i &gt; 0) {<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>                e = t[--i];<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>            }<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>            entry = e;<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>            index = i;<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>            return e != null;<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>        }<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span><a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>        public T nextElement() {<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>            Entry&lt;K,V&gt; et = entry;<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>            int i = index;<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>            Entry[] t = table;<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>            /* Use locals for faster loop iteration */<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>            while (et == null &amp;&amp; i &gt; 0) {<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>                et = t[--i];<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>            }<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>            entry = et;<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>            index = i;<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>            if (et != null) {<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>                Entry&lt;K,V&gt; e = lastReturned = entry;<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>                entry = e.next;<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>                return type == KEYS ? (T)e.key : (type == VALUES ? (T)e.value : (T)e);<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>            }<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span>            throw new NoSuchElementException("Hashtable Enumerator");<a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>        }<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span><a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>        // Iterator methods<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>        public boolean hasNext() {<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>            return hasMoreElements();<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>        }<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span><a name="line.1164"></a>
+<span class="sourceLineNo">1165</span>        public T next() {<a name="line.1165"></a>
+<span class="sourceLineNo">1166</span>            if (modCount != expectedModCount)<a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>                throw new ConcurrentModificationException();<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>            return nextElement();<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>        }<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span><a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>        public void remove() {<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>            if (!iterator)<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span>                throw new UnsupportedOperationException();<a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>            if (lastReturned == null)<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>                throw new IllegalStateException("Hashtable Enumerator");<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>            if (modCount != expectedModCount)<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>                throw new ConcurrentModificationException();<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span><a name="line.1178"></a>
+<span class="sourceLineNo">1179</span>            synchronized(Hashtable.this) {<a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>                Entry[] tab = Hashtable.this.table;<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>                int index = (lastReturned.hash &amp; 0x7FFFFFFF) % tab.length;<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span><a name="line.1182"></a>
+<span class="sourceLineNo">1183</span>                for (Entry&lt;K,V&gt; e = tab[index], prev = null; e != null;<a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>                     prev = e, e = e.next) {<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>                    if (e == lastReturned) {<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>                        modCount++;<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>                        expectedModCount++;<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>                        if (prev == null)<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span>                            tab[index] = e.next;<a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>                        else<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>                            prev.next = e.next;<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>                        count--;<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span>                        lastReturned = null;<a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>                        return;<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>                    }<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>                }<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>                throw new ConcurrentModificationException();<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>            }<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>        }<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>    }<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>}<a name="line.1201"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

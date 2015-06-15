@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang.reflect;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * {@code InvocationHandler} is the interface implemented by<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * the &lt;i&gt;invocation handler&lt;/i&gt; of a proxy instance.<a name="line.30"></a>
+<span class="sourceLineNo">031</span> *<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * &lt;p&gt;Each proxy instance has an associated invocation handler.<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * When a method is invoked on a proxy instance, the method<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * invocation is encoded and dispatched to the {@code invoke}<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * method of its invocation handler.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * @author      Peter Jones<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * @see         Proxy<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * @since       1.3<a name="line.39"></a>
+<span class="sourceLineNo">040</span> */<a name="line.40"></a>
+<span class="sourceLineNo">041</span>public interface InvocationHandler {<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>    /**<a name="line.43"></a>
+<span class="sourceLineNo">044</span>     * Processes a method invocation on a proxy instance and returns<a name="line.44"></a>
+<span class="sourceLineNo">045</span>     * the result.  This method will be invoked on an invocation handler<a name="line.45"></a>
+<span class="sourceLineNo">046</span>     * when a method is invoked on a proxy instance that it is<a name="line.46"></a>
+<span class="sourceLineNo">047</span>     * associated with.<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     *<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * @param   proxy the proxy instance that the method was invoked on<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     *<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     * @param   method the {@code Method} instance corresponding to<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     * the interface method invoked on the proxy instance.  The declaring<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     * class of the {@code Method} object will be the interface that<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * the method was declared in, which may be a superinterface of the<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * proxy interface that the proxy class inherits the method through.<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     *<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * @param   args an array of objects containing the values of the<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * arguments passed in the method invocation on the proxy instance,<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * or {@code null} if interface method takes no arguments.<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * Arguments of primitive types are wrapped in instances of the<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * appropriate primitive wrapper class, such as<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * {@code java.lang.Integer} or {@code java.lang.Boolean}.<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     *<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * @return  the value to return from the method invocation on the<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * proxy instance.  If the declared return type of the interface<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * method is a primitive type, then the value returned by<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * this method must be an instance of the corresponding primitive<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * wrapper class; otherwise, it must be a type assignable to the<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * declared return type.  If the value returned by this method is<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * {@code null} and the interface method's return type is<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * primitive, then a {@code NullPointerException} will be<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * thrown by the method invocation on the proxy instance.  If the<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * value returned by this method is otherwise not compatible with<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * the interface method's declared return type as described above,<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * a {@code ClassCastException} will be thrown by the method<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * invocation on the proxy instance.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     *<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * @throws  Throwable the exception to throw from the method<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * invocation on the proxy instance.  The exception's type must be<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * assignable either to any of the exception types declared in the<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * {@code throws} clause of the interface method or to the<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * unchecked exception types {@code java.lang.RuntimeException}<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * or {@code java.lang.Error}.  If a checked exception is<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * thrown by this method that is not assignable to any of the<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * exception types declared in the {@code throws} clause of<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * the interface method, then an<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * {@link UndeclaredThrowableException} containing the<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * exception that was thrown by this method will be thrown by the<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * method invocation on the proxy instance.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @see     UndeclaredThrowableException<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     */<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    public Object invoke(Object proxy, Method method, Object[] args)<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        throws Throwable;<a name="line.94"></a>
+<span class="sourceLineNo">095</span>}<a name="line.95"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

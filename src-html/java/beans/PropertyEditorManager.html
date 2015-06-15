@@ -1,0 +1,197 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.beans;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * The PropertyEditorManager can be used to locate a property editor for<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * any given type name.  This property editor must support the<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * java.beans.PropertyEditor interface for editing a given object.<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * &lt;P&gt;<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * The PropertyEditorManager uses three techniques for locating an editor<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * for a given type.  First, it provides a registerEditor method to allow<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * an editor to be specifically registered for a given type.  Second it<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * tries to locate a suitable class by adding "Editor" to the full<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * qualified classname of the given type (e.g. "foo.bah.FozEditor").<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * Finally it takes the simple classname (without the package name) adds<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * "Editor" to it and looks in a search-path of packages for a matching<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * class.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;P&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * So for an input class foo.bah.Fred, the PropertyEditorManager would<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * first look in its tables to see if an editor had been registered for<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * foo.bah.Fred and if so use that.  Then it will look for a<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * foo.bah.FredEditor class.  Then it will look for (say)<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * standardEditorsPackage.FredEditor class.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;p&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * Default PropertyEditors will be provided for the Java primitive types<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * "boolean", "byte", "short", "int", "long", "float", and "double"; and<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * for the classes java.lang.String. java.awt.Color, and java.awt.Font.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> */<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>public class PropertyEditorManager {<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>    /**<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * Registers an editor class to edit values of the given target class.<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * If the editor class is {@code null},<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * then any existing definition will be removed.<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * Thus this method can be used to cancel the registration.<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * The registration is canceled automatically<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * if either the target or editor class is unloaded.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * &lt;p&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * If there is a security manager, its {@code checkPropertiesAccess}<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * method is called. This could result in a {@linkplain SecurityException}.<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     *<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * @param targetType   the class object of the type to be edited<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * @param editorClass  the class object of the editor class<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * @throws SecurityException  if a security manager exists and<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     *                            its {@code checkPropertiesAccess} method<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     *                            doesn't allow setting of system properties<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     *<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * @see SecurityManager#checkPropertiesAccess<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     */<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    public static void registerEditor(Class&lt;?&gt; targetType, Class&lt;?&gt; editorClass) {<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        SecurityManager sm = System.getSecurityManager();<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        if (sm != null) {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>            sm.checkPropertiesAccess();<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        }<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        ThreadGroupContext.getContext().getPropertyEditorFinder().register(targetType, editorClass);<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    }<a name="line.80"></a>
+<span class="sourceLineNo">081</span><a name="line.81"></a>
+<span class="sourceLineNo">082</span>    /**<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * Locate a value editor for a given target type.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     *<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * @param targetType  The Class object for the type to be edited<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * @return An editor object for the given target class.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * The result is null if no suitable editor can be found.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     */<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    public static PropertyEditor findEditor(Class&lt;?&gt; targetType) {<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        return ThreadGroupContext.getContext().getPropertyEditorFinder().find(targetType);<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    }<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>    /**<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * Gets the package names that will be searched for property editors.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @return  The array of package names that will be searched in<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     *          order to find property editors.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * &lt;p&gt;     The default value for this array is implementation-dependent,<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     *         e.g. Sun implementation initially sets to  {"sun.beans.editors"}.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     */<a name="line.100"></a>
+<span class="sourceLineNo">101</span>    public static String[] getEditorSearchPath() {<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        return ThreadGroupContext.getContext().getPropertyEditorFinder().getPackages();<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    }<a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span>    /**<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * Change the list of package names that will be used for<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     *          finding property editors.<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     *<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * &lt;p&gt;First, if there is a security manager, its &lt;code&gt;checkPropertiesAccess&lt;/code&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * method is called. This could result in a SecurityException.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @param path  Array of package names.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * @exception  SecurityException  if a security manager exists and its<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *             &lt;code&gt;checkPropertiesAccess&lt;/code&gt; method doesn't allow setting<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *              of system properties.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * @see SecurityManager#checkPropertiesAccess<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     */<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    public static void setEditorSearchPath(String[] path) {<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        SecurityManager sm = System.getSecurityManager();<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        if (sm != null) {<a name="line.120"></a>
+<span class="sourceLineNo">121</span>            sm.checkPropertiesAccess();<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        }<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        ThreadGroupContext.getContext().getPropertyEditorFinder().setPackages(path);<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    }<a name="line.124"></a>
+<span class="sourceLineNo">125</span>}<a name="line.125"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

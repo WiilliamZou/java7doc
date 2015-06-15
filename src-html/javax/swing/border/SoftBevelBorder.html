@@ -1,0 +1,237 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package javax.swing.border;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.awt.Graphics;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.Insets;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.Rectangle;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.Color;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.Component;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.beans.ConstructorProperties;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * A class which implements a raised or lowered bevel with<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * softened corners.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;strong&gt;Warning:&lt;/strong&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * Serialized objects of this class will not be compatible with<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * future Swing releases. The current serialization support is<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * appropriate for short term storage or RMI between applications running<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * the same version of Swing.  As of 1.4, support for long term storage<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * of all JavaBeans&lt;sup&gt;&lt;font size="-2"&gt;TM&lt;/font&gt;&lt;/sup&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * has been added to the &lt;code&gt;java.beans&lt;/code&gt; package.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * Please see {@link java.beans.XMLEncoder}.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * @author Amy Fowler<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * @author Chester Rose<a name="line.48"></a>
+<span class="sourceLineNo">049</span> */<a name="line.49"></a>
+<span class="sourceLineNo">050</span>public class SoftBevelBorder extends BevelBorder<a name="line.50"></a>
+<span class="sourceLineNo">051</span>{<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /**<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * Creates a bevel border with the specified type and whose<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * colors will be derived from the background color of the<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * component passed into the paintBorder method.<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * @param bevelType the type of bevel for the border<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     */<a name="line.58"></a>
+<span class="sourceLineNo">059</span>    public SoftBevelBorder(int bevelType) {<a name="line.59"></a>
+<span class="sourceLineNo">060</span>        super(bevelType);<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    }<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    /**<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * Creates a bevel border with the specified type, highlight and<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * shadow colors.<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * @param bevelType the type of bevel for the border<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * @param highlight the color to use for the bevel highlight<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * @param shadow the color to use for the bevel shadow<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     */<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    public SoftBevelBorder(int bevelType, Color highlight, Color shadow) {<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        super(bevelType, highlight, shadow);<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    }<a name="line.72"></a>
+<span class="sourceLineNo">073</span><a name="line.73"></a>
+<span class="sourceLineNo">074</span>    /**<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * Creates a bevel border with the specified type, highlight<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * shadow colors.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * @param bevelType the type of bevel for the border<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * @param highlightOuterColor the color to use for the bevel outer highlight<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * @param highlightInnerColor the color to use for the bevel inner highlight<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * @param shadowOuterColor the color to use for the bevel outer shadow<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * @param shadowInnerColor the color to use for the bevel inner shadow<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     */<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    @ConstructorProperties({"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"})<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    public SoftBevelBorder(int bevelType, Color highlightOuterColor,<a name="line.84"></a>
+<span class="sourceLineNo">085</span>                        Color highlightInnerColor, Color shadowOuterColor,<a name="line.85"></a>
+<span class="sourceLineNo">086</span>                        Color shadowInnerColor) {<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        super(bevelType, highlightOuterColor, highlightInnerColor,<a name="line.87"></a>
+<span class="sourceLineNo">088</span>              shadowOuterColor, shadowInnerColor);<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    }<a name="line.89"></a>
+<span class="sourceLineNo">090</span><a name="line.90"></a>
+<span class="sourceLineNo">091</span>    /**<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * Paints the border for the specified component with the specified<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * position and size.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @param c the component for which this border is being painted<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * @param g the paint graphics<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @param x the x position of the painted border<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @param y the y position of the painted border<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * @param width the width of the painted border<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @param height the height of the painted border<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     */<a name="line.100"></a>
+<span class="sourceLineNo">101</span>    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        Color oldColor = g.getColor();<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        g.translate(x, y);<a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span>        if (bevelType == RAISED) {<a name="line.105"></a>
+<span class="sourceLineNo">106</span>            g.setColor(getHighlightOuterColor(c));<a name="line.106"></a>
+<span class="sourceLineNo">107</span>            g.drawLine(0, 0, width-2, 0);<a name="line.107"></a>
+<span class="sourceLineNo">108</span>            g.drawLine(0, 0, 0, height-2);<a name="line.108"></a>
+<span class="sourceLineNo">109</span>            g.drawLine(1, 1, 1, 1);<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>            g.setColor(getHighlightInnerColor(c));<a name="line.111"></a>
+<span class="sourceLineNo">112</span>            g.drawLine(2, 1, width-2, 1);<a name="line.112"></a>
+<span class="sourceLineNo">113</span>            g.drawLine(1, 2, 1, height-2);<a name="line.113"></a>
+<span class="sourceLineNo">114</span>            g.drawLine(2, 2, 2, 2);<a name="line.114"></a>
+<span class="sourceLineNo">115</span>            g.drawLine(0, height-1, 0, height-2);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>            g.drawLine(width-1, 0, width-1, 0);<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>            g.setColor(getShadowOuterColor(c));<a name="line.118"></a>
+<span class="sourceLineNo">119</span>            g.drawLine(2, height-1, width-1, height-1);<a name="line.119"></a>
+<span class="sourceLineNo">120</span>            g.drawLine(width-1, 2, width-1, height-1);<a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>            g.setColor(getShadowInnerColor(c));<a name="line.122"></a>
+<span class="sourceLineNo">123</span>            g.drawLine(width-2, height-2, width-2, height-2);<a name="line.123"></a>
+<span class="sourceLineNo">124</span><a name="line.124"></a>
+<span class="sourceLineNo">125</span><a name="line.125"></a>
+<span class="sourceLineNo">126</span>        } else if (bevelType == LOWERED) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            g.setColor(getShadowOuterColor(c));<a name="line.127"></a>
+<span class="sourceLineNo">128</span>            g.drawLine(0, 0, width-2, 0);<a name="line.128"></a>
+<span class="sourceLineNo">129</span>            g.drawLine(0, 0, 0, height-2);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>            g.drawLine(1, 1, 1, 1);<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>            g.setColor(getShadowInnerColor(c));<a name="line.132"></a>
+<span class="sourceLineNo">133</span>            g.drawLine(2, 1, width-2, 1);<a name="line.133"></a>
+<span class="sourceLineNo">134</span>            g.drawLine(1, 2, 1, height-2);<a name="line.134"></a>
+<span class="sourceLineNo">135</span>            g.drawLine(2, 2, 2, 2);<a name="line.135"></a>
+<span class="sourceLineNo">136</span>            g.drawLine(0, height-1, 0, height-2);<a name="line.136"></a>
+<span class="sourceLineNo">137</span>            g.drawLine(width-1, 0, width-1, 0);<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>            g.setColor(getHighlightOuterColor(c));<a name="line.139"></a>
+<span class="sourceLineNo">140</span>            g.drawLine(2, height-1, width-1, height-1);<a name="line.140"></a>
+<span class="sourceLineNo">141</span>            g.drawLine(width-1, 2, width-1, height-1);<a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span>            g.setColor(getHighlightInnerColor(c));<a name="line.143"></a>
+<span class="sourceLineNo">144</span>            g.drawLine(width-2, height-2, width-2, height-2);<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        }<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        g.translate(-x, -y);<a name="line.146"></a>
+<span class="sourceLineNo">147</span>        g.setColor(oldColor);<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    }<a name="line.148"></a>
+<span class="sourceLineNo">149</span><a name="line.149"></a>
+<span class="sourceLineNo">150</span>    /**<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * Reinitialize the insets parameter with this Border's current Insets.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * @param c the component for which this border insets value applies<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @param insets the object to be reinitialized<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     */<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    public Insets getBorderInsets(Component c, Insets insets)       {<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        insets.set(3, 3, 3, 3);<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        return insets;<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    }<a name="line.158"></a>
+<span class="sourceLineNo">159</span><a name="line.159"></a>
+<span class="sourceLineNo">160</span>    /**<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * Returns whether or not the border is opaque.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     */<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    public boolean isBorderOpaque() { return false; }<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>}<a name="line.165"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

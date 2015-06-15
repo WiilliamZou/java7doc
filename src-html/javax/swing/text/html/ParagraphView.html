@@ -1,0 +1,366 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package javax.swing.text.html;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.awt.*;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.swing.SizeRequirements;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.swing.event.DocumentEvent;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.swing.text.Document;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.swing.text.Element;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import javax.swing.text.AttributeSet;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import javax.swing.text.StyleConstants;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import javax.swing.text.View;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.swing.text.ViewFactory;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import javax.swing.text.BadLocationException;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import javax.swing.text.JTextComponent;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>/**<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * Displays the a paragraph, and uses css attributes for its<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * configuration.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * @author  Timothy Prinzing<a name="line.43"></a>
+<span class="sourceLineNo">044</span> */<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>public class ParagraphView extends javax.swing.text.ParagraphView {<a name="line.46"></a>
+<span class="sourceLineNo">047</span><a name="line.47"></a>
+<span class="sourceLineNo">048</span>    /**<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * Constructs a ParagraphView for the given element.<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     *<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     * @param elem the element that this view is responsible for<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     */<a name="line.52"></a>
+<span class="sourceLineNo">053</span>    public ParagraphView(Element elem) {<a name="line.53"></a>
+<span class="sourceLineNo">054</span>        super(elem);<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    }<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>    /**<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * Establishes the parent view for this view.  This is<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * guaranteed to be called before any other methods if the<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * parent view is functioning properly.<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * &lt;p&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * This is implemented<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * to forward to the superclass as well as call the<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * {@link #setPropertiesFromAttributes setPropertiesFromAttributes}<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * method to set the paragraph properties from the css<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * attributes.  The call is made at this time to ensure<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * the ability to resolve upward through the parents<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * view attributes.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     *<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * @param parent the new parent, or null if the view is<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     *  being removed from a parent it was previously added<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     *  to<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     */<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    public void setParent(View parent) {<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        super.setParent(parent);<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        if (parent != null) {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>            setPropertiesFromAttributes();<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        }<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    }<a name="line.79"></a>
+<span class="sourceLineNo">080</span><a name="line.80"></a>
+<span class="sourceLineNo">081</span>    /**<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * Fetches the attributes to use when rendering.  This is<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * implemented to multiplex the attributes specified in the<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * model with a StyleSheet.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     */<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    public AttributeSet getAttributes() {<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        if (attr == null) {<a name="line.87"></a>
+<span class="sourceLineNo">088</span>            StyleSheet sheet = getStyleSheet();<a name="line.88"></a>
+<span class="sourceLineNo">089</span>            attr = sheet.getViewAttributes(this);<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        }<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        return attr;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    }<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>    /**<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * Sets up the paragraph from css attributes instead of<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * the values found in StyleConstants (i.e. which are used<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * by the superclass).  Since<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     */<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    protected void setPropertiesFromAttributes() {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        StyleSheet sheet = getStyleSheet();<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        attr = sheet.getViewAttributes(this);<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        painter = sheet.getBoxPainter(attr);<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        if (attr != null) {<a name="line.103"></a>
+<span class="sourceLineNo">104</span>            super.setPropertiesFromAttributes();<a name="line.104"></a>
+<span class="sourceLineNo">105</span>            setInsets((short) painter.getInset(TOP, this),<a name="line.105"></a>
+<span class="sourceLineNo">106</span>                      (short) painter.getInset(LEFT, this),<a name="line.106"></a>
+<span class="sourceLineNo">107</span>                      (short) painter.getInset(BOTTOM, this),<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                      (short) painter.getInset(RIGHT, this));<a name="line.108"></a>
+<span class="sourceLineNo">109</span>            Object o = attr.getAttribute(CSS.Attribute.TEXT_ALIGN);<a name="line.109"></a>
+<span class="sourceLineNo">110</span>            if (o != null) {<a name="line.110"></a>
+<span class="sourceLineNo">111</span>                // set horizontal alignment<a name="line.111"></a>
+<span class="sourceLineNo">112</span>                String ta = o.toString();<a name="line.112"></a>
+<span class="sourceLineNo">113</span>                if (ta.equals("left")) {<a name="line.113"></a>
+<span class="sourceLineNo">114</span>                    setJustification(StyleConstants.ALIGN_LEFT);<a name="line.114"></a>
+<span class="sourceLineNo">115</span>                } else if (ta.equals("center")) {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>                    setJustification(StyleConstants.ALIGN_CENTER);<a name="line.116"></a>
+<span class="sourceLineNo">117</span>                } else if (ta.equals("right")) {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>                    setJustification(StyleConstants.ALIGN_RIGHT);<a name="line.118"></a>
+<span class="sourceLineNo">119</span>                } else if (ta.equals("justify")) {<a name="line.119"></a>
+<span class="sourceLineNo">120</span>                    setJustification(StyleConstants.ALIGN_JUSTIFIED);<a name="line.120"></a>
+<span class="sourceLineNo">121</span>                }<a name="line.121"></a>
+<span class="sourceLineNo">122</span>            }<a name="line.122"></a>
+<span class="sourceLineNo">123</span>            // Get the width/height<a name="line.123"></a>
+<span class="sourceLineNo">124</span>            cssWidth = (CSS.LengthValue)attr.getAttribute(<a name="line.124"></a>
+<span class="sourceLineNo">125</span>                                        CSS.Attribute.WIDTH);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>            cssHeight = (CSS.LengthValue)attr.getAttribute(<a name="line.126"></a>
+<span class="sourceLineNo">127</span>                                         CSS.Attribute.HEIGHT);<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        }<a name="line.128"></a>
+<span class="sourceLineNo">129</span>    }<a name="line.129"></a>
+<span class="sourceLineNo">130</span><a name="line.130"></a>
+<span class="sourceLineNo">131</span>    protected StyleSheet getStyleSheet() {<a name="line.131"></a>
+<span class="sourceLineNo">132</span>        HTMLDocument doc = (HTMLDocument) getDocument();<a name="line.132"></a>
+<span class="sourceLineNo">133</span>        return doc.getStyleSheet();<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    }<a name="line.134"></a>
+<span class="sourceLineNo">135</span><a name="line.135"></a>
+<span class="sourceLineNo">136</span><a name="line.136"></a>
+<span class="sourceLineNo">137</span>    /**<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * Calculate the needs for the paragraph along the minor axis.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * &lt;p&gt;If size requirements are explicitly specified for the paragraph,<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * use that requirements.  Otherwise, use the requirements of the<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * superclass {@link javax.swing.text.ParagraphView}.&lt;/p&gt;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * &lt;p&gt;If the {@code axis} parameter is neither {@code View.X_AXIS} nor<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * {@code View.Y_AXIS}, {@link IllegalArgumentException} is thrown.  If the<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * {@code r} parameter is {@code null,} a new {@code SizeRequirements}<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * object is created, otherwise the supplied {@code SizeRequirements}<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * object is returned.&lt;/p&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * @param axis  the minor axis<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @param r     the input {@code SizeRequirements} object<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * @return      the new or adjusted {@code SizeRequirements} object<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @throws IllegalArgumentException  if the {@code axis} parameter is invalid<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     */<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    protected SizeRequirements calculateMinorAxisRequirements(<a name="line.155"></a>
+<span class="sourceLineNo">156</span>                                                int axis, SizeRequirements r) {<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        r = super.calculateMinorAxisRequirements(axis, r);<a name="line.157"></a>
+<span class="sourceLineNo">158</span><a name="line.158"></a>
+<span class="sourceLineNo">159</span>        if (BlockView.spanSetFromAttributes(axis, r, cssWidth, cssHeight)) {<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            // Offset by the margins so that pref/min/max return the<a name="line.160"></a>
+<span class="sourceLineNo">161</span>            // right value.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            int margin = (axis == X_AXIS) ? getLeftInset() + getRightInset() :<a name="line.162"></a>
+<span class="sourceLineNo">163</span>                                            getTopInset() + getBottomInset();<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            r.minimum -= margin;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>            r.preferred -= margin;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            r.maximum -= margin;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        }<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        return r;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>    }<a name="line.169"></a>
+<span class="sourceLineNo">170</span><a name="line.170"></a>
+<span class="sourceLineNo">171</span><a name="line.171"></a>
+<span class="sourceLineNo">172</span>    /**<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * Indicates whether or not this view should be<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * displayed.  If none of the children wish to be<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * displayed and the only visible child is the<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * break that ends the paragraph, the paragraph<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * will not be considered visible.  Otherwise,<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * it will be considered visible and return true.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @return true if the paragraph should be displayed<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     */<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    public boolean isVisible() {<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>        int n = getLayoutViewCount() - 1;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        for (int i = 0; i &lt; n; i++) {<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            View v = getLayoutView(i);<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            if (v.isVisible()) {<a name="line.187"></a>
+<span class="sourceLineNo">188</span>                return true;<a name="line.188"></a>
+<span class="sourceLineNo">189</span>            }<a name="line.189"></a>
+<span class="sourceLineNo">190</span>        }<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        if (n &gt; 0) {<a name="line.191"></a>
+<span class="sourceLineNo">192</span>            View v = getLayoutView(n);<a name="line.192"></a>
+<span class="sourceLineNo">193</span>            if ((v.getEndOffset() - v.getStartOffset()) == 1) {<a name="line.193"></a>
+<span class="sourceLineNo">194</span>                return false;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>            }<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        }<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        // If it's the last paragraph and not editable, it shouldn't<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        // be visible.<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        if (getStartOffset() == getDocument().getLength()) {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>            boolean editable = false;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>            Component c = getContainer();<a name="line.201"></a>
+<span class="sourceLineNo">202</span>            if (c instanceof JTextComponent) {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>                editable = ((JTextComponent)c).isEditable();<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            }<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            if (!editable) {<a name="line.205"></a>
+<span class="sourceLineNo">206</span>                return false;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>            }<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        }<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        return true;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    }<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>    /**<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * Renders using the given rendering surface and area on that<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * surface.  This is implemented to delgate to the superclass<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * after stashing the base coordinate for tab calculations.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @param g the rendering surface to use<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * @param a the allocated region to render into<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @see View#paint<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     */<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    public void paint(Graphics g, Shape a) {<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        if (a == null) {<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            return;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        }<a name="line.224"></a>
+<span class="sourceLineNo">225</span><a name="line.225"></a>
+<span class="sourceLineNo">226</span>        Rectangle r;<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        if (a instanceof Rectangle) {<a name="line.227"></a>
+<span class="sourceLineNo">228</span>            r = (Rectangle) a;<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        } else {<a name="line.229"></a>
+<span class="sourceLineNo">230</span>            r = a.getBounds();<a name="line.230"></a>
+<span class="sourceLineNo">231</span>        }<a name="line.231"></a>
+<span class="sourceLineNo">232</span>        painter.paint(g, r.x, r.y, r.width, r.height, this);<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        super.paint(g, a);<a name="line.233"></a>
+<span class="sourceLineNo">234</span>    }<a name="line.234"></a>
+<span class="sourceLineNo">235</span><a name="line.235"></a>
+<span class="sourceLineNo">236</span>    /**<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * Determines the preferred span for this view.  Returns<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * 0 if the view is not visible, otherwise it calls the<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * superclass method to get the preferred span.<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * axis.<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     *<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * @param axis may be either View.X_AXIS or View.Y_AXIS<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * @return   the span the view would like to be rendered into;<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     *           typically the view is told to render into the span<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     *           that is returned, although there is no guarantee;<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *           the parent may choose to resize or break the view<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * @see javax.swing.text.ParagraphView#getPreferredSpan<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     */<a name="line.248"></a>
+<span class="sourceLineNo">249</span>    public float getPreferredSpan(int axis) {<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        if (!isVisible()) {<a name="line.250"></a>
+<span class="sourceLineNo">251</span>            return 0;<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        }<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        return super.getPreferredSpan(axis);<a name="line.253"></a>
+<span class="sourceLineNo">254</span>    }<a name="line.254"></a>
+<span class="sourceLineNo">255</span><a name="line.255"></a>
+<span class="sourceLineNo">256</span>    /**<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * Determines the minimum span for this view along an<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * axis.  Returns 0 if the view is not visible, otherwise<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * it calls the superclass method to get the minimum span.<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     *<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * @param axis may be either &lt;code&gt;View.X_AXIS&lt;/code&gt; or<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     *  &lt;code&gt;View.Y_AXIS&lt;/code&gt;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * @return  the minimum span the view can be rendered into<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * @see javax.swing.text.ParagraphView#getMinimumSpan<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     */<a name="line.265"></a>
+<span class="sourceLineNo">266</span>    public float getMinimumSpan(int axis) {<a name="line.266"></a>
+<span class="sourceLineNo">267</span>        if (!isVisible()) {<a name="line.267"></a>
+<span class="sourceLineNo">268</span>            return 0;<a name="line.268"></a>
+<span class="sourceLineNo">269</span>        }<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        return super.getMinimumSpan(axis);<a name="line.270"></a>
+<span class="sourceLineNo">271</span>    }<a name="line.271"></a>
+<span class="sourceLineNo">272</span><a name="line.272"></a>
+<span class="sourceLineNo">273</span>    /**<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * Determines the maximum span for this view along an<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * axis.  Returns 0 if the view is not visible, otherwise<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * it calls the superclass method ot get the maximum span.<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     *<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * @param axis may be either &lt;code&gt;View.X_AXIS&lt;/code&gt; or<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     *  &lt;code&gt;View.Y_AXIS&lt;/code&gt;<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * @return  the maximum span the view can be rendered into<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * @see javax.swing.text.ParagraphView#getMaximumSpan<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     */<a name="line.282"></a>
+<span class="sourceLineNo">283</span>    public float getMaximumSpan(int axis) {<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        if (!isVisible()) {<a name="line.284"></a>
+<span class="sourceLineNo">285</span>            return 0;<a name="line.285"></a>
+<span class="sourceLineNo">286</span>        }<a name="line.286"></a>
+<span class="sourceLineNo">287</span>        return super.getMaximumSpan(axis);<a name="line.287"></a>
+<span class="sourceLineNo">288</span>    }<a name="line.288"></a>
+<span class="sourceLineNo">289</span><a name="line.289"></a>
+<span class="sourceLineNo">290</span>    private AttributeSet attr;<a name="line.290"></a>
+<span class="sourceLineNo">291</span>    private StyleSheet.BoxPainter painter;<a name="line.291"></a>
+<span class="sourceLineNo">292</span>    private CSS.LengthValue cssWidth;<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    private CSS.LengthValue cssHeight;<a name="line.293"></a>
+<span class="sourceLineNo">294</span>}<a name="line.294"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

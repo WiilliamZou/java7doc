@@ -1,0 +1,460 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.security.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.Enumeration;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.Hashtable;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.StringTokenizer;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>/**<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * This class is for runtime permissions. A RuntimePermission<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * contains a name (also referred to as a "target name") but<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * no actions list; you either have the named permission<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * or you don't.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> *<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;P&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * The target name is the name of the runtime permission (see below). The<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * naming convention follows the  hierarchical property naming convention.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * Also, an asterisk<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * may appear at the end of the name, following a ".", or by itself, to<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * signify a wildcard match. For example: "loadLibrary.*" or "*" is valid,<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * "*loadLibrary" or "a*b" is not valid.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;P&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * The following table lists all the possible RuntimePermission target names,<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * and for each provides a description of what the permission allows<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * and a discussion of the risks of granting code the permission.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;P&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;table border=1 cellpadding=5 summary="permission target name,<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *  what the target allows,and associated risks"&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;tr&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;th&gt;Permission Target Name&lt;/th&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;th&gt;What the Permission Allows&lt;/th&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;th&gt;Risks of Allowing this Permission&lt;/th&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;/tr&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;tr&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *   &lt;td&gt;createClassLoader&lt;/td&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *   &lt;td&gt;Creation of a class loader&lt;/td&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *   &lt;td&gt;This is an extremely dangerous permission to grant.<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * Malicious applications that can instantiate their own class<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * loaders could then load their own rogue classes into the system.<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * These newly loaded classes could be placed into any protection<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * domain by the class loader, thereby automatically granting the<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * classes the permissions for that domain.&lt;/td&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * &lt;/tr&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;tr&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *   &lt;td&gt;getClassLoader&lt;/td&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *   &lt;td&gt;Retrieval of a class loader (e.g., the class loader for the calling<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * class)&lt;/td&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *   &lt;td&gt;This would grant an attacker permission to get the<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * class loader for a particular class. This is dangerous because<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * having access to a class's class loader allows the attacker to<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * load other classes available to that class loader. The attacker<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * would typically otherwise not have access to those classes.&lt;/td&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * &lt;/tr&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;tr&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *   &lt;td&gt;setContextClassLoader&lt;/td&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *   &lt;td&gt;Setting of the context class loader used by a thread&lt;/td&gt;<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *   &lt;td&gt;The context class loader is used by system code and extensions<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * when they need to lookup resources that might not exist in the system<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * class loader. Granting setContextClassLoader permission would allow<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * code to change which context class loader is used<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * for a particular thread, including system threads.&lt;/td&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * &lt;/tr&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * &lt;tr&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *   &lt;td&gt;enableContextClassLoaderOverride&lt;/td&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *   &lt;td&gt;Subclass implementation of the thread context class loader methods&lt;/td&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *   &lt;td&gt;The context class loader is used by system code and extensions<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * when they need to lookup resources that might not exist in the system<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * class loader. Granting enableContextClassLoaderOverride permission would allow<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * a subclass of Thread to override the methods that are used<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * to get or set the context class loader for a particular thread.&lt;/td&gt;<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * &lt;/tr&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * &lt;tr&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *   &lt;td&gt;closeClassLoader&lt;/td&gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *   &lt;td&gt;Closing of a ClassLoader&lt;/td&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *   &lt;td&gt;Granting this permission allows code to close any URLClassLoader<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * that it has a reference to.&lt;/td&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * &lt;/tr&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * &lt;tr&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *   &lt;td&gt;setSecurityManager&lt;/td&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *   &lt;td&gt;Setting of the security manager (possibly replacing an existing one)<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * &lt;/td&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *   &lt;td&gt;The security manager is a class that allows<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * applications to implement a security policy. Granting the setSecurityManager<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * permission would allow code to change which security manager is used by<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * installing a different, possibly less restrictive security manager,<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * thereby bypassing checks that would have been enforced by the original<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * security manager.&lt;/td&gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * &lt;/tr&gt;<a name="line.119"></a>
+<span class="sourceLineNo">120</span> *<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * &lt;tr&gt;<a name="line.121"></a>
+<span class="sourceLineNo">122</span> *   &lt;td&gt;createSecurityManager&lt;/td&gt;<a name="line.122"></a>
+<span class="sourceLineNo">123</span> *   &lt;td&gt;Creation of a new security manager&lt;/td&gt;<a name="line.123"></a>
+<span class="sourceLineNo">124</span> *   &lt;td&gt;This gives code access to protected, sensitive methods that may<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * disclose information about other classes or the execution stack.&lt;/td&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * &lt;/tr&gt;<a name="line.126"></a>
+<span class="sourceLineNo">127</span> *<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * &lt;tr&gt;<a name="line.128"></a>
+<span class="sourceLineNo">129</span> *   &lt;td&gt;getenv.{variable name}&lt;/td&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span> *   &lt;td&gt;Reading of the value of the specified environment variable&lt;/td&gt;<a name="line.130"></a>
+<span class="sourceLineNo">131</span> *   &lt;td&gt;This would allow code to read the value, or determine the<a name="line.131"></a>
+<span class="sourceLineNo">132</span> *       existence, of a particular environment variable.  This is<a name="line.132"></a>
+<span class="sourceLineNo">133</span> *       dangerous if the variable contains confidential data.&lt;/td&gt;<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * &lt;/tr&gt;<a name="line.134"></a>
+<span class="sourceLineNo">135</span> *<a name="line.135"></a>
+<span class="sourceLineNo">136</span> * &lt;tr&gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span> *   &lt;td&gt;exitVM.{exit status}&lt;/td&gt;<a name="line.137"></a>
+<span class="sourceLineNo">138</span> *   &lt;td&gt;Halting of the Java Virtual Machine with the specified exit status&lt;/td&gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span> *   &lt;td&gt;This allows an attacker to mount a denial-of-service attack<a name="line.139"></a>
+<span class="sourceLineNo">140</span> * by automatically forcing the virtual machine to halt.<a name="line.140"></a>
+<span class="sourceLineNo">141</span> * Note: The "exitVM.*" permission is automatically granted to all code<a name="line.141"></a>
+<span class="sourceLineNo">142</span> * loaded from the application class path, thus enabling applications<a name="line.142"></a>
+<span class="sourceLineNo">143</span> * to terminate themselves. Also, the "exitVM" permission is equivalent to<a name="line.143"></a>
+<span class="sourceLineNo">144</span> * "exitVM.*".&lt;/td&gt;<a name="line.144"></a>
+<span class="sourceLineNo">145</span> * &lt;/tr&gt;<a name="line.145"></a>
+<span class="sourceLineNo">146</span> *<a name="line.146"></a>
+<span class="sourceLineNo">147</span> * &lt;tr&gt;<a name="line.147"></a>
+<span class="sourceLineNo">148</span> *   &lt;td&gt;shutdownHooks&lt;/td&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span> *   &lt;td&gt;Registration and cancellation of virtual-machine shutdown hooks&lt;/td&gt;<a name="line.149"></a>
+<span class="sourceLineNo">150</span> *   &lt;td&gt;This allows an attacker to register a malicious shutdown<a name="line.150"></a>
+<span class="sourceLineNo">151</span> * hook that interferes with the clean shutdown of the virtual machine.&lt;/td&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span> * &lt;/tr&gt;<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *<a name="line.153"></a>
+<span class="sourceLineNo">154</span> * &lt;tr&gt;<a name="line.154"></a>
+<span class="sourceLineNo">155</span> *   &lt;td&gt;setFactory&lt;/td&gt;<a name="line.155"></a>
+<span class="sourceLineNo">156</span> *   &lt;td&gt;Setting of the socket factory used by ServerSocket or Socket,<a name="line.156"></a>
+<span class="sourceLineNo">157</span> * or of the stream handler factory used by URL&lt;/td&gt;<a name="line.157"></a>
+<span class="sourceLineNo">158</span> *   &lt;td&gt;This allows code to set the actual implementation<a name="line.158"></a>
+<span class="sourceLineNo">159</span> * for the socket, server socket, stream handler, or RMI socket factory.<a name="line.159"></a>
+<span class="sourceLineNo">160</span> * An attacker may set a faulty implementation which mangles the data<a name="line.160"></a>
+<span class="sourceLineNo">161</span> * stream.&lt;/td&gt;<a name="line.161"></a>
+<span class="sourceLineNo">162</span> * &lt;/tr&gt;<a name="line.162"></a>
+<span class="sourceLineNo">163</span> *<a name="line.163"></a>
+<span class="sourceLineNo">164</span> * &lt;tr&gt;<a name="line.164"></a>
+<span class="sourceLineNo">165</span> *   &lt;td&gt;setIO&lt;/td&gt;<a name="line.165"></a>
+<span class="sourceLineNo">166</span> *   &lt;td&gt;Setting of System.out, System.in, and System.err&lt;/td&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span> *   &lt;td&gt;This allows changing the value of the standard system streams.<a name="line.167"></a>
+<span class="sourceLineNo">168</span> * An attacker may change System.in to monitor and<a name="line.168"></a>
+<span class="sourceLineNo">169</span> * steal user input, or may set System.err to a "null" OutputStream,<a name="line.169"></a>
+<span class="sourceLineNo">170</span> * which would hide any error messages sent to System.err. &lt;/td&gt;<a name="line.170"></a>
+<span class="sourceLineNo">171</span> * &lt;/tr&gt;<a name="line.171"></a>
+<span class="sourceLineNo">172</span> *<a name="line.172"></a>
+<span class="sourceLineNo">173</span> * &lt;tr&gt;<a name="line.173"></a>
+<span class="sourceLineNo">174</span> *   &lt;td&gt;modifyThread&lt;/td&gt;<a name="line.174"></a>
+<span class="sourceLineNo">175</span> *   &lt;td&gt;Modification of threads, e.g., via calls to Thread<a name="line.175"></a>
+<span class="sourceLineNo">176</span> * &lt;tt&gt;interrupt&lt;/tt&gt;, &lt;tt&gt;stop&lt;/tt&gt;, &lt;tt&gt;suspend&lt;/tt&gt;,<a name="line.176"></a>
+<span class="sourceLineNo">177</span> * &lt;tt&gt;resume&lt;/tt&gt;, &lt;tt&gt;setDaemon&lt;/tt&gt;, &lt;tt&gt;setPriority&lt;/tt&gt;,<a name="line.177"></a>
+<span class="sourceLineNo">178</span> * &lt;tt&gt;setName&lt;/tt&gt; and &lt;tt&gt;setUncaughtExceptionHandler&lt;/tt&gt;<a name="line.178"></a>
+<span class="sourceLineNo">179</span> * methods&lt;/td&gt;<a name="line.179"></a>
+<span class="sourceLineNo">180</span> * &lt;td&gt;This allows an attacker to modify the behaviour of<a name="line.180"></a>
+<span class="sourceLineNo">181</span> * any thread in the system.&lt;/td&gt;<a name="line.181"></a>
+<span class="sourceLineNo">182</span> * &lt;/tr&gt;<a name="line.182"></a>
+<span class="sourceLineNo">183</span> *<a name="line.183"></a>
+<span class="sourceLineNo">184</span> * &lt;tr&gt;<a name="line.184"></a>
+<span class="sourceLineNo">185</span> *   &lt;td&gt;stopThread&lt;/td&gt;<a name="line.185"></a>
+<span class="sourceLineNo">186</span> *   &lt;td&gt;Stopping of threads via calls to the Thread &lt;code&gt;stop&lt;/code&gt;<a name="line.186"></a>
+<span class="sourceLineNo">187</span> * method&lt;/td&gt;<a name="line.187"></a>
+<span class="sourceLineNo">188</span> *   &lt;td&gt;This allows code to stop any thread in the system provided that it is<a name="line.188"></a>
+<span class="sourceLineNo">189</span> * already granted permission to access that thread.<a name="line.189"></a>
+<span class="sourceLineNo">190</span> * This poses as a threat, because that code may corrupt the system by<a name="line.190"></a>
+<span class="sourceLineNo">191</span> * killing existing threads.&lt;/td&gt;<a name="line.191"></a>
+<span class="sourceLineNo">192</span> * &lt;/tr&gt;<a name="line.192"></a>
+<span class="sourceLineNo">193</span> *<a name="line.193"></a>
+<span class="sourceLineNo">194</span> * &lt;tr&gt;<a name="line.194"></a>
+<span class="sourceLineNo">195</span> *   &lt;td&gt;modifyThreadGroup&lt;/td&gt;<a name="line.195"></a>
+<span class="sourceLineNo">196</span> *   &lt;td&gt;modification of thread groups, e.g., via calls to ThreadGroup<a name="line.196"></a>
+<span class="sourceLineNo">197</span> * &lt;code&gt;destroy&lt;/code&gt;, &lt;code&gt;getParent&lt;/code&gt;, &lt;code&gt;resume&lt;/code&gt;,<a name="line.197"></a>
+<span class="sourceLineNo">198</span> * &lt;code&gt;setDaemon&lt;/code&gt;, &lt;code&gt;setMaxPriority&lt;/code&gt;, &lt;code&gt;stop&lt;/code&gt;,<a name="line.198"></a>
+<span class="sourceLineNo">199</span> * and &lt;code&gt;suspend&lt;/code&gt; methods&lt;/td&gt;<a name="line.199"></a>
+<span class="sourceLineNo">200</span> *   &lt;td&gt;This allows an attacker to create thread groups and<a name="line.200"></a>
+<span class="sourceLineNo">201</span> * set their run priority.&lt;/td&gt;<a name="line.201"></a>
+<span class="sourceLineNo">202</span> * &lt;/tr&gt;<a name="line.202"></a>
+<span class="sourceLineNo">203</span> *<a name="line.203"></a>
+<span class="sourceLineNo">204</span> * &lt;tr&gt;<a name="line.204"></a>
+<span class="sourceLineNo">205</span> *   &lt;td&gt;getProtectionDomain&lt;/td&gt;<a name="line.205"></a>
+<span class="sourceLineNo">206</span> *   &lt;td&gt;Retrieval of the ProtectionDomain for a class&lt;/td&gt;<a name="line.206"></a>
+<span class="sourceLineNo">207</span> *   &lt;td&gt;This allows code to obtain policy information<a name="line.207"></a>
+<span class="sourceLineNo">208</span> * for a particular code source. While obtaining policy information<a name="line.208"></a>
+<span class="sourceLineNo">209</span> * does not compromise the security of the system, it does give<a name="line.209"></a>
+<span class="sourceLineNo">210</span> * attackers additional information, such as local file names for<a name="line.210"></a>
+<span class="sourceLineNo">211</span> * example, to better aim an attack.&lt;/td&gt;<a name="line.211"></a>
+<span class="sourceLineNo">212</span> * &lt;/tr&gt;<a name="line.212"></a>
+<span class="sourceLineNo">213</span> *<a name="line.213"></a>
+<span class="sourceLineNo">214</span> * &lt;tr&gt;<a name="line.214"></a>
+<span class="sourceLineNo">215</span> *   &lt;td&gt;getFileSystemAttributes&lt;/td&gt;<a name="line.215"></a>
+<span class="sourceLineNo">216</span> *   &lt;td&gt;Retrieval of file system attributes&lt;/td&gt;<a name="line.216"></a>
+<span class="sourceLineNo">217</span> *   &lt;td&gt;This allows code to obtain file system information such as disk usage<a name="line.217"></a>
+<span class="sourceLineNo">218</span> *       or disk space available to the caller.  This is potentially dangerous<a name="line.218"></a>
+<span class="sourceLineNo">219</span> *       because it discloses information about the system hardware<a name="line.219"></a>
+<span class="sourceLineNo">220</span> *       configuration and some information about the caller's privilege to<a name="line.220"></a>
+<span class="sourceLineNo">221</span> *       write files.&lt;/td&gt;<a name="line.221"></a>
+<span class="sourceLineNo">222</span> * &lt;/tr&gt;<a name="line.222"></a>
+<span class="sourceLineNo">223</span> *<a name="line.223"></a>
+<span class="sourceLineNo">224</span> * &lt;tr&gt;<a name="line.224"></a>
+<span class="sourceLineNo">225</span> *   &lt;td&gt;readFileDescriptor&lt;/td&gt;<a name="line.225"></a>
+<span class="sourceLineNo">226</span> *   &lt;td&gt;Reading of file descriptors&lt;/td&gt;<a name="line.226"></a>
+<span class="sourceLineNo">227</span> *   &lt;td&gt;This would allow code to read the particular file associated<a name="line.227"></a>
+<span class="sourceLineNo">228</span> *       with the file descriptor read. This is dangerous if the file<a name="line.228"></a>
+<span class="sourceLineNo">229</span> *       contains confidential data.&lt;/td&gt;<a name="line.229"></a>
+<span class="sourceLineNo">230</span> * &lt;/tr&gt;<a name="line.230"></a>
+<span class="sourceLineNo">231</span> *<a name="line.231"></a>
+<span class="sourceLineNo">232</span> * &lt;tr&gt;<a name="line.232"></a>
+<span class="sourceLineNo">233</span> *   &lt;td&gt;writeFileDescriptor&lt;/td&gt;<a name="line.233"></a>
+<span class="sourceLineNo">234</span> *   &lt;td&gt;Writing to file descriptors&lt;/td&gt;<a name="line.234"></a>
+<span class="sourceLineNo">235</span> *   &lt;td&gt;This allows code to write to a particular file associated<a name="line.235"></a>
+<span class="sourceLineNo">236</span> *       with the descriptor. This is dangerous because it may allow<a name="line.236"></a>
+<span class="sourceLineNo">237</span> *       malicious code to plant viruses or at the very least, fill up<a name="line.237"></a>
+<span class="sourceLineNo">238</span> *       your entire disk.&lt;/td&gt;<a name="line.238"></a>
+<span class="sourceLineNo">239</span> * &lt;/tr&gt;<a name="line.239"></a>
+<span class="sourceLineNo">240</span> *<a name="line.240"></a>
+<span class="sourceLineNo">241</span> * &lt;tr&gt;<a name="line.241"></a>
+<span class="sourceLineNo">242</span> *   &lt;td&gt;loadLibrary.{library name}&lt;/td&gt;<a name="line.242"></a>
+<span class="sourceLineNo">243</span> *   &lt;td&gt;Dynamic linking of the specified library&lt;/td&gt;<a name="line.243"></a>
+<span class="sourceLineNo">244</span> *   &lt;td&gt;It is dangerous to allow an applet permission to load native code<a name="line.244"></a>
+<span class="sourceLineNo">245</span> * libraries, because the Java security architecture is not designed to and<a name="line.245"></a>
+<span class="sourceLineNo">246</span> * does not prevent malicious behavior at the level of native code.&lt;/td&gt;<a name="line.246"></a>
+<span class="sourceLineNo">247</span> * &lt;/tr&gt;<a name="line.247"></a>
+<span class="sourceLineNo">248</span> *<a name="line.248"></a>
+<span class="sourceLineNo">249</span> * &lt;tr&gt;<a name="line.249"></a>
+<span class="sourceLineNo">250</span> *   &lt;td&gt;accessClassInPackage.{package name}&lt;/td&gt;<a name="line.250"></a>
+<span class="sourceLineNo">251</span> *   &lt;td&gt;Access to the specified package via a class loader's<a name="line.251"></a>
+<span class="sourceLineNo">252</span> * &lt;code&gt;loadClass&lt;/code&gt; method when that class loader calls<a name="line.252"></a>
+<span class="sourceLineNo">253</span> * the SecurityManager &lt;code&gt;checkPackageAccess&lt;/code&gt; method&lt;/td&gt;<a name="line.253"></a>
+<span class="sourceLineNo">254</span> *   &lt;td&gt;This gives code access to classes in packages<a name="line.254"></a>
+<span class="sourceLineNo">255</span> * to which it normally does not have access. Malicious code<a name="line.255"></a>
+<span class="sourceLineNo">256</span> * may use these classes to help in its attempt to compromise<a name="line.256"></a>
+<span class="sourceLineNo">257</span> * security in the system.&lt;/td&gt;<a name="line.257"></a>
+<span class="sourceLineNo">258</span> * &lt;/tr&gt;<a name="line.258"></a>
+<span class="sourceLineNo">259</span> *<a name="line.259"></a>
+<span class="sourceLineNo">260</span> * &lt;tr&gt;<a name="line.260"></a>
+<span class="sourceLineNo">261</span> *   &lt;td&gt;defineClassInPackage.{package name}&lt;/td&gt;<a name="line.261"></a>
+<span class="sourceLineNo">262</span> *   &lt;td&gt;Definition of classes in the specified package, via a class<a name="line.262"></a>
+<span class="sourceLineNo">263</span> * loader's &lt;code&gt;defineClass&lt;/code&gt; method when that class loader calls<a name="line.263"></a>
+<span class="sourceLineNo">264</span> * the SecurityManager &lt;code&gt;checkPackageDefinition&lt;/code&gt; method.&lt;/td&gt;<a name="line.264"></a>
+<span class="sourceLineNo">265</span> *   &lt;td&gt;This grants code permission to define a class<a name="line.265"></a>
+<span class="sourceLineNo">266</span> * in a particular package. This is dangerous because malicious<a name="line.266"></a>
+<span class="sourceLineNo">267</span> * code with this permission may define rogue classes in<a name="line.267"></a>
+<span class="sourceLineNo">268</span> * trusted packages like &lt;code&gt;java.security&lt;/code&gt; or &lt;code&gt;java.lang&lt;/code&gt;,<a name="line.268"></a>
+<span class="sourceLineNo">269</span> * for example.&lt;/td&gt;<a name="line.269"></a>
+<span class="sourceLineNo">270</span> * &lt;/tr&gt;<a name="line.270"></a>
+<span class="sourceLineNo">271</span> *<a name="line.271"></a>
+<span class="sourceLineNo">272</span> * &lt;tr&gt;<a name="line.272"></a>
+<span class="sourceLineNo">273</span> *   &lt;td&gt;accessDeclaredMembers&lt;/td&gt;<a name="line.273"></a>
+<span class="sourceLineNo">274</span> *   &lt;td&gt;Access to the declared members of a class&lt;/td&gt;<a name="line.274"></a>
+<span class="sourceLineNo">275</span> *   &lt;td&gt;This grants code permission to query a class for its public,<a name="line.275"></a>
+<span class="sourceLineNo">276</span> * protected, default (package) access, and private fields and/or<a name="line.276"></a>
+<span class="sourceLineNo">277</span> * methods. Although the code would have<a name="line.277"></a>
+<span class="sourceLineNo">278</span> * access to the private and protected field and method names, it would not<a name="line.278"></a>
+<span class="sourceLineNo">279</span> * have access to the private/protected field data and would not be able<a name="line.279"></a>
+<span class="sourceLineNo">280</span> * to invoke any private methods. Nevertheless, malicious code<a name="line.280"></a>
+<span class="sourceLineNo">281</span> * may use this information to better aim an attack.<a name="line.281"></a>
+<span class="sourceLineNo">282</span> * Additionally, it may invoke any public methods and/or access public fields<a name="line.282"></a>
+<span class="sourceLineNo">283</span> * in the class.  This could be dangerous if<a name="line.283"></a>
+<span class="sourceLineNo">284</span> * the code would normally not be able to invoke those methods and/or<a name="line.284"></a>
+<span class="sourceLineNo">285</span> * access the fields  because<a name="line.285"></a>
+<span class="sourceLineNo">286</span> * it can't cast the object to the class/interface with those methods<a name="line.286"></a>
+<span class="sourceLineNo">287</span> * and fields.<a name="line.287"></a>
+<span class="sourceLineNo">288</span>&lt;/td&gt;<a name="line.288"></a>
+<span class="sourceLineNo">289</span> * &lt;/tr&gt;<a name="line.289"></a>
+<span class="sourceLineNo">290</span> * &lt;tr&gt;<a name="line.290"></a>
+<span class="sourceLineNo">291</span> *   &lt;td&gt;queuePrintJob&lt;/td&gt;<a name="line.291"></a>
+<span class="sourceLineNo">292</span> *   &lt;td&gt;Initiation of a print job request&lt;/td&gt;<a name="line.292"></a>
+<span class="sourceLineNo">293</span> *   &lt;td&gt;This could print sensitive information to a printer,<a name="line.293"></a>
+<span class="sourceLineNo">294</span> * or simply waste paper.&lt;/td&gt;<a name="line.294"></a>
+<span class="sourceLineNo">295</span> * &lt;/tr&gt;<a name="line.295"></a>
+<span class="sourceLineNo">296</span> *<a name="line.296"></a>
+<span class="sourceLineNo">297</span> * &lt;tr&gt;<a name="line.297"></a>
+<span class="sourceLineNo">298</span> *   &lt;td&gt;getStackTrace&lt;/td&gt;<a name="line.298"></a>
+<span class="sourceLineNo">299</span> *   &lt;td&gt;Retrieval of the stack trace information of another thread.&lt;/td&gt;<a name="line.299"></a>
+<span class="sourceLineNo">300</span> *   &lt;td&gt;This allows retrieval of the stack trace information of<a name="line.300"></a>
+<span class="sourceLineNo">301</span> * another thread.  This might allow malicious code to monitor the<a name="line.301"></a>
+<span class="sourceLineNo">302</span> * execution of threads and discover vulnerabilities in applications.&lt;/td&gt;<a name="line.302"></a>
+<span class="sourceLineNo">303</span> * &lt;/tr&gt;<a name="line.303"></a>
+<span class="sourceLineNo">304</span> *<a name="line.304"></a>
+<span class="sourceLineNo">305</span> * &lt;tr&gt;<a name="line.305"></a>
+<span class="sourceLineNo">306</span> *   &lt;td&gt;setDefaultUncaughtExceptionHandler&lt;/td&gt;<a name="line.306"></a>
+<span class="sourceLineNo">307</span> *   &lt;td&gt;Setting the default handler to be used when a thread<a name="line.307"></a>
+<span class="sourceLineNo">308</span> *   terminates abruptly due to an uncaught exception&lt;/td&gt;<a name="line.308"></a>
+<span class="sourceLineNo">309</span> *   &lt;td&gt;This allows an attacker to register a malicious<a name="line.309"></a>
+<span class="sourceLineNo">310</span> *   uncaught exception handler that could interfere with termination<a name="line.310"></a>
+<span class="sourceLineNo">311</span> *   of a thread&lt;/td&gt;<a name="line.311"></a>
+<span class="sourceLineNo">312</span> * &lt;/tr&gt;<a name="line.312"></a>
+<span class="sourceLineNo">313</span> *<a name="line.313"></a>
+<span class="sourceLineNo">314</span> * &lt;tr&gt;<a name="line.314"></a>
+<span class="sourceLineNo">315</span> *   &lt;td&gt;preferences&lt;/td&gt;<a name="line.315"></a>
+<span class="sourceLineNo">316</span> *   &lt;td&gt;Represents the permission required to get access to the<a name="line.316"></a>
+<span class="sourceLineNo">317</span> *   java.util.prefs.Preferences implementations user or system root<a name="line.317"></a>
+<span class="sourceLineNo">318</span> *   which in turn allows retrieval or update operations within the<a name="line.318"></a>
+<span class="sourceLineNo">319</span> *   Preferences persistent backing store.) &lt;/td&gt;<a name="line.319"></a>
+<span class="sourceLineNo">320</span> *   &lt;td&gt;This permission allows the user to read from or write to the<a name="line.320"></a>
+<span class="sourceLineNo">321</span> *   preferences backing store if the user running the code has<a name="line.321"></a>
+<span class="sourceLineNo">322</span> *   sufficient OS privileges to read/write to that backing store.<a name="line.322"></a>
+<span class="sourceLineNo">323</span> *   The actual backing store may reside within a traditional filesystem<a name="line.323"></a>
+<span class="sourceLineNo">324</span> *   directory or within a registry depending on the platform OS&lt;/td&gt;<a name="line.324"></a>
+<span class="sourceLineNo">325</span> * &lt;/tr&gt;<a name="line.325"></a>
+<span class="sourceLineNo">326</span> *<a name="line.326"></a>
+<span class="sourceLineNo">327</span> * &lt;tr&gt;<a name="line.327"></a>
+<span class="sourceLineNo">328</span> *   &lt;td&gt;usePolicy&lt;/td&gt;<a name="line.328"></a>
+<span class="sourceLineNo">329</span> *   &lt;td&gt;Granting this permission disables the Java Plug-In's default<a name="line.329"></a>
+<span class="sourceLineNo">330</span> *   security prompting behavior.&lt;/td&gt;<a name="line.330"></a>
+<span class="sourceLineNo">331</span> *   &lt;td&gt;For more information, refer to Java Plug-In's guides, &lt;a href=<a name="line.331"></a>
+<span class="sourceLineNo">332</span> *   "../../../technotes/guides/plugin/developer_guide/security.html"&gt;<a name="line.332"></a>
+<span class="sourceLineNo">333</span> *   Applet Security Basics&lt;/a&gt; and &lt;a href=<a name="line.333"></a>
+<span class="sourceLineNo">334</span> *   "../../../technotes/guides/plugin/developer_guide/rsa_how.html#use"&gt;<a name="line.334"></a>
+<span class="sourceLineNo">335</span> *   usePolicy Permission&lt;/a&gt;.&lt;/td&gt;<a name="line.335"></a>
+<span class="sourceLineNo">336</span> * &lt;/tr&gt;<a name="line.336"></a>
+<span class="sourceLineNo">337</span> * &lt;/table&gt;<a name="line.337"></a>
+<span class="sourceLineNo">338</span> *<a name="line.338"></a>
+<span class="sourceLineNo">339</span> * @see java.security.BasicPermission<a name="line.339"></a>
+<span class="sourceLineNo">340</span> * @see java.security.Permission<a name="line.340"></a>
+<span class="sourceLineNo">341</span> * @see java.security.Permissions<a name="line.341"></a>
+<span class="sourceLineNo">342</span> * @see java.security.PermissionCollection<a name="line.342"></a>
+<span class="sourceLineNo">343</span> * @see java.lang.SecurityManager<a name="line.343"></a>
+<span class="sourceLineNo">344</span> *<a name="line.344"></a>
+<span class="sourceLineNo">345</span> *<a name="line.345"></a>
+<span class="sourceLineNo">346</span> * @author Marianne Mueller<a name="line.346"></a>
+<span class="sourceLineNo">347</span> * @author Roland Schemers<a name="line.347"></a>
+<span class="sourceLineNo">348</span> */<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>public final class RuntimePermission extends BasicPermission {<a name="line.350"></a>
+<span class="sourceLineNo">351</span><a name="line.351"></a>
+<span class="sourceLineNo">352</span>    private static final long serialVersionUID = 7399184964622342223L;<a name="line.352"></a>
+<span class="sourceLineNo">353</span><a name="line.353"></a>
+<span class="sourceLineNo">354</span>    /**<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * Creates a new RuntimePermission with the specified name.<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * The name is the symbolic name of the RuntimePermission, such as<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * "exit", "setFactory", etc. An asterisk<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * may appear at the end of the name, following a ".", or by itself, to<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * signify a wildcard match.<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     *<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * @param name the name of the RuntimePermission.<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     *<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * @throws NullPointerException if &lt;code&gt;name&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * @throws IllegalArgumentException if &lt;code&gt;name&lt;/code&gt; is empty.<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     */<a name="line.365"></a>
+<span class="sourceLineNo">366</span><a name="line.366"></a>
+<span class="sourceLineNo">367</span>    public RuntimePermission(String name)<a name="line.367"></a>
+<span class="sourceLineNo">368</span>    {<a name="line.368"></a>
+<span class="sourceLineNo">369</span>        super(name);<a name="line.369"></a>
+<span class="sourceLineNo">370</span>    }<a name="line.370"></a>
+<span class="sourceLineNo">371</span><a name="line.371"></a>
+<span class="sourceLineNo">372</span>    /**<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * Creates a new RuntimePermission object with the specified name.<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * The name is the symbolic name of the RuntimePermission, and the<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * actions String is currently unused and should be null.<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     *<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * @param name the name of the RuntimePermission.<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     * @param actions should be null.<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     *<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * @throws NullPointerException if &lt;code&gt;name&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * @throws IllegalArgumentException if &lt;code&gt;name&lt;/code&gt; is empty.<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     */<a name="line.382"></a>
+<span class="sourceLineNo">383</span><a name="line.383"></a>
+<span class="sourceLineNo">384</span>    public RuntimePermission(String name, String actions)<a name="line.384"></a>
+<span class="sourceLineNo">385</span>    {<a name="line.385"></a>
+<span class="sourceLineNo">386</span>        super(name, actions);<a name="line.386"></a>
+<span class="sourceLineNo">387</span>    }<a name="line.387"></a>
+<span class="sourceLineNo">388</span>}<a name="line.388"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

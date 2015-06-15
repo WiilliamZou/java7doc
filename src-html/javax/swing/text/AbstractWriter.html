@@ -1,0 +1,785 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.swing.text;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.Writer;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.IOException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.Enumeration;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * AbstractWriter is an abstract class that actually<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * does the work of writing out the element tree<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * including the attributes.  In terms of how much is<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * written out per line, the writer defaults to 100.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * But this value can be set by subclasses.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> *<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * @author Sunita Mani<a name="line.39"></a>
+<span class="sourceLineNo">040</span> */<a name="line.40"></a>
+<span class="sourceLineNo">041</span><a name="line.41"></a>
+<span class="sourceLineNo">042</span>public abstract class AbstractWriter {<a name="line.42"></a>
+<span class="sourceLineNo">043</span><a name="line.43"></a>
+<span class="sourceLineNo">044</span>    private ElementIterator it;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>    private Writer out;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>    private int indentLevel = 0;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>    private int indentSpace = 2;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>    private Document doc = null;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    private int maxLineLength = 100;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>    private int currLength = 0;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    private int startOffset = 0;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    private int endOffset = 0;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>    // If (indentLevel * indentSpace) becomes &gt;= maxLineLength, this will<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    // get incremened instead of indentLevel to avoid indenting going greater<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    // than line length.<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    private int offsetIndent = 0;<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    /**<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * String used for end of line. If the Document has the property<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * EndOfLineStringProperty, it will be used for newlines. Otherwise<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * the System property line.separator will be used. The line separator<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * can also be set.<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     */<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    private String lineSeparator;<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>    /**<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * True indicates that when writing, the line can be split, false<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * indicates that even if the line is &gt; than max line length it should<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * not be split.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    private boolean canWrapLines;<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * True while the current line is empty. This will remain true after<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * indenting.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     */<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    private boolean isLineEmpty;<a name="line.77"></a>
+<span class="sourceLineNo">078</span><a name="line.78"></a>
+<span class="sourceLineNo">079</span>    /**<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * Used when indenting. Will contain the spaces.<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     */<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    private char[] indentChars;<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    /**<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * Used when writing out a string.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     */<a name="line.86"></a>
+<span class="sourceLineNo">087</span>    private char[] tempChars;<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    /**<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * This is used in &lt;code&gt;writeLineSeparator&lt;/code&gt; instead of<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * tempChars. If tempChars were used it would mean write couldn't invoke<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * &lt;code&gt;writeLineSeparator&lt;/code&gt; as it might have been passed<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * tempChars.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     */<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    private char[] newlineChars;<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>    /**<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * Used for writing text.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     */<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    private Segment segment;<a name="line.100"></a>
+<span class="sourceLineNo">101</span><a name="line.101"></a>
+<span class="sourceLineNo">102</span>    /**<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * How the text packages models newlines.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @see #getLineSeparator<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     */<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    protected static final char NEWLINE = '\n';<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span><a name="line.108"></a>
+<span class="sourceLineNo">109</span>    /**<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * Creates a new AbstractWriter.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * Initializes the ElementIterator with the default<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * root of the document.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @param w a Writer.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @param doc a Document<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    protected AbstractWriter(Writer w, Document doc) {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        this(w, doc, 0, doc.getLength());<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    }<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>    /**<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * Creates a new AbstractWriter.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * Initializes the ElementIterator with the<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * element passed in.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     *<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * @param w a Writer<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * @param doc an Element<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @param pos The location in the document to fetch the<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     *   content.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * @param len The amount to write out.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     */<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    protected AbstractWriter(Writer w, Document doc, int pos, int len) {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>        this.doc = doc;<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        it = new ElementIterator(doc.getDefaultRootElement());<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        out = w;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        startOffset = pos;<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        endOffset = pos + len;<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        Object docNewline = doc.getProperty(DefaultEditorKit.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>                                       EndOfLineStringProperty);<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        if (docNewline instanceof String) {<a name="line.140"></a>
+<span class="sourceLineNo">141</span>            setLineSeparator((String)docNewline);<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        }<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        else {<a name="line.143"></a>
+<span class="sourceLineNo">144</span>            String newline = null;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>            try {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>                newline = System.getProperty("line.separator");<a name="line.146"></a>
+<span class="sourceLineNo">147</span>            } catch (SecurityException se) {}<a name="line.147"></a>
+<span class="sourceLineNo">148</span>            if (newline == null) {<a name="line.148"></a>
+<span class="sourceLineNo">149</span>                // Should not get here, but if we do it means we could not<a name="line.149"></a>
+<span class="sourceLineNo">150</span>                // find a newline string, use \n in this case.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>                newline = "\n";<a name="line.151"></a>
+<span class="sourceLineNo">152</span>            }<a name="line.152"></a>
+<span class="sourceLineNo">153</span>            setLineSeparator(newline);<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        }<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        canWrapLines = true;<a name="line.155"></a>
+<span class="sourceLineNo">156</span>    }<a name="line.156"></a>
+<span class="sourceLineNo">157</span><a name="line.157"></a>
+<span class="sourceLineNo">158</span>    /**<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * Creates a new AbstractWriter.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * Initializes the ElementIterator with the<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * element passed in.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @param w a Writer<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @param root an Element<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     */<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    protected AbstractWriter(Writer w, Element root) {<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        this(w, root, 0, root.getEndOffset());<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    }<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    /**<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * Creates a new AbstractWriter.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * Initializes the ElementIterator with the<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * element passed in.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @param w a Writer<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @param root an Element<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @param pos The location in the document to fetch the<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *   content.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @param len The amount to write out.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    protected AbstractWriter(Writer w, Element root, int pos, int len) {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        this.doc = root.getDocument();<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        it = new ElementIterator(root);<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        out = w;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        startOffset = pos;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        endOffset = pos + len;<a name="line.186"></a>
+<span class="sourceLineNo">187</span>        canWrapLines = true;<a name="line.187"></a>
+<span class="sourceLineNo">188</span>    }<a name="line.188"></a>
+<span class="sourceLineNo">189</span><a name="line.189"></a>
+<span class="sourceLineNo">190</span>    /**<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * Returns the first offset to be output.<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     *<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * @since 1.3<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     */<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    public int getStartOffset() {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        return startOffset;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>    }<a name="line.197"></a>
+<span class="sourceLineNo">198</span><a name="line.198"></a>
+<span class="sourceLineNo">199</span>    /**<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * Returns the last offset to be output.<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     *<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * @since 1.3<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     */<a name="line.203"></a>
+<span class="sourceLineNo">204</span>    public int getEndOffset() {<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        return endOffset;<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    }<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>    /**<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * Fetches the ElementIterator.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * @return the ElementIterator.<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     */<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    protected ElementIterator getElementIterator() {<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        return it;<a name="line.214"></a>
+<span class="sourceLineNo">215</span>    }<a name="line.215"></a>
+<span class="sourceLineNo">216</span><a name="line.216"></a>
+<span class="sourceLineNo">217</span>    /**<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * Returns the Writer that is used to output the content.<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     *<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * @since 1.3<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     */<a name="line.221"></a>
+<span class="sourceLineNo">222</span>    protected Writer getWriter() {<a name="line.222"></a>
+<span class="sourceLineNo">223</span>        return out;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    }<a name="line.224"></a>
+<span class="sourceLineNo">225</span><a name="line.225"></a>
+<span class="sourceLineNo">226</span>    /**<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * Fetches the document.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     *<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * @return the Document.<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     */<a name="line.230"></a>
+<span class="sourceLineNo">231</span>    protected Document getDocument() {<a name="line.231"></a>
+<span class="sourceLineNo">232</span>        return doc;<a name="line.232"></a>
+<span class="sourceLineNo">233</span>    }<a name="line.233"></a>
+<span class="sourceLineNo">234</span><a name="line.234"></a>
+<span class="sourceLineNo">235</span>    /**<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * This method determines whether the current element<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * is in the range specified.  When no range is specified,<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * the range is initialized to be the entire document.<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * inRange() returns true if the range specified intersects<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * with the element's range.<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     *<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * @param  next an Element.<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * @return boolean that indicates whether the element<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     *         is in the range.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     */<a name="line.245"></a>
+<span class="sourceLineNo">246</span>    protected boolean inRange(Element next) {<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        int startOffset = getStartOffset();<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        int endOffset = getEndOffset();<a name="line.248"></a>
+<span class="sourceLineNo">249</span>        if ((next.getStartOffset() &gt;= startOffset &amp;&amp;<a name="line.249"></a>
+<span class="sourceLineNo">250</span>             next.getStartOffset()  &lt; endOffset) ||<a name="line.250"></a>
+<span class="sourceLineNo">251</span>            (startOffset &gt;= next.getStartOffset() &amp;&amp;<a name="line.251"></a>
+<span class="sourceLineNo">252</span>             startOffset &lt; next.getEndOffset())) {<a name="line.252"></a>
+<span class="sourceLineNo">253</span>            return true;<a name="line.253"></a>
+<span class="sourceLineNo">254</span>        }<a name="line.254"></a>
+<span class="sourceLineNo">255</span>        return false;<a name="line.255"></a>
+<span class="sourceLineNo">256</span>    }<a name="line.256"></a>
+<span class="sourceLineNo">257</span><a name="line.257"></a>
+<span class="sourceLineNo">258</span>    /**<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * This abstract method needs to be implemented<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * by subclasses.  Its responsibility is to<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * iterate over the elements and use the write()<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * methods to generate output in the desired format.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     */<a name="line.263"></a>
+<span class="sourceLineNo">264</span>    abstract protected void write() throws IOException, BadLocationException;<a name="line.264"></a>
+<span class="sourceLineNo">265</span><a name="line.265"></a>
+<span class="sourceLineNo">266</span>    /**<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * Returns the text associated with the element.<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * The assumption here is that the element is a<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * leaf element.  Throws a BadLocationException<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * when encountered.<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     *<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @param     elem an &lt;code&gt;Element&lt;/code&gt;<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * @exception BadLocationException if pos represents an invalid<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     *            location within the document<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * @return    the text as a &lt;code&gt;String&lt;/code&gt;<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     */<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    protected String getText(Element elem) throws BadLocationException {<a name="line.277"></a>
+<span class="sourceLineNo">278</span>        return doc.getText(elem.getStartOffset(),<a name="line.278"></a>
+<span class="sourceLineNo">279</span>                           elem.getEndOffset() - elem.getStartOffset());<a name="line.279"></a>
+<span class="sourceLineNo">280</span>    }<a name="line.280"></a>
+<span class="sourceLineNo">281</span><a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>    /**<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * Writes out text.  If a range is specified when the constructor<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * is invoked, then only the appropriate range of text is written<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * out.<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     *<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * @param     elem an Element.<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * @exception IOException on any I/O error<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * @exception BadLocationException if pos represents an invalid<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     *            location within the document.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     */<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    protected void text(Element elem) throws BadLocationException,<a name="line.293"></a>
+<span class="sourceLineNo">294</span>                                             IOException {<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        int start = Math.max(getStartOffset(), elem.getStartOffset());<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        int end = Math.min(getEndOffset(), elem.getEndOffset());<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        if (start &lt; end) {<a name="line.297"></a>
+<span class="sourceLineNo">298</span>            if (segment == null) {<a name="line.298"></a>
+<span class="sourceLineNo">299</span>                segment = new Segment();<a name="line.299"></a>
+<span class="sourceLineNo">300</span>            }<a name="line.300"></a>
+<span class="sourceLineNo">301</span>            getDocument().getText(start, end - start, segment);<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            if (segment.count &gt; 0) {<a name="line.302"></a>
+<span class="sourceLineNo">303</span>                write(segment.array, segment.offset, segment.count);<a name="line.303"></a>
+<span class="sourceLineNo">304</span>            }<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        }<a name="line.305"></a>
+<span class="sourceLineNo">306</span>    }<a name="line.306"></a>
+<span class="sourceLineNo">307</span><a name="line.307"></a>
+<span class="sourceLineNo">308</span>    /**<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * Enables subclasses to set the number of characters they<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * want written per line.   The default is 100.<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     *<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * @param l the maximum line length.<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     */<a name="line.313"></a>
+<span class="sourceLineNo">314</span>    protected void setLineLength(int l) {<a name="line.314"></a>
+<span class="sourceLineNo">315</span>        maxLineLength = l;<a name="line.315"></a>
+<span class="sourceLineNo">316</span>    }<a name="line.316"></a>
+<span class="sourceLineNo">317</span><a name="line.317"></a>
+<span class="sourceLineNo">318</span>    /**<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * Returns the maximum line length.<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     *<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * @since 1.3<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     */<a name="line.322"></a>
+<span class="sourceLineNo">323</span>    protected int getLineLength() {<a name="line.323"></a>
+<span class="sourceLineNo">324</span>        return maxLineLength;<a name="line.324"></a>
+<span class="sourceLineNo">325</span>    }<a name="line.325"></a>
+<span class="sourceLineNo">326</span><a name="line.326"></a>
+<span class="sourceLineNo">327</span>    /**<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * Sets the current line length.<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     *<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * @since 1.3<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     */<a name="line.331"></a>
+<span class="sourceLineNo">332</span>    protected void setCurrentLineLength(int length) {<a name="line.332"></a>
+<span class="sourceLineNo">333</span>        currLength = length;<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        isLineEmpty = (currLength == 0);<a name="line.334"></a>
+<span class="sourceLineNo">335</span>    }<a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span>    /**<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * Returns the current line length.<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     *<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * @since 1.3<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     */<a name="line.341"></a>
+<span class="sourceLineNo">342</span>    protected int getCurrentLineLength() {<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        return currLength;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>    }<a name="line.344"></a>
+<span class="sourceLineNo">345</span><a name="line.345"></a>
+<span class="sourceLineNo">346</span>    /**<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * Returns true if the current line should be considered empty. This<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * is true when &lt;code&gt;getCurrentLineLength&lt;/code&gt; == 0 ||<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     * &lt;code&gt;indent&lt;/code&gt; has been invoked on an empty line.<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     *<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * @since 1.3<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     */<a name="line.352"></a>
+<span class="sourceLineNo">353</span>    protected boolean isLineEmpty() {<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        return isLineEmpty;<a name="line.354"></a>
+<span class="sourceLineNo">355</span>    }<a name="line.355"></a>
+<span class="sourceLineNo">356</span><a name="line.356"></a>
+<span class="sourceLineNo">357</span>    /**<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * Sets whether or not lines can be wrapped. This can be toggled<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * during the writing of lines. For example, outputting HTML might<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * set this to false when outputting a quoted string.<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     *<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * @since 1.3<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     */<a name="line.363"></a>
+<span class="sourceLineNo">364</span>    protected void setCanWrapLines(boolean newValue) {<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        canWrapLines = newValue;<a name="line.365"></a>
+<span class="sourceLineNo">366</span>    }<a name="line.366"></a>
+<span class="sourceLineNo">367</span><a name="line.367"></a>
+<span class="sourceLineNo">368</span>    /**<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * Returns whether or not the lines can be wrapped. If this is false<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * no lineSeparator's will be output.<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     *<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * @since 1.3<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     */<a name="line.373"></a>
+<span class="sourceLineNo">374</span>    protected boolean getCanWrapLines() {<a name="line.374"></a>
+<span class="sourceLineNo">375</span>        return canWrapLines;<a name="line.375"></a>
+<span class="sourceLineNo">376</span>    }<a name="line.376"></a>
+<span class="sourceLineNo">377</span><a name="line.377"></a>
+<span class="sourceLineNo">378</span>    /**<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * Enables subclasses to specify how many spaces an indent<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * maps to. When indentation takes place, the indent level<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * is multiplied by this mapping.  The default is 2.<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     *<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * @param space an int representing the space to indent mapping.<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     */<a name="line.384"></a>
+<span class="sourceLineNo">385</span>    protected void setIndentSpace(int space) {<a name="line.385"></a>
+<span class="sourceLineNo">386</span>        indentSpace = space;<a name="line.386"></a>
+<span class="sourceLineNo">387</span>    }<a name="line.387"></a>
+<span class="sourceLineNo">388</span><a name="line.388"></a>
+<span class="sourceLineNo">389</span>    /**<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * Returns the amount of space to indent.<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     *<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * @since 1.3<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     */<a name="line.393"></a>
+<span class="sourceLineNo">394</span>    protected int getIndentSpace() {<a name="line.394"></a>
+<span class="sourceLineNo">395</span>        return indentSpace;<a name="line.395"></a>
+<span class="sourceLineNo">396</span>    }<a name="line.396"></a>
+<span class="sourceLineNo">397</span><a name="line.397"></a>
+<span class="sourceLineNo">398</span>    /**<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * Sets the String used to reprsent newlines. This is initialized<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * in the constructor from either the Document, or the System property<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     * line.separator.<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     *<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * @since 1.3<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     */<a name="line.404"></a>
+<span class="sourceLineNo">405</span>    public void setLineSeparator(String value) {<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        lineSeparator = value;<a name="line.406"></a>
+<span class="sourceLineNo">407</span>    }<a name="line.407"></a>
+<span class="sourceLineNo">408</span><a name="line.408"></a>
+<span class="sourceLineNo">409</span>    /**<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * Returns the string used to represent newlines.<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     *<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * @since 1.3<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     */<a name="line.413"></a>
+<span class="sourceLineNo">414</span>    public String getLineSeparator() {<a name="line.414"></a>
+<span class="sourceLineNo">415</span>        return lineSeparator;<a name="line.415"></a>
+<span class="sourceLineNo">416</span>    }<a name="line.416"></a>
+<span class="sourceLineNo">417</span><a name="line.417"></a>
+<span class="sourceLineNo">418</span>    /**<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * Increments the indent level. If indenting would cause<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * &lt;code&gt;getIndentSpace()&lt;/code&gt; *&lt;code&gt;getIndentLevel()&lt;/code&gt; to be &gt;<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * than &lt;code&gt;getLineLength()&lt;/code&gt; this will not cause an indent.<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     */<a name="line.422"></a>
+<span class="sourceLineNo">423</span>    protected void incrIndent() {<a name="line.423"></a>
+<span class="sourceLineNo">424</span>        // Only increment to a certain point.<a name="line.424"></a>
+<span class="sourceLineNo">425</span>        if (offsetIndent &gt; 0) {<a name="line.425"></a>
+<span class="sourceLineNo">426</span>            offsetIndent++;<a name="line.426"></a>
+<span class="sourceLineNo">427</span>        }<a name="line.427"></a>
+<span class="sourceLineNo">428</span>        else {<a name="line.428"></a>
+<span class="sourceLineNo">429</span>            if (++indentLevel * getIndentSpace() &gt;= getLineLength()) {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                offsetIndent++;<a name="line.430"></a>
+<span class="sourceLineNo">431</span>                --indentLevel;<a name="line.431"></a>
+<span class="sourceLineNo">432</span>            }<a name="line.432"></a>
+<span class="sourceLineNo">433</span>        }<a name="line.433"></a>
+<span class="sourceLineNo">434</span>    }<a name="line.434"></a>
+<span class="sourceLineNo">435</span><a name="line.435"></a>
+<span class="sourceLineNo">436</span>    /**<a name="line.436"></a>
+<span class="sourceLineNo">437</span>     * Decrements the indent level.<a name="line.437"></a>
+<span class="sourceLineNo">438</span>     */<a name="line.438"></a>
+<span class="sourceLineNo">439</span>    protected void decrIndent() {<a name="line.439"></a>
+<span class="sourceLineNo">440</span>        if (offsetIndent &gt; 0) {<a name="line.440"></a>
+<span class="sourceLineNo">441</span>            --offsetIndent;<a name="line.441"></a>
+<span class="sourceLineNo">442</span>        }<a name="line.442"></a>
+<span class="sourceLineNo">443</span>        else {<a name="line.443"></a>
+<span class="sourceLineNo">444</span>            indentLevel--;<a name="line.444"></a>
+<span class="sourceLineNo">445</span>        }<a name="line.445"></a>
+<span class="sourceLineNo">446</span>    }<a name="line.446"></a>
+<span class="sourceLineNo">447</span><a name="line.447"></a>
+<span class="sourceLineNo">448</span>    /**<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     * Returns the current indentation level. That is, the number of times<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * &lt;code&gt;incrIndent&lt;/code&gt; has been invoked minus the number of times<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     * &lt;code&gt;decrIndent&lt;/code&gt; has been invoked.<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     *<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     * @since 1.3<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     */<a name="line.454"></a>
+<span class="sourceLineNo">455</span>    protected int getIndentLevel() {<a name="line.455"></a>
+<span class="sourceLineNo">456</span>        return indentLevel;<a name="line.456"></a>
+<span class="sourceLineNo">457</span>    }<a name="line.457"></a>
+<span class="sourceLineNo">458</span><a name="line.458"></a>
+<span class="sourceLineNo">459</span>    /**<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     * Does indentation. The number of spaces written<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     * out is indent level times the space to map mapping. If the current<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     * line is empty, this will not make it so that the current line is<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     * still considered empty.<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     *<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     * @exception IOException on any I/O error<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     */<a name="line.466"></a>
+<span class="sourceLineNo">467</span>    protected void indent() throws IOException {<a name="line.467"></a>
+<span class="sourceLineNo">468</span>        int max = getIndentLevel() * getIndentSpace();<a name="line.468"></a>
+<span class="sourceLineNo">469</span>        if (indentChars == null || max &gt; indentChars.length) {<a name="line.469"></a>
+<span class="sourceLineNo">470</span>            indentChars = new char[max];<a name="line.470"></a>
+<span class="sourceLineNo">471</span>            for (int counter = 0; counter &lt; max; counter++) {<a name="line.471"></a>
+<span class="sourceLineNo">472</span>                indentChars[counter] = ' ';<a name="line.472"></a>
+<span class="sourceLineNo">473</span>            }<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        }<a name="line.474"></a>
+<span class="sourceLineNo">475</span>        int length = getCurrentLineLength();<a name="line.475"></a>
+<span class="sourceLineNo">476</span>        boolean wasEmpty = isLineEmpty();<a name="line.476"></a>
+<span class="sourceLineNo">477</span>        output(indentChars, 0, max);<a name="line.477"></a>
+<span class="sourceLineNo">478</span>        if (wasEmpty &amp;&amp; length == 0) {<a name="line.478"></a>
+<span class="sourceLineNo">479</span>            isLineEmpty = true;<a name="line.479"></a>
+<span class="sourceLineNo">480</span>        }<a name="line.480"></a>
+<span class="sourceLineNo">481</span>    }<a name="line.481"></a>
+<span class="sourceLineNo">482</span><a name="line.482"></a>
+<span class="sourceLineNo">483</span>    /**<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * Writes out a character. This is implemented to invoke<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     * the &lt;code&gt;write&lt;/code&gt; method that takes a char[].<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     *<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     * @param     ch a char.<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     * @exception IOException on any I/O error<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     */<a name="line.489"></a>
+<span class="sourceLineNo">490</span>    protected void write(char ch) throws IOException {<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        if (tempChars == null) {<a name="line.491"></a>
+<span class="sourceLineNo">492</span>            tempChars = new char[128];<a name="line.492"></a>
+<span class="sourceLineNo">493</span>        }<a name="line.493"></a>
+<span class="sourceLineNo">494</span>        tempChars[0] = ch;<a name="line.494"></a>
+<span class="sourceLineNo">495</span>        write(tempChars, 0, 1);<a name="line.495"></a>
+<span class="sourceLineNo">496</span>    }<a name="line.496"></a>
+<span class="sourceLineNo">497</span><a name="line.497"></a>
+<span class="sourceLineNo">498</span>    /**<a name="line.498"></a>
+<span class="sourceLineNo">499</span>     * Writes out a string. This is implemented to invoke the<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     * &lt;code&gt;write&lt;/code&gt; method that takes a char[].<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     *<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * @param     content a String.<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * @exception IOException on any I/O error<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     */<a name="line.504"></a>
+<span class="sourceLineNo">505</span>    protected void write(String content) throws IOException {<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        if (content == null) {<a name="line.506"></a>
+<span class="sourceLineNo">507</span>            return;<a name="line.507"></a>
+<span class="sourceLineNo">508</span>        }<a name="line.508"></a>
+<span class="sourceLineNo">509</span>        int size = content.length();<a name="line.509"></a>
+<span class="sourceLineNo">510</span>        if (tempChars == null || tempChars.length &lt; size) {<a name="line.510"></a>
+<span class="sourceLineNo">511</span>            tempChars = new char[size];<a name="line.511"></a>
+<span class="sourceLineNo">512</span>        }<a name="line.512"></a>
+<span class="sourceLineNo">513</span>        content.getChars(0, size, tempChars, 0);<a name="line.513"></a>
+<span class="sourceLineNo">514</span>        write(tempChars, 0, size);<a name="line.514"></a>
+<span class="sourceLineNo">515</span>    }<a name="line.515"></a>
+<span class="sourceLineNo">516</span><a name="line.516"></a>
+<span class="sourceLineNo">517</span>    /**<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     * Writes the line separator. This invokes &lt;code&gt;output&lt;/code&gt; directly<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     * as well as setting the &lt;code&gt;lineLength&lt;/code&gt; to 0.<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     *<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * @since 1.3<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     */<a name="line.522"></a>
+<span class="sourceLineNo">523</span>    protected void writeLineSeparator() throws IOException {<a name="line.523"></a>
+<span class="sourceLineNo">524</span>        String newline = getLineSeparator();<a name="line.524"></a>
+<span class="sourceLineNo">525</span>        int length = newline.length();<a name="line.525"></a>
+<span class="sourceLineNo">526</span>        if (newlineChars == null || newlineChars.length &lt; length) {<a name="line.526"></a>
+<span class="sourceLineNo">527</span>            newlineChars = new char[length];<a name="line.527"></a>
+<span class="sourceLineNo">528</span>        }<a name="line.528"></a>
+<span class="sourceLineNo">529</span>        newline.getChars(0, length, newlineChars, 0);<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        output(newlineChars, 0, length);<a name="line.530"></a>
+<span class="sourceLineNo">531</span>        setCurrentLineLength(0);<a name="line.531"></a>
+<span class="sourceLineNo">532</span>    }<a name="line.532"></a>
+<span class="sourceLineNo">533</span><a name="line.533"></a>
+<span class="sourceLineNo">534</span>    /**<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     * All write methods call into this one. If &lt;code&gt;getCanWrapLines()&lt;/code&gt;<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * returns false, this will call &lt;code&gt;output&lt;/code&gt; with each sequence<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * of &lt;code&gt;chars&lt;/code&gt; that doesn't contain a NEWLINE, followed<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     * by a call to &lt;code&gt;writeLineSeparator&lt;/code&gt;. On the other hand,<a name="line.538"></a>
+<span class="sourceLineNo">539</span>     * if &lt;code&gt;getCanWrapLines()&lt;/code&gt; returns true, this will split the<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     * string, as necessary, so &lt;code&gt;getLineLength&lt;/code&gt; is honored.<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     * The only exception is if the current string contains no whitespace,<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * and won't fit in which case the line length will exceed<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * &lt;code&gt;getLineLength&lt;/code&gt;.<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     *<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     * @since 1.3<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     */<a name="line.546"></a>
+<span class="sourceLineNo">547</span>    protected void write(char[] chars, int startIndex, int length)<a name="line.547"></a>
+<span class="sourceLineNo">548</span>                   throws IOException {<a name="line.548"></a>
+<span class="sourceLineNo">549</span>        if (!getCanWrapLines()) {<a name="line.549"></a>
+<span class="sourceLineNo">550</span>            // We can not break string, just track if a newline<a name="line.550"></a>
+<span class="sourceLineNo">551</span>            // is in it.<a name="line.551"></a>
+<span class="sourceLineNo">552</span>            int lastIndex = startIndex;<a name="line.552"></a>
+<span class="sourceLineNo">553</span>            int endIndex = startIndex + length;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>            int newlineIndex = indexOf(chars, NEWLINE, startIndex, endIndex);<a name="line.554"></a>
+<span class="sourceLineNo">555</span>            while (newlineIndex != -1) {<a name="line.555"></a>
+<span class="sourceLineNo">556</span>                if (newlineIndex &gt; lastIndex) {<a name="line.556"></a>
+<span class="sourceLineNo">557</span>                    output(chars, lastIndex, newlineIndex - lastIndex);<a name="line.557"></a>
+<span class="sourceLineNo">558</span>                }<a name="line.558"></a>
+<span class="sourceLineNo">559</span>                writeLineSeparator();<a name="line.559"></a>
+<span class="sourceLineNo">560</span>                lastIndex = newlineIndex + 1;<a name="line.560"></a>
+<span class="sourceLineNo">561</span>                newlineIndex = indexOf(chars, '\n', lastIndex, endIndex);<a name="line.561"></a>
+<span class="sourceLineNo">562</span>            }<a name="line.562"></a>
+<span class="sourceLineNo">563</span>            if (lastIndex &lt; endIndex) {<a name="line.563"></a>
+<span class="sourceLineNo">564</span>                output(chars, lastIndex, endIndex - lastIndex);<a name="line.564"></a>
+<span class="sourceLineNo">565</span>            }<a name="line.565"></a>
+<span class="sourceLineNo">566</span>        }<a name="line.566"></a>
+<span class="sourceLineNo">567</span>        else {<a name="line.567"></a>
+<span class="sourceLineNo">568</span>            // We can break chars if the length exceeds maxLength.<a name="line.568"></a>
+<span class="sourceLineNo">569</span>            int lastIndex = startIndex;<a name="line.569"></a>
+<span class="sourceLineNo">570</span>            int endIndex = startIndex + length;<a name="line.570"></a>
+<span class="sourceLineNo">571</span>            int lineLength = getCurrentLineLength();<a name="line.571"></a>
+<span class="sourceLineNo">572</span>            int maxLength = getLineLength();<a name="line.572"></a>
+<span class="sourceLineNo">573</span><a name="line.573"></a>
+<span class="sourceLineNo">574</span>            while (lastIndex &lt; endIndex) {<a name="line.574"></a>
+<span class="sourceLineNo">575</span>                int newlineIndex = indexOf(chars, NEWLINE, lastIndex,<a name="line.575"></a>
+<span class="sourceLineNo">576</span>                                           endIndex);<a name="line.576"></a>
+<span class="sourceLineNo">577</span>                boolean needsNewline = false;<a name="line.577"></a>
+<span class="sourceLineNo">578</span>                boolean forceNewLine = false;<a name="line.578"></a>
+<span class="sourceLineNo">579</span><a name="line.579"></a>
+<span class="sourceLineNo">580</span>                lineLength = getCurrentLineLength();<a name="line.580"></a>
+<span class="sourceLineNo">581</span>                if (newlineIndex != -1 &amp;&amp; (lineLength +<a name="line.581"></a>
+<span class="sourceLineNo">582</span>                              (newlineIndex - lastIndex)) &lt; maxLength) {<a name="line.582"></a>
+<span class="sourceLineNo">583</span>                    if (newlineIndex &gt; lastIndex) {<a name="line.583"></a>
+<span class="sourceLineNo">584</span>                        output(chars, lastIndex, newlineIndex - lastIndex);<a name="line.584"></a>
+<span class="sourceLineNo">585</span>                    }<a name="line.585"></a>
+<span class="sourceLineNo">586</span>                    lastIndex = newlineIndex + 1;<a name="line.586"></a>
+<span class="sourceLineNo">587</span>                    forceNewLine = true;<a name="line.587"></a>
+<span class="sourceLineNo">588</span>                }<a name="line.588"></a>
+<span class="sourceLineNo">589</span>                else if (newlineIndex == -1 &amp;&amp; (lineLength +<a name="line.589"></a>
+<span class="sourceLineNo">590</span>                                (endIndex - lastIndex)) &lt; maxLength) {<a name="line.590"></a>
+<span class="sourceLineNo">591</span>                    if (endIndex &gt; lastIndex) {<a name="line.591"></a>
+<span class="sourceLineNo">592</span>                        output(chars, lastIndex, endIndex - lastIndex);<a name="line.592"></a>
+<span class="sourceLineNo">593</span>                    }<a name="line.593"></a>
+<span class="sourceLineNo">594</span>                    lastIndex = endIndex;<a name="line.594"></a>
+<span class="sourceLineNo">595</span>                }<a name="line.595"></a>
+<span class="sourceLineNo">596</span>                else {<a name="line.596"></a>
+<span class="sourceLineNo">597</span>                    // Need to break chars, find a place to split chars at,<a name="line.597"></a>
+<span class="sourceLineNo">598</span>                    // from lastIndex to endIndex,<a name="line.598"></a>
+<span class="sourceLineNo">599</span>                    // or maxLength - lineLength whichever is smaller<a name="line.599"></a>
+<span class="sourceLineNo">600</span>                    int breakPoint = -1;<a name="line.600"></a>
+<span class="sourceLineNo">601</span>                    int maxBreak = Math.min(endIndex - lastIndex,<a name="line.601"></a>
+<span class="sourceLineNo">602</span>                                            maxLength - lineLength - 1);<a name="line.602"></a>
+<span class="sourceLineNo">603</span>                    int counter = 0;<a name="line.603"></a>
+<span class="sourceLineNo">604</span>                    while (counter &lt; maxBreak) {<a name="line.604"></a>
+<span class="sourceLineNo">605</span>                        if (Character.isWhitespace(chars[counter +<a name="line.605"></a>
+<span class="sourceLineNo">606</span>                                                        lastIndex])) {<a name="line.606"></a>
+<span class="sourceLineNo">607</span>                            breakPoint = counter;<a name="line.607"></a>
+<span class="sourceLineNo">608</span>                        }<a name="line.608"></a>
+<span class="sourceLineNo">609</span>                        counter++;<a name="line.609"></a>
+<span class="sourceLineNo">610</span>                    }<a name="line.610"></a>
+<span class="sourceLineNo">611</span>                    if (breakPoint != -1) {<a name="line.611"></a>
+<span class="sourceLineNo">612</span>                        // Found a place to break at.<a name="line.612"></a>
+<span class="sourceLineNo">613</span>                        breakPoint += lastIndex + 1;<a name="line.613"></a>
+<span class="sourceLineNo">614</span>                        output(chars, lastIndex, breakPoint - lastIndex);<a name="line.614"></a>
+<span class="sourceLineNo">615</span>                        lastIndex = breakPoint;<a name="line.615"></a>
+<span class="sourceLineNo">616</span>                        needsNewline = true;<a name="line.616"></a>
+<span class="sourceLineNo">617</span>                    }<a name="line.617"></a>
+<span class="sourceLineNo">618</span>                    else {<a name="line.618"></a>
+<span class="sourceLineNo">619</span>                        // No where good to break.<a name="line.619"></a>
+<span class="sourceLineNo">620</span><a name="line.620"></a>
+<span class="sourceLineNo">621</span>                        // find the next whitespace, or write out the<a name="line.621"></a>
+<span class="sourceLineNo">622</span>                        // whole string.<a name="line.622"></a>
+<span class="sourceLineNo">623</span>                            // maxBreak will be negative if current line too<a name="line.623"></a>
+<span class="sourceLineNo">624</span>                            // long.<a name="line.624"></a>
+<span class="sourceLineNo">625</span>                            counter = Math.max(0, maxBreak);<a name="line.625"></a>
+<span class="sourceLineNo">626</span>                            maxBreak = endIndex - lastIndex;<a name="line.626"></a>
+<span class="sourceLineNo">627</span>                            while (counter &lt; maxBreak) {<a name="line.627"></a>
+<span class="sourceLineNo">628</span>                                if (Character.isWhitespace(chars[counter +<a name="line.628"></a>
+<span class="sourceLineNo">629</span>                                                                lastIndex])) {<a name="line.629"></a>
+<span class="sourceLineNo">630</span>                                    breakPoint = counter;<a name="line.630"></a>
+<span class="sourceLineNo">631</span>                                    break;<a name="line.631"></a>
+<span class="sourceLineNo">632</span>                                }<a name="line.632"></a>
+<span class="sourceLineNo">633</span>                                counter++;<a name="line.633"></a>
+<span class="sourceLineNo">634</span>                            }<a name="line.634"></a>
+<span class="sourceLineNo">635</span>                            if (breakPoint == -1) {<a name="line.635"></a>
+<span class="sourceLineNo">636</span>                                output(chars, lastIndex, endIndex - lastIndex);<a name="line.636"></a>
+<span class="sourceLineNo">637</span>                                breakPoint = endIndex;<a name="line.637"></a>
+<span class="sourceLineNo">638</span>                            }<a name="line.638"></a>
+<span class="sourceLineNo">639</span>                            else {<a name="line.639"></a>
+<span class="sourceLineNo">640</span>                                breakPoint += lastIndex;<a name="line.640"></a>
+<span class="sourceLineNo">641</span>                                if (chars[breakPoint] == NEWLINE) {<a name="line.641"></a>
+<span class="sourceLineNo">642</span>                                    output(chars, lastIndex, breakPoint++ -<a name="line.642"></a>
+<span class="sourceLineNo">643</span>                                           lastIndex);<a name="line.643"></a>
+<span class="sourceLineNo">644</span>                                forceNewLine = true;<a name="line.644"></a>
+<span class="sourceLineNo">645</span>                                }<a name="line.645"></a>
+<span class="sourceLineNo">646</span>                                else {<a name="line.646"></a>
+<span class="sourceLineNo">647</span>                                    output(chars, lastIndex, ++breakPoint -<a name="line.647"></a>
+<span class="sourceLineNo">648</span>                                              lastIndex);<a name="line.648"></a>
+<span class="sourceLineNo">649</span>                                needsNewline = true;<a name="line.649"></a>
+<span class="sourceLineNo">650</span>                                }<a name="line.650"></a>
+<span class="sourceLineNo">651</span>                            }<a name="line.651"></a>
+<span class="sourceLineNo">652</span>                            lastIndex = breakPoint;<a name="line.652"></a>
+<span class="sourceLineNo">653</span>                        }<a name="line.653"></a>
+<span class="sourceLineNo">654</span>                    }<a name="line.654"></a>
+<span class="sourceLineNo">655</span>                if (forceNewLine || needsNewline || lastIndex &lt; endIndex) {<a name="line.655"></a>
+<span class="sourceLineNo">656</span>                    writeLineSeparator();<a name="line.656"></a>
+<span class="sourceLineNo">657</span>                    if (lastIndex &lt; endIndex || !forceNewLine) {<a name="line.657"></a>
+<span class="sourceLineNo">658</span>                        indent();<a name="line.658"></a>
+<span class="sourceLineNo">659</span>                    }<a name="line.659"></a>
+<span class="sourceLineNo">660</span>                }<a name="line.660"></a>
+<span class="sourceLineNo">661</span>            }<a name="line.661"></a>
+<span class="sourceLineNo">662</span>        }<a name="line.662"></a>
+<span class="sourceLineNo">663</span>    }<a name="line.663"></a>
+<span class="sourceLineNo">664</span><a name="line.664"></a>
+<span class="sourceLineNo">665</span>    /**<a name="line.665"></a>
+<span class="sourceLineNo">666</span>     * Writes out the set of attributes as " &lt;name&gt;=&lt;value&gt;"<a name="line.666"></a>
+<span class="sourceLineNo">667</span>     * pairs. It throws an IOException when encountered.<a name="line.667"></a>
+<span class="sourceLineNo">668</span>     *<a name="line.668"></a>
+<span class="sourceLineNo">669</span>     * @param     attr an AttributeSet.<a name="line.669"></a>
+<span class="sourceLineNo">670</span>     * @exception IOException on any I/O error<a name="line.670"></a>
+<span class="sourceLineNo">671</span>     */<a name="line.671"></a>
+<span class="sourceLineNo">672</span>    protected void writeAttributes(AttributeSet attr) throws IOException {<a name="line.672"></a>
+<span class="sourceLineNo">673</span><a name="line.673"></a>
+<span class="sourceLineNo">674</span>        Enumeration names = attr.getAttributeNames();<a name="line.674"></a>
+<span class="sourceLineNo">675</span>        while (names.hasMoreElements()) {<a name="line.675"></a>
+<span class="sourceLineNo">676</span>            Object name = names.nextElement();<a name="line.676"></a>
+<span class="sourceLineNo">677</span>            write(" " + name + "=" + attr.getAttribute(name));<a name="line.677"></a>
+<span class="sourceLineNo">678</span>        }<a name="line.678"></a>
+<span class="sourceLineNo">679</span>    }<a name="line.679"></a>
+<span class="sourceLineNo">680</span><a name="line.680"></a>
+<span class="sourceLineNo">681</span>    /**<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     * The last stop in writing out content. All the write methods eventually<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     * make it to this method, which invokes &lt;code&gt;write&lt;/code&gt; on the<a name="line.683"></a>
+<span class="sourceLineNo">684</span>     * Writer.<a name="line.684"></a>
+<span class="sourceLineNo">685</span>     * &lt;p&gt;This method also updates the line length based on<a name="line.685"></a>
+<span class="sourceLineNo">686</span>     * &lt;code&gt;length&lt;/code&gt;. If this is invoked to output a newline, the<a name="line.686"></a>
+<span class="sourceLineNo">687</span>     * current line length will need to be reset as will no longer be<a name="line.687"></a>
+<span class="sourceLineNo">688</span>     * valid. If it is up to the caller to do this. Use<a name="line.688"></a>
+<span class="sourceLineNo">689</span>     * &lt;code&gt;writeLineSeparator&lt;/code&gt; to write out a newline, which will<a name="line.689"></a>
+<span class="sourceLineNo">690</span>     * property update the current line length.<a name="line.690"></a>
+<span class="sourceLineNo">691</span>     *<a name="line.691"></a>
+<span class="sourceLineNo">692</span>     * @since 1.3<a name="line.692"></a>
+<span class="sourceLineNo">693</span>     */<a name="line.693"></a>
+<span class="sourceLineNo">694</span>    protected void output(char[] content, int start, int length)<a name="line.694"></a>
+<span class="sourceLineNo">695</span>                   throws IOException {<a name="line.695"></a>
+<span class="sourceLineNo">696</span>        getWriter().write(content, start, length);<a name="line.696"></a>
+<span class="sourceLineNo">697</span>        setCurrentLineLength(getCurrentLineLength() + length);<a name="line.697"></a>
+<span class="sourceLineNo">698</span>    }<a name="line.698"></a>
+<span class="sourceLineNo">699</span><a name="line.699"></a>
+<span class="sourceLineNo">700</span>    /**<a name="line.700"></a>
+<span class="sourceLineNo">701</span>     * Support method to locate an occurence of a particular character.<a name="line.701"></a>
+<span class="sourceLineNo">702</span>     */<a name="line.702"></a>
+<span class="sourceLineNo">703</span>    private int indexOf(char[] chars, char sChar, int startIndex,<a name="line.703"></a>
+<span class="sourceLineNo">704</span>                        int endIndex) {<a name="line.704"></a>
+<span class="sourceLineNo">705</span>        while(startIndex &lt; endIndex) {<a name="line.705"></a>
+<span class="sourceLineNo">706</span>            if (chars[startIndex] == sChar) {<a name="line.706"></a>
+<span class="sourceLineNo">707</span>                return startIndex;<a name="line.707"></a>
+<span class="sourceLineNo">708</span>            }<a name="line.708"></a>
+<span class="sourceLineNo">709</span>            startIndex++;<a name="line.709"></a>
+<span class="sourceLineNo">710</span>        }<a name="line.710"></a>
+<span class="sourceLineNo">711</span>        return -1;<a name="line.711"></a>
+<span class="sourceLineNo">712</span>    }<a name="line.712"></a>
+<span class="sourceLineNo">713</span>}<a name="line.713"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

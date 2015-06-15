@@ -1,0 +1,416 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.nio.channels;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.nio.channels.spi.AsynchronousChannelProvider;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.IOException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.concurrent.ExecutorService;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.concurrent.ThreadFactory;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.concurrent.TimeUnit;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * A grouping of asynchronous channels for the purpose of resource sharing.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt; An asynchronous channel group encapsulates the mechanics required to<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * handle the completion of I/O operations initiated by {@link AsynchronousChannel<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * asynchronous channels} that are bound to the group. A group has an associated<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * thread pool to which tasks are submitted to handle I/O events and dispatch to<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * {@link CompletionHandler completion-handlers} that consume the result of<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * asynchronous operations performed on channels in the group. In addition to<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * handling I/O events, the pooled threads may also execute other tasks required<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * to support the execution of asynchronous I/O operations.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;p&gt; An asynchronous channel group is created by invoking the {@link<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * #withFixedThreadPool withFixedThreadPool} or {@link #withCachedThreadPool<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * withCachedThreadPool} methods defined here. Channels are bound to a group by<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * specifying the group when constructing the channel. The associated thread<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * pool is &lt;em&gt;owned&lt;/em&gt; by the group; termination of the group results in the<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * shutdown of the associated thread pool.<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;p&gt; In addition to groups created explicitly, the Java virtual machine<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * maintains a system-wide &lt;em&gt;default group&lt;/em&gt; that is constructed<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * automatically. Asynchronous channels that do not specify a group at<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * construction time are bound to the default group. The default group has an<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * associated thread pool that creates new threads as needed. The default group<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * may be configured by means of system properties defined in the table below.<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * Where the {@link java.util.concurrent.ThreadFactory ThreadFactory} for the<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * default group is not configured then the pooled threads of the default group<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * are {@link Thread#isDaemon daemon} threads.<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;table border&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *   &lt;tr&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *     &lt;th&gt;System property&lt;/th&gt;<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *     &lt;th&gt;Description&lt;/th&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *   &lt;/tr&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *   &lt;tr&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *   &lt;tr&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *     &lt;td&gt; {@code java.nio.channels.DefaultThreadPool.threadFactory} &lt;/td&gt;<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *     &lt;td&gt; The value of this property is taken to be the fully-qualified name<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *     of a concrete {@link java.util.concurrent.ThreadFactory ThreadFactory}<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *     class. The class is loaded using the system class loader and instantiated.<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *     The factory's {@link java.util.concurrent.ThreadFactory#newThread<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *     newThread} method is invoked to create each thread for the default<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *     group's thread pool. If the process to load and instantiate the value<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *     of the property fails then an unspecified error is thrown during the<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *     construction of the default group. &lt;/td&gt;<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *   &lt;/tr&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *   &lt;tr&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *     &lt;td&gt; {@code java.nio.channels.DefaultThreadPool.initialSize} &lt;/td&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *     &lt;td&gt; The value of the {@code initialSize} parameter for the default<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *     group (see {@link #withCachedThreadPool withCachedThreadPool}).<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *     The value of the property is taken to be the {@code String}<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *     representation of an {@code Integer} that is the initial size parameter.<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *     If the value cannot be parsed as an {@code Integer} it causes an<a name="line.86"></a>
+<span class="sourceLineNo">087</span> *     unspecified error to be thrown during the construction of the default<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *     group. &lt;/td&gt;<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *   &lt;/tr&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * &lt;/table&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * &lt;a name="threading"&gt;&lt;h4&gt;Threading&lt;/h4&gt;&lt;/a&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;p&gt; The completion handler for an I/O operation initiated on a channel bound<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * to a group is guaranteed to be invoked by one of the pooled threads in the<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * group. This ensures that the completion handler is run by a thread with the<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * expected &lt;em&gt;identity&lt;/em&gt;.<a name="line.97"></a>
+<span class="sourceLineNo">098</span> *<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * &lt;p&gt; Where an I/O operation completes immediately, and the initiating thread<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * is one of the pooled threads in the group then the completion handler may<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * be invoked directly by the initiating thread. To avoid stack overflow, an<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * implementation may impose a limit as to the number of activations on the<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * thread stack. Some I/O operations may prohibit invoking the completion<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * handler directly by the initiating thread (see {@link<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * AsynchronousServerSocketChannel#accept(Object,CompletionHandler) accept}).<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * &lt;a name="shutdown"&gt;&lt;h4&gt;Shutdown and Termination&lt;/h4&gt;&lt;/a&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * &lt;p&gt; The {@link #shutdown() shutdown} method is used to initiate an &lt;em&gt;orderly<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * shutdown&lt;/em&gt; of a group. An orderly shutdown marks the group as shutdown;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * further attempts to construct a channel that binds to the group will throw<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * {@link ShutdownChannelGroupException}. Whether or not a group is shutdown can<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * be tested using the {@link #isShutdown() isShutdown} method. Once shutdown,<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * the group &lt;em&gt;terminates&lt;/em&gt; when all asynchronous channels that are bound to<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * the group are closed, all actively executing completion handlers have run to<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * completion, and resources used by the group are released. No attempt is made<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * to stop or interrupt threads that are executing completion handlers. The<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * {@link #isTerminated() isTerminated} method is used to test if the group has<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * terminated, and the {@link #awaitTermination awaitTermination} method can be<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * used to block until the group has terminated.<a name="line.120"></a>
+<span class="sourceLineNo">121</span> *<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * &lt;p&gt; The {@link #shutdownNow() shutdownNow} method can be used to initiate a<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * &lt;em&gt;forceful shutdown&lt;/em&gt; of the group. In addition to the actions performed<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * by an orderly shutdown, the {@code shutdownNow} method closes all open channels<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * in the group as if by invoking the {@link AsynchronousChannel#close close}<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * method.<a name="line.126"></a>
+<span class="sourceLineNo">127</span> *<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * @since 1.7<a name="line.128"></a>
+<span class="sourceLineNo">129</span> *<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * @see AsynchronousSocketChannel#open(AsynchronousChannelGroup)<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * @see AsynchronousServerSocketChannel#open(AsynchronousChannelGroup)<a name="line.131"></a>
+<span class="sourceLineNo">132</span> */<a name="line.132"></a>
+<span class="sourceLineNo">133</span><a name="line.133"></a>
+<span class="sourceLineNo">134</span>public abstract class AsynchronousChannelGroup {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    private final AsynchronousChannelProvider provider;<a name="line.135"></a>
+<span class="sourceLineNo">136</span><a name="line.136"></a>
+<span class="sourceLineNo">137</span>    /**<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * Initialize a new instance of this class.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * @param   provider<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *          The asynchronous channel provider for this group<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     */<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    protected AsynchronousChannelGroup(AsynchronousChannelProvider provider) {<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        this.provider = provider;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>    }<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>    /**<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * Returns the provider that created this channel group.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * @return  The provider that created this channel group<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     */<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    public final AsynchronousChannelProvider provider() {<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        return provider;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    }<a name="line.154"></a>
+<span class="sourceLineNo">155</span><a name="line.155"></a>
+<span class="sourceLineNo">156</span>    /**<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * Creates an asynchronous channel group with a fixed thread pool.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * &lt;p&gt; The resulting asynchronous channel group reuses a fixed number of<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * threads. At any point, at most {@code nThreads} threads will be active<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * processing tasks that are submitted to handle I/O events and dispatch<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * completion results for operations initiated on asynchronous channels in<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * the group.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     *<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * &lt;p&gt; The group is created by invoking the {@link<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * AsynchronousChannelProvider#openAsynchronousChannelGroup(int,ThreadFactory)<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * openAsynchronousChannelGroup(int,ThreadFactory)} method of the system-wide<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * default {@link AsynchronousChannelProvider} object.<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * @param   nThreads<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *          The number of threads in the pool<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @param   threadFactory<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     *          The factory to use when creating new threads<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @return  A new asynchronous channel group<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @throws  IllegalArgumentException<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *          If {@code nThreads &lt;= 0}<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @throws  IOException<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     *          If an I/O error occurs<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     */<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    public static AsynchronousChannelGroup withFixedThreadPool(int nThreads,<a name="line.182"></a>
+<span class="sourceLineNo">183</span>                                                               ThreadFactory threadFactory)<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        throws IOException<a name="line.184"></a>
+<span class="sourceLineNo">185</span>    {<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        return AsynchronousChannelProvider.provider()<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            .openAsynchronousChannelGroup(nThreads, threadFactory);<a name="line.187"></a>
+<span class="sourceLineNo">188</span>    }<a name="line.188"></a>
+<span class="sourceLineNo">189</span><a name="line.189"></a>
+<span class="sourceLineNo">190</span>    /**<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * Creates an asynchronous channel group with a given thread pool that<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * creates new threads as needed.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     *<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * &lt;p&gt; The {@code executor} parameter is an {@code ExecutorService} that<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * creates new threads as needed to execute tasks that are submitted to<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * handle I/O events and dispatch completion results for operations initiated<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * on asynchronous channels in the group. It may reuse previously constructed<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * threads when they are available.<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     *<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * &lt;p&gt; The {@code initialSize} parameter may be used by the implementation<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * as a &lt;em&gt;hint&lt;/em&gt; as to the initial number of tasks it may submit. For<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * example, it may be used to indictae the initial number of threads that<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * wait on I/O events.<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     *<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * &lt;p&gt; The executor is intended to be used exclusively by the resulting<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * asynchronous channel group. Termination of the group results in the<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * orderly  {@link ExecutorService#shutdown shutdown} of the executor<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * service. Shutting down the executor service by other means results in<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * unspecified behavior.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * &lt;p&gt; The group is created by invoking the {@link<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * AsynchronousChannelProvider#openAsynchronousChannelGroup(ExecutorService,int)<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * openAsynchronousChannelGroup(ExecutorService,int)} method of the system-wide<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * default {@link AsynchronousChannelProvider} object.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * @param   executor<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     *          The thread pool for the resulting group<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * @param   initialSize<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     *          A value {@code &gt;=0} or a negative value for implementation<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     *          specific default<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     *<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * @return  A new asynchronous channel group<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     *<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * @throws  IOException<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     *          If an I/O error occurs<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     *<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * @see java.util.concurrent.Executors#newCachedThreadPool<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     */<a name="line.228"></a>
+<span class="sourceLineNo">229</span>    public static AsynchronousChannelGroup withCachedThreadPool(ExecutorService executor,<a name="line.229"></a>
+<span class="sourceLineNo">230</span>                                                                int initialSize)<a name="line.230"></a>
+<span class="sourceLineNo">231</span>        throws IOException<a name="line.231"></a>
+<span class="sourceLineNo">232</span>    {<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        return AsynchronousChannelProvider.provider()<a name="line.233"></a>
+<span class="sourceLineNo">234</span>            .openAsynchronousChannelGroup(executor, initialSize);<a name="line.234"></a>
+<span class="sourceLineNo">235</span>    }<a name="line.235"></a>
+<span class="sourceLineNo">236</span><a name="line.236"></a>
+<span class="sourceLineNo">237</span>    /**<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * Creates an asynchronous channel group with a given thread pool.<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     *<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * &lt;p&gt; The {@code executor} parameter is an {@code ExecutorService} that<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * executes tasks submitted to dispatch completion results for operations<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * initiated on asynchronous channels in the group.<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     *<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * &lt;p&gt; Care should be taken when configuring the executor service. It<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * should support &lt;em&gt;direct handoff&lt;/em&gt; or &lt;em&gt;unbounded queuing&lt;/em&gt; of<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * submitted tasks, and the thread that invokes the {@link<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * ExecutorService#execute execute} method should never invoke the task<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * directly. An implementation may mandate additional constraints.<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     *<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * &lt;p&gt; The executor is intended to be used exclusively by the resulting<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * asynchronous channel group. Termination of the group results in the<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * orderly  {@link ExecutorService#shutdown shutdown} of the executor<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * service. Shutting down the executor service by other means results in<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * unspecified behavior.<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     *<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * &lt;p&gt; The group is created by invoking the {@link<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * AsynchronousChannelProvider#openAsynchronousChannelGroup(ExecutorService,int)<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * openAsynchronousChannelGroup(ExecutorService,int)} method of the system-wide<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * default {@link AsynchronousChannelProvider} object with an {@code<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * initialSize} of {@code 0}.<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     *<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * @param   executor<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     *          The thread pool for the resulting group<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     *<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * @return  A new asynchronous channel group<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     *<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * @throws  IOException<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     *          If an I/O error occurs<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     */<a name="line.269"></a>
+<span class="sourceLineNo">270</span>    public static AsynchronousChannelGroup withThreadPool(ExecutorService executor)<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        throws IOException<a name="line.271"></a>
+<span class="sourceLineNo">272</span>    {<a name="line.272"></a>
+<span class="sourceLineNo">273</span>        return AsynchronousChannelProvider.provider()<a name="line.273"></a>
+<span class="sourceLineNo">274</span>            .openAsynchronousChannelGroup(executor, 0);<a name="line.274"></a>
+<span class="sourceLineNo">275</span>    }<a name="line.275"></a>
+<span class="sourceLineNo">276</span><a name="line.276"></a>
+<span class="sourceLineNo">277</span>    /**<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * Tells whether or not this asynchronous channel group is shutdown.<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     *<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * @return  {@code true} if this asynchronous channel group is shutdown or<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     *          has been marked for shutdown.<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     */<a name="line.282"></a>
+<span class="sourceLineNo">283</span>    public abstract boolean isShutdown();<a name="line.283"></a>
+<span class="sourceLineNo">284</span><a name="line.284"></a>
+<span class="sourceLineNo">285</span>    /**<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * Tells whether or not this group has terminated.<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     *<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * &lt;p&gt; Where this method returns {@code true}, then the associated thread<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * pool has also {@link ExecutorService#isTerminated terminated}.<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     *<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * @return  {@code true} if this group has terminated<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     */<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    public abstract boolean isTerminated();<a name="line.293"></a>
+<span class="sourceLineNo">294</span><a name="line.294"></a>
+<span class="sourceLineNo">295</span>    /**<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * Initiates an orderly shutdown of the group.<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     *<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * &lt;p&gt; This method marks the group as shutdown. Further attempts to construct<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * channel that binds to this group will throw {@link ShutdownChannelGroupException}.<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * The group terminates when all asynchronous channels in the group are<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * closed, all actively executing completion handlers have run to completion,<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * and all resources have been released. This method has no effect if the<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * group is already shutdown.<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     */<a name="line.304"></a>
+<span class="sourceLineNo">305</span>    public abstract void shutdown();<a name="line.305"></a>
+<span class="sourceLineNo">306</span><a name="line.306"></a>
+<span class="sourceLineNo">307</span>    /**<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * Shuts down the group and closes all open channels in the group.<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     *<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * &lt;p&gt; In addition to the actions performed by the {@link #shutdown() shutdown}<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * method, this method invokes the {@link AsynchronousChannel#close close}<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * method on all open channels in the group. This method does not attempt to<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * stop or interrupt threads that are executing completion handlers. The<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * group terminates when all actively executing completion handlers have run<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * to completion and all resources have been released. This method may be<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * invoked at any time. If some other thread has already invoked it, then<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * another invocation will block until the first invocation is complete,<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * after which it will return without effect.<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     *<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * @throws  IOException<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     *          If an I/O error occurs<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     */<a name="line.322"></a>
+<span class="sourceLineNo">323</span>    public abstract void shutdownNow() throws IOException;<a name="line.323"></a>
+<span class="sourceLineNo">324</span><a name="line.324"></a>
+<span class="sourceLineNo">325</span>    /**<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * Awaits termination of the group.<a name="line.326"></a>
+<span class="sourceLineNo">327</span><a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * &lt;p&gt; This method blocks until the group has terminated, or the timeout<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * occurs, or the current thread is interrupted, whichever happens first.<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     *<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * @param   timeout<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     *          The maximum time to wait, or zero or less to not wait<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * @param   unit<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     *          The time unit of the timeout argument<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     *<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * @return  {@code true} if the group has terminated; {@code false} if the<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     *          timeout elapsed before termination<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     *<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * @throws  InterruptedException<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     *          If interrupted while waiting<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     */<a name="line.341"></a>
+<span class="sourceLineNo">342</span>    public abstract boolean awaitTermination(long timeout, TimeUnit unit)<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        throws InterruptedException;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>}<a name="line.344"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

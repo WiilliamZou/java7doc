@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt.print;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.geom.Rectangle2D;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * The &lt;code&gt;Paper&lt;/code&gt; class describes the physical characteristics of<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * a piece of paper.<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * &lt;p&gt;<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * When creating a &lt;code&gt;Paper&lt;/code&gt; object, it is the application's<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * responsibility to ensure that the paper size and the imageable area<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * are compatible.  For example, if the paper size is changed from<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * 11 x 17 to 8.5 x 11, the application might need to reduce the<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * imageable area so that whatever is printed fits on the page.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;p&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * @see #setSize(double, double)<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * @see #setImageableArea(double, double, double, double)<a name="line.41"></a>
+<span class="sourceLineNo">042</span> */<a name="line.42"></a>
+<span class="sourceLineNo">043</span>public class Paper implements Cloneable {<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span> /* Private Class Variables */<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>    private static final int INCH = 72;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>    private static final double LETTER_WIDTH = 8.5 * INCH;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    private static final double LETTER_HEIGHT = 11 * INCH;<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span> /* Instance Variables */<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /**<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * The height of the physical page in 1/72nds<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * of an inch. The number is stored as a floating<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * point value rather than as an integer<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * to facilitate the conversion from metric<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * units to 1/72nds of an inch and then back.<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * (This may or may not be a good enough reason<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * for a float).<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     */<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    private double mHeight;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>    /**<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * The width of the physical page in 1/72nds<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * of an inch.<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     */<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    private double mWidth;<a name="line.68"></a>
+<span class="sourceLineNo">069</span><a name="line.69"></a>
+<span class="sourceLineNo">070</span>    /**<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * The area of the page on which drawing will<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * be visable. The area outside of this<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * rectangle but on the Page generally<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * reflects the printer's hardware margins.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * The origin of the physical page is<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * at (0, 0) with this rectangle provided<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * in that coordinate system.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     */<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    private Rectangle2D mImageableArea;<a name="line.79"></a>
+<span class="sourceLineNo">080</span><a name="line.80"></a>
+<span class="sourceLineNo">081</span> /* Constructors */<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    /**<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * Creates a letter sized piece of paper<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * with one inch margins.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     */<a name="line.86"></a>
+<span class="sourceLineNo">087</span>    public Paper() {<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        mHeight = LETTER_HEIGHT;<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        mWidth = LETTER_WIDTH;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        mImageableArea = new Rectangle2D.Double(INCH, INCH,<a name="line.90"></a>
+<span class="sourceLineNo">091</span>                                                mWidth - 2 * INCH,<a name="line.91"></a>
+<span class="sourceLineNo">092</span>                                                mHeight - 2 * INCH);<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    }<a name="line.93"></a>
+<span class="sourceLineNo">094</span><a name="line.94"></a>
+<span class="sourceLineNo">095</span> /* Instance Methods */<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>    /**<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * Creates a copy of this &lt;code&gt;Paper&lt;/code&gt; with the same contents<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * as this &lt;code&gt;Paper&lt;/code&gt;.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * @return a copy of this &lt;code&gt;Paper&lt;/code&gt;.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     */<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    public Object clone() {<a name="line.102"></a>
+<span class="sourceLineNo">103</span><a name="line.103"></a>
+<span class="sourceLineNo">104</span>        Paper newPaper;<a name="line.104"></a>
+<span class="sourceLineNo">105</span><a name="line.105"></a>
+<span class="sourceLineNo">106</span>        try {<a name="line.106"></a>
+<span class="sourceLineNo">107</span>            /* It's okay to copy the reference to the imageable<a name="line.107"></a>
+<span class="sourceLineNo">108</span>             * area into the clone since we always return a copy<a name="line.108"></a>
+<span class="sourceLineNo">109</span>             * of the imageable area when asked for it.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>             */<a name="line.110"></a>
+<span class="sourceLineNo">111</span>            newPaper = (Paper) super.clone();<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>        } catch (CloneNotSupportedException e) {<a name="line.113"></a>
+<span class="sourceLineNo">114</span>            e.printStackTrace();<a name="line.114"></a>
+<span class="sourceLineNo">115</span>            newPaper = null;    // should never happen.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        }<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>        return newPaper;<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    }<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>    /**<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * Returns the height of the page in 1/72nds of an inch.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * @return the height of the page described by this<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     *          &lt;code&gt;Paper&lt;/code&gt;.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     */<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    public double getHeight() {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        return mHeight;<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    }<a name="line.128"></a>
+<span class="sourceLineNo">129</span><a name="line.129"></a>
+<span class="sourceLineNo">130</span>    /**<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * Sets the width and height of this &lt;code&gt;Paper&lt;/code&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * object, which represents the properties of the page onto<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * which printing occurs.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * The dimensions are supplied in 1/72nds of<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * an inch.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @param width the value to which to set this &lt;code&gt;Paper&lt;/code&gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * object's width<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @param height the value to which to set this &lt;code&gt;Paper&lt;/code&gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * object's height<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     */<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    public void setSize(double width, double height) {<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        mWidth = width;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        mHeight = height;<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    }<a name="line.144"></a>
+<span class="sourceLineNo">145</span><a name="line.145"></a>
+<span class="sourceLineNo">146</span>    /**<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * Returns the width of the page in 1/72nds<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * of an inch.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * @return the width of the page described by this<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * &lt;code&gt;Paper&lt;/code&gt;.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     */<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    public double getWidth() {<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        return mWidth;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    }<a name="line.154"></a>
+<span class="sourceLineNo">155</span><a name="line.155"></a>
+<span class="sourceLineNo">156</span>    /**<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * Sets the imageable area of this &lt;code&gt;Paper&lt;/code&gt;.  The<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * imageable area is the area on the page in which printing<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * occurs.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @param x the X coordinate to which to set the<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * upper-left corner of the imageable area of this &lt;code&gt;Paper&lt;/code&gt;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @param y the Y coordinate to which to set the<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * upper-left corner of the imageable area of this &lt;code&gt;Paper&lt;/code&gt;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @param width the value to which to set the width of the<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * imageable area of this &lt;code&gt;Paper&lt;/code&gt;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @param height the value to which to set the height of the<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * imageable area of this &lt;code&gt;Paper&lt;/code&gt;<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     */<a name="line.168"></a>
+<span class="sourceLineNo">169</span>    public void setImageableArea(double x, double y,<a name="line.169"></a>
+<span class="sourceLineNo">170</span>                                 double width, double height) {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        mImageableArea = new Rectangle2D.Double(x, y, width,height);<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    }<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>    /**<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * Returns the x coordinate of the upper-left corner of this<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * &lt;code&gt;Paper&lt;/code&gt; object's imageable area.<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @return the x coordinate of the imageable area.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     */<a name="line.178"></a>
+<span class="sourceLineNo">179</span>    public double getImageableX() {<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        return mImageableArea.getX();<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    }<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Returns the y coordinate of the upper-left corner of this<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * &lt;code&gt;Paper&lt;/code&gt; object's imageable area.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * @return the y coordinate of the imageable area.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     */<a name="line.187"></a>
+<span class="sourceLineNo">188</span>    public double getImageableY() {<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        return mImageableArea.getY();<a name="line.189"></a>
+<span class="sourceLineNo">190</span>    }<a name="line.190"></a>
+<span class="sourceLineNo">191</span><a name="line.191"></a>
+<span class="sourceLineNo">192</span>    /**<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * Returns the width of this &lt;code&gt;Paper&lt;/code&gt; object's imageable<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * area.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * @return the width of the imageable area.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     */<a name="line.196"></a>
+<span class="sourceLineNo">197</span>    public double getImageableWidth() {<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        return mImageableArea.getWidth();<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    }<a name="line.199"></a>
+<span class="sourceLineNo">200</span><a name="line.200"></a>
+<span class="sourceLineNo">201</span>    /**<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * Returns the height of this &lt;code&gt;Paper&lt;/code&gt; object's imageable<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * area.<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * @return the height of the imageable area.<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     */<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    public double getImageableHeight() {<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        return mImageableArea.getHeight();<a name="line.207"></a>
+<span class="sourceLineNo">208</span>    }<a name="line.208"></a>
+<span class="sourceLineNo">209</span>}<a name="line.209"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

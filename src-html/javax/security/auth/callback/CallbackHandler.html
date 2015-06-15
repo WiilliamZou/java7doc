@@ -1,0 +1,225 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.security.auth.callback;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * &lt;p&gt; An application implements a &lt;code&gt;CallbackHandler&lt;/code&gt; and passes<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * it to underlying security services so that they may interact with<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * the application to retrieve specific authentication data,<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * such as usernames and passwords, or to display certain information,<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * such as error and warning messages.<a name="line.33"></a>
+<span class="sourceLineNo">034</span> *<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;p&gt; CallbackHandlers are implemented in an application-dependent fashion.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * For example, implementations for an application with a graphical user<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * interface (GUI) may pop up windows to prompt for requested information<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * or to display error messages.  An implementation may also choose to obtain<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * requested information from an alternate source without asking the end user.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;p&gt; Underlying security services make requests for different types<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * of information by passing individual Callbacks to the<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;code&gt;CallbackHandler&lt;/code&gt;.  The &lt;code&gt;CallbackHandler&lt;/code&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * implementation decides how to retrieve and display information<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * depending on the Callbacks passed to it.  For example,<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * if the underlying service needs a username and password to<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * authenticate a user, it uses a &lt;code&gt;NameCallback&lt;/code&gt; and<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;code&gt;PasswordCallback&lt;/code&gt;.  The &lt;code&gt;CallbackHandler&lt;/code&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * can then choose to prompt for a username and password serially,<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * or to prompt for both in a single window.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;p&gt; A default &lt;code&gt;CallbackHandler&lt;/code&gt; class implementation<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * may be specified in the &lt;i&gt;auth.login.defaultCallbackHandler&lt;/i&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * security property.  The security property can be set<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * in the Java security properties file located in the file named<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &amp;lt;JAVA_HOME&amp;gt;/lib/security/java.security.<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &amp;lt;JAVA_HOME&amp;gt; refers to the value of the java.home system property,<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * and specifies the directory where the JRE is installed.<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;p&gt; If the security property is set to the fully qualified name of a<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;code&gt;CallbackHandler&lt;/code&gt; implementation class,<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * then a &lt;code&gt;LoginContext&lt;/code&gt; will load the specified<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;code&gt;CallbackHandler&lt;/code&gt; and pass it to the underlying LoginModules.<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * The &lt;code&gt;LoginContext&lt;/code&gt; only loads the default handler<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * if it was not provided one.<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;p&gt; All default handler implementations must provide a public<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * zero-argument constructor.<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *<a name="line.69"></a>
+<span class="sourceLineNo">070</span> */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>public interface CallbackHandler {<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * &lt;p&gt; Retrieve or display the information requested in the<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * provided Callbacks.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     *<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * &lt;p&gt; The &lt;code&gt;handle&lt;/code&gt; method implementation checks the<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * instance(s) of the &lt;code&gt;Callback&lt;/code&gt; object(s) passed in<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * to retrieve or display the requested information.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * The following example is provided to help demonstrate what an<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * &lt;code&gt;handle&lt;/code&gt; method implementation might look like.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * This example code is for guidance only.  Many details,<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * including proper error handling, are left out for simplicity.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     *<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * &lt;pre&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * public void handle(Callback[] callbacks)<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * throws IOException, UnsupportedCallbackException {<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     *   for (int i = 0; i &lt; callbacks.length; i++) {<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *      if (callbacks[i] instanceof TextOutputCallback) {<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *          // display the message according to the specified type<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     *          TextOutputCallback toc = (TextOutputCallback)callbacks[i];<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     *          switch (toc.getMessageType()) {<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *          case TextOutputCallback.INFORMATION:<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *              System.out.println(toc.getMessage());<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     *              break;<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *          case TextOutputCallback.ERROR:<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     *              System.out.println("ERROR: " + toc.getMessage());<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     *              break;<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *          case TextOutputCallback.WARNING:<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     *              System.out.println("WARNING: " + toc.getMessage());<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     *              break;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     *          default:<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     *              throw new IOException("Unsupported message type: " +<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     *                                  toc.getMessageType());<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     *          }<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     *<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     *      } else if (callbacks[i] instanceof NameCallback) {<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     *<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *          // prompt the user for a username<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     *          NameCallback nc = (NameCallback)callbacks[i];<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *          // ignore the provided defaultName<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *          System.err.print(nc.getPrompt());<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *          System.err.flush();<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     *          nc.setName((new BufferedReader<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *                  (new InputStreamReader(System.in))).readLine());<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     *<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     *      } else if (callbacks[i] instanceof PasswordCallback) {<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     *          // prompt the user for sensitive information<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *          PasswordCallback pc = (PasswordCallback)callbacks[i];<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     *          System.err.print(pc.getPrompt());<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     *          System.err.flush();<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     *          pc.setPassword(readPassword(System.in));<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     *<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     *      } else {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     *          throw new UnsupportedCallbackException<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *                  (callbacks[i], "Unrecognized Callback");<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *      }<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *   }<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * }<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * // Reads user password from given input stream.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * private char[] readPassword(InputStream in) throws IOException {<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *    // insert code to read a user password from the input stream<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * }<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * &lt;/pre&gt;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @param callbacks an array of &lt;code&gt;Callback&lt;/code&gt; objects provided<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *          by an underlying security service which contains<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *          the information requested to be retrieved or displayed.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * @exception java.io.IOException if an input or output error occurs. &lt;p&gt;<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     *<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @exception UnsupportedCallbackException if the implementation of this<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     *          method does not support one or more of the Callbacks<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *          specified in the &lt;code&gt;callbacks&lt;/code&gt; parameter.<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     */<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    void handle(Callback[] callbacks)<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    throws java.io.IOException, UnsupportedCallbackException;<a name="line.152"></a>
+<span class="sourceLineNo">153</span>}<a name="line.153"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

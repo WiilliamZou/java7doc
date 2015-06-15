@@ -1,0 +1,224 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>/*<a name="line.25"></a>
+<span class="sourceLineNo">026</span> * $Id: KeySelector.java,v 1.6 2005/05/10 15:47:42 mullan Exp $<a name="line.26"></a>
+<span class="sourceLineNo">027</span> */<a name="line.27"></a>
+<span class="sourceLineNo">028</span>package javax.xml.crypto;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.security.Key;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.xml.crypto.dsig.keyinfo.KeyInfo;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import javax.xml.crypto.dsig.keyinfo.RetrievalMethod;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * A selector that finds and returns a key using the data contained in a<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * {@link KeyInfo} object. An example of an implementation of<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * this class is one that searchs a {@link java.security.KeyStore} for<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * trusted keys that match information contained in a &lt;code&gt;KeyInfo&lt;/code&gt;.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> *<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * &lt;p&gt;Whether or not the returned key is trusted and the mechanisms<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * used to determine that is implementation-specific.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * @author Sean Mullan<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * @author JSR 105 Expert Group<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * @since 1.6<a name="line.45"></a>
+<span class="sourceLineNo">046</span> */<a name="line.46"></a>
+<span class="sourceLineNo">047</span>public abstract class KeySelector {<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>    /**<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * The purpose of the key that is to be selected.<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     */<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    public static class Purpose {<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>        private final String name;<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>        private Purpose(String name)    { this.name = name; }<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>        /**<a name="line.58"></a>
+<span class="sourceLineNo">059</span>         * Returns a string representation of this purpose ("sign",<a name="line.59"></a>
+<span class="sourceLineNo">060</span>         * "verify", "encrypt", or "decrypt").<a name="line.60"></a>
+<span class="sourceLineNo">061</span>         *<a name="line.61"></a>
+<span class="sourceLineNo">062</span>         * @return a string representation of this purpose<a name="line.62"></a>
+<span class="sourceLineNo">063</span>         */<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        public String toString()        { return name; }<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>        /**<a name="line.66"></a>
+<span class="sourceLineNo">067</span>         * A key for signing.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>         */<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        public static final Purpose SIGN = new Purpose("sign");<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        /**<a name="line.70"></a>
+<span class="sourceLineNo">071</span>         * A key for verifying.<a name="line.71"></a>
+<span class="sourceLineNo">072</span>         */<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        public static final Purpose VERIFY = new Purpose("verify");<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        /**<a name="line.74"></a>
+<span class="sourceLineNo">075</span>         * A key for encrypting.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>         */<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        public static final Purpose ENCRYPT = new Purpose("encrypt");<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        /**<a name="line.78"></a>
+<span class="sourceLineNo">079</span>         * A key for decrypting.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>         */<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        public static final Purpose DECRYPT = new Purpose("decrypt");<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    }<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    /**<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * Default no-args constructor; intended for invocation by subclasses only.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     */<a name="line.86"></a>
+<span class="sourceLineNo">087</span>    protected KeySelector() {}<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    /**<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * Attempts to find a key that satisfies the specified constraints.<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @param keyInfo a &lt;code&gt;KeyInfo&lt;/code&gt; (may be &lt;code&gt;null&lt;/code&gt;)<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @param purpose the key's purpose ({@link Purpose#SIGN},<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     *    {@link Purpose#VERIFY}, {@link Purpose#ENCRYPT}, or<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *    {@link Purpose#DECRYPT})<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @param method the algorithm method that this key is to be used for.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     *    Only keys that are compatible with the algorithm and meet the<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *    constraints of the specified algorithm should be returned.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @param context an &lt;code&gt;XMLCryptoContext&lt;/code&gt; that may contain<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     *    useful information for finding an appropriate key. If this key<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *    selector supports resolving {@link RetrievalMethod} types, the<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     *    context's &lt;code&gt;baseURI&lt;/code&gt; and &lt;code&gt;dereferencer&lt;/code&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     *    parameters (if specified) should be used by the selector to<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     *    resolve and dereference the URI.<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * @return the result of the key selector<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * @throws KeySelectorException if an exceptional condition occurs while<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     *    attempting to find a key. Note that an inability to find a key is not<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     *    considered an exception (&lt;code&gt;null&lt;/code&gt; should be<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     *    returned in that case). However, an error condition (ex: network<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     *    communications failure) that prevented the &lt;code&gt;KeySelector&lt;/code&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *    from finding a potential key should be considered an exception.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @throws ClassCastException if the data type of &lt;code&gt;method&lt;/code&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *    is not supported by this key selector<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     */<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    public abstract KeySelectorResult select(KeyInfo keyInfo, Purpose purpose,<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        AlgorithmMethod method, XMLCryptoContext context)<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        throws KeySelectorException;<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>    /**<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * Returns a &lt;code&gt;KeySelector&lt;/code&gt; that always selects the specified<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * key, regardless of the &lt;code&gt;KeyInfo&lt;/code&gt; passed to it.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     *<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * @param key the sole key to be stored in the key selector<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @return a key selector that always selects the specified key<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @throws NullPointerException if &lt;code&gt;key&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     */<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    public static KeySelector singletonKeySelector(Key key) {<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        return new SingletonKeySelector(key);<a name="line.128"></a>
+<span class="sourceLineNo">129</span>    }<a name="line.129"></a>
+<span class="sourceLineNo">130</span><a name="line.130"></a>
+<span class="sourceLineNo">131</span>    private static class SingletonKeySelector extends KeySelector {<a name="line.131"></a>
+<span class="sourceLineNo">132</span>        private final Key key;<a name="line.132"></a>
+<span class="sourceLineNo">133</span><a name="line.133"></a>
+<span class="sourceLineNo">134</span>        SingletonKeySelector(Key key) {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>            if (key == null) {<a name="line.135"></a>
+<span class="sourceLineNo">136</span>                throw new NullPointerException();<a name="line.136"></a>
+<span class="sourceLineNo">137</span>            }<a name="line.137"></a>
+<span class="sourceLineNo">138</span>            this.key = key;<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        }<a name="line.139"></a>
+<span class="sourceLineNo">140</span><a name="line.140"></a>
+<span class="sourceLineNo">141</span>        public KeySelectorResult select(KeyInfo keyInfo, Purpose purpose,<a name="line.141"></a>
+<span class="sourceLineNo">142</span>            AlgorithmMethod method, XMLCryptoContext context)<a name="line.142"></a>
+<span class="sourceLineNo">143</span>            throws KeySelectorException {<a name="line.143"></a>
+<span class="sourceLineNo">144</span><a name="line.144"></a>
+<span class="sourceLineNo">145</span>            return new KeySelectorResult() {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>                public Key getKey() {<a name="line.146"></a>
+<span class="sourceLineNo">147</span>                    return key;<a name="line.147"></a>
+<span class="sourceLineNo">148</span>                }<a name="line.148"></a>
+<span class="sourceLineNo">149</span>            };<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        }<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    }<a name="line.151"></a>
+<span class="sourceLineNo">152</span>}<a name="line.152"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

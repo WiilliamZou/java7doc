@@ -1,0 +1,210 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.util.*;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>/**<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * This interface imposes a total ordering on the objects of each class that<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * implements it.  This ordering is referred to as the class's &lt;i&gt;natural<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * ordering&lt;/i&gt;, and the class's &lt;tt&gt;compareTo&lt;/tt&gt; method is referred to as<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * its &lt;i&gt;natural comparison method&lt;/i&gt;.&lt;p&gt;<a name="line.33"></a>
+<span class="sourceLineNo">034</span> *<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * Lists (and arrays) of objects that implement this interface can be sorted<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * automatically by {@link Collections#sort(List) Collections.sort} (and<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * {@link Arrays#sort(Object[]) Arrays.sort}).  Objects that implement this<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * interface can be used as keys in a {@linkplain SortedMap sorted map} or as<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * elements in a {@linkplain SortedSet sorted set}, without the need to<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * specify a {@linkplain Comparator comparator}.&lt;p&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * The natural ordering for a class &lt;tt&gt;C&lt;/tt&gt; is said to be &lt;i&gt;consistent<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * with equals&lt;/i&gt; if and only if &lt;tt&gt;e1.compareTo(e2) == 0&lt;/tt&gt; has<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * the same boolean value as &lt;tt&gt;e1.equals(e2)&lt;/tt&gt; for every<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;tt&gt;e1&lt;/tt&gt; and &lt;tt&gt;e2&lt;/tt&gt; of class &lt;tt&gt;C&lt;/tt&gt;.  Note that &lt;tt&gt;null&lt;/tt&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * is not an instance of any class, and &lt;tt&gt;e.compareTo(null)&lt;/tt&gt; should<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * throw a &lt;tt&gt;NullPointerException&lt;/tt&gt; even though &lt;tt&gt;e.equals(null)&lt;/tt&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * returns &lt;tt&gt;false&lt;/tt&gt;.&lt;p&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * It is strongly recommended (though not required) that natural orderings be<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * consistent with equals.  This is so because sorted sets (and sorted maps)<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * without explicit comparators behave "strangely" when they are used with<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * elements (or keys) whose natural ordering is inconsistent with equals.  In<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * particular, such a sorted set (or sorted map) violates the general contract<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * for set (or map), which is defined in terms of the &lt;tt&gt;equals&lt;/tt&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * method.&lt;p&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * For example, if one adds two keys &lt;tt&gt;a&lt;/tt&gt; and &lt;tt&gt;b&lt;/tt&gt; such that<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * &lt;tt&gt;(!a.equals(b) &amp;&amp; a.compareTo(b) == 0)&lt;/tt&gt; to a sorted<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * set that does not use an explicit comparator, the second &lt;tt&gt;add&lt;/tt&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * operation returns false (and the size of the sorted set does not increase)<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * because &lt;tt&gt;a&lt;/tt&gt; and &lt;tt&gt;b&lt;/tt&gt; are equivalent from the sorted set's<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * perspective.&lt;p&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * Virtually all Java core classes that implement &lt;tt&gt;Comparable&lt;/tt&gt; have natural<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * orderings that are consistent with equals.  One exception is<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;tt&gt;java.math.BigDecimal&lt;/tt&gt;, whose natural ordering equates<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;tt&gt;BigDecimal&lt;/tt&gt; objects with equal values and different precisions<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * (such as 4.0 and 4.00).&lt;p&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * For the mathematically inclined, the &lt;i&gt;relation&lt;/i&gt; that defines<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * the natural ordering on a given class C is:&lt;pre&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *       {(x, y) such that x.compareTo(y) &amp;lt;= 0}.<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;/pre&gt; The &lt;i&gt;quotient&lt;/i&gt; for this total order is: &lt;pre&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *       {(x, y) such that x.compareTo(y) == 0}.<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * &lt;/pre&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * It follows immediately from the contract for &lt;tt&gt;compareTo&lt;/tt&gt; that the<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * quotient is an &lt;i&gt;equivalence relation&lt;/i&gt; on &lt;tt&gt;C&lt;/tt&gt;, and that the<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * natural ordering is a &lt;i&gt;total order&lt;/i&gt; on &lt;tt&gt;C&lt;/tt&gt;.  When we say that a<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * class's natural ordering is &lt;i&gt;consistent with equals&lt;/i&gt;, we mean that the<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * quotient for the natural ordering is the equivalence relation defined by<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * the class's {@link Object#equals(Object) equals(Object)} method:&lt;pre&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *     {(x, y) such that x.equals(y)}. &lt;/pre&gt;&lt;p&gt;<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * This interface is a member of the<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * &lt;a href="{@docRoot}/../technotes/guides/collections/index.html"&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * Java Collections Framework&lt;/a&gt;.<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * @param &lt;T&gt; the type of objects that this object may be compared to<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * @author  Josh Bloch<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * @see java.util.Comparator<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * @since 1.2<a name="line.94"></a>
+<span class="sourceLineNo">095</span> */<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>public interface Comparable&lt;T&gt; {<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    /**<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * Compares this object with the specified object for order.  Returns a<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * negative integer, zero, or a positive integer as this object is less<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * than, equal to, or greater than the specified object.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     *<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * &lt;p&gt;The implementor must ensure &lt;tt&gt;sgn(x.compareTo(y)) ==<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * -sgn(y.compareTo(x))&lt;/tt&gt; for all &lt;tt&gt;x&lt;/tt&gt; and &lt;tt&gt;y&lt;/tt&gt;.  (This<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * implies that &lt;tt&gt;x.compareTo(y)&lt;/tt&gt; must throw an exception iff<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * &lt;tt&gt;y.compareTo(x)&lt;/tt&gt; throws an exception.)<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     *<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * &lt;p&gt;The implementor must also ensure that the relation is transitive:<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * &lt;tt&gt;(x.compareTo(y)&amp;gt;0 &amp;amp;&amp;amp; y.compareTo(z)&amp;gt;0)&lt;/tt&gt; implies<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * &lt;tt&gt;x.compareTo(z)&amp;gt;0&lt;/tt&gt;.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * &lt;p&gt;Finally, the implementor must ensure that &lt;tt&gt;x.compareTo(y)==0&lt;/tt&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * implies that &lt;tt&gt;sgn(x.compareTo(z)) == sgn(y.compareTo(z))&lt;/tt&gt;, for<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * all &lt;tt&gt;z&lt;/tt&gt;.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * &lt;p&gt;It is strongly recommended, but &lt;i&gt;not&lt;/i&gt; strictly required that<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * &lt;tt&gt;(x.compareTo(y)==0) == (x.equals(y))&lt;/tt&gt;.  Generally speaking, any<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * class that implements the &lt;tt&gt;Comparable&lt;/tt&gt; interface and violates<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * this condition should clearly indicate this fact.  The recommended<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * language is "Note: this class has a natural ordering that is<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * inconsistent with equals."<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     *<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * &lt;p&gt;In the foregoing description, the notation<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * &lt;tt&gt;sgn(&lt;/tt&gt;&lt;i&gt;expression&lt;/i&gt;&lt;tt&gt;)&lt;/tt&gt; designates the mathematical<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * &lt;i&gt;signum&lt;/i&gt; function, which is defined to return one of &lt;tt&gt;-1&lt;/tt&gt;,<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * &lt;tt&gt;0&lt;/tt&gt;, or &lt;tt&gt;1&lt;/tt&gt; according to whether the value of<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * &lt;i&gt;expression&lt;/i&gt; is negative, zero or positive.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     *<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * @param   o the object to be compared.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * @return  a negative integer, zero, or a positive integer as this object<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *          is less than, equal to, or greater than the specified object.<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * @throws NullPointerException if the specified object is null<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * @throws ClassCastException if the specified object's type prevents it<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *         from being compared to this object.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     */<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    public int compareTo(T o);<a name="line.137"></a>
+<span class="sourceLineNo">138</span>}<a name="line.138"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2004, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.xml.bind.annotation;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.lang.annotation.Target;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.lang.annotation.Retention;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import static java.lang.annotation.ElementType.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import static java.lang.annotation.RetentionPolicy.*;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>/**<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * &lt;p&gt;<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * Maps a JavaBean property to XML IDREF.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * To preserve referential integrity of an object graph across XML<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * serialization followed by a XML deserialization, requires an object<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * reference to be marshalled by reference or containment<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * appropriately. Annotations &lt;tt&gt;&amp;#64;XmlID&lt;/tt&gt; and &lt;tt&gt;&amp;#64;XmlIDREF&lt;/tt&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * together allow a customized mapping of a JavaBean property's<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * type by containment or reference.<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;p&gt;&lt;b&gt;Usage&lt;/b&gt; &lt;/p&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * The &lt;tt&gt;&amp;#64;XmlIDREF&lt;/tt&gt; annotation can be used with the following<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * program elements:<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;ul&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *   &lt;li&gt; a JavaBean property &lt;/li&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *   &lt;li&gt; non static, non transient field &lt;/li&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;/ul&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;p&gt;See "Package Specification" in javax.xml.bind.package javadoc for<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * additional common information.&lt;/p&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;p&gt; The usage is subject to the following constraints:<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;ul&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *   &lt;li&gt; If the type of the field or property is a collection type,<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *        then the collection item type must contain a property or<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *        field annotated with &lt;tt&gt;&amp;#64;XmlID&lt;/tt&gt;.  &lt;/li&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *   &lt;li&gt; If the field or property is single valued, then the type of<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *        the property or field must contain a property or field<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *        annotated with &lt;tt&gt;&amp;#64;XmlID&lt;/tt&gt;.<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *        &lt;p&gt;Note: If the collection item type or the type of the<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *        property (for non collection type) is java.lang.Object, then<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *        the instance must contain a property/field annotated with<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *        &lt;tt&gt;&amp;#64;XmlID&lt;/tt&gt; attribute.<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *        &lt;/li&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *   &lt;li&gt; This annotation can be used with the following annotations:<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *        {@link XmlElement}, {@link XmlAttribute}, {@link XmlList},<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *        and {@link XmlElements}.&lt;/li&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;/ul&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;p&gt;&lt;b&gt;Example:&lt;/b&gt; Map a JavaBean property to &lt;tt&gt;xs:IDREF&lt;/tt&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *   (i.e. by reference rather than by containment)&lt;/p&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &lt;pre&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *   //EXAMPLE: Code fragment<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *   public class Shipping {<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *       &amp;#64;XmlIDREF public Customer getCustomer();<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *       public void setCustomer(Customer customer);<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *       ....<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *    }<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *   &amp;lt;!-- Example: XML Schema fragment --&gt;<a name="line.86"></a>
+<span class="sourceLineNo">087</span> *   &amp;lt;xs:complexType name="Shipping"&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *     &amp;lt;xs:complexContent&gt;<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *       &amp;lt;xs:sequence&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *         &amp;lt;xs:element name="customer" type="xs:IDREF"/&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *         ....<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *       &amp;lt;/xs:sequence&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *     &amp;lt;/xs:complexContent&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *   &amp;lt;/xs:complexType&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;/pre&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span> *<a name="line.97"></a>
+<span class="sourceLineNo">098</span> *<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * &lt;p&gt;&lt;b&gt;Example 2: &lt;/b&gt; The following is a complete example of<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * containment versus reference.<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * &lt;pre&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *    // By default, Customer maps to complex type &lt;tt&gt;xs:Customer&lt;/tt&gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *    public class Customer {<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *        // map JavaBean property type to &lt;tt&gt;xs:ID&lt;/tt&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *        &amp;#64;XmlID public String getCustomerID();<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *        public void setCustomerID(String id);<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *        // .... other properties not shown<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *    }<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *<a name="line.113"></a>
+<span class="sourceLineNo">114</span> *   // By default, Invoice maps to a complex type &lt;tt&gt;xs:Invoice&lt;/tt&gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *   public class Invoice {<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *<a name="line.116"></a>
+<span class="sourceLineNo">117</span> *       // map by reference<a name="line.117"></a>
+<span class="sourceLineNo">118</span> *       &amp;#64;XmlIDREF public Customer getCustomer();<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *       public void setCustomer(Customer customer);<a name="line.119"></a>
+<span class="sourceLineNo">120</span> *<a name="line.120"></a>
+<span class="sourceLineNo">121</span> *      // .... other properties not shown here<a name="line.121"></a>
+<span class="sourceLineNo">122</span> *   }<a name="line.122"></a>
+<span class="sourceLineNo">123</span> *<a name="line.123"></a>
+<span class="sourceLineNo">124</span> *   // By default, Shipping maps to complex type &lt;tt&gt;xs:Shipping&lt;/tt&gt;<a name="line.124"></a>
+<span class="sourceLineNo">125</span> *   public class Shipping {<a name="line.125"></a>
+<span class="sourceLineNo">126</span> *<a name="line.126"></a>
+<span class="sourceLineNo">127</span> *       // map by reference<a name="line.127"></a>
+<span class="sourceLineNo">128</span> *       &amp;#64;XmlIDREF public Customer getCustomer();<a name="line.128"></a>
+<span class="sourceLineNo">129</span> *       public void setCustomer(Customer customer);<a name="line.129"></a>
+<span class="sourceLineNo">130</span> *   }<a name="line.130"></a>
+<span class="sourceLineNo">131</span> *<a name="line.131"></a>
+<span class="sourceLineNo">132</span> *   // at least one class must reference Customer by containment;<a name="line.132"></a>
+<span class="sourceLineNo">133</span> *   // Customer instances won't be marshalled.<a name="line.133"></a>
+<span class="sourceLineNo">134</span> *   &amp;#64;XmlElement(name="CustomerData")<a name="line.134"></a>
+<span class="sourceLineNo">135</span> *   public class CustomerData {<a name="line.135"></a>
+<span class="sourceLineNo">136</span> *       // map reference to Customer by containment by default.<a name="line.136"></a>
+<span class="sourceLineNo">137</span> *       public Customer getCustomer();<a name="line.137"></a>
+<span class="sourceLineNo">138</span> *<a name="line.138"></a>
+<span class="sourceLineNo">139</span> *       // maps reference to Shipping by containment by default.<a name="line.139"></a>
+<span class="sourceLineNo">140</span> *       public Shipping getShipping();<a name="line.140"></a>
+<span class="sourceLineNo">141</span> *<a name="line.141"></a>
+<span class="sourceLineNo">142</span> *       // maps reference to Invoice by containment by default.<a name="line.142"></a>
+<span class="sourceLineNo">143</span> *       public Invoice getInvoice();<a name="line.143"></a>
+<span class="sourceLineNo">144</span> *   }<a name="line.144"></a>
+<span class="sourceLineNo">145</span> *<a name="line.145"></a>
+<span class="sourceLineNo">146</span> *   &amp;lt;!-- XML Schema mapping for above code frament --&gt;<a name="line.146"></a>
+<span class="sourceLineNo">147</span> *<a name="line.147"></a>
+<span class="sourceLineNo">148</span> *   &amp;lt;xs:complexType name="Invoice"&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span> *     &amp;lt;xs:complexContent&gt;<a name="line.149"></a>
+<span class="sourceLineNo">150</span> *       &amp;lt;xs:sequence&gt;<a name="line.150"></a>
+<span class="sourceLineNo">151</span> *         &amp;lt;xs:element name="customer" type="xs:IDREF"/&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span> *         ....<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *       &amp;lt;/xs:sequence&gt;<a name="line.153"></a>
+<span class="sourceLineNo">154</span> *     &amp;lt;/xs:complexContent&gt;<a name="line.154"></a>
+<span class="sourceLineNo">155</span> *   &amp;lt;/xs:complexType&gt;<a name="line.155"></a>
+<span class="sourceLineNo">156</span> *<a name="line.156"></a>
+<span class="sourceLineNo">157</span> *   &amp;lt;xs:complexType name="Shipping"&gt;<a name="line.157"></a>
+<span class="sourceLineNo">158</span> *     &amp;lt;xs:complexContent&gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span> *       &amp;lt;xs:sequence&gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span> *         &amp;lt;xs:element name="customer" type="xs:IDREF"/&gt;<a name="line.160"></a>
+<span class="sourceLineNo">161</span> *         ....<a name="line.161"></a>
+<span class="sourceLineNo">162</span> *       &amp;lt;/xs:sequence&gt;<a name="line.162"></a>
+<span class="sourceLineNo">163</span> *     &amp;lt;/xs:complexContent&gt;<a name="line.163"></a>
+<span class="sourceLineNo">164</span> *   &amp;lt;/xs:complexType&gt;<a name="line.164"></a>
+<span class="sourceLineNo">165</span> *<a name="line.165"></a>
+<span class="sourceLineNo">166</span> *   &amp;lt;xs:complexType name="Customer"&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span> *     &amp;lt;xs:complexContent&gt;<a name="line.167"></a>
+<span class="sourceLineNo">168</span> *       &amp;lt;xs:sequence&gt;<a name="line.168"></a>
+<span class="sourceLineNo">169</span> *         ....<a name="line.169"></a>
+<span class="sourceLineNo">170</span> *       &amp;lt;/xs:sequence&gt;<a name="line.170"></a>
+<span class="sourceLineNo">171</span> *       &amp;lt;xs:attribute name="CustomerID" type="xs:ID"/&gt;<a name="line.171"></a>
+<span class="sourceLineNo">172</span> *     &amp;lt;/xs:complexContent&gt;<a name="line.172"></a>
+<span class="sourceLineNo">173</span> *   &amp;lt;/xs:complexType&gt;<a name="line.173"></a>
+<span class="sourceLineNo">174</span> *<a name="line.174"></a>
+<span class="sourceLineNo">175</span> *   &amp;lt;xs:complexType name="CustomerData"&gt;<a name="line.175"></a>
+<span class="sourceLineNo">176</span> *     &amp;lt;xs:complexContent&gt;<a name="line.176"></a>
+<span class="sourceLineNo">177</span> *       &amp;lt;xs:sequence&gt;<a name="line.177"></a>
+<span class="sourceLineNo">178</span> *         &amp;lt;xs:element name="customer" type="xs:Customer"/&gt;<a name="line.178"></a>
+<span class="sourceLineNo">179</span> *         &amp;lt;xs:element name="shipping" type="xs:Shipping"/&gt;<a name="line.179"></a>
+<span class="sourceLineNo">180</span> *         &amp;lt;xs:element name="invoice"  type="xs:Invoice"/&gt;<a name="line.180"></a>
+<span class="sourceLineNo">181</span> *       &amp;lt;/xs:sequence&gt;<a name="line.181"></a>
+<span class="sourceLineNo">182</span> *     &amp;lt;/xs:complexContent&gt;<a name="line.182"></a>
+<span class="sourceLineNo">183</span> *   &amp;lt;/xs:complexType&gt;<a name="line.183"></a>
+<span class="sourceLineNo">184</span> *<a name="line.184"></a>
+<span class="sourceLineNo">185</span> *   &amp;lt;xs:element name"customerData" type="xs:CustomerData"/&gt;<a name="line.185"></a>
+<span class="sourceLineNo">186</span> *<a name="line.186"></a>
+<span class="sourceLineNo">187</span> *   &amp;lt;!-- Instance document conforming to the above XML Schema --&gt;<a name="line.187"></a>
+<span class="sourceLineNo">188</span> *    &amp;lt;customerData&gt;<a name="line.188"></a>
+<span class="sourceLineNo">189</span> *       &amp;lt;customer customerID="Alice"&gt;<a name="line.189"></a>
+<span class="sourceLineNo">190</span> *           ....<a name="line.190"></a>
+<span class="sourceLineNo">191</span> *       &amp;lt;/customer&gt;<a name="line.191"></a>
+<span class="sourceLineNo">192</span> *<a name="line.192"></a>
+<span class="sourceLineNo">193</span> *       &amp;lt;shipping customer="Alice"&gt;<a name="line.193"></a>
+<span class="sourceLineNo">194</span> *           ....<a name="line.194"></a>
+<span class="sourceLineNo">195</span> *       &amp;lt;/shipping&gt;<a name="line.195"></a>
+<span class="sourceLineNo">196</span> *<a name="line.196"></a>
+<span class="sourceLineNo">197</span> *       &amp;lt;invoice customer="Alice"&gt;<a name="line.197"></a>
+<span class="sourceLineNo">198</span> *           ....<a name="line.198"></a>
+<span class="sourceLineNo">199</span> *       &amp;lt;/invoice&gt;<a name="line.199"></a>
+<span class="sourceLineNo">200</span> *   &amp;lt;/customerData&gt;<a name="line.200"></a>
+<span class="sourceLineNo">201</span> *<a name="line.201"></a>
+<span class="sourceLineNo">202</span> * &lt;/pre&gt;<a name="line.202"></a>
+<span class="sourceLineNo">203</span> *<a name="line.203"></a>
+<span class="sourceLineNo">204</span> * &lt;p&gt;&lt;b&gt;Example 3: &lt;/b&gt; Mapping List to repeating element of type IDREF<a name="line.204"></a>
+<span class="sourceLineNo">205</span> * &lt;pre&gt;<a name="line.205"></a>
+<span class="sourceLineNo">206</span> *     // Code fragment<a name="line.206"></a>
+<span class="sourceLineNo">207</span> *     public class Shipping {<a name="line.207"></a>
+<span class="sourceLineNo">208</span> *         &amp;#64;XmlIDREF<a name="line.208"></a>
+<span class="sourceLineNo">209</span> *         &amp;#64;XmlElement(name="Alice")<a name="line.209"></a>
+<span class="sourceLineNo">210</span> *             public List customers;<a name="line.210"></a>
+<span class="sourceLineNo">211</span> *     }<a name="line.211"></a>
+<span class="sourceLineNo">212</span> *<a name="line.212"></a>
+<span class="sourceLineNo">213</span> *     &amp;lt;!-- XML schema fragment --&gt;<a name="line.213"></a>
+<span class="sourceLineNo">214</span> *     &amp;lt;xs:complexType name="Shipping"&gt;<a name="line.214"></a>
+<span class="sourceLineNo">215</span> *       &amp;lt;xs:sequence&gt;<a name="line.215"></a>
+<span class="sourceLineNo">216</span> *         &amp;lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;<a name="line.216"></a>
+<span class="sourceLineNo">217</span> *           &amp;lt;xs:element name="Alice" type="xs:IDREF"/&gt;<a name="line.217"></a>
+<span class="sourceLineNo">218</span> *         &amp;lt;/xs:choice&gt;<a name="line.218"></a>
+<span class="sourceLineNo">219</span> *       &amp;lt;/xs:sequence&gt;<a name="line.219"></a>
+<span class="sourceLineNo">220</span> *     &amp;lt;/xs:complexType&gt;<a name="line.220"></a>
+<span class="sourceLineNo">221</span> * &lt;/pre&gt;<a name="line.221"></a>
+<span class="sourceLineNo">222</span> *<a name="line.222"></a>
+<span class="sourceLineNo">223</span> * &lt;p&gt;&lt;b&gt;Example 4: &lt;/b&gt; Mapping a List to a list of elements of type IDREF.<a name="line.223"></a>
+<span class="sourceLineNo">224</span> * &lt;pre&gt;<a name="line.224"></a>
+<span class="sourceLineNo">225</span> *     //Code fragment<a name="line.225"></a>
+<span class="sourceLineNo">226</span> *     public class Shipping {<a name="line.226"></a>
+<span class="sourceLineNo">227</span> *         &amp;#64;XmlIDREF<a name="line.227"></a>
+<span class="sourceLineNo">228</span> *         &amp;#64;XmlElements(<a name="line.228"></a>
+<span class="sourceLineNo">229</span> *             &amp;#64;XmlElement(name="Alice", type="Customer.class")<a name="line.229"></a>
+<span class="sourceLineNo">230</span> *              &amp;#64;XmlElement(name="John", type="InternationalCustomer.class")<a name="line.230"></a>
+<span class="sourceLineNo">231</span> *         public List customers;<a name="line.231"></a>
+<span class="sourceLineNo">232</span> *     }<a name="line.232"></a>
+<span class="sourceLineNo">233</span> *<a name="line.233"></a>
+<span class="sourceLineNo">234</span> *     &amp;lt;!-- XML Schema fragment --&gt;<a name="line.234"></a>
+<span class="sourceLineNo">235</span> *     &amp;lt;xs:complexType name="Shipping"&gt;<a name="line.235"></a>
+<span class="sourceLineNo">236</span> *       &amp;lt;xs:sequence&gt;<a name="line.236"></a>
+<span class="sourceLineNo">237</span> *         &amp;lt;xs:choice minOccurs="0" maxOccurs="unbounded"&gt;<a name="line.237"></a>
+<span class="sourceLineNo">238</span> *           &amp;lt;xs:element name="Alice" type="xs:IDREF"/&gt;<a name="line.238"></a>
+<span class="sourceLineNo">239</span> *           &amp;lt;xs:element name="John" type="xs:IDREF"/&gt;<a name="line.239"></a>
+<span class="sourceLineNo">240</span> *         &amp;lt;/xs:choice&gt;<a name="line.240"></a>
+<span class="sourceLineNo">241</span> *       &amp;lt;/xs:sequence&gt;<a name="line.241"></a>
+<span class="sourceLineNo">242</span> *     &amp;lt;/xs:complexType&gt;<a name="line.242"></a>
+<span class="sourceLineNo">243</span> * &lt;/pre&gt;<a name="line.243"></a>
+<span class="sourceLineNo">244</span> * @author Sekhar Vajjhala, Sun Microsystems, Inc.<a name="line.244"></a>
+<span class="sourceLineNo">245</span> * @see XmlID<a name="line.245"></a>
+<span class="sourceLineNo">246</span> * @since JAXB2.0<a name="line.246"></a>
+<span class="sourceLineNo">247</span> */<a name="line.247"></a>
+<span class="sourceLineNo">248</span><a name="line.248"></a>
+<span class="sourceLineNo">249</span>@Retention(RUNTIME) @Target({FIELD, METHOD})<a name="line.249"></a>
+<span class="sourceLineNo">250</span>public @interface XmlIDREF {}<a name="line.250"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.xml.transform;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * &lt;p&gt;A TransformerFactory instance can be used to create<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * {@link javax.xml.transform.Transformer} and<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * {@link javax.xml.transform.Templates} objects.&lt;/p&gt;<a name="line.31"></a>
+<span class="sourceLineNo">032</span> *<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * &lt;p&gt;The system property that determines which Factory implementation<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * to create is named &lt;code&gt;"javax.xml.transform.TransformerFactory"&lt;/code&gt;.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * This property names a concrete subclass of the<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;code&gt;TransformerFactory&lt;/code&gt; abstract class. If the property is not<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * defined, a platform default is be used.&lt;/p&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> *<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * @author &lt;a href="mailto:Jeff.Suttor@Sun.com"&gt;Jeff Suttor&lt;/a&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * @author &lt;a href="mailto:Neeraj.Bajaj@sun.com"&gt;Neeraj Bajaj&lt;/a&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * @since 1.5<a name="line.42"></a>
+<span class="sourceLineNo">043</span> */<a name="line.43"></a>
+<span class="sourceLineNo">044</span>public abstract class TransformerFactory {<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>    /**<a name="line.46"></a>
+<span class="sourceLineNo">047</span>     * Default constructor is protected on purpose.<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     */<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    protected TransformerFactory() { }<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /**<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * &lt;p&gt;Obtain a new instance of a &lt;code&gt;TransformerFactory&lt;/code&gt;.<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * This static method creates a new factory instance<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * This method uses the following ordered lookup procedure to determine<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * the &lt;code&gt;TransformerFactory&lt;/code&gt; implementation class to<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * load:&lt;/p&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * &lt;ul&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * &lt;li&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * Use the &lt;code&gt;javax.xml.transform.TransformerFactory&lt;/code&gt; system<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * property.<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * &lt;/li&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * &lt;li&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * Use the properties file "lib/jaxp.properties" in the JRE directory.<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * This configuration file is in standard &lt;code&gt;java.util.Properties<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * &lt;/code&gt; format and contains the fully qualified name of the<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * implementation class with the key being the system property defined<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * above.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     *<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * The jaxp.properties file is read only once by the JAXP implementation<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * and it's values are then cached for future use.  If the file does not exist<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * when the first attempt is made to read from it, no further attempts are<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * made to check for its existence.  It is not possible to change the value<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * of any property in jaxp.properties after it has been read for the first time.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * &lt;/li&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * &lt;li&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * Use the Services API (as detailed in the JAR specification), if<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * available, to determine the classname. The Services API will look<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * for a classname in the file<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * &lt;code&gt;META-INF/services/javax.xml.transform.TransformerFactory&lt;/code&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * in jars available to the runtime.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * &lt;/li&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * &lt;li&gt;<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * Platform default &lt;code&gt;TransformerFactory&lt;/code&gt; instance.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * &lt;/li&gt;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * &lt;/ul&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * &lt;p&gt;Once an application has obtained a reference to a &lt;code&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * TransformerFactory&lt;/code&gt; it can use the factory to configure<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * and obtain transformer instances.&lt;/p&gt;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @return new TransformerFactory instance, never null.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     *<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * @throws TransformerFactoryConfigurationError Thrown if the implementation<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *    is not available or cannot be instantiated.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     */<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    public static TransformerFactory newInstance()<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        throws TransformerFactoryConfigurationError {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        try {<a name="line.100"></a>
+<span class="sourceLineNo">101</span>            return (TransformerFactory) FactoryFinder.find(<a name="line.101"></a>
+<span class="sourceLineNo">102</span>            /* The default property name according to the JAXP spec */<a name="line.102"></a>
+<span class="sourceLineNo">103</span>            "javax.xml.transform.TransformerFactory",<a name="line.103"></a>
+<span class="sourceLineNo">104</span>            /* The fallback implementation class name, XSLTC */<a name="line.104"></a>
+<span class="sourceLineNo">105</span>            "com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl");<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        } catch (FactoryFinder.ConfigurationError e) {<a name="line.106"></a>
+<span class="sourceLineNo">107</span>            throw new TransformerFactoryConfigurationError(<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                e.getException(),<a name="line.108"></a>
+<span class="sourceLineNo">109</span>                e.getMessage());<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        }<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    }<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    /**<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * &lt;p&gt;Obtain a new instance of a &lt;code&gt;TransformerFactory&lt;/code&gt; from factory class name.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * This function is useful when there are multiple providers in the classpath.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * It gives more control to the application as it can specify which provider<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * should be loaded.&lt;/p&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * &lt;p&gt;Once an application has obtained a reference to a &lt;code&gt;<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * TransformerFactory&lt;/code&gt; it can use the factory to configure<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * and obtain transformer instances.&lt;/p&gt;<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     *<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * &lt;h2&gt;Tip for Trouble-shooting&lt;/h2&gt;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * &lt;p&gt;Setting the &lt;code&gt;jaxp.debug&lt;/code&gt; system property will cause<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * this method to print a lot of debug messages<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * to &lt;code&gt;System.err&lt;/code&gt; about what it is doing and where it is looking at.&lt;/p&gt;<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     *<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * &lt;p&gt; If you have problems try:&lt;/p&gt;<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * &lt;pre&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * java -Djaxp.debug=1 YourProgram ....<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * &lt;/pre&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * @param factoryClassName fully qualified factory class name that provides implementation of &lt;code&gt;javax.xml.transform.TransformerFactory&lt;/code&gt;.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * @param classLoader &lt;code&gt;ClassLoader&lt;/code&gt; used to load the factory class. If &lt;code&gt;null&lt;/code&gt;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     *                     current &lt;code&gt;Thread&lt;/code&gt;'s context classLoader is used to load the factory class.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @return new TransformerFactory instance, never null.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * @throws TransformerFactoryConfigurationError<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *                    if &lt;code&gt;factoryClassName&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;, or<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *                   the factory class cannot be loaded, instantiated.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @see #newInstance()<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @since 1.6<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     */<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    public static TransformerFactory newInstance(String factoryClassName, ClassLoader classLoader)<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        throws TransformerFactoryConfigurationError{<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        try {<a name="line.150"></a>
+<span class="sourceLineNo">151</span>            //do not fallback if given classloader can't find the class, throw exception<a name="line.151"></a>
+<span class="sourceLineNo">152</span>            return (TransformerFactory) FactoryFinder.newInstance(factoryClassName, classLoader, false);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        } catch (FactoryFinder.ConfigurationError e) {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>            throw new TransformerFactoryConfigurationError(<a name="line.154"></a>
+<span class="sourceLineNo">155</span>                e.getException(),<a name="line.155"></a>
+<span class="sourceLineNo">156</span>                e.getMessage());<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        }<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    }<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    /**<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * &lt;p&gt;Process the &lt;code&gt;Source&lt;/code&gt; into a &lt;code&gt;Transformer&lt;/code&gt;<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * &lt;code&gt;Object&lt;/code&gt;.  The &lt;code&gt;Source&lt;/code&gt; is an XSLT document that<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * conforms to &lt;a href="http://www.w3.org/TR/xslt"&gt;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * XSL Transformations (XSLT) Version 1.0&lt;/a&gt;.  Care must<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * be taken not to use this &lt;code&gt;Transformer&lt;/code&gt; in multiple<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * &lt;code&gt;Thread&lt;/code&gt;s running concurrently.<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * Different &lt;code&gt;TransformerFactories&lt;/code&gt; can be used concurrently by<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * different &lt;code&gt;Thread&lt;/code&gt;s.&lt;/p&gt;<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     *<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * @param source &lt;code&gt;Source &lt;/code&gt; of XSLT document used to create<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *   &lt;code&gt;Transformer&lt;/code&gt;.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *   Examples of XML &lt;code&gt;Source&lt;/code&gt;s include<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     *   {@link javax.xml.transform.dom.DOMSource DOMSource},<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     *   {@link javax.xml.transform.sax.SAXSource SAXSource}, and<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *   {@link javax.xml.transform.stream.StreamSource StreamSource}.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @return A &lt;code&gt;Transformer&lt;/code&gt; object that may be used to perform<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *   a transformation in a single &lt;code&gt;Thread&lt;/code&gt;, never<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *   &lt;code&gt;null&lt;/code&gt;.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @throws TransformerConfigurationException Thrown if there are errors when<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     *    parsing the &lt;code&gt;Source&lt;/code&gt; or it is not possible to create a<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     *   &lt;code&gt;Transformer&lt;/code&gt; instance.<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     *<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * @see &lt;a href="http://www.w3.org/TR/xslt"&gt;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     *   XSL Transformations (XSLT) Version 1.0&lt;/a&gt;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     */<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    public abstract Transformer newTransformer(Source source)<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        throws TransformerConfigurationException;<a name="line.188"></a>
+<span class="sourceLineNo">189</span><a name="line.189"></a>
+<span class="sourceLineNo">190</span>    /**<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * &lt;p&gt;Create a new &lt;code&gt;Transformer&lt;/code&gt; that performs a copy<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * of the &lt;code&gt;Source&lt;/code&gt; to the &lt;code&gt;Result&lt;/code&gt;.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * i.e. the "&lt;em&gt;identity transform&lt;/em&gt;".&lt;/p&gt;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     *<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * @return A Transformer object that may be used to perform a transformation<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * in a single thread, never null.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @throws TransformerConfigurationException When it is not<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     *   possible to create a &lt;code&gt;Transformer&lt;/code&gt; instance.<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     */<a name="line.200"></a>
+<span class="sourceLineNo">201</span>    public abstract Transformer newTransformer()<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        throws TransformerConfigurationException;<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>    /**<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * Process the Source into a Templates object, which is a<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * a compiled representation of the source. This Templates object<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * may then be used concurrently across multiple threads.  Creating<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * a Templates object allows the TransformerFactory to do detailed<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * performance optimization of transformation instructions, without<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * penalizing runtime transformation.<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     *<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * @param source An object that holds a URL, input stream, etc.<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     *<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * @return A Templates object capable of being used for transformation<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *   purposes, never &lt;code&gt;null&lt;/code&gt;.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @throws TransformerConfigurationException When parsing to<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *   construct the Templates object fails.<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     */<a name="line.219"></a>
+<span class="sourceLineNo">220</span>    public abstract Templates newTemplates(Source source)<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        throws TransformerConfigurationException;<a name="line.221"></a>
+<span class="sourceLineNo">222</span><a name="line.222"></a>
+<span class="sourceLineNo">223</span>    /**<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * &lt;p&gt;Get the stylesheet specification(s) associated with the<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * XML &lt;code&gt;Source&lt;/code&gt; document via the<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * &lt;a href="http://www.w3.org/TR/xml-stylesheet/"&gt;<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * xml-stylesheet processing instruction&lt;/a&gt; that match the given criteria.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * Note that it is possible to return several stylesheets, in which case<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * they are applied as if they were a list of imports or cascades in a<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * single stylesheet.&lt;/p&gt;<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     *<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * @param source The XML source document.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @param media The media attribute to be matched.  May be null, in which<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     *      case the prefered templates will be used (i.e. alternate = no).<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * @param title The value of the title attribute to match.  May be null.<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * @param charset The value of the charset attribute to match.  May be null.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     *<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * @return A &lt;code&gt;Source&lt;/code&gt; &lt;code&gt;Object&lt;/code&gt; suitable for passing<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     *   to the &lt;code&gt;TransformerFactory&lt;/code&gt;.<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     *<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * @throws TransformerConfigurationException An &lt;code&gt;Exception&lt;/code&gt;<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     *   is thrown if an error occurings during parsing of the<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     *   &lt;code&gt;source&lt;/code&gt;.<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     *<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * @see &lt;a href="http://www.w3.org/TR/xml-stylesheet/"&gt;<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *   Associating Style Sheets with XML documents Version 1.0&lt;/a&gt;<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     */<a name="line.247"></a>
+<span class="sourceLineNo">248</span>    public abstract Source getAssociatedStylesheet(<a name="line.248"></a>
+<span class="sourceLineNo">249</span>        Source source,<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        String media,<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        String title,<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        String charset)<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        throws TransformerConfigurationException;<a name="line.253"></a>
+<span class="sourceLineNo">254</span><a name="line.254"></a>
+<span class="sourceLineNo">255</span>    /**<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * Set an object that is used by default during the transformation<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * to resolve URIs used in document(), xsl:import, or xsl:include.<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     *<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * @param resolver An object that implements the URIResolver interface,<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * or null.<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     */<a name="line.261"></a>
+<span class="sourceLineNo">262</span>    public abstract void setURIResolver(URIResolver resolver);<a name="line.262"></a>
+<span class="sourceLineNo">263</span><a name="line.263"></a>
+<span class="sourceLineNo">264</span>    /**<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * Get the object that is used by default during the transformation<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * to resolve URIs used in document(), xsl:import, or xsl:include.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     *<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * @return The URIResolver that was set with setURIResolver.<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     */<a name="line.269"></a>
+<span class="sourceLineNo">270</span>    public abstract URIResolver getURIResolver();<a name="line.270"></a>
+<span class="sourceLineNo">271</span><a name="line.271"></a>
+<span class="sourceLineNo">272</span>    //======= CONFIGURATION METHODS =======<a name="line.272"></a>
+<span class="sourceLineNo">273</span><a name="line.273"></a>
+<span class="sourceLineNo">274</span>        /**<a name="line.274"></a>
+<span class="sourceLineNo">275</span>         * &lt;p&gt;Set a feature for this &lt;code&gt;TransformerFactory&lt;/code&gt; and &lt;code&gt;Transformer&lt;/code&gt;s<a name="line.275"></a>
+<span class="sourceLineNo">276</span>         * or &lt;code&gt;Template&lt;/code&gt;s created by this factory.&lt;/p&gt;<a name="line.276"></a>
+<span class="sourceLineNo">277</span>         *<a name="line.277"></a>
+<span class="sourceLineNo">278</span>         * &lt;p&gt;<a name="line.278"></a>
+<span class="sourceLineNo">279</span>         * Feature names are fully qualified {@link java.net.URI}s.<a name="line.279"></a>
+<span class="sourceLineNo">280</span>         * Implementations may define their own features.<a name="line.280"></a>
+<span class="sourceLineNo">281</span>         * An {@link TransformerConfigurationException} is thrown if this &lt;code&gt;TransformerFactory&lt;/code&gt; or the<a name="line.281"></a>
+<span class="sourceLineNo">282</span>         * &lt;code&gt;Transformer&lt;/code&gt;s or &lt;code&gt;Template&lt;/code&gt;s it creates cannot support the feature.<a name="line.282"></a>
+<span class="sourceLineNo">283</span>         * It is possible for an &lt;code&gt;TransformerFactory&lt;/code&gt; to expose a feature value but be unable to change its state.<a name="line.283"></a>
+<span class="sourceLineNo">284</span>         * &lt;/p&gt;<a name="line.284"></a>
+<span class="sourceLineNo">285</span>         *<a name="line.285"></a>
+<span class="sourceLineNo">286</span>         * &lt;p&gt;All implementations are required to support the {@link javax.xml.XMLConstants#FEATURE_SECURE_PROCESSING} feature.<a name="line.286"></a>
+<span class="sourceLineNo">287</span>         * When the feature is:&lt;/p&gt;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>         * &lt;ul&gt;<a name="line.288"></a>
+<span class="sourceLineNo">289</span>         *   &lt;li&gt;<a name="line.289"></a>
+<span class="sourceLineNo">290</span>         *     &lt;code&gt;true&lt;/code&gt;: the implementation will limit XML processing to conform to implementation limits<a name="line.290"></a>
+<span class="sourceLineNo">291</span>         *     and behave in a secure fashion as defined by the implementation.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>         *     Examples include resolving user defined style sheets and functions.<a name="line.292"></a>
+<span class="sourceLineNo">293</span>         *     If XML processing is limited for security reasons, it will be reported via a call to the registered<a name="line.293"></a>
+<span class="sourceLineNo">294</span>         *     {@link ErrorListener#fatalError(TransformerException exception)}.<a name="line.294"></a>
+<span class="sourceLineNo">295</span>         *     See {@link  #setErrorListener(ErrorListener listener)}.<a name="line.295"></a>
+<span class="sourceLineNo">296</span>         *   &lt;/li&gt;<a name="line.296"></a>
+<span class="sourceLineNo">297</span>         *   &lt;li&gt;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>         *     &lt;code&gt;false&lt;/code&gt;: the implementation will processing XML according to the XML specifications without<a name="line.298"></a>
+<span class="sourceLineNo">299</span>         *     regard to possible implementation limits.<a name="line.299"></a>
+<span class="sourceLineNo">300</span>         *   &lt;/li&gt;<a name="line.300"></a>
+<span class="sourceLineNo">301</span>         * &lt;/ul&gt;<a name="line.301"></a>
+<span class="sourceLineNo">302</span>         *<a name="line.302"></a>
+<span class="sourceLineNo">303</span>         * @param name Feature name.<a name="line.303"></a>
+<span class="sourceLineNo">304</span>         * @param value Is feature state &lt;code&gt;true&lt;/code&gt; or &lt;code&gt;false&lt;/code&gt;.<a name="line.304"></a>
+<span class="sourceLineNo">305</span>         *<a name="line.305"></a>
+<span class="sourceLineNo">306</span>         * @throws TransformerConfigurationException if this &lt;code&gt;TransformerFactory&lt;/code&gt;<a name="line.306"></a>
+<span class="sourceLineNo">307</span>         *   or the &lt;code&gt;Transformer&lt;/code&gt;s or &lt;code&gt;Template&lt;/code&gt;s it creates cannot support this feature.<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * @throws NullPointerException If the &lt;code&gt;name&lt;/code&gt; parameter is null.<a name="line.308"></a>
+<span class="sourceLineNo">309</span>         */<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        public abstract void setFeature(String name, boolean value)<a name="line.310"></a>
+<span class="sourceLineNo">311</span>                throws TransformerConfigurationException;<a name="line.311"></a>
+<span class="sourceLineNo">312</span><a name="line.312"></a>
+<span class="sourceLineNo">313</span>    /**<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * Look up the value of a feature.<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     *<a name="line.315"></a>
+<span class="sourceLineNo">316</span>         * &lt;p&gt;<a name="line.316"></a>
+<span class="sourceLineNo">317</span>         * Feature names are fully qualified {@link java.net.URI}s.<a name="line.317"></a>
+<span class="sourceLineNo">318</span>         * Implementations may define their own features.<a name="line.318"></a>
+<span class="sourceLineNo">319</span>         * &lt;code&gt;false&lt;/code&gt; is returned if this &lt;code&gt;TransformerFactory&lt;/code&gt; or the<a name="line.319"></a>
+<span class="sourceLineNo">320</span>         * &lt;code&gt;Transformer&lt;/code&gt;s or &lt;code&gt;Template&lt;/code&gt;s it creates cannot support the feature.<a name="line.320"></a>
+<span class="sourceLineNo">321</span>         * It is possible for an &lt;code&gt;TransformerFactory&lt;/code&gt; to expose a feature value but be unable to change its state.<a name="line.321"></a>
+<span class="sourceLineNo">322</span>         * &lt;/p&gt;<a name="line.322"></a>
+<span class="sourceLineNo">323</span>         *<a name="line.323"></a>
+<span class="sourceLineNo">324</span>         * @param name Feature name.<a name="line.324"></a>
+<span class="sourceLineNo">325</span>         *<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * @return The current state of the feature, &lt;code&gt;true&lt;/code&gt; or &lt;code&gt;false&lt;/code&gt;.<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     *<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * @throws NullPointerException If the &lt;code&gt;name&lt;/code&gt; parameter is null.<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     */<a name="line.329"></a>
+<span class="sourceLineNo">330</span>    public abstract boolean getFeature(String name);<a name="line.330"></a>
+<span class="sourceLineNo">331</span><a name="line.331"></a>
+<span class="sourceLineNo">332</span>    /**<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * Allows the user to set specific attributes on the underlying<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * implementation.  An attribute in this context is defined to<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * be an option that the implementation provides.<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * An &lt;code&gt;IllegalArgumentException&lt;/code&gt; is thrown if the underlying<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * implementation doesn't recognize the attribute.<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * &lt;p&gt;<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * All implementations that implement JAXP 1.5 or newer are required to<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * support the {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_DTD}  and<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_STYLESHEET} properties.<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * &lt;/p&gt;<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * &lt;ul&gt;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     *   &lt;li&gt;<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     *      &lt;p&gt;<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     *      Access to external DTDs in the source file is restricted to the protocols<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     *      specified by the {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_DTD} property.<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     *      If access is denied during transformation due to the restriction of this property,<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     *      {@link javax.xml.transform.TransformerException} will be thrown by<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     *      {@link javax.xml.transform.Transformer#transform(Source, Result)}.<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     *      &lt;/p&gt;<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     *      &lt;p&gt;<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     *      Access to external DTDs in the stylesheet is restricted to the protocols<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     *      specified by the {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_DTD} property.<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     *      If access is denied during the creation of a new transformer due to the<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     *      restriction of this property,<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     *      {@link javax.xml.transform.TransformerConfigurationException} will be thrown<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     *      by the {@link #newTransformer(Source)} method.<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     *      &lt;/p&gt;<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     *      &lt;p&gt;<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     *      Access to external reference set by the stylesheet processing instruction,<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     *      Import and Include element is restricted to the protocols specified by the<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     *      {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_STYLESHEET} property.<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     *      If access is denied during the creation of a new transformer due to the<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     *      restriction of this property,<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     *      {@link javax.xml.transform.TransformerConfigurationException} will be thrown<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     *      by the {@link #newTransformer(Source)} method.<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     *      &lt;/p&gt;<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     *      &lt;p&gt;<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     *      Access to external document through XSLT document function is restricted<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     *      to the protocols specified by the property. If access is denied during<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     *      the transformation due to the restriction of this property,<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     *      {@link javax.xml.transform.TransformerException} will be thrown by the<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     *      {@link javax.xml.transform.Transformer#transform(Source, Result)} method.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     *      &lt;/p&gt;<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     *   &lt;/li&gt;<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * &lt;/ul&gt;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     *<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * @param name The name of the attribute.<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * @param value The value of the attribute.<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     *<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     * @throws IllegalArgumentException When implementation does not<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     *   recognize the attribute.<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     */<a name="line.384"></a>
+<span class="sourceLineNo">385</span>    public abstract void setAttribute(String name, Object value);<a name="line.385"></a>
+<span class="sourceLineNo">386</span><a name="line.386"></a>
+<span class="sourceLineNo">387</span>    /**<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * Allows the user to retrieve specific attributes on the underlying<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * implementation.<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * An &lt;code&gt;IllegalArgumentException&lt;/code&gt; is thrown if the underlying<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * implementation doesn't recognize the attribute.<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     *<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * @param name The name of the attribute.<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     *<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * @return value The value of the attribute.<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     *<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * @throws IllegalArgumentException When implementation does not<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     *   recognize the attribute.<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     */<a name="line.399"></a>
+<span class="sourceLineNo">400</span>    public abstract Object getAttribute(String name);<a name="line.400"></a>
+<span class="sourceLineNo">401</span><a name="line.401"></a>
+<span class="sourceLineNo">402</span>    /**<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * Set the error event listener for the TransformerFactory, which<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * is used for the processing of transformation instructions,<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * and not for the transformation itself.<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * An &lt;code&gt;IllegalArgumentException&lt;/code&gt; is thrown if the<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * &lt;code&gt;ErrorListener&lt;/code&gt; listener is &lt;code&gt;null&lt;/code&gt;.<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     *<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * @param listener The new error listener.<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     *<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * @throws IllegalArgumentException When &lt;code&gt;listener&lt;/code&gt; is<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     *   &lt;code&gt;null&lt;/code&gt;<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     */<a name="line.413"></a>
+<span class="sourceLineNo">414</span>    public abstract void setErrorListener(ErrorListener listener);<a name="line.414"></a>
+<span class="sourceLineNo">415</span><a name="line.415"></a>
+<span class="sourceLineNo">416</span>    /**<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     * Get the error event handler for the TransformerFactory.<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     *<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * @return The current error handler, which should never be null.<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     */<a name="line.420"></a>
+<span class="sourceLineNo">421</span>    public abstract ErrorListener getErrorListener();<a name="line.421"></a>
+<span class="sourceLineNo">422</span><a name="line.422"></a>
+<span class="sourceLineNo">423</span>}<a name="line.423"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

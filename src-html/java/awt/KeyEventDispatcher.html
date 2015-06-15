@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2001, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package java.awt;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.awt.event.KeyEvent;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * A KeyEventDispatcher cooperates with the current KeyboardFocusManager in the<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * targeting and dispatching of all KeyEvents. KeyEventDispatchers registered<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * with the current KeyboardFocusManager will receive KeyEvents before they are<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * dispatched to their targets, allowing each KeyEventDispatcher to retarget<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * the event, consume it, dispatch the event itself, or make other changes.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;p&gt;<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * Note that KeyboardFocusManager itself implements KeyEventDispatcher. By<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * default, the current KeyboardFocusManager will be the sink for all KeyEvents<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * not dispatched by the registered KeyEventDispatchers. The current<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * KeyboardFocusManager cannot be completely deregistered as a<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * KeyEventDispatcher. However, if a KeyEventDispatcher reports that it<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * dispatched the KeyEvent, regardless of whether it actually did so, the<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * KeyboardFocusManager will take no further action with regard to the<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * KeyEvent. (While it is possible for client code to register the current<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * KeyboardFocusManager as a KeyEventDispatcher one or more times, this is<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * usually unnecessary and not recommended.)<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * @author David Mendenhall<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * @see KeyboardFocusManager#addKeyEventDispatcher<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * @see KeyboardFocusManager#removeKeyEventDispatcher<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * @since 1.4<a name="line.52"></a>
+<span class="sourceLineNo">053</span> */<a name="line.53"></a>
+<span class="sourceLineNo">054</span>public interface KeyEventDispatcher {<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>    /**<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * This method is called by the current KeyboardFocusManager requesting<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * that this KeyEventDispatcher dispatch the specified event on its behalf.<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * This KeyEventDispatcher is free to retarget the event, consume it,<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * dispatch it itself, or make other changes. This capability is typically<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * used to deliver KeyEvents to Components other than the focus owner. This<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * can be useful when navigating children of non-focusable Windows in an<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * accessible environment, for example. Note that if a KeyEventDispatcher<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * dispatches the KeyEvent itself, it must use &lt;code&gt;redispatchEvent&lt;/code&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * to prevent the current KeyboardFocusManager from recursively requesting<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * that this KeyEventDispatcher dispatch the event again.<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * &lt;p&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * If an implementation of this method returns &lt;code&gt;false&lt;/code&gt;, then<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * the KeyEvent is passed to the next KeyEventDispatcher in the chain,<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * ending with the current KeyboardFocusManager. If an implementation<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * returns &lt;code&gt;true&lt;/code&gt;, the KeyEvent is assumed to have been<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * dispatched (although this need not be the case), and the current<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * KeyboardFocusManager will take no further action with regard to the<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * KeyEvent. In such a case,<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * &lt;code&gt;KeyboardFocusManager.dispatchEvent&lt;/code&gt; should return<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * &lt;code&gt;true&lt;/code&gt; as well. If an implementation consumes the KeyEvent,<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * but returns &lt;code&gt;false&lt;/code&gt;, the consumed event will still be passed<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * to the next KeyEventDispatcher in the chain. It is important for<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * developers to check whether the KeyEvent has been consumed before<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * dispatching it to a target. By default, the current KeyboardFocusManager<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * will not dispatch a consumed KeyEvent.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     *<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * @param e the KeyEvent to dispatch<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * @return &lt;code&gt;true&lt;/code&gt; if the KeyboardFocusManager should take no<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     *         further action with regard to the KeyEvent; &lt;code&gt;false&lt;/code&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     *         otherwise<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @see KeyboardFocusManager#redispatchEvent<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     */<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    boolean dispatchKeyEvent(KeyEvent e);<a name="line.89"></a>
+<span class="sourceLineNo">090</span>}<a name="line.90"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

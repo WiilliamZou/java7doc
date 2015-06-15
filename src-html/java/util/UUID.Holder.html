@@ -1,0 +1,515 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.util;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.security.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * A class that represents an immutable universally unique identifier (UUID).<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * A UUID represents a 128-bit value.<a name="line.32"></a>
+<span class="sourceLineNo">033</span> *<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * &lt;p&gt; There exist different variants of these global identifiers.  The methods<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * of this class are for manipulating the Leach-Salz variant, although the<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * constructors allow the creation of any variant of UUID (described below).<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;p&gt; The layout of a variant 2 (Leach-Salz) UUID is as follows:<a name="line.38"></a>
+<span class="sourceLineNo">039</span> *<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * The most significant long consists of the following unsigned fields:<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;pre&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * 0xFFFFFFFF00000000 time_low<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * 0x00000000FFFF0000 time_mid<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * 0x000000000000F000 version<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * 0x0000000000000FFF time_hi<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;/pre&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * The least significant long consists of the following unsigned fields:<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;pre&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * 0xC000000000000000 variant<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * 0x3FFF000000000000 clock_seq<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * 0x0000FFFFFFFFFFFF node<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;/pre&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt; The variant field contains a value which identifies the layout of the<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * {@code UUID}.  The bit layout described above is valid only for a {@code<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * UUID} with a variant value of 2, which indicates the Leach-Salz variant.<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;p&gt; The version field holds a value that describes the type of this {@code<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * UUID}.  There are four different basic types of UUIDs: time-based, DCE<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * security, name-based, and randomly generated UUIDs.  These types have a<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * version value of 1, 2, 3 and 4, respectively.<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;p&gt; For more information including algorithms used to create {@code UUID}s,<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * see &lt;a href="http://www.ietf.org/rfc/rfc4122.txt"&gt; &lt;i&gt;RFC&amp;nbsp;4122: A<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * Universally Unique IDentifier (UUID) URN Namespace&lt;/i&gt;&lt;/a&gt;, section 4.2<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &amp;quot;Algorithms for Creating a Time-Based UUID&amp;quot;.<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * @since   1.5<a name="line.68"></a>
+<span class="sourceLineNo">069</span> */<a name="line.69"></a>
+<span class="sourceLineNo">070</span>public final class UUID implements java.io.Serializable, Comparable&lt;UUID&gt; {<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>    /**<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * Explicit serialVersionUID for interoperability.<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     */<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    private static final long serialVersionUID = -4856846361193249489L;<a name="line.75"></a>
+<span class="sourceLineNo">076</span><a name="line.76"></a>
+<span class="sourceLineNo">077</span>    /*<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * The most significant 64 bits of this UUID.<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     *<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * @serial<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     */<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    private final long mostSigBits;<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    /*<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * The least significant 64 bits of this UUID.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     *<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @serial<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     */<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    private final long leastSigBits;<a name="line.89"></a>
+<span class="sourceLineNo">090</span><a name="line.90"></a>
+<span class="sourceLineNo">091</span>    /*<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * The random number generator used by this class to create random<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * based UUIDs. In a holder class to defer initialization until needed.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     */<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    private static class Holder {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        static final SecureRandom numberGenerator = new SecureRandom();<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    }<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    // Constructors and Factories<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>    /*<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * Private constructor which uses a byte array to construct the new UUID.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    private UUID(byte[] data) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        long msb = 0;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        long lsb = 0;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        assert data.length == 16 : "data must be 16 bytes in length";<a name="line.107"></a>
+<span class="sourceLineNo">108</span>        for (int i=0; i&lt;8; i++)<a name="line.108"></a>
+<span class="sourceLineNo">109</span>            msb = (msb &lt;&lt; 8) | (data[i] &amp; 0xff);<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        for (int i=8; i&lt;16; i++)<a name="line.110"></a>
+<span class="sourceLineNo">111</span>            lsb = (lsb &lt;&lt; 8) | (data[i] &amp; 0xff);<a name="line.111"></a>
+<span class="sourceLineNo">112</span>        this.mostSigBits = msb;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        this.leastSigBits = lsb;<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    }<a name="line.114"></a>
+<span class="sourceLineNo">115</span><a name="line.115"></a>
+<span class="sourceLineNo">116</span>    /**<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * Constructs a new {@code UUID} using the specified data.  {@code<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * mostSigBits} is used for the most significant 64 bits of the {@code<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * UUID} and {@code leastSigBits} becomes the least significant 64 bits of<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * the {@code UUID}.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @param  mostSigBits<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *         The most significant bits of the {@code UUID}<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     *<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @param  leastSigBits<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     *         The least significant bits of the {@code UUID}<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     */<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    public UUID(long mostSigBits, long leastSigBits) {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        this.mostSigBits = mostSigBits;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        this.leastSigBits = leastSigBits;<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>    /**<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * Static factory to retrieve a type 4 (pseudo randomly generated) UUID.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * The {@code UUID} is generated using a cryptographically strong pseudo<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * random number generator.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     *<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @return  A randomly generated {@code UUID}<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     */<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    public static UUID randomUUID() {<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        SecureRandom ng = Holder.numberGenerator;<a name="line.142"></a>
+<span class="sourceLineNo">143</span><a name="line.143"></a>
+<span class="sourceLineNo">144</span>        byte[] randomBytes = new byte[16];<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        ng.nextBytes(randomBytes);<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        randomBytes[6]  &amp;= 0x0f;  /* clear version        */<a name="line.146"></a>
+<span class="sourceLineNo">147</span>        randomBytes[6]  |= 0x40;  /* set to version 4     */<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        randomBytes[8]  &amp;= 0x3f;  /* clear variant        */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        randomBytes[8]  |= 0x80;  /* set to IETF variant  */<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        return new UUID(randomBytes);<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    }<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    /**<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * Static factory to retrieve a type 3 (name based) {@code UUID} based on<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * the specified byte array.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * @param  name<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *         A byte array to be used to construct a {@code UUID}<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @return  A {@code UUID} generated from the specified array<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     */<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    public static UUID nameUUIDFromBytes(byte[] name) {<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        MessageDigest md;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        try {<a name="line.164"></a>
+<span class="sourceLineNo">165</span>            md = MessageDigest.getInstance("MD5");<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        } catch (NoSuchAlgorithmException nsae) {<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            throw new InternalError("MD5 not supported");<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        }<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        byte[] md5Bytes = md.digest(name);<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        md5Bytes[6]  &amp;= 0x0f;  /* clear version        */<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        md5Bytes[6]  |= 0x30;  /* set to version 3     */<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        md5Bytes[8]  &amp;= 0x3f;  /* clear variant        */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        md5Bytes[8]  |= 0x80;  /* set to IETF variant  */<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        return new UUID(md5Bytes);<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    }<a name="line.175"></a>
+<span class="sourceLineNo">176</span><a name="line.176"></a>
+<span class="sourceLineNo">177</span>    /**<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * Creates a {@code UUID} from the string standard representation as<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * described in the {@link #toString} method.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     *<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * @param  name<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     *         A string that specifies a {@code UUID}<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     *<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * @return  A {@code UUID} with the specified value<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     *<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * @throws  IllegalArgumentException<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     *          If name does not conform to the string representation as<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     *          described in {@link #toString}<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    public static UUID fromString(String name) {<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        String[] components = name.split("-");<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        if (components.length != 5)<a name="line.193"></a>
+<span class="sourceLineNo">194</span>            throw new IllegalArgumentException("Invalid UUID string: "+name);<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        for (int i=0; i&lt;5; i++)<a name="line.195"></a>
+<span class="sourceLineNo">196</span>            components[i] = "0x"+components[i];<a name="line.196"></a>
+<span class="sourceLineNo">197</span><a name="line.197"></a>
+<span class="sourceLineNo">198</span>        long mostSigBits = Long.decode(components[0]).longValue();<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        mostSigBits &lt;&lt;= 16;<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        mostSigBits |= Long.decode(components[1]).longValue();<a name="line.200"></a>
+<span class="sourceLineNo">201</span>        mostSigBits &lt;&lt;= 16;<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        mostSigBits |= Long.decode(components[2]).longValue();<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>        long leastSigBits = Long.decode(components[3]).longValue();<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        leastSigBits &lt;&lt;= 48;<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        leastSigBits |= Long.decode(components[4]).longValue();<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>        return new UUID(mostSigBits, leastSigBits);<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    }<a name="line.209"></a>
+<span class="sourceLineNo">210</span><a name="line.210"></a>
+<span class="sourceLineNo">211</span>    // Field Accessor Methods<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>    /**<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * Returns the least significant 64 bits of this UUID's 128 bit value.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * @return  The least significant 64 bits of this UUID's 128 bit value<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     */<a name="line.217"></a>
+<span class="sourceLineNo">218</span>    public long getLeastSignificantBits() {<a name="line.218"></a>
+<span class="sourceLineNo">219</span>        return leastSigBits;<a name="line.219"></a>
+<span class="sourceLineNo">220</span>    }<a name="line.220"></a>
+<span class="sourceLineNo">221</span><a name="line.221"></a>
+<span class="sourceLineNo">222</span>    /**<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * Returns the most significant 64 bits of this UUID's 128 bit value.<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     *<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * @return  The most significant 64 bits of this UUID's 128 bit value<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     */<a name="line.226"></a>
+<span class="sourceLineNo">227</span>    public long getMostSignificantBits() {<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        return mostSigBits;<a name="line.228"></a>
+<span class="sourceLineNo">229</span>    }<a name="line.229"></a>
+<span class="sourceLineNo">230</span><a name="line.230"></a>
+<span class="sourceLineNo">231</span>    /**<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * The version number associated with this {@code UUID}.  The version<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * number describes how this {@code UUID} was generated.<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     *<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * The version number has the following meaning:<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * &lt;p&gt;&lt;ul&gt;<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * &lt;li&gt;1    Time-based UUID<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * &lt;li&gt;2    DCE security UUID<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * &lt;li&gt;3    Name-based UUID<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * &lt;li&gt;4    Randomly generated UUID<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * &lt;/ul&gt;<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     *<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * @return  The version number of this {@code UUID}<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     */<a name="line.244"></a>
+<span class="sourceLineNo">245</span>    public int version() {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>        // Version is bits masked by 0x000000000000F000 in MS long<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        return (int)((mostSigBits &gt;&gt; 12) &amp; 0x0f);<a name="line.247"></a>
+<span class="sourceLineNo">248</span>    }<a name="line.248"></a>
+<span class="sourceLineNo">249</span><a name="line.249"></a>
+<span class="sourceLineNo">250</span>    /**<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * The variant number associated with this {@code UUID}.  The variant<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * number describes the layout of the {@code UUID}.<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     *<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * The variant number has the following meaning:<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * &lt;p&gt;&lt;ul&gt;<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * &lt;li&gt;0    Reserved for NCS backward compatibility<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * &lt;li&gt;2    &lt;a href="http://www.ietf.org/rfc/rfc4122.txt"&gt;IETF&amp;nbsp;RFC&amp;nbsp;4122&lt;/a&gt;<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * (Leach-Salz), used by this class<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * &lt;li&gt;6    Reserved, Microsoft Corporation backward compatibility<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * &lt;li&gt;7    Reserved for future definition<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * &lt;/ul&gt;<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     *<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * @return  The variant number of this {@code UUID}<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     */<a name="line.264"></a>
+<span class="sourceLineNo">265</span>    public int variant() {<a name="line.265"></a>
+<span class="sourceLineNo">266</span>        // This field is composed of a varying number of bits.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>        // 0    -    -    Reserved for NCS backward compatibility<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        // 1    0    -    The IETF aka Leach-Salz variant (used by this class)<a name="line.268"></a>
+<span class="sourceLineNo">269</span>        // 1    1    0    Reserved, Microsoft backward compatibility<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        // 1    1    1    Reserved for future definition.<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        return (int) ((leastSigBits &gt;&gt;&gt; (64 - (leastSigBits &gt;&gt;&gt; 62)))<a name="line.271"></a>
+<span class="sourceLineNo">272</span>                      &amp; (leastSigBits &gt;&gt; 63));<a name="line.272"></a>
+<span class="sourceLineNo">273</span>    }<a name="line.273"></a>
+<span class="sourceLineNo">274</span><a name="line.274"></a>
+<span class="sourceLineNo">275</span>    /**<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * The timestamp value associated with this UUID.<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     *<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * &lt;p&gt; The 60 bit timestamp value is constructed from the time_low,<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * time_mid, and time_hi fields of this {@code UUID}.  The resulting<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * timestamp is measured in 100-nanosecond units since midnight,<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * October 15, 1582 UTC.<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     *<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * &lt;p&gt; The timestamp value is only meaningful in a time-based UUID, which<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * has version type 1.  If this {@code UUID} is not a time-based UUID then<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * this method throws UnsupportedOperationException.<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     *<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * @throws UnsupportedOperationException<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     *         If this UUID is not a version 1 UUID<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     */<a name="line.289"></a>
+<span class="sourceLineNo">290</span>    public long timestamp() {<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        if (version() != 1) {<a name="line.291"></a>
+<span class="sourceLineNo">292</span>            throw new UnsupportedOperationException("Not a time-based UUID");<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        }<a name="line.293"></a>
+<span class="sourceLineNo">294</span><a name="line.294"></a>
+<span class="sourceLineNo">295</span>        return (mostSigBits &amp; 0x0FFFL) &lt;&lt; 48<a name="line.295"></a>
+<span class="sourceLineNo">296</span>             | ((mostSigBits &gt;&gt; 16) &amp; 0x0FFFFL) &lt;&lt; 32<a name="line.296"></a>
+<span class="sourceLineNo">297</span>             | mostSigBits &gt;&gt;&gt; 32;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>    }<a name="line.298"></a>
+<span class="sourceLineNo">299</span><a name="line.299"></a>
+<span class="sourceLineNo">300</span>    /**<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * The clock sequence value associated with this UUID.<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     *<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * &lt;p&gt; The 14 bit clock sequence value is constructed from the clock<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * sequence field of this UUID.  The clock sequence field is used to<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * guarantee temporal uniqueness in a time-based UUID.<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     *<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * &lt;p&gt; The {@code clockSequence} value is only meaningful in a time-based<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * UUID, which has version type 1.  If this UUID is not a time-based UUID<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * then this method throws UnsupportedOperationException.<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     *<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @return  The clock sequence of this {@code UUID}<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     *<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * @throws  UnsupportedOperationException<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     *          If this UUID is not a version 1 UUID<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     */<a name="line.315"></a>
+<span class="sourceLineNo">316</span>    public int clockSequence() {<a name="line.316"></a>
+<span class="sourceLineNo">317</span>        if (version() != 1) {<a name="line.317"></a>
+<span class="sourceLineNo">318</span>            throw new UnsupportedOperationException("Not a time-based UUID");<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        }<a name="line.319"></a>
+<span class="sourceLineNo">320</span><a name="line.320"></a>
+<span class="sourceLineNo">321</span>        return (int)((leastSigBits &amp; 0x3FFF000000000000L) &gt;&gt;&gt; 48);<a name="line.321"></a>
+<span class="sourceLineNo">322</span>    }<a name="line.322"></a>
+<span class="sourceLineNo">323</span><a name="line.323"></a>
+<span class="sourceLineNo">324</span>    /**<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * The node value associated with this UUID.<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     *<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * &lt;p&gt; The 48 bit node value is constructed from the node field of this<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * UUID.  This field is intended to hold the IEEE 802 address of the machine<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * that generated this UUID to guarantee spatial uniqueness.<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     *<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * &lt;p&gt; The node value is only meaningful in a time-based UUID, which has<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * version type 1.  If this UUID is not a time-based UUID then this method<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * throws UnsupportedOperationException.<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     *<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * @return  The node value of this {@code UUID}<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     *<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * @throws  UnsupportedOperationException<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     *          If this UUID is not a version 1 UUID<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     */<a name="line.339"></a>
+<span class="sourceLineNo">340</span>    public long node() {<a name="line.340"></a>
+<span class="sourceLineNo">341</span>        if (version() != 1) {<a name="line.341"></a>
+<span class="sourceLineNo">342</span>            throw new UnsupportedOperationException("Not a time-based UUID");<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        }<a name="line.343"></a>
+<span class="sourceLineNo">344</span><a name="line.344"></a>
+<span class="sourceLineNo">345</span>        return leastSigBits &amp; 0x0000FFFFFFFFFFFFL;<a name="line.345"></a>
+<span class="sourceLineNo">346</span>    }<a name="line.346"></a>
+<span class="sourceLineNo">347</span><a name="line.347"></a>
+<span class="sourceLineNo">348</span>    // Object Inherited Methods<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>    /**<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * Returns a {@code String} object representing this {@code UUID}.<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     *<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * &lt;p&gt; The UUID string representation is as described by this BNF:<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * &lt;blockquote&gt;&lt;pre&gt;<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * {@code<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * UUID                   = &lt;time_low&gt; "-" &lt;time_mid&gt; "-"<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     *                          &lt;time_high_and_version&gt; "-"<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     *                          &lt;variant_and_sequence&gt; "-"<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     *                          &lt;node&gt;<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * time_low               = 4*&lt;hexOctet&gt;<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * time_mid               = 2*&lt;hexOctet&gt;<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * time_high_and_version  = 2*&lt;hexOctet&gt;<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * variant_and_sequence   = 2*&lt;hexOctet&gt;<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * node                   = 6*&lt;hexOctet&gt;<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * hexOctet               = &lt;hexDigit&gt;&lt;hexDigit&gt;<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * hexDigit               =<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     *       "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     *       | "a" | "b" | "c" | "d" | "e" | "f"<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     *       | "A" | "B" | "C" | "D" | "E" | "F"<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * }&lt;/pre&gt;&lt;/blockquote&gt;<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     *<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * @return  A string representation of this {@code UUID}<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     */<a name="line.373"></a>
+<span class="sourceLineNo">374</span>    public String toString() {<a name="line.374"></a>
+<span class="sourceLineNo">375</span>        return (digits(mostSigBits &gt;&gt; 32, 8) + "-" +<a name="line.375"></a>
+<span class="sourceLineNo">376</span>                digits(mostSigBits &gt;&gt; 16, 4) + "-" +<a name="line.376"></a>
+<span class="sourceLineNo">377</span>                digits(mostSigBits, 4) + "-" +<a name="line.377"></a>
+<span class="sourceLineNo">378</span>                digits(leastSigBits &gt;&gt; 48, 4) + "-" +<a name="line.378"></a>
+<span class="sourceLineNo">379</span>                digits(leastSigBits, 12));<a name="line.379"></a>
+<span class="sourceLineNo">380</span>    }<a name="line.380"></a>
+<span class="sourceLineNo">381</span><a name="line.381"></a>
+<span class="sourceLineNo">382</span>    /** Returns val represented by the specified number of hex digits. */<a name="line.382"></a>
+<span class="sourceLineNo">383</span>    private static String digits(long val, int digits) {<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        long hi = 1L &lt;&lt; (digits * 4);<a name="line.384"></a>
+<span class="sourceLineNo">385</span>        return Long.toHexString(hi | (val &amp; (hi - 1))).substring(1);<a name="line.385"></a>
+<span class="sourceLineNo">386</span>    }<a name="line.386"></a>
+<span class="sourceLineNo">387</span><a name="line.387"></a>
+<span class="sourceLineNo">388</span>    /**<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * Returns a hash code for this {@code UUID}.<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     *<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * @return  A hash code value for this {@code UUID}<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     */<a name="line.392"></a>
+<span class="sourceLineNo">393</span>    public int hashCode() {<a name="line.393"></a>
+<span class="sourceLineNo">394</span>        long hilo = mostSigBits ^ leastSigBits;<a name="line.394"></a>
+<span class="sourceLineNo">395</span>        return ((int)(hilo &gt;&gt; 32)) ^ (int) hilo;<a name="line.395"></a>
+<span class="sourceLineNo">396</span>    }<a name="line.396"></a>
+<span class="sourceLineNo">397</span><a name="line.397"></a>
+<span class="sourceLineNo">398</span>    /**<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * Compares this object to the specified object.  The result is {@code<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * true} if and only if the argument is not {@code null}, is a {@code UUID}<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     * object, has the same variant, and contains the same value, bit for bit,<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * as this {@code UUID}.<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     *<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * @param  obj<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     *         The object to be compared<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     *<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * @return  {@code true} if the objects are the same; {@code false}<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     *          otherwise<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     */<a name="line.409"></a>
+<span class="sourceLineNo">410</span>    public boolean equals(Object obj) {<a name="line.410"></a>
+<span class="sourceLineNo">411</span>        if ((null == obj) || (obj.getClass() != UUID.class))<a name="line.411"></a>
+<span class="sourceLineNo">412</span>            return false;<a name="line.412"></a>
+<span class="sourceLineNo">413</span>        UUID id = (UUID)obj;<a name="line.413"></a>
+<span class="sourceLineNo">414</span>        return (mostSigBits == id.mostSigBits &amp;&amp;<a name="line.414"></a>
+<span class="sourceLineNo">415</span>                leastSigBits == id.leastSigBits);<a name="line.415"></a>
+<span class="sourceLineNo">416</span>    }<a name="line.416"></a>
+<span class="sourceLineNo">417</span><a name="line.417"></a>
+<span class="sourceLineNo">418</span>    // Comparison Operations<a name="line.418"></a>
+<span class="sourceLineNo">419</span><a name="line.419"></a>
+<span class="sourceLineNo">420</span>    /**<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * Compares this UUID with the specified UUID.<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     *<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     * &lt;p&gt; The first of two UUIDs is greater than the second if the most<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * significant field in which the UUIDs differ is greater for the first<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     * UUID.<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     *<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * @param  val<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     *         {@code UUID} to which this {@code UUID} is to be compared<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     *<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * @return  -1, 0 or 1 as this {@code UUID} is less than, equal to, or<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     *          greater than {@code val}<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     *<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     */<a name="line.433"></a>
+<span class="sourceLineNo">434</span>    public int compareTo(UUID val) {<a name="line.434"></a>
+<span class="sourceLineNo">435</span>        // The ordering is intentionally set up so that the UUIDs<a name="line.435"></a>
+<span class="sourceLineNo">436</span>        // can simply be numerically compared as two numbers<a name="line.436"></a>
+<span class="sourceLineNo">437</span>        return (this.mostSigBits &lt; val.mostSigBits ? -1 :<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                (this.mostSigBits &gt; val.mostSigBits ? 1 :<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                 (this.leastSigBits &lt; val.leastSigBits ? -1 :<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                  (this.leastSigBits &gt; val.leastSigBits ? 1 :<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                   0))));<a name="line.441"></a>
+<span class="sourceLineNo">442</span>    }<a name="line.442"></a>
+<span class="sourceLineNo">443</span>}<a name="line.443"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

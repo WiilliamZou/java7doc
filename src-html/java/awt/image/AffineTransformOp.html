@@ -1,0 +1,632 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt.image;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.geom.AffineTransform;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.geom.NoninvertibleTransformException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.geom.Rectangle2D;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.geom.Point2D;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.AlphaComposite;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.awt.GraphicsEnvironment;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.awt.Rectangle;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.awt.RenderingHints;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.awt.Transparency;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import sun.awt.image.ImagingLib;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>/**<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * This class uses an affine transform to perform a linear mapping from<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * 2D coordinates in the source image or &lt;CODE&gt;Raster&lt;/CODE&gt; to 2D coordinates<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * in the destination image or &lt;CODE&gt;Raster&lt;/CODE&gt;.<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * The type of interpolation that is used is specified through a constructor,<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * either by a &lt;CODE&gt;RenderingHints&lt;/CODE&gt; object or by one of the integer<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * interpolation types defined in this class.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;p&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * If a &lt;CODE&gt;RenderingHints&lt;/CODE&gt; object is specified in the constructor, the<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * interpolation hint and the rendering quality hint are used to set<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * the interpolation type for this operation.  The color rendering hint<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * and the dithering hint can be used when color conversion is required.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;p&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * Note that the following constraints have to be met:<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;ul&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;li&gt;The source and destination must be different.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;li&gt;For &lt;CODE&gt;Raster&lt;/CODE&gt; objects, the number of bands in the source must<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * be equal to the number of bands in the destination.<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;/ul&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * @see AffineTransform<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * @see BufferedImageFilter<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * @see java.awt.RenderingHints#KEY_INTERPOLATION<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * @see java.awt.RenderingHints#KEY_RENDERING<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * @see java.awt.RenderingHints#KEY_COLOR_RENDERING<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * @see java.awt.RenderingHints#KEY_DITHERING<a name="line.63"></a>
+<span class="sourceLineNo">064</span> */<a name="line.64"></a>
+<span class="sourceLineNo">065</span>public class AffineTransformOp implements BufferedImageOp, RasterOp {<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    private AffineTransform xform;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>    RenderingHints hints;<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>    /**<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * Nearest-neighbor interpolation type.<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     */<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    public static final int TYPE_NEAREST_NEIGHBOR = 1;<a name="line.72"></a>
+<span class="sourceLineNo">073</span><a name="line.73"></a>
+<span class="sourceLineNo">074</span>    /**<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * Bilinear interpolation type.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     */<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    public static final int TYPE_BILINEAR = 2;<a name="line.77"></a>
+<span class="sourceLineNo">078</span><a name="line.78"></a>
+<span class="sourceLineNo">079</span>    /**<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * Bicubic interpolation type.<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     */<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    public static final int TYPE_BICUBIC = 3;<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    int interpolationType = TYPE_NEAREST_NEIGHBOR;<a name="line.84"></a>
+<span class="sourceLineNo">085</span><a name="line.85"></a>
+<span class="sourceLineNo">086</span>    /**<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * Constructs an &lt;CODE&gt;AffineTransformOp&lt;/CODE&gt; given an affine transform.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * The interpolation type is determined from the<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * &lt;CODE&gt;RenderingHints&lt;/CODE&gt; object.  If the interpolation hint is<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * defined, it will be used. Otherwise, if the rendering quality hint is<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * defined, the interpolation type is determined from its value.  If no<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * hints are specified (&lt;CODE&gt;hints&lt;/CODE&gt; is null),<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * the interpolation type is {@link #TYPE_NEAREST_NEIGHBOR<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * TYPE_NEAREST_NEIGHBOR}.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @param xform The &lt;CODE&gt;AffineTransform&lt;/CODE&gt; to use for the<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * operation.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @param hints The &lt;CODE&gt;RenderingHints&lt;/CODE&gt; object used to specify<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * the interpolation type for the operation.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @throws ImagingOpException if the transform is non-invertible.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * @see java.awt.RenderingHints#KEY_INTERPOLATION<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @see java.awt.RenderingHints#KEY_RENDERING<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     */<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    public AffineTransformOp(AffineTransform xform, RenderingHints hints){<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        validateTransform(xform);<a name="line.107"></a>
+<span class="sourceLineNo">108</span>        this.xform = (AffineTransform) xform.clone();<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        this.hints = hints;<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>        if (hints != null) {<a name="line.111"></a>
+<span class="sourceLineNo">112</span>            Object value = hints.get(hints.KEY_INTERPOLATION);<a name="line.112"></a>
+<span class="sourceLineNo">113</span>            if (value == null) {<a name="line.113"></a>
+<span class="sourceLineNo">114</span>                value = hints.get(hints.KEY_RENDERING);<a name="line.114"></a>
+<span class="sourceLineNo">115</span>                if (value == hints.VALUE_RENDER_SPEED) {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>                    interpolationType = TYPE_NEAREST_NEIGHBOR;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>                }<a name="line.117"></a>
+<span class="sourceLineNo">118</span>                else if (value == hints.VALUE_RENDER_QUALITY) {<a name="line.118"></a>
+<span class="sourceLineNo">119</span>                    interpolationType = TYPE_BILINEAR;<a name="line.119"></a>
+<span class="sourceLineNo">120</span>                }<a name="line.120"></a>
+<span class="sourceLineNo">121</span>            }<a name="line.121"></a>
+<span class="sourceLineNo">122</span>            else if (value == hints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR) {<a name="line.122"></a>
+<span class="sourceLineNo">123</span>                interpolationType = TYPE_NEAREST_NEIGHBOR;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>            }<a name="line.124"></a>
+<span class="sourceLineNo">125</span>            else if (value == hints.VALUE_INTERPOLATION_BILINEAR) {<a name="line.125"></a>
+<span class="sourceLineNo">126</span>                interpolationType = TYPE_BILINEAR;<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            }<a name="line.127"></a>
+<span class="sourceLineNo">128</span>            else if (value == hints.VALUE_INTERPOLATION_BICUBIC) {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>                interpolationType = TYPE_BICUBIC;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>            }<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        }<a name="line.131"></a>
+<span class="sourceLineNo">132</span>        else {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>            interpolationType = TYPE_NEAREST_NEIGHBOR;<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        }<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    }<a name="line.135"></a>
+<span class="sourceLineNo">136</span><a name="line.136"></a>
+<span class="sourceLineNo">137</span>    /**<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * Constructs an &lt;CODE&gt;AffineTransformOp&lt;/CODE&gt; given an affine transform<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * and the interpolation type.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @param xform The &lt;CODE&gt;AffineTransform&lt;/CODE&gt; to use for the operation.<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * @param interpolationType One of the integer<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * interpolation type constants defined by this class:<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * {@link #TYPE_NEAREST_NEIGHBOR TYPE_NEAREST_NEIGHBOR},<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * {@link #TYPE_BILINEAR TYPE_BILINEAR},<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * {@link #TYPE_BICUBIC TYPE_BICUBIC}.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @throws ImagingOpException if the transform is non-invertible.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    public AffineTransformOp(AffineTransform xform, int interpolationType) {<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        validateTransform(xform);<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        this.xform = (AffineTransform)xform.clone();<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        switch(interpolationType) {<a name="line.152"></a>
+<span class="sourceLineNo">153</span>            case TYPE_NEAREST_NEIGHBOR:<a name="line.153"></a>
+<span class="sourceLineNo">154</span>            case TYPE_BILINEAR:<a name="line.154"></a>
+<span class="sourceLineNo">155</span>            case TYPE_BICUBIC:<a name="line.155"></a>
+<span class="sourceLineNo">156</span>                break;<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        default:<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            throw new IllegalArgumentException("Unknown interpolation type: "+<a name="line.158"></a>
+<span class="sourceLineNo">159</span>                                               interpolationType);<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        }<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        this.interpolationType = interpolationType;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    }<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>    /**<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * Returns the interpolation type used by this op.<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @return the interpolation type.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * @see #TYPE_NEAREST_NEIGHBOR<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * @see #TYPE_BILINEAR<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * @see #TYPE_BICUBIC<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     */<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    public final int getInterpolationType() {<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        return interpolationType;<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    }<a name="line.173"></a>
+<span class="sourceLineNo">174</span><a name="line.174"></a>
+<span class="sourceLineNo">175</span>    /**<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * Transforms the source &lt;CODE&gt;BufferedImage&lt;/CODE&gt; and stores the results<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * in the destination &lt;CODE&gt;BufferedImage&lt;/CODE&gt;.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * If the color models for the two images do not match, a color<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * conversion into the destination color model is performed.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * If the destination image is null,<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * a &lt;CODE&gt;BufferedImage&lt;/CODE&gt; is created with the source<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * &lt;CODE&gt;ColorModel&lt;/CODE&gt;.<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * &lt;p&gt;<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * The coordinates of the rectangle returned by<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * &lt;code&gt;getBounds2D(BufferedImage)&lt;/code&gt;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * are not necessarily the same as the coordinates of the<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;code&gt;BufferedImage&lt;/code&gt; returned by this method.  If the<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * upper-left corner coordinates of the rectangle are<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * negative then this part of the rectangle is not drawn.  If the<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * upper-left corner coordinates of the  rectangle are positive<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * then the filtered image is drawn at that position in the<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * destination &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * &lt;p&gt;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * An &lt;CODE&gt;IllegalArgumentException&lt;/CODE&gt; is thrown if the source is<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * the same as the destination.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     *<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @param src The &lt;CODE&gt;BufferedImage&lt;/CODE&gt; to transform.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @param dst The &lt;CODE&gt;BufferedImage&lt;/CODE&gt; in which to store the results<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * of the transformation.<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     *<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * @return The filtered &lt;CODE&gt;BufferedImage&lt;/CODE&gt;.<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * @throws IllegalArgumentException if &lt;code&gt;src&lt;/code&gt; and<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     *         &lt;code&gt;dst&lt;/code&gt; are the same<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * @throws ImagingOpException if the image cannot be transformed<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     *         because of a data-processing error that might be<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     *         caused by an invalid image format, tile format, or<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     *         image-processing operation, or any other unsupported<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     *         operation.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     */<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    public final BufferedImage filter(BufferedImage src, BufferedImage dst) {<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>        if (src == null) {<a name="line.212"></a>
+<span class="sourceLineNo">213</span>            throw new NullPointerException("src image is null");<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        }<a name="line.214"></a>
+<span class="sourceLineNo">215</span>        if (src == dst) {<a name="line.215"></a>
+<span class="sourceLineNo">216</span>            throw new IllegalArgumentException("src image cannot be the "+<a name="line.216"></a>
+<span class="sourceLineNo">217</span>                                               "same as the dst image");<a name="line.217"></a>
+<span class="sourceLineNo">218</span>        }<a name="line.218"></a>
+<span class="sourceLineNo">219</span><a name="line.219"></a>
+<span class="sourceLineNo">220</span>        boolean needToConvert = false;<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        ColorModel srcCM = src.getColorModel();<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        ColorModel dstCM;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>        BufferedImage origDst = dst;<a name="line.223"></a>
+<span class="sourceLineNo">224</span><a name="line.224"></a>
+<span class="sourceLineNo">225</span>        if (dst == null) {<a name="line.225"></a>
+<span class="sourceLineNo">226</span>            dst = createCompatibleDestImage(src, null);<a name="line.226"></a>
+<span class="sourceLineNo">227</span>            dstCM = srcCM;<a name="line.227"></a>
+<span class="sourceLineNo">228</span>            origDst = dst;<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        }<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        else {<a name="line.230"></a>
+<span class="sourceLineNo">231</span>            dstCM = dst.getColorModel();<a name="line.231"></a>
+<span class="sourceLineNo">232</span>            if (srcCM.getColorSpace().getType() !=<a name="line.232"></a>
+<span class="sourceLineNo">233</span>                dstCM.getColorSpace().getType())<a name="line.233"></a>
+<span class="sourceLineNo">234</span>            {<a name="line.234"></a>
+<span class="sourceLineNo">235</span>                int type = xform.getType();<a name="line.235"></a>
+<span class="sourceLineNo">236</span>                boolean needTrans = ((type&amp;<a name="line.236"></a>
+<span class="sourceLineNo">237</span>                                      (xform.TYPE_MASK_ROTATION|<a name="line.237"></a>
+<span class="sourceLineNo">238</span>                                       xform.TYPE_GENERAL_TRANSFORM))<a name="line.238"></a>
+<span class="sourceLineNo">239</span>                                     != 0);<a name="line.239"></a>
+<span class="sourceLineNo">240</span>                if (! needTrans &amp;&amp; type != xform.TYPE_TRANSLATION &amp;&amp; type != xform.TYPE_IDENTITY)<a name="line.240"></a>
+<span class="sourceLineNo">241</span>                {<a name="line.241"></a>
+<span class="sourceLineNo">242</span>                    double[] mtx = new double[4];<a name="line.242"></a>
+<span class="sourceLineNo">243</span>                    xform.getMatrix(mtx);<a name="line.243"></a>
+<span class="sourceLineNo">244</span>                    // Check out the matrix.  A non-integral scale will force ARGB<a name="line.244"></a>
+<span class="sourceLineNo">245</span>                    // since the edge conditions can't be guaranteed.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                    needTrans = (mtx[0] != (int)mtx[0] || mtx[3] != (int)mtx[3]);<a name="line.246"></a>
+<span class="sourceLineNo">247</span>                }<a name="line.247"></a>
+<span class="sourceLineNo">248</span><a name="line.248"></a>
+<span class="sourceLineNo">249</span>                if (needTrans &amp;&amp;<a name="line.249"></a>
+<span class="sourceLineNo">250</span>                    srcCM.getTransparency() == Transparency.OPAQUE)<a name="line.250"></a>
+<span class="sourceLineNo">251</span>                {<a name="line.251"></a>
+<span class="sourceLineNo">252</span>                    // Need to convert first<a name="line.252"></a>
+<span class="sourceLineNo">253</span>                    ColorConvertOp ccop = new ColorConvertOp(hints);<a name="line.253"></a>
+<span class="sourceLineNo">254</span>                    BufferedImage tmpSrc = null;<a name="line.254"></a>
+<span class="sourceLineNo">255</span>                    int sw = src.getWidth();<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                    int sh = src.getHeight();<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                    if (dstCM.getTransparency() == Transparency.OPAQUE) {<a name="line.257"></a>
+<span class="sourceLineNo">258</span>                        tmpSrc = new BufferedImage(sw, sh,<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                                                  BufferedImage.TYPE_INT_ARGB);<a name="line.259"></a>
+<span class="sourceLineNo">260</span>                    }<a name="line.260"></a>
+<span class="sourceLineNo">261</span>                    else {<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                        WritableRaster r =<a name="line.262"></a>
+<span class="sourceLineNo">263</span>                            dstCM.createCompatibleWritableRaster(sw, sh);<a name="line.263"></a>
+<span class="sourceLineNo">264</span>                        tmpSrc = new BufferedImage(dstCM, r,<a name="line.264"></a>
+<span class="sourceLineNo">265</span>                                                  dstCM.isAlphaPremultiplied(),<a name="line.265"></a>
+<span class="sourceLineNo">266</span>                                                  null);<a name="line.266"></a>
+<span class="sourceLineNo">267</span>                    }<a name="line.267"></a>
+<span class="sourceLineNo">268</span>                    src = ccop.filter(src, tmpSrc);<a name="line.268"></a>
+<span class="sourceLineNo">269</span>                }<a name="line.269"></a>
+<span class="sourceLineNo">270</span>                else {<a name="line.270"></a>
+<span class="sourceLineNo">271</span>                    needToConvert = true;<a name="line.271"></a>
+<span class="sourceLineNo">272</span>                    dst = createCompatibleDestImage(src, null);<a name="line.272"></a>
+<span class="sourceLineNo">273</span>                }<a name="line.273"></a>
+<span class="sourceLineNo">274</span>            }<a name="line.274"></a>
+<span class="sourceLineNo">275</span><a name="line.275"></a>
+<span class="sourceLineNo">276</span>        }<a name="line.276"></a>
+<span class="sourceLineNo">277</span><a name="line.277"></a>
+<span class="sourceLineNo">278</span>        if (interpolationType != TYPE_NEAREST_NEIGHBOR &amp;&amp;<a name="line.278"></a>
+<span class="sourceLineNo">279</span>            dst.getColorModel() instanceof IndexColorModel) {<a name="line.279"></a>
+<span class="sourceLineNo">280</span>            dst = new BufferedImage(dst.getWidth(), dst.getHeight(),<a name="line.280"></a>
+<span class="sourceLineNo">281</span>                                    BufferedImage.TYPE_INT_ARGB);<a name="line.281"></a>
+<span class="sourceLineNo">282</span>        }<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        if (ImagingLib.filter(this, src, dst) == null) {<a name="line.283"></a>
+<span class="sourceLineNo">284</span>            throw new ImagingOpException ("Unable to transform src image");<a name="line.284"></a>
+<span class="sourceLineNo">285</span>        }<a name="line.285"></a>
+<span class="sourceLineNo">286</span><a name="line.286"></a>
+<span class="sourceLineNo">287</span>        if (needToConvert) {<a name="line.287"></a>
+<span class="sourceLineNo">288</span>            ColorConvertOp ccop = new ColorConvertOp(hints);<a name="line.288"></a>
+<span class="sourceLineNo">289</span>            ccop.filter(dst, origDst);<a name="line.289"></a>
+<span class="sourceLineNo">290</span>        }<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        else if (origDst != dst) {<a name="line.291"></a>
+<span class="sourceLineNo">292</span>            java.awt.Graphics2D g = origDst.createGraphics();<a name="line.292"></a>
+<span class="sourceLineNo">293</span>            try {<a name="line.293"></a>
+<span class="sourceLineNo">294</span>                g.setComposite(AlphaComposite.Src);<a name="line.294"></a>
+<span class="sourceLineNo">295</span>                g.drawImage(dst, 0, 0, null);<a name="line.295"></a>
+<span class="sourceLineNo">296</span>            } finally {<a name="line.296"></a>
+<span class="sourceLineNo">297</span>                g.dispose();<a name="line.297"></a>
+<span class="sourceLineNo">298</span>            }<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        }<a name="line.299"></a>
+<span class="sourceLineNo">300</span><a name="line.300"></a>
+<span class="sourceLineNo">301</span>        return origDst;<a name="line.301"></a>
+<span class="sourceLineNo">302</span>    }<a name="line.302"></a>
+<span class="sourceLineNo">303</span><a name="line.303"></a>
+<span class="sourceLineNo">304</span>    /**<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * Transforms the source &lt;CODE&gt;Raster&lt;/CODE&gt; and stores the results in<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * the destination &lt;CODE&gt;Raster&lt;/CODE&gt;.  This operation performs the<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * transform band by band.<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * &lt;p&gt;<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * If the destination &lt;CODE&gt;Raster&lt;/CODE&gt; is null, a new<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * &lt;CODE&gt;Raster&lt;/CODE&gt; is created.<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * An &lt;CODE&gt;IllegalArgumentException&lt;/CODE&gt; may be thrown if the source is<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * the same as the destination or if the number of bands in<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * the source is not equal to the number of bands in the<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * destination.<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * &lt;p&gt;<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * The coordinates of the rectangle returned by<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * &lt;code&gt;getBounds2D(Raster)&lt;/code&gt;<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * are not necessarily the same as the coordinates of the<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * &lt;code&gt;WritableRaster&lt;/code&gt; returned by this method.  If the<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * upper-left corner coordinates of rectangle are negative then<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * this part of the rectangle is not drawn.  If the coordinates<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * of the rectangle are positive then the filtered image is drawn at<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * that position in the destination &lt;code&gt;Raster&lt;/code&gt;.<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * &lt;p&gt;<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * @param src The &lt;CODE&gt;Raster&lt;/CODE&gt; to transform.<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * @param dst The &lt;CODE&gt;Raster&lt;/CODE&gt; in which to store the results of the<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * transformation.<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     *<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * @return The transformed &lt;CODE&gt;Raster&lt;/CODE&gt;.<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     *<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * @throws ImagingOpException if the raster cannot be transformed<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     *         because of a data-processing error that might be<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     *         caused by an invalid image format, tile format, or<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     *         image-processing operation, or any other unsupported<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     *         operation.<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     */<a name="line.336"></a>
+<span class="sourceLineNo">337</span>    public final WritableRaster filter(Raster src, WritableRaster dst) {<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        if (src == null) {<a name="line.338"></a>
+<span class="sourceLineNo">339</span>            throw new NullPointerException("src image is null");<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        }<a name="line.340"></a>
+<span class="sourceLineNo">341</span>        if (dst == null) {<a name="line.341"></a>
+<span class="sourceLineNo">342</span>            dst = createCompatibleDestRaster(src);<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        }<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        if (src == dst) {<a name="line.344"></a>
+<span class="sourceLineNo">345</span>            throw new IllegalArgumentException("src image cannot be the "+<a name="line.345"></a>
+<span class="sourceLineNo">346</span>                                               "same as the dst image");<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        }<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        if (src.getNumBands() != dst.getNumBands()) {<a name="line.348"></a>
+<span class="sourceLineNo">349</span>            throw new IllegalArgumentException("Number of src bands ("+<a name="line.349"></a>
+<span class="sourceLineNo">350</span>                                               src.getNumBands()+<a name="line.350"></a>
+<span class="sourceLineNo">351</span>                                               ") does not match number of "+<a name="line.351"></a>
+<span class="sourceLineNo">352</span>                                               " dst bands ("+<a name="line.352"></a>
+<span class="sourceLineNo">353</span>                                               dst.getNumBands()+")");<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        }<a name="line.354"></a>
+<span class="sourceLineNo">355</span><a name="line.355"></a>
+<span class="sourceLineNo">356</span>        if (ImagingLib.filter(this, src, dst) == null) {<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            throw new ImagingOpException ("Unable to transform src image");<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        }<a name="line.358"></a>
+<span class="sourceLineNo">359</span>        return dst;<a name="line.359"></a>
+<span class="sourceLineNo">360</span>    }<a name="line.360"></a>
+<span class="sourceLineNo">361</span><a name="line.361"></a>
+<span class="sourceLineNo">362</span>    /**<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * Returns the bounding box of the transformed destination.  The<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * rectangle returned is the actual bounding box of the<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * transformed points.  The coordinates of the upper-left corner<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * of the returned rectangle might not be (0,&amp;nbsp;0).<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     *<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * @param src The &lt;CODE&gt;BufferedImage&lt;/CODE&gt; to be transformed.<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     *<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * @return The &lt;CODE&gt;Rectangle2D&lt;/CODE&gt; representing the destination's<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * bounding box.<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     */<a name="line.372"></a>
+<span class="sourceLineNo">373</span>    public final Rectangle2D getBounds2D (BufferedImage src) {<a name="line.373"></a>
+<span class="sourceLineNo">374</span>        return getBounds2D(src.getRaster());<a name="line.374"></a>
+<span class="sourceLineNo">375</span>    }<a name="line.375"></a>
+<span class="sourceLineNo">376</span><a name="line.376"></a>
+<span class="sourceLineNo">377</span>    /**<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     * Returns the bounding box of the transformed destination.  The<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * rectangle returned will be the actual bounding box of the<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * transformed points.  The coordinates of the upper-left corner<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * of the returned rectangle might not be (0,&amp;nbsp;0).<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     *<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * @param src The &lt;CODE&gt;Raster&lt;/CODE&gt; to be transformed.<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     *<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * @return The &lt;CODE&gt;Rectangle2D&lt;/CODE&gt; representing the destination's<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * bounding box.<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     */<a name="line.387"></a>
+<span class="sourceLineNo">388</span>    public final Rectangle2D getBounds2D (Raster src) {<a name="line.388"></a>
+<span class="sourceLineNo">389</span>        int w = src.getWidth();<a name="line.389"></a>
+<span class="sourceLineNo">390</span>        int h = src.getHeight();<a name="line.390"></a>
+<span class="sourceLineNo">391</span><a name="line.391"></a>
+<span class="sourceLineNo">392</span>        // Get the bounding box of the src and transform the corners<a name="line.392"></a>
+<span class="sourceLineNo">393</span>        float[] pts = {0, 0, w, 0, w, h, 0, h};<a name="line.393"></a>
+<span class="sourceLineNo">394</span>        xform.transform(pts, 0, pts, 0, 4);<a name="line.394"></a>
+<span class="sourceLineNo">395</span><a name="line.395"></a>
+<span class="sourceLineNo">396</span>        // Get the min, max of the dst<a name="line.396"></a>
+<span class="sourceLineNo">397</span>        float fmaxX = pts[0];<a name="line.397"></a>
+<span class="sourceLineNo">398</span>        float fmaxY = pts[1];<a name="line.398"></a>
+<span class="sourceLineNo">399</span>        float fminX = pts[0];<a name="line.399"></a>
+<span class="sourceLineNo">400</span>        float fminY = pts[1];<a name="line.400"></a>
+<span class="sourceLineNo">401</span>        for (int i=2; i &lt; 8; i+=2) {<a name="line.401"></a>
+<span class="sourceLineNo">402</span>            if (pts[i] &gt; fmaxX) {<a name="line.402"></a>
+<span class="sourceLineNo">403</span>                fmaxX = pts[i];<a name="line.403"></a>
+<span class="sourceLineNo">404</span>            }<a name="line.404"></a>
+<span class="sourceLineNo">405</span>            else if (pts[i] &lt; fminX) {<a name="line.405"></a>
+<span class="sourceLineNo">406</span>                fminX = pts[i];<a name="line.406"></a>
+<span class="sourceLineNo">407</span>            }<a name="line.407"></a>
+<span class="sourceLineNo">408</span>            if (pts[i+1] &gt; fmaxY) {<a name="line.408"></a>
+<span class="sourceLineNo">409</span>                fmaxY = pts[i+1];<a name="line.409"></a>
+<span class="sourceLineNo">410</span>            }<a name="line.410"></a>
+<span class="sourceLineNo">411</span>            else if (pts[i+1] &lt; fminY) {<a name="line.411"></a>
+<span class="sourceLineNo">412</span>                fminY = pts[i+1];<a name="line.412"></a>
+<span class="sourceLineNo">413</span>            }<a name="line.413"></a>
+<span class="sourceLineNo">414</span>        }<a name="line.414"></a>
+<span class="sourceLineNo">415</span><a name="line.415"></a>
+<span class="sourceLineNo">416</span>        return new Rectangle2D.Float(fminX, fminY, fmaxX-fminX, fmaxY-fminY);<a name="line.416"></a>
+<span class="sourceLineNo">417</span>    }<a name="line.417"></a>
+<span class="sourceLineNo">418</span><a name="line.418"></a>
+<span class="sourceLineNo">419</span>    /**<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * Creates a zeroed destination image with the correct size and number of<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * bands.  A &lt;CODE&gt;RasterFormatException&lt;/CODE&gt; may be thrown if the<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     * transformed width or height is equal to 0.<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     * &lt;p&gt;<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * If &lt;CODE&gt;destCM&lt;/CODE&gt; is null,<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     * an appropriate &lt;CODE&gt;ColorModel&lt;/CODE&gt; is used; this<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     * &lt;CODE&gt;ColorModel&lt;/CODE&gt; may have<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * an alpha channel even if the source &lt;CODE&gt;ColorModel&lt;/CODE&gt; is opaque.<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     *<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * @param src  The &lt;CODE&gt;BufferedImage&lt;/CODE&gt; to be transformed.<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * @param destCM  &lt;CODE&gt;ColorModel&lt;/CODE&gt; of the destination.  If null,<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * an appropriate &lt;CODE&gt;ColorModel&lt;/CODE&gt; is used.<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     *<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     * @return The zeroed destination image.<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     */<a name="line.434"></a>
+<span class="sourceLineNo">435</span>    public BufferedImage createCompatibleDestImage (BufferedImage src,<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                                                    ColorModel destCM) {<a name="line.436"></a>
+<span class="sourceLineNo">437</span>        BufferedImage image;<a name="line.437"></a>
+<span class="sourceLineNo">438</span>        Rectangle r = getBounds2D(src).getBounds();<a name="line.438"></a>
+<span class="sourceLineNo">439</span><a name="line.439"></a>
+<span class="sourceLineNo">440</span>        // If r.x (or r.y) is &lt; 0, then we want to only create an image<a name="line.440"></a>
+<span class="sourceLineNo">441</span>        // that is in the positive range.<a name="line.441"></a>
+<span class="sourceLineNo">442</span>        // If r.x (or r.y) is &gt; 0, then we need to create an image that<a name="line.442"></a>
+<span class="sourceLineNo">443</span>        // includes the translation.<a name="line.443"></a>
+<span class="sourceLineNo">444</span>        int w = r.x + r.width;<a name="line.444"></a>
+<span class="sourceLineNo">445</span>        int h = r.y + r.height;<a name="line.445"></a>
+<span class="sourceLineNo">446</span>        if (w &lt;= 0) {<a name="line.446"></a>
+<span class="sourceLineNo">447</span>            throw new RasterFormatException("Transformed width ("+w+<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                                            ") is less than or equal to 0.");<a name="line.448"></a>
+<span class="sourceLineNo">449</span>        }<a name="line.449"></a>
+<span class="sourceLineNo">450</span>        if (h &lt;= 0) {<a name="line.450"></a>
+<span class="sourceLineNo">451</span>            throw new RasterFormatException("Transformed height ("+h+<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                                            ") is less than or equal to 0.");<a name="line.452"></a>
+<span class="sourceLineNo">453</span>        }<a name="line.453"></a>
+<span class="sourceLineNo">454</span><a name="line.454"></a>
+<span class="sourceLineNo">455</span>        if (destCM == null) {<a name="line.455"></a>
+<span class="sourceLineNo">456</span>            ColorModel cm = src.getColorModel();<a name="line.456"></a>
+<span class="sourceLineNo">457</span>            if (interpolationType != TYPE_NEAREST_NEIGHBOR &amp;&amp;<a name="line.457"></a>
+<span class="sourceLineNo">458</span>                (cm instanceof IndexColorModel ||<a name="line.458"></a>
+<span class="sourceLineNo">459</span>                 cm.getTransparency() == Transparency.OPAQUE))<a name="line.459"></a>
+<span class="sourceLineNo">460</span>            {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>                image = new BufferedImage(w, h,<a name="line.461"></a>
+<span class="sourceLineNo">462</span>                                          BufferedImage.TYPE_INT_ARGB);<a name="line.462"></a>
+<span class="sourceLineNo">463</span>            }<a name="line.463"></a>
+<span class="sourceLineNo">464</span>            else {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                image = new BufferedImage(cm,<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                          src.getRaster().createCompatibleWritableRaster(w,h),<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                          cm.isAlphaPremultiplied(), null);<a name="line.467"></a>
+<span class="sourceLineNo">468</span>            }<a name="line.468"></a>
+<span class="sourceLineNo">469</span>        }<a name="line.469"></a>
+<span class="sourceLineNo">470</span>        else {<a name="line.470"></a>
+<span class="sourceLineNo">471</span>            image = new BufferedImage(destCM,<a name="line.471"></a>
+<span class="sourceLineNo">472</span>                                    destCM.createCompatibleWritableRaster(w,h),<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                                    destCM.isAlphaPremultiplied(), null);<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        }<a name="line.474"></a>
+<span class="sourceLineNo">475</span><a name="line.475"></a>
+<span class="sourceLineNo">476</span>        return image;<a name="line.476"></a>
+<span class="sourceLineNo">477</span>    }<a name="line.477"></a>
+<span class="sourceLineNo">478</span><a name="line.478"></a>
+<span class="sourceLineNo">479</span>    /**<a name="line.479"></a>
+<span class="sourceLineNo">480</span>     * Creates a zeroed destination &lt;CODE&gt;Raster&lt;/CODE&gt; with the correct size<a name="line.480"></a>
+<span class="sourceLineNo">481</span>     * and number of bands.  A &lt;CODE&gt;RasterFormatException&lt;/CODE&gt; may be thrown<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     * if the transformed width or height is equal to 0.<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     *<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * @param src The &lt;CODE&gt;Raster&lt;/CODE&gt; to be transformed.<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     *<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     * @return The zeroed destination &lt;CODE&gt;Raster&lt;/CODE&gt;.<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     */<a name="line.487"></a>
+<span class="sourceLineNo">488</span>    public WritableRaster createCompatibleDestRaster (Raster src) {<a name="line.488"></a>
+<span class="sourceLineNo">489</span>        Rectangle2D r = getBounds2D(src);<a name="line.489"></a>
+<span class="sourceLineNo">490</span><a name="line.490"></a>
+<span class="sourceLineNo">491</span>        return src.createCompatibleWritableRaster((int)r.getX(),<a name="line.491"></a>
+<span class="sourceLineNo">492</span>                                                  (int)r.getY(),<a name="line.492"></a>
+<span class="sourceLineNo">493</span>                                                  (int)r.getWidth(),<a name="line.493"></a>
+<span class="sourceLineNo">494</span>                                                  (int)r.getHeight());<a name="line.494"></a>
+<span class="sourceLineNo">495</span>    }<a name="line.495"></a>
+<span class="sourceLineNo">496</span><a name="line.496"></a>
+<span class="sourceLineNo">497</span>    /**<a name="line.497"></a>
+<span class="sourceLineNo">498</span>     * Returns the location of the corresponding destination point given a<a name="line.498"></a>
+<span class="sourceLineNo">499</span>     * point in the source.  If &lt;CODE&gt;dstPt&lt;/CODE&gt; is specified, it<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     * is used to hold the return value.<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     *<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * @param srcPt The &lt;code&gt;Point2D&lt;/code&gt; that represents the source<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     *              point.<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * @param dstPt The &lt;CODE&gt;Point2D&lt;/CODE&gt; in which to store the result.<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     *<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     * @return The &lt;CODE&gt;Point2D&lt;/CODE&gt; in the destination that corresponds to<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     * the specified point in the source.<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     */<a name="line.508"></a>
+<span class="sourceLineNo">509</span>    public final Point2D getPoint2D (Point2D srcPt, Point2D dstPt) {<a name="line.509"></a>
+<span class="sourceLineNo">510</span>        return xform.transform (srcPt, dstPt);<a name="line.510"></a>
+<span class="sourceLineNo">511</span>    }<a name="line.511"></a>
+<span class="sourceLineNo">512</span><a name="line.512"></a>
+<span class="sourceLineNo">513</span>    /**<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     * Returns the affine transform used by this transform operation.<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     *<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     * @return The &lt;CODE&gt;AffineTransform&lt;/CODE&gt; associated with this op.<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     */<a name="line.517"></a>
+<span class="sourceLineNo">518</span>    public final AffineTransform getTransform() {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>        return (AffineTransform) xform.clone();<a name="line.519"></a>
+<span class="sourceLineNo">520</span>    }<a name="line.520"></a>
+<span class="sourceLineNo">521</span><a name="line.521"></a>
+<span class="sourceLineNo">522</span>    /**<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     * Returns the rendering hints used by this transform operation.<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     *<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     * @return The &lt;CODE&gt;RenderingHints&lt;/CODE&gt; object associated with this op.<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     */<a name="line.526"></a>
+<span class="sourceLineNo">527</span>    public final RenderingHints getRenderingHints() {<a name="line.527"></a>
+<span class="sourceLineNo">528</span>        if (hints == null) {<a name="line.528"></a>
+<span class="sourceLineNo">529</span>            Object val;<a name="line.529"></a>
+<span class="sourceLineNo">530</span>            switch(interpolationType) {<a name="line.530"></a>
+<span class="sourceLineNo">531</span>            case TYPE_NEAREST_NEIGHBOR:<a name="line.531"></a>
+<span class="sourceLineNo">532</span>                val = RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR;<a name="line.532"></a>
+<span class="sourceLineNo">533</span>                break;<a name="line.533"></a>
+<span class="sourceLineNo">534</span>            case TYPE_BILINEAR:<a name="line.534"></a>
+<span class="sourceLineNo">535</span>                val = RenderingHints.VALUE_INTERPOLATION_BILINEAR;<a name="line.535"></a>
+<span class="sourceLineNo">536</span>                break;<a name="line.536"></a>
+<span class="sourceLineNo">537</span>            case TYPE_BICUBIC:<a name="line.537"></a>
+<span class="sourceLineNo">538</span>                val = RenderingHints.VALUE_INTERPOLATION_BICUBIC;<a name="line.538"></a>
+<span class="sourceLineNo">539</span>                break;<a name="line.539"></a>
+<span class="sourceLineNo">540</span>            default:<a name="line.540"></a>
+<span class="sourceLineNo">541</span>                // Should never get here<a name="line.541"></a>
+<span class="sourceLineNo">542</span>                throw new InternalError("Unknown interpolation type "+<a name="line.542"></a>
+<span class="sourceLineNo">543</span>                                         interpolationType);<a name="line.543"></a>
+<span class="sourceLineNo">544</span><a name="line.544"></a>
+<span class="sourceLineNo">545</span>            }<a name="line.545"></a>
+<span class="sourceLineNo">546</span>            hints = new RenderingHints(RenderingHints.KEY_INTERPOLATION, val);<a name="line.546"></a>
+<span class="sourceLineNo">547</span>        }<a name="line.547"></a>
+<span class="sourceLineNo">548</span><a name="line.548"></a>
+<span class="sourceLineNo">549</span>        return hints;<a name="line.549"></a>
+<span class="sourceLineNo">550</span>    }<a name="line.550"></a>
+<span class="sourceLineNo">551</span><a name="line.551"></a>
+<span class="sourceLineNo">552</span>    // We need to be able to invert the transform if we want to<a name="line.552"></a>
+<span class="sourceLineNo">553</span>    // transform the image.  If the determinant of the matrix is 0,<a name="line.553"></a>
+<span class="sourceLineNo">554</span>    // then we can't invert the transform.<a name="line.554"></a>
+<span class="sourceLineNo">555</span>    void validateTransform(AffineTransform xform) {<a name="line.555"></a>
+<span class="sourceLineNo">556</span>        if (Math.abs(xform.getDeterminant()) &lt;= Double.MIN_VALUE) {<a name="line.556"></a>
+<span class="sourceLineNo">557</span>            throw new ImagingOpException("Unable to invert transform "+xform);<a name="line.557"></a>
+<span class="sourceLineNo">558</span>        }<a name="line.558"></a>
+<span class="sourceLineNo">559</span>    }<a name="line.559"></a>
+<span class="sourceLineNo">560</span>}<a name="line.560"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

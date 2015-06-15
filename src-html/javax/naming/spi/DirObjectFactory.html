@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2004, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.naming.spi;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.Hashtable;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.naming.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.naming.directory.Attributes;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span>  * This interface represents a factory for creating an object given<a name="line.33"></a>
+<span class="sourceLineNo">034</span>  * an object and attributes about the object.<a name="line.34"></a>
+<span class="sourceLineNo">035</span>  *&lt;p&gt;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>  * The JNDI framework allows for object implementations to<a name="line.36"></a>
+<span class="sourceLineNo">037</span>  * be loaded in dynamically via &lt;em&gt;object factories&lt;/em&gt;. See<a name="line.37"></a>
+<span class="sourceLineNo">038</span>  * &lt;tt&gt;ObjectFactory&lt;/tt&gt; for details.<a name="line.38"></a>
+<span class="sourceLineNo">039</span>  * &lt;p&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>  * A &lt;tt&gt;DirObjectFactory&lt;/tt&gt; extends &lt;tt&gt;ObjectFactory&lt;/tt&gt; by allowing<a name="line.40"></a>
+<span class="sourceLineNo">041</span>  * an &lt;tt&gt;Attributes&lt;/tt&gt; instance<a name="line.41"></a>
+<span class="sourceLineNo">042</span>  * to be supplied to the &lt;tt&gt;getObjectInstance()&lt;/tt&gt; method.<a name="line.42"></a>
+<span class="sourceLineNo">043</span>  * &lt;tt&gt;DirObjectFactory&lt;/tt&gt; implementations are intended to be used by &lt;tt&gt;DirContext&lt;/tt&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>  * service providers. The service provider, in addition reading an<a name="line.44"></a>
+<span class="sourceLineNo">045</span>  * object from the directory, might already have attributes that<a name="line.45"></a>
+<span class="sourceLineNo">046</span>  * are useful for the object factory to check to see whether the<a name="line.46"></a>
+<span class="sourceLineNo">047</span>  * factory is supposed to process the object. For instance, an LDAP-style<a name="line.47"></a>
+<span class="sourceLineNo">048</span>  * service provider might have read the "objectclass" of the object.<a name="line.48"></a>
+<span class="sourceLineNo">049</span>  * A CORBA object factory might be interested only in LDAP entries<a name="line.49"></a>
+<span class="sourceLineNo">050</span>  * with "objectclass=corbaObject". By using the attributes supplied by<a name="line.50"></a>
+<span class="sourceLineNo">051</span>  * the LDAP service provider, the CORBA object factory can quickly<a name="line.51"></a>
+<span class="sourceLineNo">052</span>  * eliminate objects that it need not worry about, and non-CORBA object<a name="line.52"></a>
+<span class="sourceLineNo">053</span>  * factories can quickly eliminate CORBA-related LDAP entries.<a name="line.53"></a>
+<span class="sourceLineNo">054</span>  *<a name="line.54"></a>
+<span class="sourceLineNo">055</span>  * @author Rosanna Lee<a name="line.55"></a>
+<span class="sourceLineNo">056</span>  * @author Scott Seligman<a name="line.56"></a>
+<span class="sourceLineNo">057</span>  *<a name="line.57"></a>
+<span class="sourceLineNo">058</span>  * @see NamingManager#getObjectInstance<a name="line.58"></a>
+<span class="sourceLineNo">059</span>  * @see DirectoryManager#getObjectInstance<a name="line.59"></a>
+<span class="sourceLineNo">060</span>  * @see ObjectFactory<a name="line.60"></a>
+<span class="sourceLineNo">061</span>  * @since 1.3<a name="line.61"></a>
+<span class="sourceLineNo">062</span>  */<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>public interface DirObjectFactory extends ObjectFactory {<a name="line.64"></a>
+<span class="sourceLineNo">065</span>/**<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * Creates an object using the location or reference information, and attributes<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * specified.<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;p&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * Special requirements of this object are supplied<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * using &lt;code&gt;environment&lt;/code&gt;.<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * An example of such an environment property is user identity<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * information.<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *&lt;p&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;tt&gt;DirectoryManager.getObjectInstance()&lt;/tt&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * successively loads in object factories. If it encounters a &lt;tt&gt;DirObjectFactory&lt;/tt&gt;,<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * it will invoke &lt;tt&gt;DirObjectFactory.getObjectInstance()&lt;/tt&gt;;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * otherwise, it invokes<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * &lt;tt&gt;ObjectFactory.getObjectInstance()&lt;/tt&gt;. It does this until a factory<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * produces a non-null answer.<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * &lt;p&gt; When an exception<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * is thrown by an object factory, the exception is passed on to the caller<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * of &lt;tt&gt;DirectoryManager.getObjectInstance()&lt;/tt&gt;. The search for other factories<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * that may produce a non-null answer is halted.<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * An object factory should only throw an exception if it is sure that<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * it is the only intended factory and that no other object factories<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * should be tried.<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * If this factory cannot create an object using the arguments supplied,<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * it should return null.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>  *&lt;p&gt;Since &lt;tt&gt;DirObjectFactory&lt;/tt&gt; extends &lt;tt&gt;ObjectFactory&lt;/tt&gt;, it<a name="line.89"></a>
+<span class="sourceLineNo">090</span>  * effectively<a name="line.90"></a>
+<span class="sourceLineNo">091</span>  * has two &lt;tt&gt;getObjectInstance()&lt;/tt&gt; methods, where one differs from the other by<a name="line.91"></a>
+<span class="sourceLineNo">092</span>  * the attributes argument. Given a factory that implements &lt;tt&gt;DirObjectFactory&lt;/tt&gt;,<a name="line.92"></a>
+<span class="sourceLineNo">093</span>  * &lt;tt&gt;DirectoryManager.getObjectInstance()&lt;/tt&gt; will only<a name="line.93"></a>
+<span class="sourceLineNo">094</span>  * use the method that accepts the attributes argument, while<a name="line.94"></a>
+<span class="sourceLineNo">095</span>  * &lt;tt&gt;NamingManager.getObjectInstance()&lt;/tt&gt; will only use the one that does not accept<a name="line.95"></a>
+<span class="sourceLineNo">096</span>  * the attributes argument.<a name="line.96"></a>
+<span class="sourceLineNo">097</span> *&lt;p&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * See &lt;tt&gt;ObjectFactory&lt;/tt&gt; for a description URL context factories and other<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * properties of object factories that apply equally to &lt;tt&gt;DirObjectFactory&lt;/tt&gt;.<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *&lt;p&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * The &lt;tt&gt;name&lt;/tt&gt;, &lt;tt&gt;attrs&lt;/tt&gt;, and &lt;tt&gt;environment&lt;/tt&gt; parameters<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * are owned by the caller.<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * The implementation will not modify these objects or keep references<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * to them, although it may keep references to clones or copies.<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * @param obj The possibly null object containing location or reference<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *              information that can be used in creating an object.<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * @param name The name of this object relative to &lt;code&gt;nameCtx&lt;/code&gt;,<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *              or null if no name is specified.<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * @param nameCtx The context relative to which the &lt;code&gt;name&lt;/code&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *              parameter is specified, or null if &lt;code&gt;name&lt;/code&gt; is<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *              relative to the default initial context.<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * @param environment The possibly null environment that is used in<a name="line.113"></a>
+<span class="sourceLineNo">114</span> *              creating the object.<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * @param attrs The possibly null attributes containing some of &lt;tt&gt;obj&lt;/tt&gt;'s<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * attributes. &lt;tt&gt;attrs&lt;/tt&gt; might not necessarily have all of &lt;tt&gt;obj&lt;/tt&gt;'s<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * attributes. If the object factory requires more attributes, it needs<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * to get it, either using &lt;tt&gt;obj&lt;/tt&gt;, or &lt;tt&gt;name&lt;/tt&gt; and &lt;tt&gt;nameCtx&lt;/tt&gt;.<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *      The factory must not modify attrs.<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * @return The object created; null if an object cannot be created.<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * @exception Exception If this object factory encountered an exception<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * while attempting to create an object, and no other object factories are<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * to be tried.<a name="line.123"></a>
+<span class="sourceLineNo">124</span> *<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * @see DirectoryManager#getObjectInstance<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * @see NamingManager#getURLContext<a name="line.126"></a>
+<span class="sourceLineNo">127</span> */<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    public Object getObjectInstance(Object obj, Name name, Context nameCtx,<a name="line.128"></a>
+<span class="sourceLineNo">129</span>                                    Hashtable&lt;?,?&gt; environment,<a name="line.129"></a>
+<span class="sourceLineNo">130</span>                                    Attributes attrs)<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        throws Exception;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>}<a name="line.132"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

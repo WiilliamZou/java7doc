@@ -1,0 +1,927 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package javax.print.attribute.standard;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.util.HashMap;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.Vector;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.print.attribute.Size2DSyntax;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.print.attribute.Attribute;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>/**<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * Class MediaSize is a two-dimensional size valued printing attribute class<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * that indicates the dimensions of the medium in a portrait orientation, with<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * the X dimension running along the bottom edge and the Y dimension running<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * along the left edge. Thus, the Y dimension must be greater than or equal to<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * the X dimension. Class MediaSize declares many standard media size<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * values, organized into nested classes for ISO, JIS, North American,<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * engineering, and other media.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;P&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * MediaSize is not yet used to specify media. Its current role is<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * as a mapping for named media (see {@link MediaSizeName MediaSizeName}).<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * Clients can use the mapping method<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;code&gt;MediaSize.getMediaSizeForName(MediaSizeName)&lt;/code&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * to find the physical dimensions of the MediaSizeName instances<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * enumerated in this API. This is useful for clients which need this<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * information to format &amp; paginate printing.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;P&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * @author  Phil Race, Alan Kaminsky<a name="line.51"></a>
+<span class="sourceLineNo">052</span> */<a name="line.52"></a>
+<span class="sourceLineNo">053</span>public class MediaSize extends Size2DSyntax implements Attribute {<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>    private static final long serialVersionUID = -1967958664615414771L;<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>    private MediaSizeName mediaName;<a name="line.57"></a>
+<span class="sourceLineNo">058</span><a name="line.58"></a>
+<span class="sourceLineNo">059</span>    private static HashMap mediaMap = new HashMap(100, 10);<a name="line.59"></a>
+<span class="sourceLineNo">060</span><a name="line.60"></a>
+<span class="sourceLineNo">061</span>    private static Vector sizeVector = new Vector(100, 10);<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    /**<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * Construct a new media size attribute from the given floating-point<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * values.<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     *<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * @param  x  X dimension.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * @param  y  Y dimension.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @param  units<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     *     Unit conversion factor, e.g. &lt;CODE&gt;Size2DSyntax.INCH&lt;/CODE&gt; or<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     *     &lt;CODE&gt;Size2DSyntax.MM&lt;/CODE&gt;.<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     *<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * @exception  IllegalArgumentException<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     *   (Unchecked exception) Thrown if &lt;CODE&gt;x&lt;/CODE&gt; &lt; 0 or &lt;CODE&gt;y&lt;/CODE&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     *     &lt; 0 or &lt;CODE&gt;units&lt;/CODE&gt; &lt; 1 or &lt;CODE&gt;x&lt;/CODE&gt; &gt; &lt;CODE&gt;y&lt;/CODE&gt;.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     */<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    public MediaSize(float x, float y,int units) {<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        super (x, y, units);<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        if (x &gt; y) {<a name="line.79"></a>
+<span class="sourceLineNo">080</span>            throw new IllegalArgumentException("X dimension &gt; Y dimension");<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        }<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        sizeVector.add(this);<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    }<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>    /**<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * Construct a new media size attribute from the given integer values.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     *<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * @param  x  X dimension.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @param  y  Y dimension.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @param  units<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *     Unit conversion factor, e.g. &lt;CODE&gt;Size2DSyntax.INCH&lt;/CODE&gt; or<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *     &lt;CODE&gt;Size2DSyntax.MM&lt;/CODE&gt;.<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     *<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @exception  IllegalArgumentException<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *   (Unchecked exception) Thrown if &lt;CODE&gt;x&lt;/CODE&gt; &lt; 0 or &lt;CODE&gt;y&lt;/CODE&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *     &lt; 0 or &lt;CODE&gt;units&lt;/CODE&gt; &lt; 1 or &lt;CODE&gt;x&lt;/CODE&gt; &gt; &lt;CODE&gt;y&lt;/CODE&gt;.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     */<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    public MediaSize(int x, int y,int units) {<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        super (x, y, units);<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        if (x &gt; y) {<a name="line.100"></a>
+<span class="sourceLineNo">101</span>            throw new IllegalArgumentException("X dimension &gt; Y dimension");<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        }<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        sizeVector.add(this);<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    }<a name="line.104"></a>
+<span class="sourceLineNo">105</span><a name="line.105"></a>
+<span class="sourceLineNo">106</span>   /**<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * Construct a new media size attribute from the given floating-point<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * values.<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     *<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * @param  x  X dimension.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * @param  y  Y dimension.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @param  units<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *     Unit conversion factor, e.g. &lt;CODE&gt;Size2DSyntax.INCH&lt;/CODE&gt; or<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *     &lt;CODE&gt;Size2DSyntax.MM&lt;/CODE&gt;.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @param media a media name to associate with this MediaSize<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @exception  IllegalArgumentException<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *   (Unchecked exception) Thrown if &lt;CODE&gt;x&lt;/CODE&gt; &lt; 0 or &lt;CODE&gt;y&lt;/CODE&gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     *     &lt; 0 or &lt;CODE&gt;units&lt;/CODE&gt; &lt; 1 or &lt;CODE&gt;x&lt;/CODE&gt; &gt; &lt;CODE&gt;y&lt;/CODE&gt;.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     */<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    public MediaSize(float x, float y,int units, MediaSizeName media) {<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        super (x, y, units);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        if (x &gt; y) {<a name="line.123"></a>
+<span class="sourceLineNo">124</span>            throw new IllegalArgumentException("X dimension &gt; Y dimension");<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        }<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        if (media != null &amp;&amp; mediaMap.get(media) == null) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            mediaName = media;<a name="line.127"></a>
+<span class="sourceLineNo">128</span>            mediaMap.put(mediaName, this);<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        }<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        sizeVector.add(this);<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>    /**<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * Construct a new media size attribute from the given integer values.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @param  x  X dimension.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * @param  y  Y dimension.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @param  units<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *     Unit conversion factor, e.g. &lt;CODE&gt;Size2DSyntax.INCH&lt;/CODE&gt; or<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *     &lt;CODE&gt;Size2DSyntax.MM&lt;/CODE&gt;.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @param media a media name to associate with this MediaSize<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @exception  IllegalArgumentException<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *   (Unchecked exception) Thrown if &lt;CODE&gt;x&lt;/CODE&gt; &lt; 0 or &lt;CODE&gt;y&lt;/CODE&gt;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *     &lt; 0 or &lt;CODE&gt;units&lt;/CODE&gt; &lt; 1 or &lt;CODE&gt;x&lt;/CODE&gt; &gt; &lt;CODE&gt;y&lt;/CODE&gt;.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     */<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    public MediaSize(int x, int y,int units, MediaSizeName media) {<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        super (x, y, units);<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        if (x &gt; y) {<a name="line.149"></a>
+<span class="sourceLineNo">150</span>            throw new IllegalArgumentException("X dimension &gt; Y dimension");<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        }<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        if (media != null &amp;&amp; mediaMap.get(media) == null) {<a name="line.152"></a>
+<span class="sourceLineNo">153</span>            mediaName = media;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>            mediaMap.put(mediaName, this);<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        }<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        sizeVector.add(this);<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    }<a name="line.157"></a>
+<span class="sourceLineNo">158</span><a name="line.158"></a>
+<span class="sourceLineNo">159</span>    /**<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * Get the media name, if any, for this size.<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @return the name for this media size, or null if no name was<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * associated with this size (an anonymous size).<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     */<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    public MediaSizeName getMediaSizeName() {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        return mediaName;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    }<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>    /**<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * Get the MediaSize for the specified named media.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @param media - the name of the media for which the size is sought<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * @return size of the media, or null if this media is not associated<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * with any size.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     */<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    public static MediaSize getMediaSizeForName(MediaSizeName media) {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        return (MediaSize)mediaMap.get(media);<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    }<a name="line.178"></a>
+<span class="sourceLineNo">179</span><a name="line.179"></a>
+<span class="sourceLineNo">180</span>    /**<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * The specified dimensions are used to locate a matching MediaSize<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * instance from amongst all the standard MediaSize instances.<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * If there is no exact match, the closest match is used.<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * &lt;p&gt;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * The MediaSize is in turn used to locate the MediaSizeName object.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * This method may return null if the closest matching MediaSize<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * has no corresponding Media instance.<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * &lt;p&gt;<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * This method is useful for clients which have only dimensions and<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * want to find a Media which corresponds to the dimensions.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * @param x - X dimension<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * @param y - Y dimension.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * @param  units<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     *     Unit conversion factor, e.g. &lt;CODE&gt;Size2DSyntax.INCH&lt;/CODE&gt; or<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     *     &lt;CODE&gt;Size2DSyntax.MM&lt;/CODE&gt;<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @return MediaSizeName matching these dimensions, or null.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @exception IllegalArgumentException if x &lt;= 0, y &lt;= 0, or units &lt; 1<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     *<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     */<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    public static MediaSizeName findMedia(float x, float y, int units) {<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>        MediaSize match = MediaSize.ISO.A4;<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>        if (x &lt;= 0.0f || y &lt;= 0.0f || units &lt; 1) {<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            throw new IllegalArgumentException("args must be +ve values");<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        }<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>        double ls = x * x + y * y;<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        double tmp_ls;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        float []dim;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        float diffx = x;<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        float diffy = y;<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>        for (int i=0; i &lt; sizeVector.size() ; i++) {<a name="line.214"></a>
+<span class="sourceLineNo">215</span>            MediaSize mediaSize = (MediaSize)sizeVector.elementAt(i);<a name="line.215"></a>
+<span class="sourceLineNo">216</span>            dim = mediaSize.getSize(units);<a name="line.216"></a>
+<span class="sourceLineNo">217</span>            if (x == dim[0] &amp;&amp; y == dim[1]) {<a name="line.217"></a>
+<span class="sourceLineNo">218</span>                match = mediaSize;<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                break;<a name="line.219"></a>
+<span class="sourceLineNo">220</span>            } else {<a name="line.220"></a>
+<span class="sourceLineNo">221</span>                diffx = x - dim[0];<a name="line.221"></a>
+<span class="sourceLineNo">222</span>                diffy = y - dim[1];<a name="line.222"></a>
+<span class="sourceLineNo">223</span>                tmp_ls = diffx * diffx + diffy * diffy;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                if (tmp_ls &lt; ls) {<a name="line.224"></a>
+<span class="sourceLineNo">225</span>                    ls = tmp_ls;<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                    match = mediaSize;<a name="line.226"></a>
+<span class="sourceLineNo">227</span>                }<a name="line.227"></a>
+<span class="sourceLineNo">228</span>            }<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        }<a name="line.229"></a>
+<span class="sourceLineNo">230</span><a name="line.230"></a>
+<span class="sourceLineNo">231</span>        return match.getMediaSizeName();<a name="line.231"></a>
+<span class="sourceLineNo">232</span>    }<a name="line.232"></a>
+<span class="sourceLineNo">233</span><a name="line.233"></a>
+<span class="sourceLineNo">234</span>    /**<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * Returns whether this media size attribute is equivalent to the passed<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * in object.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * To be equivalent, all of the following conditions must be true:<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * &lt;OL TYPE=1&gt;<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * &lt;LI&gt;<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * &lt;CODE&gt;object&lt;/CODE&gt; is not null.<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * &lt;LI&gt;<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * &lt;CODE&gt;object&lt;/CODE&gt; is an instance of class MediaSize.<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * &lt;LI&gt;<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * This media size attribute's X dimension is equal to<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * &lt;CODE&gt;object&lt;/CODE&gt;'s X dimension.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * &lt;LI&gt;<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * This media size attribute's Y dimension is equal to<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * &lt;CODE&gt;object&lt;/CODE&gt;'s Y dimension.<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * &lt;/OL&gt;<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     *<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * @param  object  Object to compare to.<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     *<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * @return  True if &lt;CODE&gt;object&lt;/CODE&gt; is equivalent to this media size<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     *          attribute, false otherwise.<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     */<a name="line.255"></a>
+<span class="sourceLineNo">256</span>    public boolean equals(Object object) {<a name="line.256"></a>
+<span class="sourceLineNo">257</span>        return (super.equals(object) &amp;&amp; object instanceof MediaSize);<a name="line.257"></a>
+<span class="sourceLineNo">258</span>    }<a name="line.258"></a>
+<span class="sourceLineNo">259</span><a name="line.259"></a>
+<span class="sourceLineNo">260</span>    /**<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * Get the printing attribute class which is to be used as the "category"<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * for this printing attribute value.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * &lt;P&gt;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * For class MediaSize and any vendor-defined subclasses, the category is<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * class MediaSize itself.<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     *<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * @return  Printing attribute class (category), an instance of class<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     *          {@link java.lang.Class java.lang.Class}.<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     */<a name="line.269"></a>
+<span class="sourceLineNo">270</span>    public final Class&lt;? extends Attribute&gt; getCategory() {<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        return MediaSize.class;<a name="line.271"></a>
+<span class="sourceLineNo">272</span>    }<a name="line.272"></a>
+<span class="sourceLineNo">273</span><a name="line.273"></a>
+<span class="sourceLineNo">274</span>    /**<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * Get the name of the category of which this attribute value is an<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * instance.<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * &lt;P&gt;<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * For class MediaSize and any vendor-defined subclasses, the category<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * name is &lt;CODE&gt;"media-size"&lt;/CODE&gt;.<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     *<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * @return  Attribute category name.<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     */<a name="line.282"></a>
+<span class="sourceLineNo">283</span>    public final String getName() {<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        return "media-size";<a name="line.284"></a>
+<span class="sourceLineNo">285</span>    }<a name="line.285"></a>
+<span class="sourceLineNo">286</span><a name="line.286"></a>
+<span class="sourceLineNo">287</span>    /**<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * Class MediaSize.ISO includes {@link MediaSize MediaSize} values for ISO<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * media.<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * &lt;P&gt;<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     */<a name="line.291"></a>
+<span class="sourceLineNo">292</span>    public final static class ISO {<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        /**<a name="line.293"></a>
+<span class="sourceLineNo">294</span>         * Specifies the ISO A0 size, 841 mm by 1189 mm.<a name="line.294"></a>
+<span class="sourceLineNo">295</span>         */<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        public static final MediaSize<a name="line.296"></a>
+<span class="sourceLineNo">297</span>            A0 = new MediaSize(841, 1189, Size2DSyntax.MM, MediaSizeName.ISO_A0);<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        /**<a name="line.298"></a>
+<span class="sourceLineNo">299</span>         * Specifies the ISO A1 size, 594 mm by 841 mm.<a name="line.299"></a>
+<span class="sourceLineNo">300</span>         */<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        public static final MediaSize<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            A1 = new MediaSize(594, 841, Size2DSyntax.MM, MediaSizeName.ISO_A1);<a name="line.302"></a>
+<span class="sourceLineNo">303</span>        /**<a name="line.303"></a>
+<span class="sourceLineNo">304</span>         * Specifies the ISO A2 size, 420 mm by 594 mm.<a name="line.304"></a>
+<span class="sourceLineNo">305</span>         */<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        public static final MediaSize<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            A2 = new MediaSize(420, 594, Size2DSyntax.MM, MediaSizeName.ISO_A2);<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        /**<a name="line.308"></a>
+<span class="sourceLineNo">309</span>         * Specifies the ISO A3 size, 297 mm by 420 mm.<a name="line.309"></a>
+<span class="sourceLineNo">310</span>         */<a name="line.310"></a>
+<span class="sourceLineNo">311</span>        public static final MediaSize<a name="line.311"></a>
+<span class="sourceLineNo">312</span>            A3 = new MediaSize(297, 420, Size2DSyntax.MM, MediaSizeName.ISO_A3);<a name="line.312"></a>
+<span class="sourceLineNo">313</span>        /**<a name="line.313"></a>
+<span class="sourceLineNo">314</span>         * Specifies the ISO A4 size, 210 mm by 297 mm.<a name="line.314"></a>
+<span class="sourceLineNo">315</span>         */<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        public static final MediaSize<a name="line.316"></a>
+<span class="sourceLineNo">317</span>            A4 = new MediaSize(210, 297, Size2DSyntax.MM, MediaSizeName.ISO_A4);<a name="line.317"></a>
+<span class="sourceLineNo">318</span>        /**<a name="line.318"></a>
+<span class="sourceLineNo">319</span>         * Specifies the ISO A5 size, 148 mm by 210 mm.<a name="line.319"></a>
+<span class="sourceLineNo">320</span>         */<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        public static final MediaSize<a name="line.321"></a>
+<span class="sourceLineNo">322</span>            A5 = new MediaSize(148, 210, Size2DSyntax.MM, MediaSizeName.ISO_A5);<a name="line.322"></a>
+<span class="sourceLineNo">323</span>        /**<a name="line.323"></a>
+<span class="sourceLineNo">324</span>         * Specifies the ISO A6 size, 105 mm by 148 mm.<a name="line.324"></a>
+<span class="sourceLineNo">325</span>         */<a name="line.325"></a>
+<span class="sourceLineNo">326</span>        public static final MediaSize<a name="line.326"></a>
+<span class="sourceLineNo">327</span>            A6 = new MediaSize(105, 148, Size2DSyntax.MM, MediaSizeName.ISO_A6);<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        /**<a name="line.328"></a>
+<span class="sourceLineNo">329</span>         * Specifies the ISO A7 size, 74 mm by 105 mm.<a name="line.329"></a>
+<span class="sourceLineNo">330</span>         */<a name="line.330"></a>
+<span class="sourceLineNo">331</span>        public static final MediaSize<a name="line.331"></a>
+<span class="sourceLineNo">332</span>            A7 = new MediaSize(74, 105, Size2DSyntax.MM, MediaSizeName.ISO_A7);<a name="line.332"></a>
+<span class="sourceLineNo">333</span>        /**<a name="line.333"></a>
+<span class="sourceLineNo">334</span>         * Specifies the ISO A8 size, 52 mm by 74 mm.<a name="line.334"></a>
+<span class="sourceLineNo">335</span>         */<a name="line.335"></a>
+<span class="sourceLineNo">336</span>        public static final MediaSize<a name="line.336"></a>
+<span class="sourceLineNo">337</span>            A8 = new MediaSize(52, 74, Size2DSyntax.MM, MediaSizeName.ISO_A8);<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        /**<a name="line.338"></a>
+<span class="sourceLineNo">339</span>         * Specifies the ISO A9 size, 37 mm by 52 mm.<a name="line.339"></a>
+<span class="sourceLineNo">340</span>         */<a name="line.340"></a>
+<span class="sourceLineNo">341</span>        public static final MediaSize<a name="line.341"></a>
+<span class="sourceLineNo">342</span>            A9 = new MediaSize(37, 52, Size2DSyntax.MM, MediaSizeName.ISO_A9);<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        /**<a name="line.343"></a>
+<span class="sourceLineNo">344</span>         * Specifies the ISO A10 size, 26 mm by 37 mm.<a name="line.344"></a>
+<span class="sourceLineNo">345</span>         */<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        public static final MediaSize<a name="line.346"></a>
+<span class="sourceLineNo">347</span>            A10 = new MediaSize(26, 37, Size2DSyntax.MM, MediaSizeName.ISO_A10);<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        /**<a name="line.348"></a>
+<span class="sourceLineNo">349</span>         * Specifies the ISO B0 size, 1000 mm by 1414 mm.<a name="line.349"></a>
+<span class="sourceLineNo">350</span>         */<a name="line.350"></a>
+<span class="sourceLineNo">351</span>        public static final MediaSize<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            B0 = new MediaSize(1000, 1414, Size2DSyntax.MM, MediaSizeName.ISO_B0);<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        /**<a name="line.353"></a>
+<span class="sourceLineNo">354</span>         * Specifies the ISO B1 size, 707 mm by 1000 mm.<a name="line.354"></a>
+<span class="sourceLineNo">355</span>         */<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        public static final MediaSize<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            B1 = new MediaSize(707, 1000, Size2DSyntax.MM, MediaSizeName.ISO_B1);<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        /**<a name="line.358"></a>
+<span class="sourceLineNo">359</span>         * Specifies the ISO B2 size, 500 mm by 707 mm.<a name="line.359"></a>
+<span class="sourceLineNo">360</span>         */<a name="line.360"></a>
+<span class="sourceLineNo">361</span>        public static final MediaSize<a name="line.361"></a>
+<span class="sourceLineNo">362</span>            B2 = new MediaSize(500, 707, Size2DSyntax.MM, MediaSizeName.ISO_B2);<a name="line.362"></a>
+<span class="sourceLineNo">363</span>        /**<a name="line.363"></a>
+<span class="sourceLineNo">364</span>         * Specifies the ISO B3 size, 353 mm by 500 mm.<a name="line.364"></a>
+<span class="sourceLineNo">365</span>         */<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        public static final MediaSize<a name="line.366"></a>
+<span class="sourceLineNo">367</span>            B3 = new MediaSize(353, 500, Size2DSyntax.MM, MediaSizeName.ISO_B3);<a name="line.367"></a>
+<span class="sourceLineNo">368</span>        /**<a name="line.368"></a>
+<span class="sourceLineNo">369</span>         * Specifies the ISO B4 size, 250 mm by 353 mm.<a name="line.369"></a>
+<span class="sourceLineNo">370</span>         */<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        public static final MediaSize<a name="line.371"></a>
+<span class="sourceLineNo">372</span>            B4 = new MediaSize(250, 353, Size2DSyntax.MM, MediaSizeName.ISO_B4);<a name="line.372"></a>
+<span class="sourceLineNo">373</span>        /**<a name="line.373"></a>
+<span class="sourceLineNo">374</span>         * Specifies the ISO B5 size, 176 mm by 250 mm.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>         */<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        public static final MediaSize<a name="line.376"></a>
+<span class="sourceLineNo">377</span>            B5 = new MediaSize(176, 250, Size2DSyntax.MM, MediaSizeName.ISO_B5);<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        /**<a name="line.378"></a>
+<span class="sourceLineNo">379</span>         * Specifies the ISO B6 size, 125 mm by 176 mm.<a name="line.379"></a>
+<span class="sourceLineNo">380</span>         */<a name="line.380"></a>
+<span class="sourceLineNo">381</span>        public static final MediaSize<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            B6 = new MediaSize(125, 176, Size2DSyntax.MM, MediaSizeName.ISO_B6);<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        /**<a name="line.383"></a>
+<span class="sourceLineNo">384</span>         * Specifies the ISO B7 size, 88 mm by 125 mm.<a name="line.384"></a>
+<span class="sourceLineNo">385</span>         */<a name="line.385"></a>
+<span class="sourceLineNo">386</span>        public static final MediaSize<a name="line.386"></a>
+<span class="sourceLineNo">387</span>            B7 = new MediaSize(88, 125, Size2DSyntax.MM, MediaSizeName.ISO_B7);<a name="line.387"></a>
+<span class="sourceLineNo">388</span>        /**<a name="line.388"></a>
+<span class="sourceLineNo">389</span>         * Specifies the ISO B8 size, 62 mm by 88 mm.<a name="line.389"></a>
+<span class="sourceLineNo">390</span>         */<a name="line.390"></a>
+<span class="sourceLineNo">391</span>        public static final MediaSize<a name="line.391"></a>
+<span class="sourceLineNo">392</span>            B8 = new MediaSize(62, 88, Size2DSyntax.MM, MediaSizeName.ISO_B8);<a name="line.392"></a>
+<span class="sourceLineNo">393</span>        /**<a name="line.393"></a>
+<span class="sourceLineNo">394</span>         * Specifies the ISO B9 size, 44 mm by 62 mm.<a name="line.394"></a>
+<span class="sourceLineNo">395</span>         */<a name="line.395"></a>
+<span class="sourceLineNo">396</span>        public static final MediaSize<a name="line.396"></a>
+<span class="sourceLineNo">397</span>            B9 = new MediaSize(44, 62, Size2DSyntax.MM, MediaSizeName.ISO_B9);<a name="line.397"></a>
+<span class="sourceLineNo">398</span>        /**<a name="line.398"></a>
+<span class="sourceLineNo">399</span>         * Specifies the ISO B10 size, 31 mm by 44 mm.<a name="line.399"></a>
+<span class="sourceLineNo">400</span>         */<a name="line.400"></a>
+<span class="sourceLineNo">401</span>        public static final MediaSize<a name="line.401"></a>
+<span class="sourceLineNo">402</span>            B10 = new MediaSize(31, 44, Size2DSyntax.MM, MediaSizeName.ISO_B10);<a name="line.402"></a>
+<span class="sourceLineNo">403</span>        /**<a name="line.403"></a>
+<span class="sourceLineNo">404</span>         * Specifies the ISO C3 size, 324 mm by 458 mm.<a name="line.404"></a>
+<span class="sourceLineNo">405</span>         */<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        public static final MediaSize<a name="line.406"></a>
+<span class="sourceLineNo">407</span>            C3 = new MediaSize(324, 458, Size2DSyntax.MM, MediaSizeName.ISO_C3);<a name="line.407"></a>
+<span class="sourceLineNo">408</span>        /**<a name="line.408"></a>
+<span class="sourceLineNo">409</span>         * Specifies the ISO C4 size, 229 mm by 324 mm.<a name="line.409"></a>
+<span class="sourceLineNo">410</span>         */<a name="line.410"></a>
+<span class="sourceLineNo">411</span>        public static final MediaSize<a name="line.411"></a>
+<span class="sourceLineNo">412</span>            C4 = new MediaSize(229, 324, Size2DSyntax.MM, MediaSizeName.ISO_C4);<a name="line.412"></a>
+<span class="sourceLineNo">413</span>        /**<a name="line.413"></a>
+<span class="sourceLineNo">414</span>         * Specifies the ISO C5 size, 162 mm by 229 mm.<a name="line.414"></a>
+<span class="sourceLineNo">415</span>         */<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        public static final MediaSize<a name="line.416"></a>
+<span class="sourceLineNo">417</span>            C5 = new MediaSize(162, 229, Size2DSyntax.MM, MediaSizeName.ISO_C5);<a name="line.417"></a>
+<span class="sourceLineNo">418</span>        /**<a name="line.418"></a>
+<span class="sourceLineNo">419</span>         * Specifies the ISO C6 size, 114 mm by 162 mm.<a name="line.419"></a>
+<span class="sourceLineNo">420</span>         */<a name="line.420"></a>
+<span class="sourceLineNo">421</span>        public static final MediaSize<a name="line.421"></a>
+<span class="sourceLineNo">422</span>            C6 = new MediaSize(114, 162, Size2DSyntax.MM, MediaSizeName.ISO_C6);<a name="line.422"></a>
+<span class="sourceLineNo">423</span>        /**<a name="line.423"></a>
+<span class="sourceLineNo">424</span>         * Specifies the ISO Designated Long size, 110 mm by 220 mm.<a name="line.424"></a>
+<span class="sourceLineNo">425</span>         */<a name="line.425"></a>
+<span class="sourceLineNo">426</span>        public static final MediaSize<a name="line.426"></a>
+<span class="sourceLineNo">427</span>            DESIGNATED_LONG = new MediaSize(110, 220, Size2DSyntax.MM,<a name="line.427"></a>
+<span class="sourceLineNo">428</span>                                            MediaSizeName.ISO_DESIGNATED_LONG);<a name="line.428"></a>
+<span class="sourceLineNo">429</span><a name="line.429"></a>
+<span class="sourceLineNo">430</span>        /**<a name="line.430"></a>
+<span class="sourceLineNo">431</span>         * Hide all constructors.<a name="line.431"></a>
+<span class="sourceLineNo">432</span>         */<a name="line.432"></a>
+<span class="sourceLineNo">433</span>        private ISO() {<a name="line.433"></a>
+<span class="sourceLineNo">434</span>        }<a name="line.434"></a>
+<span class="sourceLineNo">435</span>    }<a name="line.435"></a>
+<span class="sourceLineNo">436</span><a name="line.436"></a>
+<span class="sourceLineNo">437</span>    /**<a name="line.437"></a>
+<span class="sourceLineNo">438</span>     * Class MediaSize.JIS includes {@link MediaSize MediaSize} values for JIS<a name="line.438"></a>
+<span class="sourceLineNo">439</span>     * (Japanese) media.      *<a name="line.439"></a>
+<span class="sourceLineNo">440</span>     */<a name="line.440"></a>
+<span class="sourceLineNo">441</span>    public final static class JIS {<a name="line.441"></a>
+<span class="sourceLineNo">442</span><a name="line.442"></a>
+<span class="sourceLineNo">443</span>        /**<a name="line.443"></a>
+<span class="sourceLineNo">444</span>         * Specifies the JIS B0 size, 1030 mm by 1456 mm.<a name="line.444"></a>
+<span class="sourceLineNo">445</span>         */<a name="line.445"></a>
+<span class="sourceLineNo">446</span>        public static final MediaSize<a name="line.446"></a>
+<span class="sourceLineNo">447</span>            B0 = new MediaSize(1030, 1456, Size2DSyntax.MM, MediaSizeName.JIS_B0);<a name="line.447"></a>
+<span class="sourceLineNo">448</span>        /**<a name="line.448"></a>
+<span class="sourceLineNo">449</span>         * Specifies the JIS B1 size, 728 mm by 1030 mm.<a name="line.449"></a>
+<span class="sourceLineNo">450</span>         */<a name="line.450"></a>
+<span class="sourceLineNo">451</span>        public static final MediaSize<a name="line.451"></a>
+<span class="sourceLineNo">452</span>            B1 = new MediaSize(728, 1030, Size2DSyntax.MM, MediaSizeName.JIS_B1);<a name="line.452"></a>
+<span class="sourceLineNo">453</span>        /**<a name="line.453"></a>
+<span class="sourceLineNo">454</span>         * Specifies the JIS B2 size, 515 mm by 728 mm.<a name="line.454"></a>
+<span class="sourceLineNo">455</span>         */<a name="line.455"></a>
+<span class="sourceLineNo">456</span>        public static final MediaSize<a name="line.456"></a>
+<span class="sourceLineNo">457</span>            B2 = new MediaSize(515, 728, Size2DSyntax.MM, MediaSizeName.JIS_B2);<a name="line.457"></a>
+<span class="sourceLineNo">458</span>        /**<a name="line.458"></a>
+<span class="sourceLineNo">459</span>         * Specifies the JIS B3 size, 364 mm by 515 mm.<a name="line.459"></a>
+<span class="sourceLineNo">460</span>         */<a name="line.460"></a>
+<span class="sourceLineNo">461</span>        public static final MediaSize<a name="line.461"></a>
+<span class="sourceLineNo">462</span>            B3 = new MediaSize(364, 515, Size2DSyntax.MM, MediaSizeName.JIS_B3);<a name="line.462"></a>
+<span class="sourceLineNo">463</span>        /**<a name="line.463"></a>
+<span class="sourceLineNo">464</span>         * Specifies the JIS B4 size, 257 mm by 364 mm.<a name="line.464"></a>
+<span class="sourceLineNo">465</span>         */<a name="line.465"></a>
+<span class="sourceLineNo">466</span>        public static final MediaSize<a name="line.466"></a>
+<span class="sourceLineNo">467</span>            B4 = new MediaSize(257, 364, Size2DSyntax.MM, MediaSizeName.JIS_B4);<a name="line.467"></a>
+<span class="sourceLineNo">468</span>        /**<a name="line.468"></a>
+<span class="sourceLineNo">469</span>         * Specifies the JIS B5 size, 182 mm by 257 mm.<a name="line.469"></a>
+<span class="sourceLineNo">470</span>         */<a name="line.470"></a>
+<span class="sourceLineNo">471</span>        public static final MediaSize<a name="line.471"></a>
+<span class="sourceLineNo">472</span>            B5 = new MediaSize(182, 257, Size2DSyntax.MM, MediaSizeName.JIS_B5);<a name="line.472"></a>
+<span class="sourceLineNo">473</span>        /**<a name="line.473"></a>
+<span class="sourceLineNo">474</span>         * Specifies the JIS B6 size, 128 mm by 182 mm.<a name="line.474"></a>
+<span class="sourceLineNo">475</span>         */<a name="line.475"></a>
+<span class="sourceLineNo">476</span>        public static final MediaSize<a name="line.476"></a>
+<span class="sourceLineNo">477</span>            B6 = new MediaSize(128, 182, Size2DSyntax.MM, MediaSizeName.JIS_B6);<a name="line.477"></a>
+<span class="sourceLineNo">478</span>        /**<a name="line.478"></a>
+<span class="sourceLineNo">479</span>         * Specifies the JIS B7 size, 91 mm by 128 mm.<a name="line.479"></a>
+<span class="sourceLineNo">480</span>         */<a name="line.480"></a>
+<span class="sourceLineNo">481</span>        public static final MediaSize<a name="line.481"></a>
+<span class="sourceLineNo">482</span>            B7 = new MediaSize(91, 128, Size2DSyntax.MM, MediaSizeName.JIS_B7);<a name="line.482"></a>
+<span class="sourceLineNo">483</span>        /**<a name="line.483"></a>
+<span class="sourceLineNo">484</span>         * Specifies the JIS B8 size, 64 mm by 91 mm.<a name="line.484"></a>
+<span class="sourceLineNo">485</span>         */<a name="line.485"></a>
+<span class="sourceLineNo">486</span>        public static final MediaSize<a name="line.486"></a>
+<span class="sourceLineNo">487</span>            B8 = new MediaSize(64, 91, Size2DSyntax.MM, MediaSizeName.JIS_B8);<a name="line.487"></a>
+<span class="sourceLineNo">488</span>        /**<a name="line.488"></a>
+<span class="sourceLineNo">489</span>         * Specifies the JIS B9 size, 45 mm by 64 mm.<a name="line.489"></a>
+<span class="sourceLineNo">490</span>         */<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        public static final MediaSize<a name="line.491"></a>
+<span class="sourceLineNo">492</span>            B9 = new MediaSize(45, 64, Size2DSyntax.MM, MediaSizeName.JIS_B9);<a name="line.492"></a>
+<span class="sourceLineNo">493</span>        /**<a name="line.493"></a>
+<span class="sourceLineNo">494</span>         * Specifies the JIS B10 size, 32 mm by 45 mm.<a name="line.494"></a>
+<span class="sourceLineNo">495</span>         */<a name="line.495"></a>
+<span class="sourceLineNo">496</span>        public static final MediaSize<a name="line.496"></a>
+<span class="sourceLineNo">497</span>            B10 = new MediaSize(32, 45, Size2DSyntax.MM, MediaSizeName.JIS_B10);<a name="line.497"></a>
+<span class="sourceLineNo">498</span>        /**<a name="line.498"></a>
+<span class="sourceLineNo">499</span>         * Specifies the JIS Chou ("long") #1 envelope size, 142 mm by 332 mm.<a name="line.499"></a>
+<span class="sourceLineNo">500</span>         */<a name="line.500"></a>
+<span class="sourceLineNo">501</span>        public static final MediaSize CHOU_1 = new MediaSize(142, 332, Size2DSyntax.MM);<a name="line.501"></a>
+<span class="sourceLineNo">502</span>        /**<a name="line.502"></a>
+<span class="sourceLineNo">503</span>         * Specifies the JIS Chou ("long") #2 envelope size, 119 mm by 277 mm.<a name="line.503"></a>
+<span class="sourceLineNo">504</span>         */<a name="line.504"></a>
+<span class="sourceLineNo">505</span>        public static final MediaSize CHOU_2 = new MediaSize(119, 277, Size2DSyntax.MM);<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        /**<a name="line.506"></a>
+<span class="sourceLineNo">507</span>         * Specifies the JIS Chou ("long") #3 envelope size, 120 mm by 235 mm.<a name="line.507"></a>
+<span class="sourceLineNo">508</span>         */<a name="line.508"></a>
+<span class="sourceLineNo">509</span>        public static final MediaSize CHOU_3 = new MediaSize(120, 235, Size2DSyntax.MM);<a name="line.509"></a>
+<span class="sourceLineNo">510</span>        /**<a name="line.510"></a>
+<span class="sourceLineNo">511</span>         * Specifies the JIS Chou ("long") #4 envelope size, 90 mm by 205 mm.<a name="line.511"></a>
+<span class="sourceLineNo">512</span>         */<a name="line.512"></a>
+<span class="sourceLineNo">513</span>        public static final MediaSize CHOU_4 = new MediaSize(90, 205, Size2DSyntax.MM);<a name="line.513"></a>
+<span class="sourceLineNo">514</span>        /**<a name="line.514"></a>
+<span class="sourceLineNo">515</span>         * Specifies the JIS Chou ("long") #30 envelope size, 92 mm by 235 mm.<a name="line.515"></a>
+<span class="sourceLineNo">516</span>         */<a name="line.516"></a>
+<span class="sourceLineNo">517</span>        public static final MediaSize CHOU_30 = new MediaSize(92, 235, Size2DSyntax.MM);<a name="line.517"></a>
+<span class="sourceLineNo">518</span>        /**<a name="line.518"></a>
+<span class="sourceLineNo">519</span>         * Specifies the JIS Chou ("long") #40 envelope size, 90 mm by 225 mm.<a name="line.519"></a>
+<span class="sourceLineNo">520</span>         */<a name="line.520"></a>
+<span class="sourceLineNo">521</span>        public static final MediaSize CHOU_40 = new MediaSize(90, 225, Size2DSyntax.MM);<a name="line.521"></a>
+<span class="sourceLineNo">522</span>        /**<a name="line.522"></a>
+<span class="sourceLineNo">523</span>         * Specifies the JIS Kaku ("square") #0 envelope size, 287 mm by 382 mm.<a name="line.523"></a>
+<span class="sourceLineNo">524</span>         */<a name="line.524"></a>
+<span class="sourceLineNo">525</span>        public static final MediaSize KAKU_0 = new MediaSize(287, 382, Size2DSyntax.MM);<a name="line.525"></a>
+<span class="sourceLineNo">526</span>        /**<a name="line.526"></a>
+<span class="sourceLineNo">527</span>         * Specifies the JIS Kaku ("square") #1 envelope size, 270 mm by 382 mm.<a name="line.527"></a>
+<span class="sourceLineNo">528</span>         */<a name="line.528"></a>
+<span class="sourceLineNo">529</span>        public static final MediaSize KAKU_1 = new MediaSize(270, 382, Size2DSyntax.MM);<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        /**<a name="line.530"></a>
+<span class="sourceLineNo">531</span>         * Specifies the JIS Kaku ("square") #2 envelope size, 240 mm by 332 mm.<a name="line.531"></a>
+<span class="sourceLineNo">532</span>         */<a name="line.532"></a>
+<span class="sourceLineNo">533</span>        public static final MediaSize KAKU_2 = new MediaSize(240, 332, Size2DSyntax.MM);<a name="line.533"></a>
+<span class="sourceLineNo">534</span>        /**<a name="line.534"></a>
+<span class="sourceLineNo">535</span>         * Specifies the JIS Kaku ("square") #3 envelope size, 216 mm by 277 mm.<a name="line.535"></a>
+<span class="sourceLineNo">536</span>         */<a name="line.536"></a>
+<span class="sourceLineNo">537</span>        public static final MediaSize KAKU_3 = new MediaSize(216, 277, Size2DSyntax.MM);<a name="line.537"></a>
+<span class="sourceLineNo">538</span>        /**<a name="line.538"></a>
+<span class="sourceLineNo">539</span>         * Specifies the JIS Kaku ("square") #4 envelope size, 197 mm by 267 mm.<a name="line.539"></a>
+<span class="sourceLineNo">540</span>         */<a name="line.540"></a>
+<span class="sourceLineNo">541</span>        public static final MediaSize KAKU_4 = new MediaSize(197, 267, Size2DSyntax.MM);<a name="line.541"></a>
+<span class="sourceLineNo">542</span>        /**<a name="line.542"></a>
+<span class="sourceLineNo">543</span>         * Specifies the JIS Kaku ("square") #5 envelope size, 190 mm by 240 mm.<a name="line.543"></a>
+<span class="sourceLineNo">544</span>         */<a name="line.544"></a>
+<span class="sourceLineNo">545</span>        public static final MediaSize KAKU_5 = new MediaSize(190, 240, Size2DSyntax.MM);<a name="line.545"></a>
+<span class="sourceLineNo">546</span>        /**<a name="line.546"></a>
+<span class="sourceLineNo">547</span>         * Specifies the JIS Kaku ("square") #6 envelope size, 162 mm by 229 mm.<a name="line.547"></a>
+<span class="sourceLineNo">548</span>         */<a name="line.548"></a>
+<span class="sourceLineNo">549</span>        public static final MediaSize KAKU_6 = new MediaSize(162, 229, Size2DSyntax.MM);<a name="line.549"></a>
+<span class="sourceLineNo">550</span>        /**<a name="line.550"></a>
+<span class="sourceLineNo">551</span>         * Specifies the JIS Kaku ("square") #7 envelope size, 142 mm by 205 mm.<a name="line.551"></a>
+<span class="sourceLineNo">552</span>         */<a name="line.552"></a>
+<span class="sourceLineNo">553</span>        public static final MediaSize KAKU_7 = new MediaSize(142, 205, Size2DSyntax.MM);<a name="line.553"></a>
+<span class="sourceLineNo">554</span>        /**<a name="line.554"></a>
+<span class="sourceLineNo">555</span>         * Specifies the JIS Kaku ("square") #8 envelope size, 119 mm by 197 mm.<a name="line.555"></a>
+<span class="sourceLineNo">556</span>         */<a name="line.556"></a>
+<span class="sourceLineNo">557</span>        public static final MediaSize KAKU_8 = new MediaSize(119, 197, Size2DSyntax.MM);<a name="line.557"></a>
+<span class="sourceLineNo">558</span>        /**<a name="line.558"></a>
+<span class="sourceLineNo">559</span>         * Specifies the JIS Kaku ("square") #20 envelope size, 229 mm by 324 mm.<a name="line.559"></a>
+<span class="sourceLineNo">560</span>         */<a name="line.560"></a>
+<span class="sourceLineNo">561</span>        public static final MediaSize KAKU_20 = new MediaSize(229, 324, Size2DSyntax.MM);<a name="line.561"></a>
+<span class="sourceLineNo">562</span>        /**<a name="line.562"></a>
+<span class="sourceLineNo">563</span>         * Specifies the JIS Kaku ("square") A4 envelope size, 228 mm by 312 mm.<a name="line.563"></a>
+<span class="sourceLineNo">564</span>         */<a name="line.564"></a>
+<span class="sourceLineNo">565</span>        public static final MediaSize KAKU_A4 = new MediaSize(228, 312, Size2DSyntax.MM);<a name="line.565"></a>
+<span class="sourceLineNo">566</span>        /**<a name="line.566"></a>
+<span class="sourceLineNo">567</span>         * Specifies the JIS You ("Western") #1 envelope size, 120 mm by 176 mm.<a name="line.567"></a>
+<span class="sourceLineNo">568</span>         */<a name="line.568"></a>
+<span class="sourceLineNo">569</span>        public static final MediaSize YOU_1 = new MediaSize(120, 176, Size2DSyntax.MM);<a name="line.569"></a>
+<span class="sourceLineNo">570</span>        /**<a name="line.570"></a>
+<span class="sourceLineNo">571</span>         * Specifies the JIS You ("Western") #2 envelope size, 114 mm by 162 mm.<a name="line.571"></a>
+<span class="sourceLineNo">572</span>         */<a name="line.572"></a>
+<span class="sourceLineNo">573</span>        public static final MediaSize YOU_2 = new MediaSize(114, 162, Size2DSyntax.MM);<a name="line.573"></a>
+<span class="sourceLineNo">574</span>        /**<a name="line.574"></a>
+<span class="sourceLineNo">575</span>         * Specifies the JIS You ("Western") #3 envelope size, 98 mm by 148 mm.<a name="line.575"></a>
+<span class="sourceLineNo">576</span>         */<a name="line.576"></a>
+<span class="sourceLineNo">577</span>        public static final MediaSize YOU_3 = new MediaSize(98, 148, Size2DSyntax.MM);<a name="line.577"></a>
+<span class="sourceLineNo">578</span>        /**<a name="line.578"></a>
+<span class="sourceLineNo">579</span>         * Specifies the JIS You ("Western") #4 envelope size, 105 mm by 235 mm.<a name="line.579"></a>
+<span class="sourceLineNo">580</span>         */<a name="line.580"></a>
+<span class="sourceLineNo">581</span>        public static final MediaSize YOU_4 = new MediaSize(105, 235, Size2DSyntax.MM);<a name="line.581"></a>
+<span class="sourceLineNo">582</span>        /**<a name="line.582"></a>
+<span class="sourceLineNo">583</span>         * Specifies the JIS You ("Western") #5 envelope size, 95 mm by 217 mm.<a name="line.583"></a>
+<span class="sourceLineNo">584</span>         */<a name="line.584"></a>
+<span class="sourceLineNo">585</span>        public static final MediaSize YOU_5 = new MediaSize(95, 217, Size2DSyntax.MM);<a name="line.585"></a>
+<span class="sourceLineNo">586</span>        /**<a name="line.586"></a>
+<span class="sourceLineNo">587</span>         * Specifies the JIS You ("Western") #6 envelope size, 98 mm by 190 mm.<a name="line.587"></a>
+<span class="sourceLineNo">588</span>         */<a name="line.588"></a>
+<span class="sourceLineNo">589</span>        public static final MediaSize YOU_6 = new MediaSize(98, 190, Size2DSyntax.MM);<a name="line.589"></a>
+<span class="sourceLineNo">590</span>        /**<a name="line.590"></a>
+<span class="sourceLineNo">591</span>         * Specifies the JIS You ("Western") #7 envelope size, 92 mm by 165 mm.<a name="line.591"></a>
+<span class="sourceLineNo">592</span>         */<a name="line.592"></a>
+<span class="sourceLineNo">593</span>        public static final MediaSize YOU_7 = new MediaSize(92, 165, Size2DSyntax.MM);<a name="line.593"></a>
+<span class="sourceLineNo">594</span>        /**<a name="line.594"></a>
+<span class="sourceLineNo">595</span>         * Hide all constructors.<a name="line.595"></a>
+<span class="sourceLineNo">596</span>         */<a name="line.596"></a>
+<span class="sourceLineNo">597</span>        private JIS() {<a name="line.597"></a>
+<span class="sourceLineNo">598</span>        }<a name="line.598"></a>
+<span class="sourceLineNo">599</span>    }<a name="line.599"></a>
+<span class="sourceLineNo">600</span><a name="line.600"></a>
+<span class="sourceLineNo">601</span>    /**<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     * Class MediaSize.NA includes {@link MediaSize MediaSize} values for North<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * American media.<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     */<a name="line.604"></a>
+<span class="sourceLineNo">605</span>    public final static class NA {<a name="line.605"></a>
+<span class="sourceLineNo">606</span><a name="line.606"></a>
+<span class="sourceLineNo">607</span>        /**<a name="line.607"></a>
+<span class="sourceLineNo">608</span>         * Specifies the North American letter size, 8.5 inches by 11 inches.<a name="line.608"></a>
+<span class="sourceLineNo">609</span>         */<a name="line.609"></a>
+<span class="sourceLineNo">610</span>        public static final MediaSize<a name="line.610"></a>
+<span class="sourceLineNo">611</span>            LETTER = new MediaSize(8.5f, 11.0f, Size2DSyntax.INCH,<a name="line.611"></a>
+<span class="sourceLineNo">612</span>                                                MediaSizeName.NA_LETTER);<a name="line.612"></a>
+<span class="sourceLineNo">613</span>        /**<a name="line.613"></a>
+<span class="sourceLineNo">614</span>         * Specifies the North American legal size, 8.5 inches by 14 inches.<a name="line.614"></a>
+<span class="sourceLineNo">615</span>         */<a name="line.615"></a>
+<span class="sourceLineNo">616</span>        public static final MediaSize<a name="line.616"></a>
+<span class="sourceLineNo">617</span>            LEGAL = new MediaSize(8.5f, 14.0f, Size2DSyntax.INCH,<a name="line.617"></a>
+<span class="sourceLineNo">618</span>                                               MediaSizeName.NA_LEGAL);<a name="line.618"></a>
+<span class="sourceLineNo">619</span>        /**<a name="line.619"></a>
+<span class="sourceLineNo">620</span>         * Specifies the North American 5 inch by 7 inch paper.<a name="line.620"></a>
+<span class="sourceLineNo">621</span>         */<a name="line.621"></a>
+<span class="sourceLineNo">622</span>        public static final MediaSize<a name="line.622"></a>
+<span class="sourceLineNo">623</span>            NA_5X7 = new MediaSize(5, 7, Size2DSyntax.INCH,<a name="line.623"></a>
+<span class="sourceLineNo">624</span>                                   MediaSizeName.NA_5X7);<a name="line.624"></a>
+<span class="sourceLineNo">625</span>        /**<a name="line.625"></a>
+<span class="sourceLineNo">626</span>         * Specifies the North American 8 inch by 10 inch paper.<a name="line.626"></a>
+<span class="sourceLineNo">627</span>         */<a name="line.627"></a>
+<span class="sourceLineNo">628</span>        public static final MediaSize<a name="line.628"></a>
+<span class="sourceLineNo">629</span>            NA_8X10 = new MediaSize(8, 10, Size2DSyntax.INCH,<a name="line.629"></a>
+<span class="sourceLineNo">630</span>                                   MediaSizeName.NA_8X10);<a name="line.630"></a>
+<span class="sourceLineNo">631</span>        /**<a name="line.631"></a>
+<span class="sourceLineNo">632</span>         * Specifies the North American Number 9 business envelope size,<a name="line.632"></a>
+<span class="sourceLineNo">633</span>         * 3.875 inches by 8.875 inches.<a name="line.633"></a>
+<span class="sourceLineNo">634</span>         */<a name="line.634"></a>
+<span class="sourceLineNo">635</span>        public static final MediaSize<a name="line.635"></a>
+<span class="sourceLineNo">636</span>            NA_NUMBER_9_ENVELOPE =<a name="line.636"></a>
+<span class="sourceLineNo">637</span>            new MediaSize(3.875f, 8.875f, Size2DSyntax.INCH,<a name="line.637"></a>
+<span class="sourceLineNo">638</span>                          MediaSizeName.NA_NUMBER_9_ENVELOPE);<a name="line.638"></a>
+<span class="sourceLineNo">639</span>        /**<a name="line.639"></a>
+<span class="sourceLineNo">640</span>         * Specifies the North American Number 10 business envelope size,<a name="line.640"></a>
+<span class="sourceLineNo">641</span>         * 4.125 inches by 9.5 inches.<a name="line.641"></a>
+<span class="sourceLineNo">642</span>         */<a name="line.642"></a>
+<span class="sourceLineNo">643</span>        public static final MediaSize<a name="line.643"></a>
+<span class="sourceLineNo">644</span>            NA_NUMBER_10_ENVELOPE =<a name="line.644"></a>
+<span class="sourceLineNo">645</span>            new MediaSize(4.125f, 9.5f, Size2DSyntax.INCH,<a name="line.645"></a>
+<span class="sourceLineNo">646</span>                          MediaSizeName.NA_NUMBER_10_ENVELOPE);<a name="line.646"></a>
+<span class="sourceLineNo">647</span>        /**<a name="line.647"></a>
+<span class="sourceLineNo">648</span>         * Specifies the North American Number 11 business envelope size,<a name="line.648"></a>
+<span class="sourceLineNo">649</span>         * 4.5 inches by 10.375 inches.<a name="line.649"></a>
+<span class="sourceLineNo">650</span>         */<a name="line.650"></a>
+<span class="sourceLineNo">651</span>        public static final MediaSize<a name="line.651"></a>
+<span class="sourceLineNo">652</span>            NA_NUMBER_11_ENVELOPE =<a name="line.652"></a>
+<span class="sourceLineNo">653</span>            new MediaSize(4.5f, 10.375f, Size2DSyntax.INCH,<a name="line.653"></a>
+<span class="sourceLineNo">654</span>                          MediaSizeName.NA_NUMBER_11_ENVELOPE);<a name="line.654"></a>
+<span class="sourceLineNo">655</span>        /**<a name="line.655"></a>
+<span class="sourceLineNo">656</span>         * Specifies the North American Number 12 business envelope size,<a name="line.656"></a>
+<span class="sourceLineNo">657</span>         * 4.75 inches by 11 inches.<a name="line.657"></a>
+<span class="sourceLineNo">658</span>         */<a name="line.658"></a>
+<span class="sourceLineNo">659</span>        public static final MediaSize<a name="line.659"></a>
+<span class="sourceLineNo">660</span>            NA_NUMBER_12_ENVELOPE =<a name="line.660"></a>
+<span class="sourceLineNo">661</span>            new MediaSize(4.75f, 11.0f, Size2DSyntax.INCH,<a name="line.661"></a>
+<span class="sourceLineNo">662</span>                          MediaSizeName.NA_NUMBER_12_ENVELOPE);<a name="line.662"></a>
+<span class="sourceLineNo">663</span>        /**<a name="line.663"></a>
+<span class="sourceLineNo">664</span>         * Specifies the North American Number 14 business envelope size,<a name="line.664"></a>
+<span class="sourceLineNo">665</span>         * 5 inches by 11.5 inches.<a name="line.665"></a>
+<span class="sourceLineNo">666</span>         */<a name="line.666"></a>
+<span class="sourceLineNo">667</span>        public static final MediaSize<a name="line.667"></a>
+<span class="sourceLineNo">668</span>            NA_NUMBER_14_ENVELOPE =<a name="line.668"></a>
+<span class="sourceLineNo">669</span>            new MediaSize(5.0f, 11.5f, Size2DSyntax.INCH,<a name="line.669"></a>
+<span class="sourceLineNo">670</span>                          MediaSizeName.NA_NUMBER_14_ENVELOPE);<a name="line.670"></a>
+<span class="sourceLineNo">671</span><a name="line.671"></a>
+<span class="sourceLineNo">672</span>        /**<a name="line.672"></a>
+<span class="sourceLineNo">673</span>         * Specifies the North American 6 inch by 9 inch envelope size.<a name="line.673"></a>
+<span class="sourceLineNo">674</span>         */<a name="line.674"></a>
+<span class="sourceLineNo">675</span>        public static final MediaSize<a name="line.675"></a>
+<span class="sourceLineNo">676</span>            NA_6X9_ENVELOPE = new MediaSize(6.0f, 9.0f, Size2DSyntax.INCH,<a name="line.676"></a>
+<span class="sourceLineNo">677</span>                                            MediaSizeName.NA_6X9_ENVELOPE);<a name="line.677"></a>
+<span class="sourceLineNo">678</span>        /**<a name="line.678"></a>
+<span class="sourceLineNo">679</span>         * Specifies the North American 7 inch by 9 inch envelope size.<a name="line.679"></a>
+<span class="sourceLineNo">680</span>         */<a name="line.680"></a>
+<span class="sourceLineNo">681</span>        public static final MediaSize<a name="line.681"></a>
+<span class="sourceLineNo">682</span>            NA_7X9_ENVELOPE = new MediaSize(7.0f, 9.0f, Size2DSyntax.INCH,<a name="line.682"></a>
+<span class="sourceLineNo">683</span>                                            MediaSizeName.NA_7X9_ENVELOPE);<a name="line.683"></a>
+<span class="sourceLineNo">684</span>        /**<a name="line.684"></a>
+<span class="sourceLineNo">685</span>         * Specifies the North American 9 inch by 11 inch envelope size.<a name="line.685"></a>
+<span class="sourceLineNo">686</span>         */<a name="line.686"></a>
+<span class="sourceLineNo">687</span>        public static final MediaSize<a name="line.687"></a>
+<span class="sourceLineNo">688</span>            NA_9x11_ENVELOPE = new MediaSize(9.0f, 11.0f, Size2DSyntax.INCH,<a name="line.688"></a>
+<span class="sourceLineNo">689</span>                                             MediaSizeName.NA_9X11_ENVELOPE);<a name="line.689"></a>
+<span class="sourceLineNo">690</span>        /**<a name="line.690"></a>
+<span class="sourceLineNo">691</span>         * Specifies the North American 9 inch by 12 inch envelope size.<a name="line.691"></a>
+<span class="sourceLineNo">692</span>         */<a name="line.692"></a>
+<span class="sourceLineNo">693</span>        public static final MediaSize<a name="line.693"></a>
+<span class="sourceLineNo">694</span>            NA_9x12_ENVELOPE = new MediaSize(9.0f, 12.0f, Size2DSyntax.INCH,<a name="line.694"></a>
+<span class="sourceLineNo">695</span>                                             MediaSizeName.NA_9X12_ENVELOPE);<a name="line.695"></a>
+<span class="sourceLineNo">696</span>        /**<a name="line.696"></a>
+<span class="sourceLineNo">697</span>         * Specifies the North American 10 inch by 13 inch envelope size.<a name="line.697"></a>
+<span class="sourceLineNo">698</span>         */<a name="line.698"></a>
+<span class="sourceLineNo">699</span>        public static final MediaSize<a name="line.699"></a>
+<span class="sourceLineNo">700</span>            NA_10x13_ENVELOPE = new MediaSize(10.0f, 13.0f, Size2DSyntax.INCH,<a name="line.700"></a>
+<span class="sourceLineNo">701</span>                                              MediaSizeName.NA_10X13_ENVELOPE);<a name="line.701"></a>
+<span class="sourceLineNo">702</span>        /**<a name="line.702"></a>
+<span class="sourceLineNo">703</span>         * Specifies the North American 10 inch by 14 inch envelope size.<a name="line.703"></a>
+<span class="sourceLineNo">704</span>         */<a name="line.704"></a>
+<span class="sourceLineNo">705</span>        public static final MediaSize<a name="line.705"></a>
+<span class="sourceLineNo">706</span>            NA_10x14_ENVELOPE = new MediaSize(10.0f, 14.0f, Size2DSyntax.INCH,<a name="line.706"></a>
+<span class="sourceLineNo">707</span>                                              MediaSizeName.NA_10X14_ENVELOPE);<a name="line.707"></a>
+<span class="sourceLineNo">708</span>        /**<a name="line.708"></a>
+<span class="sourceLineNo">709</span>         * Specifies the North American 10 inch by 15 inch envelope size.<a name="line.709"></a>
+<span class="sourceLineNo">710</span>         */<a name="line.710"></a>
+<span class="sourceLineNo">711</span>        public static final MediaSize<a name="line.711"></a>
+<span class="sourceLineNo">712</span>            NA_10X15_ENVELOPE = new MediaSize(10.0f, 15.0f, Size2DSyntax.INCH,<a name="line.712"></a>
+<span class="sourceLineNo">713</span>                                              MediaSizeName.NA_10X15_ENVELOPE);<a name="line.713"></a>
+<span class="sourceLineNo">714</span>        /**<a name="line.714"></a>
+<span class="sourceLineNo">715</span>         * Hide all constructors.<a name="line.715"></a>
+<span class="sourceLineNo">716</span>         */<a name="line.716"></a>
+<span class="sourceLineNo">717</span>        private NA() {<a name="line.717"></a>
+<span class="sourceLineNo">718</span>        }<a name="line.718"></a>
+<span class="sourceLineNo">719</span>    }<a name="line.719"></a>
+<span class="sourceLineNo">720</span><a name="line.720"></a>
+<span class="sourceLineNo">721</span>    /**<a name="line.721"></a>
+<span class="sourceLineNo">722</span>     * Class MediaSize.Engineering includes {@link MediaSize MediaSize} values<a name="line.722"></a>
+<span class="sourceLineNo">723</span>     * for engineering media.<a name="line.723"></a>
+<span class="sourceLineNo">724</span>     */<a name="line.724"></a>
+<span class="sourceLineNo">725</span>    public final static class Engineering {<a name="line.725"></a>
+<span class="sourceLineNo">726</span><a name="line.726"></a>
+<span class="sourceLineNo">727</span>        /**<a name="line.727"></a>
+<span class="sourceLineNo">728</span>         * Specifies the engineering A size, 8.5 inch by 11 inch.<a name="line.728"></a>
+<span class="sourceLineNo">729</span>         */<a name="line.729"></a>
+<span class="sourceLineNo">730</span>        public static final MediaSize<a name="line.730"></a>
+<span class="sourceLineNo">731</span>            A = new MediaSize(8.5f, 11.0f, Size2DSyntax.INCH,<a name="line.731"></a>
+<span class="sourceLineNo">732</span>                              MediaSizeName.A);<a name="line.732"></a>
+<span class="sourceLineNo">733</span>        /**<a name="line.733"></a>
+<span class="sourceLineNo">734</span>         * Specifies the engineering B size, 11 inch by 17 inch.<a name="line.734"></a>
+<span class="sourceLineNo">735</span>         */<a name="line.735"></a>
+<span class="sourceLineNo">736</span>        public static final MediaSize<a name="line.736"></a>
+<span class="sourceLineNo">737</span>            B = new MediaSize(11.0f, 17.0f, Size2DSyntax.INCH,<a name="line.737"></a>
+<span class="sourceLineNo">738</span>                              MediaSizeName.B);<a name="line.738"></a>
+<span class="sourceLineNo">739</span>        /**<a name="line.739"></a>
+<span class="sourceLineNo">740</span>         * Specifies the engineering C size, 17 inch by 22 inch.<a name="line.740"></a>
+<span class="sourceLineNo">741</span>         */<a name="line.741"></a>
+<span class="sourceLineNo">742</span>        public static final MediaSize<a name="line.742"></a>
+<span class="sourceLineNo">743</span>            C = new MediaSize(17.0f, 22.0f, Size2DSyntax.INCH,<a name="line.743"></a>
+<span class="sourceLineNo">744</span>                              MediaSizeName.C);<a name="line.744"></a>
+<span class="sourceLineNo">745</span>        /**<a name="line.745"></a>
+<span class="sourceLineNo">746</span>         * Specifies the engineering D size, 22 inch by 34 inch.<a name="line.746"></a>
+<span class="sourceLineNo">747</span>         */<a name="line.747"></a>
+<span class="sourceLineNo">748</span>        public static final MediaSize<a name="line.748"></a>
+<span class="sourceLineNo">749</span>            D = new MediaSize(22.0f, 34.0f, Size2DSyntax.INCH,<a name="line.749"></a>
+<span class="sourceLineNo">750</span>                              MediaSizeName.D);<a name="line.750"></a>
+<span class="sourceLineNo">751</span>        /**<a name="line.751"></a>
+<span class="sourceLineNo">752</span>         * Specifies the engineering E size, 34 inch by 44 inch.<a name="line.752"></a>
+<span class="sourceLineNo">753</span>         */<a name="line.753"></a>
+<span class="sourceLineNo">754</span>        public static final MediaSize<a name="line.754"></a>
+<span class="sourceLineNo">755</span>            E = new MediaSize(34.0f, 44.0f, Size2DSyntax.INCH,<a name="line.755"></a>
+<span class="sourceLineNo">756</span>                              MediaSizeName.E);<a name="line.756"></a>
+<span class="sourceLineNo">757</span>        /**<a name="line.757"></a>
+<span class="sourceLineNo">758</span>         * Hide all constructors.<a name="line.758"></a>
+<span class="sourceLineNo">759</span>         */<a name="line.759"></a>
+<span class="sourceLineNo">760</span>        private Engineering() {<a name="line.760"></a>
+<span class="sourceLineNo">761</span>        }<a name="line.761"></a>
+<span class="sourceLineNo">762</span>    }<a name="line.762"></a>
+<span class="sourceLineNo">763</span><a name="line.763"></a>
+<span class="sourceLineNo">764</span>    /**<a name="line.764"></a>
+<span class="sourceLineNo">765</span>     * Class MediaSize.Other includes {@link MediaSize MediaSize} values for<a name="line.765"></a>
+<span class="sourceLineNo">766</span>     * miscellaneous media.<a name="line.766"></a>
+<span class="sourceLineNo">767</span>     */<a name="line.767"></a>
+<span class="sourceLineNo">768</span>    public final static class Other {<a name="line.768"></a>
+<span class="sourceLineNo">769</span>        /**<a name="line.769"></a>
+<span class="sourceLineNo">770</span>         * Specifies the executive size, 7.25 inches by 10.5 inches.<a name="line.770"></a>
+<span class="sourceLineNo">771</span>         */<a name="line.771"></a>
+<span class="sourceLineNo">772</span>        public static final MediaSize<a name="line.772"></a>
+<span class="sourceLineNo">773</span>            EXECUTIVE = new MediaSize(7.25f, 10.5f, Size2DSyntax.INCH,<a name="line.773"></a>
+<span class="sourceLineNo">774</span>                                      MediaSizeName.EXECUTIVE);<a name="line.774"></a>
+<span class="sourceLineNo">775</span>        /**<a name="line.775"></a>
+<span class="sourceLineNo">776</span>         * Specifies the ledger size, 11 inches by 17 inches.<a name="line.776"></a>
+<span class="sourceLineNo">777</span>         */<a name="line.777"></a>
+<span class="sourceLineNo">778</span>        public static final MediaSize<a name="line.778"></a>
+<span class="sourceLineNo">779</span>            LEDGER = new MediaSize(11.0f, 17.0f, Size2DSyntax.INCH,<a name="line.779"></a>
+<span class="sourceLineNo">780</span>                                   MediaSizeName.LEDGER);<a name="line.780"></a>
+<span class="sourceLineNo">781</span><a name="line.781"></a>
+<span class="sourceLineNo">782</span>        /**<a name="line.782"></a>
+<span class="sourceLineNo">783</span>         * Specifies the tabloid size, 11 inches by 17 inches.<a name="line.783"></a>
+<span class="sourceLineNo">784</span>         * @since 1.5<a name="line.784"></a>
+<span class="sourceLineNo">785</span>         */<a name="line.785"></a>
+<span class="sourceLineNo">786</span>        public static final MediaSize<a name="line.786"></a>
+<span class="sourceLineNo">787</span>            TABLOID = new MediaSize(11.0f, 17.0f, Size2DSyntax.INCH,<a name="line.787"></a>
+<span class="sourceLineNo">788</span>                                   MediaSizeName.TABLOID);<a name="line.788"></a>
+<span class="sourceLineNo">789</span><a name="line.789"></a>
+<span class="sourceLineNo">790</span>        /**<a name="line.790"></a>
+<span class="sourceLineNo">791</span>         * Specifies the invoice size, 5.5 inches by 8.5 inches.<a name="line.791"></a>
+<span class="sourceLineNo">792</span>         */<a name="line.792"></a>
+<span class="sourceLineNo">793</span>        public static final MediaSize<a name="line.793"></a>
+<span class="sourceLineNo">794</span>            INVOICE = new MediaSize(5.5f, 8.5f, Size2DSyntax.INCH,<a name="line.794"></a>
+<span class="sourceLineNo">795</span>                              MediaSizeName.INVOICE);<a name="line.795"></a>
+<span class="sourceLineNo">796</span>        /**<a name="line.796"></a>
+<span class="sourceLineNo">797</span>         * Specifies the folio size, 8.5 inches by 13 inches.<a name="line.797"></a>
+<span class="sourceLineNo">798</span>         */<a name="line.798"></a>
+<span class="sourceLineNo">799</span>        public static final MediaSize<a name="line.799"></a>
+<span class="sourceLineNo">800</span>            FOLIO = new MediaSize(8.5f, 13.0f, Size2DSyntax.INCH,<a name="line.800"></a>
+<span class="sourceLineNo">801</span>                                  MediaSizeName.FOLIO);<a name="line.801"></a>
+<span class="sourceLineNo">802</span>        /**<a name="line.802"></a>
+<span class="sourceLineNo">803</span>         * Specifies the quarto size, 8.5 inches by 10.83 inches.<a name="line.803"></a>
+<span class="sourceLineNo">804</span>         */<a name="line.804"></a>
+<span class="sourceLineNo">805</span>        public static final MediaSize<a name="line.805"></a>
+<span class="sourceLineNo">806</span>            QUARTO = new MediaSize(8.5f, 10.83f, Size2DSyntax.INCH,<a name="line.806"></a>
+<span class="sourceLineNo">807</span>                                   MediaSizeName.QUARTO);<a name="line.807"></a>
+<span class="sourceLineNo">808</span>        /**<a name="line.808"></a>
+<span class="sourceLineNo">809</span>         * Specifies the Italy envelope size, 110 mm by 230 mm.<a name="line.809"></a>
+<span class="sourceLineNo">810</span>         */<a name="line.810"></a>
+<span class="sourceLineNo">811</span>        public static final MediaSize<a name="line.811"></a>
+<span class="sourceLineNo">812</span>        ITALY_ENVELOPE = new MediaSize(110, 230, Size2DSyntax.MM,<a name="line.812"></a>
+<span class="sourceLineNo">813</span>                                       MediaSizeName.ITALY_ENVELOPE);<a name="line.813"></a>
+<span class="sourceLineNo">814</span>        /**<a name="line.814"></a>
+<span class="sourceLineNo">815</span>         * Specifies the Monarch envelope size, 3.87 inch by 7.5 inch.<a name="line.815"></a>
+<span class="sourceLineNo">816</span>         */<a name="line.816"></a>
+<span class="sourceLineNo">817</span>        public static final MediaSize<a name="line.817"></a>
+<span class="sourceLineNo">818</span>        MONARCH_ENVELOPE = new MediaSize(3.87f, 7.5f, Size2DSyntax.INCH,<a name="line.818"></a>
+<span class="sourceLineNo">819</span>                                         MediaSizeName.MONARCH_ENVELOPE);<a name="line.819"></a>
+<span class="sourceLineNo">820</span>        /**<a name="line.820"></a>
+<span class="sourceLineNo">821</span>         * Specifies the Personal envelope size, 3.625 inch by 6.5 inch.<a name="line.821"></a>
+<span class="sourceLineNo">822</span>         */<a name="line.822"></a>
+<span class="sourceLineNo">823</span>        public static final MediaSize<a name="line.823"></a>
+<span class="sourceLineNo">824</span>        PERSONAL_ENVELOPE = new MediaSize(3.625f, 6.5f, Size2DSyntax.INCH,<a name="line.824"></a>
+<span class="sourceLineNo">825</span>                                         MediaSizeName.PERSONAL_ENVELOPE);<a name="line.825"></a>
+<span class="sourceLineNo">826</span>        /**<a name="line.826"></a>
+<span class="sourceLineNo">827</span>         * Specifies the Japanese postcard size, 100 mm by 148 mm.<a name="line.827"></a>
+<span class="sourceLineNo">828</span>         */<a name="line.828"></a>
+<span class="sourceLineNo">829</span>        public static final MediaSize<a name="line.829"></a>
+<span class="sourceLineNo">830</span>            JAPANESE_POSTCARD = new MediaSize(100, 148, Size2DSyntax.MM,<a name="line.830"></a>
+<span class="sourceLineNo">831</span>                                              MediaSizeName.JAPANESE_POSTCARD);<a name="line.831"></a>
+<span class="sourceLineNo">832</span>        /**<a name="line.832"></a>
+<span class="sourceLineNo">833</span>         * Specifies the Japanese Double postcard size, 148 mm by 200 mm.<a name="line.833"></a>
+<span class="sourceLineNo">834</span>         */<a name="line.834"></a>
+<span class="sourceLineNo">835</span>        public static final MediaSize<a name="line.835"></a>
+<span class="sourceLineNo">836</span>            JAPANESE_DOUBLE_POSTCARD = new MediaSize(148, 200, Size2DSyntax.MM,<a name="line.836"></a>
+<span class="sourceLineNo">837</span>                                     MediaSizeName.JAPANESE_DOUBLE_POSTCARD);<a name="line.837"></a>
+<span class="sourceLineNo">838</span>        /**<a name="line.838"></a>
+<span class="sourceLineNo">839</span>         * Hide all constructors.<a name="line.839"></a>
+<span class="sourceLineNo">840</span>         */<a name="line.840"></a>
+<span class="sourceLineNo">841</span>        private Other() {<a name="line.841"></a>
+<span class="sourceLineNo">842</span>        }<a name="line.842"></a>
+<span class="sourceLineNo">843</span>    }<a name="line.843"></a>
+<span class="sourceLineNo">844</span><a name="line.844"></a>
+<span class="sourceLineNo">845</span>    /* force loading of all the subclasses so that the instances<a name="line.845"></a>
+<span class="sourceLineNo">846</span>     * are created and inserted into the hashmap.<a name="line.846"></a>
+<span class="sourceLineNo">847</span>     */<a name="line.847"></a>
+<span class="sourceLineNo">848</span>    static {<a name="line.848"></a>
+<span class="sourceLineNo">849</span>        MediaSize ISOA4 = ISO.A4;<a name="line.849"></a>
+<span class="sourceLineNo">850</span>        MediaSize JISB5 = JIS.B5;<a name="line.850"></a>
+<span class="sourceLineNo">851</span>        MediaSize NALETTER = NA.LETTER;<a name="line.851"></a>
+<span class="sourceLineNo">852</span>        MediaSize EngineeringC = Engineering.C;<a name="line.852"></a>
+<span class="sourceLineNo">853</span>        MediaSize OtherEXECUTIVE = Other.EXECUTIVE;<a name="line.853"></a>
+<span class="sourceLineNo">854</span>    }<a name="line.854"></a>
+<span class="sourceLineNo">855</span>}<a name="line.855"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

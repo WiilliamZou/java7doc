@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.xml.ws;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.xml.ws.soap.AddressingFeature;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * This feature clarifies the use of the &lt;code&gt;wsdl:binding&lt;/code&gt;<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * in a JAX-WS runtime.<a name="line.32"></a>
+<span class="sourceLineNo">033</span> *<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * This feature can be used during the creation of SEI proxy, and<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * {@link Dispatch} instances on the client side and {@link Endpoint}<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * instances on the server side. This feature cannot be used for {@link Service}<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * instance creation on the client side.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;p&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * This feature is only useful with web services that have an<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * associated WSDL. Enabling this feature requires that a JAX-WS<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * implementation inspect the &lt;code&gt;wsdl:binding&lt;/code&gt; for an<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * endpoint at runtime to make sure that all &lt;code&gt;wsdl:extensions&lt;/code&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * that have the &lt;code&gt;required&lt;/code&gt; attribute set to &lt;code&gt;true&lt;/code&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * are understood and are being used.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;p&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * The following describes the affects of this feature with respect<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * to be enabled or disabled:<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;ul&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *  &lt;li&gt; ENABLED: In this Mode, a JAX-WS runtime MUST assure that all<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *  required &lt;code&gt;wsdl:binding&lt;/code&gt; extensions(including policies) are<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *  either understood and used by the runtime, or explicitly disabled by the<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *  web service application. A web service can disable a particular<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *  extension if there is a corresponding {@link WebServiceFeature} or annotation.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *  Similarly, a web service client can disable<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *  particular extension using the corresponding &lt;code&gt;WebServiceFeature&lt;/code&gt; while<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *  creating a proxy or Dispatch instance.<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *  The runtime MUST also make sure that binding of<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *  SEI parameters/return values respect the &lt;code&gt;wsdl:binding&lt;/code&gt;.<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *  With this feature enabled, if a required (&lt;code&gt;wsdl:required="true"&lt;/code&gt;)<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *  &lt;code&gt;wsdl:binding&lt;/code&gt; extension is in the WSDL and it is not<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *  supported by a JAX-WS runtime and it has not<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *  been explicitly turned off by the web service developer, then<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *  that JAX-WS runtime MUST behave appropriately based on whether it is<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *  on the client or server:<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *  &lt;UL&gt;<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *    &lt;li&gt;Client: runtime MUST throw a<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *  {@link WebServiceException} no sooner than when one of the methods<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *  above is invoked but no later than the first invocation of an endpoint<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *  operation.<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *    &lt;li&gt;Server: throw a {@link WebServiceException} and the endpoint MUST fail to deploy<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *  &lt;/ul&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *  &lt;li&gt; DISABLED: In this Mode, an implementation may choose whether<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *  to inspect the &lt;code&gt;wsdl:binding&lt;/code&gt; or not and to what degree<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *  the &lt;code&gt;wsdl:binding&lt;/code&gt; will be inspected.  For example,<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *  one implementation may choose to behave as if this feature is enabled,<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *  another implementation may only choose to verify the SEI's<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *  parameter/return type bindings.<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * &lt;/ul&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * @see AddressingFeature<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * @since JAX-WS 2.1<a name="line.83"></a>
+<span class="sourceLineNo">084</span> */<a name="line.84"></a>
+<span class="sourceLineNo">085</span>public final class RespectBindingFeature extends WebServiceFeature {<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    /**<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     *<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * Constant value identifying the RespectBindingFeature<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     */<a name="line.89"></a>
+<span class="sourceLineNo">090</span>    public static final String ID = "javax.xml.ws.RespectBindingFeature";<a name="line.90"></a>
+<span class="sourceLineNo">091</span><a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>    /**<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * Creates an &lt;code&gt;RespectBindingFeature&lt;/code&gt;.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * The instance created will be enabled.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     */<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    public RespectBindingFeature() {<a name="line.97"></a>
+<span class="sourceLineNo">098</span>        this.enabled = true;<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    }<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>    /**<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * Creates an RespectBindingFeature<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     *<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @param enabled specifies whether this feature should<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * be enabled or not.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     */<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    public RespectBindingFeature(boolean enabled) {<a name="line.107"></a>
+<span class="sourceLineNo">108</span>        this.enabled = enabled;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    }<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>    /**<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * {@inheritDoc}<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     */<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    public String getID() {<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        return ID;<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    }<a name="line.116"></a>
+<span class="sourceLineNo">117</span>}<a name="line.117"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

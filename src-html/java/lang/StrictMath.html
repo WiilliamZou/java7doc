@@ -1,0 +1,1540 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.util.Random;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import sun.misc.FpUtils;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import sun.misc.DoubleConsts;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>/**<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * The class {@code StrictMath} contains methods for performing basic<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * numeric operations such as the elementary exponential, logarithm,<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * square root, and trigonometric functions.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;p&gt;To help ensure portability of Java programs, the definitions of<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * some of the numeric functions in this package require that they<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * produce the same results as certain published algorithms. These<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * algorithms are available from the well-known network library<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * {@code netlib} as the package "Freely Distributable Math<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * Library," &lt;a<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * href="ftp://ftp.netlib.org/fdlibm.tar"&gt;{@code fdlibm}&lt;/a&gt;. These<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * algorithms, which are written in the C programming language, are<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * then to be understood as executed with all floating-point<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * operations following the rules of Java floating-point arithmetic.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;p&gt;The Java math library is defined with respect to<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * {@code fdlibm} version 5.3. Where {@code fdlibm} provides<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * more than one definition for a function (such as<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * {@code acos}), use the "IEEE 754 core function" version<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * (residing in a file whose name begins with the letter<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * {@code e}).  The methods which require {@code fdlibm}<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * semantics are {@code sin}, {@code cos}, {@code tan},<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * {@code asin}, {@code acos}, {@code atan},<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * {@code exp}, {@code log}, {@code log10},<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * {@code cbrt}, {@code atan2}, {@code pow},<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * {@code sinh}, {@code cosh}, {@code tanh},<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * {@code hypot}, {@code expm1}, and {@code log1p}.<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * @author  unascribed<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * @author  Joseph D. Darcy<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * @since   1.3<a name="line.62"></a>
+<span class="sourceLineNo">063</span> */<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>public final class StrictMath {<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>    /**<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * Don't let anyone instantiate this class.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     */<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    private StrictMath() {}<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>    /**<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * The {@code double} value that is closer than any other to<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * &lt;i&gt;e&lt;/i&gt;, the base of the natural logarithms.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     */<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    public static final double E = 2.7182818284590452354;<a name="line.76"></a>
+<span class="sourceLineNo">077</span><a name="line.77"></a>
+<span class="sourceLineNo">078</span>    /**<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * The {@code double} value that is closer than any other to<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * &lt;i&gt;pi&lt;/i&gt;, the ratio of the circumference of a circle to its<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * diameter.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     */<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    public static final double PI = 3.14159265358979323846;<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>    /**<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * Returns the trigonometric sine of an angle. Special cases:<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN or an infinity, then the<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * result is NaN.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * &lt;li&gt;If the argument is zero, then the result is a zero with the<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * same sign as the argument.&lt;/ul&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @param   a   an angle, in radians.<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @return  the sine of the argument.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     */<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    public static native double sin(double a);<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>    /**<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * Returns the trigonometric cosine of an angle. Special cases:<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN or an infinity, then the<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * result is NaN.&lt;/ul&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @param   a   an angle, in radians.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * @return  the cosine of the argument.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     */<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    public static native double cos(double a);<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>    /**<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * Returns the trigonometric tangent of an angle. Special cases:<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN or an infinity, then the result<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * is NaN.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * &lt;li&gt;If the argument is zero, then the result is a zero with the<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * same sign as the argument.&lt;/ul&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @param   a   an angle, in radians.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @return  the tangent of the argument.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    public static native double tan(double a);<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>    /**<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * Returns the arc sine of a value; the returned angle is in the<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * range -&lt;i&gt;pi&lt;/i&gt;/2 through &lt;i&gt;pi&lt;/i&gt;/2.  Special cases:<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN or its absolute value is greater<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * than 1, then the result is NaN.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * &lt;li&gt;If the argument is zero, then the result is a zero with the<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * same sign as the argument.&lt;/ul&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     *<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * @param   a   the value whose arc sine is to be returned.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @return  the arc sine of the argument.<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     */<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    public static native double asin(double a);<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /**<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * Returns the arc cosine of a value; the returned angle is in the<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * range 0.0 through &lt;i&gt;pi&lt;/i&gt;.  Special case:<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN or its absolute value is greater<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * than 1, then the result is NaN.&lt;/ul&gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @param   a   the value whose arc cosine is to be returned.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @return  the arc cosine of the argument.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     */<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    public static native double acos(double a);<a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span>    /**<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * Returns the arc tangent of a value; the returned angle is in the<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * range -&lt;i&gt;pi&lt;/i&gt;/2 through &lt;i&gt;pi&lt;/i&gt;/2.  Special cases:<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN, then the result is NaN.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * &lt;li&gt;If the argument is zero, then the result is a zero with the<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * same sign as the argument.&lt;/ul&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * @param   a   the value whose arc tangent is to be returned.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @return  the arc tangent of the argument.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    public static native double atan(double a);<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    /**<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * Converts an angle measured in degrees to an approximately<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * equivalent angle measured in radians.  The conversion from<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * degrees to radians is generally inexact.<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @param   angdeg   an angle, in degrees<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @return  the measurement of the angle {@code angdeg}<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *          in radians.<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     */<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    public static strictfp double toRadians(double angdeg) {<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        return angdeg / 180.0 * PI;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    }<a name="line.166"></a>
+<span class="sourceLineNo">167</span><a name="line.167"></a>
+<span class="sourceLineNo">168</span>    /**<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * Converts an angle measured in radians to an approximately<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * equivalent angle measured in degrees.  The conversion from<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * radians to degrees is generally inexact; users should<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * &lt;i&gt;not&lt;/i&gt; expect {@code cos(toRadians(90.0))} to exactly<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * equal {@code 0.0}.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @param   angrad   an angle, in radians<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @return  the measurement of the angle {@code angrad}<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *          in degrees.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     */<a name="line.178"></a>
+<span class="sourceLineNo">179</span>    public static strictfp double toDegrees(double angrad) {<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        return angrad * 180.0 / PI;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    }<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Returns Euler's number &lt;i&gt;e&lt;/i&gt; raised to the power of a<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * {@code double} value. Special cases:<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN, the result is NaN.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;li&gt;If the argument is positive infinity, then the result is<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * positive infinity.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * &lt;li&gt;If the argument is negative infinity, then the result is<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * positive zero.&lt;/ul&gt;<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     *<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * @param   a   the exponent to raise &lt;i&gt;e&lt;/i&gt; to.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * @return  the value &lt;i&gt;e&lt;/i&gt;&lt;sup&gt;{@code a}&lt;/sup&gt;,<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     *          where &lt;i&gt;e&lt;/i&gt; is the base of the natural logarithms.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     */<a name="line.195"></a>
+<span class="sourceLineNo">196</span>    public static native double exp(double a);<a name="line.196"></a>
+<span class="sourceLineNo">197</span><a name="line.197"></a>
+<span class="sourceLineNo">198</span>    /**<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * Returns the natural logarithm (base &lt;i&gt;e&lt;/i&gt;) of a {@code double}<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * value. Special cases:<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN or less than zero, then the result<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * is NaN.<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * &lt;li&gt;If the argument is positive infinity, then the result is<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * positive infinity.<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * &lt;li&gt;If the argument is positive zero or negative zero, then the<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * result is negative infinity.&lt;/ul&gt;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     *<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * @param   a   a value<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * @return  the value ln&amp;nbsp;{@code a}, the natural logarithm of<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *          {@code a}.<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     */<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    public static native double log(double a);<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span><a name="line.214"></a>
+<span class="sourceLineNo">215</span>    /**<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * Returns the base 10 logarithm of a {@code double} value.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * Special cases:<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN or less than zero, then the result<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * is NaN.<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * &lt;li&gt;If the argument is positive infinity, then the result is<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * positive infinity.<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * &lt;li&gt;If the argument is positive zero or negative zero, then the<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * result is negative infinity.<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * &lt;li&gt; If the argument is equal to 10&lt;sup&gt;&lt;i&gt;n&lt;/i&gt;&lt;/sup&gt; for<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * integer &lt;i&gt;n&lt;/i&gt;, then the result is &lt;i&gt;n&lt;/i&gt;.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * &lt;/ul&gt;<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     *<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * @param   a   a value<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * @return  the base 10 logarithm of  {@code a}.<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * @since 1.5<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     */<a name="line.232"></a>
+<span class="sourceLineNo">233</span>    public static native double log10(double a);<a name="line.233"></a>
+<span class="sourceLineNo">234</span><a name="line.234"></a>
+<span class="sourceLineNo">235</span>    /**<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * Returns the correctly rounded positive square root of a<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * {@code double} value.<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * Special cases:<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN or less than zero, then the result<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * is NaN.<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * &lt;li&gt;If the argument is positive infinity, then the result is positive<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * infinity.<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * &lt;li&gt;If the argument is positive zero or negative zero, then the<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * result is the same as the argument.&lt;/ul&gt;<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * Otherwise, the result is the {@code double} value closest to<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * the true mathematical square root of the argument value.<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     *<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * @param   a   a value.<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * @return  the positive square root of {@code a}.<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     */<a name="line.250"></a>
+<span class="sourceLineNo">251</span>    public static native double sqrt(double a);<a name="line.251"></a>
+<span class="sourceLineNo">252</span><a name="line.252"></a>
+<span class="sourceLineNo">253</span>    /**<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * Returns the cube root of a {@code double} value.  For<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * positive finite {@code x}, {@code cbrt(-x) ==<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * -cbrt(x)}; that is, the cube root of a negative value is<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * the negative of the cube root of that value's magnitude.<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * Special cases:<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     *<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * &lt;ul&gt;<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     *<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * &lt;li&gt;If the argument is NaN, then the result is NaN.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     *<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * &lt;li&gt;If the argument is infinite, then the result is an infinity<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * with the same sign as the argument.<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     *<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * &lt;li&gt;If the argument is zero, then the result is a zero with the<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * same sign as the argument.<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     *<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * &lt;/ul&gt;<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     *<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @param   a   a value.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * @return  the cube root of {@code a}.<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * @since 1.5<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     */<a name="line.275"></a>
+<span class="sourceLineNo">276</span>    public static native double cbrt(double a);<a name="line.276"></a>
+<span class="sourceLineNo">277</span><a name="line.277"></a>
+<span class="sourceLineNo">278</span>    /**<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * Computes the remainder operation on two arguments as prescribed<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * by the IEEE 754 standard.<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * The remainder value is mathematically equal to<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * &lt;code&gt;f1&amp;nbsp;-&amp;nbsp;f2&lt;/code&gt;&amp;nbsp;&amp;times;&amp;nbsp;&lt;i&gt;n&lt;/i&gt;,<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * where &lt;i&gt;n&lt;/i&gt; is the mathematical integer closest to the exact<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * mathematical value of the quotient {@code f1/f2}, and if two<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * mathematical integers are equally close to {@code f1/f2},<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * then &lt;i&gt;n&lt;/i&gt; is the integer that is even. If the remainder is<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * zero, its sign is the same as the sign of the first argument.<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * Special cases:<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * &lt;ul&gt;&lt;li&gt;If either argument is NaN, or the first argument is infinite,<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * or the second argument is positive zero or negative zero, then the<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * result is NaN.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * &lt;li&gt;If the first argument is finite and the second argument is<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * infinite, then the result is the same as the first argument.&lt;/ul&gt;<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     *<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * @param   f1   the dividend.<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * @param   f2   the divisor.<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * @return  the remainder when {@code f1} is divided by<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     *          {@code f2}.<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     */<a name="line.299"></a>
+<span class="sourceLineNo">300</span>    public static native double IEEEremainder(double f1, double f2);<a name="line.300"></a>
+<span class="sourceLineNo">301</span><a name="line.301"></a>
+<span class="sourceLineNo">302</span>    /**<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * Returns the smallest (closest to negative infinity)<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * {@code double} value that is greater than or equal to the<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * argument and is equal to a mathematical integer. Special cases:<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * &lt;ul&gt;&lt;li&gt;If the argument value is already equal to a<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * mathematical integer, then the result is the same as the<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * argument.  &lt;li&gt;If the argument is NaN or an infinity or<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * positive zero or negative zero, then the result is the same as<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * the argument.  &lt;li&gt;If the argument value is less than zero but<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * greater than -1.0, then the result is negative zero.&lt;/ul&gt; Note<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * that the value of {@code StrictMath.ceil(x)} is exactly the<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * value of {@code -StrictMath.floor(-x)}.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     *<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * @param   a   a value.<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * @return  the smallest (closest to negative infinity)<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     *          floating-point value that is greater than or equal to<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     *          the argument and is equal to a mathematical integer.<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     */<a name="line.319"></a>
+<span class="sourceLineNo">320</span>    public static double ceil(double a) {<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        return floorOrCeil(a, -0.0, 1.0, 1.0);<a name="line.321"></a>
+<span class="sourceLineNo">322</span>    }<a name="line.322"></a>
+<span class="sourceLineNo">323</span><a name="line.323"></a>
+<span class="sourceLineNo">324</span>    /**<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * Returns the largest (closest to positive infinity)<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * {@code double} value that is less than or equal to the<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * argument and is equal to a mathematical integer. Special cases:<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * &lt;ul&gt;&lt;li&gt;If the argument value is already equal to a<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * mathematical integer, then the result is the same as the<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * argument.  &lt;li&gt;If the argument is NaN or an infinity or<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * positive zero or negative zero, then the result is the same as<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * the argument.&lt;/ul&gt;<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     *<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * @param   a   a value.<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * @return  the largest (closest to positive infinity)<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     *          floating-point value that less than or equal to the argument<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     *          and is equal to a mathematical integer.<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     */<a name="line.338"></a>
+<span class="sourceLineNo">339</span>    public static double floor(double a) {<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        return floorOrCeil(a, -1.0, 0.0, -1.0);<a name="line.340"></a>
+<span class="sourceLineNo">341</span>    }<a name="line.341"></a>
+<span class="sourceLineNo">342</span><a name="line.342"></a>
+<span class="sourceLineNo">343</span>    /**<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * Internal method to share logic between floor and ceil.<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     *<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * @param a the value to be floored or ceiled<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * @param negativeBoundary result for values in (-1, 0)<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * @param positiveBoundary result for values in (0, 1)<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     * @param increment value to add when the argument is non-integral<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     */<a name="line.350"></a>
+<span class="sourceLineNo">351</span>    private static double floorOrCeil(double a,<a name="line.351"></a>
+<span class="sourceLineNo">352</span>                                      double negativeBoundary,<a name="line.352"></a>
+<span class="sourceLineNo">353</span>                                      double positiveBoundary,<a name="line.353"></a>
+<span class="sourceLineNo">354</span>                                      double sign) {<a name="line.354"></a>
+<span class="sourceLineNo">355</span>        int exponent = Math.getExponent(a);<a name="line.355"></a>
+<span class="sourceLineNo">356</span><a name="line.356"></a>
+<span class="sourceLineNo">357</span>        if (exponent &lt; 0) {<a name="line.357"></a>
+<span class="sourceLineNo">358</span>            /*<a name="line.358"></a>
+<span class="sourceLineNo">359</span>             * Absolute value of argument is less than 1.<a name="line.359"></a>
+<span class="sourceLineNo">360</span>             * floorOrceil(-0.0) =&gt; -0.0<a name="line.360"></a>
+<span class="sourceLineNo">361</span>             * floorOrceil(+0.0) =&gt; +0.0<a name="line.361"></a>
+<span class="sourceLineNo">362</span>             */<a name="line.362"></a>
+<span class="sourceLineNo">363</span>            return ((a == 0.0) ? a :<a name="line.363"></a>
+<span class="sourceLineNo">364</span>                    ( (a &lt; 0.0) ?  negativeBoundary : positiveBoundary) );<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        } else if (exponent &gt;= 52) {<a name="line.365"></a>
+<span class="sourceLineNo">366</span>            /*<a name="line.366"></a>
+<span class="sourceLineNo">367</span>             * Infinity, NaN, or a value so large it must be integral.<a name="line.367"></a>
+<span class="sourceLineNo">368</span>             */<a name="line.368"></a>
+<span class="sourceLineNo">369</span>            return a;<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        }<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        // Else the argument is either an integral value already XOR it<a name="line.371"></a>
+<span class="sourceLineNo">372</span>        // has to be rounded to one.<a name="line.372"></a>
+<span class="sourceLineNo">373</span>        assert exponent &gt;= 0 &amp;&amp; exponent &lt;= 51;<a name="line.373"></a>
+<span class="sourceLineNo">374</span><a name="line.374"></a>
+<span class="sourceLineNo">375</span>        long doppel = Double.doubleToRawLongBits(a);<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        long mask   = DoubleConsts.SIGNIF_BIT_MASK &gt;&gt; exponent;<a name="line.376"></a>
+<span class="sourceLineNo">377</span><a name="line.377"></a>
+<span class="sourceLineNo">378</span>        if ( (mask &amp; doppel) == 0L )<a name="line.378"></a>
+<span class="sourceLineNo">379</span>            return a; // integral value<a name="line.379"></a>
+<span class="sourceLineNo">380</span>        else {<a name="line.380"></a>
+<span class="sourceLineNo">381</span>            double result = Double.longBitsToDouble(doppel &amp; (~mask));<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            if (sign*a &gt; 0.0)<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                result = result + sign;<a name="line.383"></a>
+<span class="sourceLineNo">384</span>            return result;<a name="line.384"></a>
+<span class="sourceLineNo">385</span>        }<a name="line.385"></a>
+<span class="sourceLineNo">386</span>    }<a name="line.386"></a>
+<span class="sourceLineNo">387</span><a name="line.387"></a>
+<span class="sourceLineNo">388</span>    /**<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * Returns the {@code double} value that is closest in value<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * to the argument and is equal to a mathematical integer. If two<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * {@code double} values that are mathematical integers are<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * equally close to the value of the argument, the result is the<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * integer value that is even. Special cases:<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * &lt;ul&gt;&lt;li&gt;If the argument value is already equal to a mathematical<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * integer, then the result is the same as the argument.<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * &lt;li&gt;If the argument is NaN or an infinity or positive zero or negative<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * zero, then the result is the same as the argument.&lt;/ul&gt;<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     *<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * @param   a   a value.<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * @return  the closest floating-point value to {@code a} that is<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     *          equal to a mathematical integer.<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * @author Joseph D. Darcy<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     */<a name="line.403"></a>
+<span class="sourceLineNo">404</span>    public static double rint(double a) {<a name="line.404"></a>
+<span class="sourceLineNo">405</span>        /*<a name="line.405"></a>
+<span class="sourceLineNo">406</span>         * If the absolute value of a is not less than 2^52, it<a name="line.406"></a>
+<span class="sourceLineNo">407</span>         * is either a finite integer (the double format does not have<a name="line.407"></a>
+<span class="sourceLineNo">408</span>         * enough significand bits for a number that large to have any<a name="line.408"></a>
+<span class="sourceLineNo">409</span>         * fractional portion), an infinity, or a NaN.  In any of<a name="line.409"></a>
+<span class="sourceLineNo">410</span>         * these cases, rint of the argument is the argument.<a name="line.410"></a>
+<span class="sourceLineNo">411</span>         *<a name="line.411"></a>
+<span class="sourceLineNo">412</span>         * Otherwise, the sum (twoToThe52 + a ) will properly round<a name="line.412"></a>
+<span class="sourceLineNo">413</span>         * away any fractional portion of a since ulp(twoToThe52) ==<a name="line.413"></a>
+<span class="sourceLineNo">414</span>         * 1.0; subtracting out twoToThe52 from this sum will then be<a name="line.414"></a>
+<span class="sourceLineNo">415</span>         * exact and leave the rounded integer portion of a.<a name="line.415"></a>
+<span class="sourceLineNo">416</span>         *<a name="line.416"></a>
+<span class="sourceLineNo">417</span>         * This method does *not* need to be declared strictfp to get<a name="line.417"></a>
+<span class="sourceLineNo">418</span>         * fully reproducible results.  Whether or not a method is<a name="line.418"></a>
+<span class="sourceLineNo">419</span>         * declared strictfp can only make a difference in the<a name="line.419"></a>
+<span class="sourceLineNo">420</span>         * returned result if some operation would overflow or<a name="line.420"></a>
+<span class="sourceLineNo">421</span>         * underflow with strictfp semantics.  The operation<a name="line.421"></a>
+<span class="sourceLineNo">422</span>         * (twoToThe52 + a ) cannot overflow since large values of a<a name="line.422"></a>
+<span class="sourceLineNo">423</span>         * are screened out; the add cannot underflow since twoToThe52<a name="line.423"></a>
+<span class="sourceLineNo">424</span>         * is too large.  The subtraction ((twoToThe52 + a ) -<a name="line.424"></a>
+<span class="sourceLineNo">425</span>         * twoToThe52) will be exact as discussed above and thus<a name="line.425"></a>
+<span class="sourceLineNo">426</span>         * cannot overflow or meaningfully underflow.  Finally, the<a name="line.426"></a>
+<span class="sourceLineNo">427</span>         * last multiply in the return statement is by plus or minus<a name="line.427"></a>
+<span class="sourceLineNo">428</span>         * 1.0, which is exact too.<a name="line.428"></a>
+<span class="sourceLineNo">429</span>         */<a name="line.429"></a>
+<span class="sourceLineNo">430</span>        double twoToThe52 = (double)(1L &lt;&lt; 52); // 2^52<a name="line.430"></a>
+<span class="sourceLineNo">431</span>        double sign = FpUtils.rawCopySign(1.0, a); // preserve sign info<a name="line.431"></a>
+<span class="sourceLineNo">432</span>        a = Math.abs(a);<a name="line.432"></a>
+<span class="sourceLineNo">433</span><a name="line.433"></a>
+<span class="sourceLineNo">434</span>        if (a &lt; twoToThe52) { // E_min &lt;= ilogb(a) &lt;= 51<a name="line.434"></a>
+<span class="sourceLineNo">435</span>            a = ((twoToThe52 + a ) - twoToThe52);<a name="line.435"></a>
+<span class="sourceLineNo">436</span>        }<a name="line.436"></a>
+<span class="sourceLineNo">437</span><a name="line.437"></a>
+<span class="sourceLineNo">438</span>        return sign * a; // restore original sign<a name="line.438"></a>
+<span class="sourceLineNo">439</span>    }<a name="line.439"></a>
+<span class="sourceLineNo">440</span><a name="line.440"></a>
+<span class="sourceLineNo">441</span>    /**<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     * Returns the angle &lt;i&gt;theta&lt;/i&gt; from the conversion of rectangular<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * coordinates ({@code x},&amp;nbsp;{@code y}) to polar<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     * coordinates (r,&amp;nbsp;&lt;i&gt;theta&lt;/i&gt;).<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     * This method computes the phase &lt;i&gt;theta&lt;/i&gt; by computing an arc tangent<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     * of {@code y/x} in the range of -&lt;i&gt;pi&lt;/i&gt; to &lt;i&gt;pi&lt;/i&gt;. Special<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     * cases:<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * &lt;ul&gt;&lt;li&gt;If either argument is NaN, then the result is NaN.<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     * &lt;li&gt;If the first argument is positive zero and the second argument<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * is positive, or the first argument is positive and finite and the<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     * second argument is positive infinity, then the result is positive<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     * zero.<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     * &lt;li&gt;If the first argument is negative zero and the second argument<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     * is positive, or the first argument is negative and finite and the<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * second argument is positive infinity, then the result is negative zero.<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     * &lt;li&gt;If the first argument is positive zero and the second argument<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     * is negative, or the first argument is positive and finite and the<a name="line.457"></a>
+<span class="sourceLineNo">458</span>     * second argument is negative infinity, then the result is the<a name="line.458"></a>
+<span class="sourceLineNo">459</span>     * {@code double} value closest to &lt;i&gt;pi&lt;/i&gt;.<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     * &lt;li&gt;If the first argument is negative zero and the second argument<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     * is negative, or the first argument is negative and finite and the<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     * second argument is negative infinity, then the result is the<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     * {@code double} value closest to -&lt;i&gt;pi&lt;/i&gt;.<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     * &lt;li&gt;If the first argument is positive and the second argument is<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     * positive zero or negative zero, or the first argument is positive<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     * infinity and the second argument is finite, then the result is the<a name="line.466"></a>
+<span class="sourceLineNo">467</span>     * {@code double} value closest to &lt;i&gt;pi&lt;/i&gt;/2.<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     * &lt;li&gt;If the first argument is negative and the second argument is<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     * positive zero or negative zero, or the first argument is negative<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     * infinity and the second argument is finite, then the result is the<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     * {@code double} value closest to -&lt;i&gt;pi&lt;/i&gt;/2.<a name="line.471"></a>
+<span class="sourceLineNo">472</span>     * &lt;li&gt;If both arguments are positive infinity, then the result is the<a name="line.472"></a>
+<span class="sourceLineNo">473</span>     * {@code double} value closest to &lt;i&gt;pi&lt;/i&gt;/4.<a name="line.473"></a>
+<span class="sourceLineNo">474</span>     * &lt;li&gt;If the first argument is positive infinity and the second argument<a name="line.474"></a>
+<span class="sourceLineNo">475</span>     * is negative infinity, then the result is the {@code double}<a name="line.475"></a>
+<span class="sourceLineNo">476</span>     * value closest to 3*&lt;i&gt;pi&lt;/i&gt;/4.<a name="line.476"></a>
+<span class="sourceLineNo">477</span>     * &lt;li&gt;If the first argument is negative infinity and the second argument<a name="line.477"></a>
+<span class="sourceLineNo">478</span>     * is positive infinity, then the result is the {@code double} value<a name="line.478"></a>
+<span class="sourceLineNo">479</span>     * closest to -&lt;i&gt;pi&lt;/i&gt;/4.<a name="line.479"></a>
+<span class="sourceLineNo">480</span>     * &lt;li&gt;If both arguments are negative infinity, then the result is the<a name="line.480"></a>
+<span class="sourceLineNo">481</span>     * {@code double} value closest to -3*&lt;i&gt;pi&lt;/i&gt;/4.&lt;/ul&gt;<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     *<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     * @param   y   the ordinate coordinate<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * @param   x   the abscissa coordinate<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     * @return  the &lt;i&gt;theta&lt;/i&gt; component of the point<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     *          (&lt;i&gt;r&lt;/i&gt;,&amp;nbsp;&lt;i&gt;theta&lt;/i&gt;)<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     *          in polar coordinates that corresponds to the point<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     *          (&lt;i&gt;x&lt;/i&gt;,&amp;nbsp;&lt;i&gt;y&lt;/i&gt;) in Cartesian coordinates.<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     */<a name="line.489"></a>
+<span class="sourceLineNo">490</span>    public static native double atan2(double y, double x);<a name="line.490"></a>
+<span class="sourceLineNo">491</span><a name="line.491"></a>
+<span class="sourceLineNo">492</span><a name="line.492"></a>
+<span class="sourceLineNo">493</span>    /**<a name="line.493"></a>
+<span class="sourceLineNo">494</span>     * Returns the value of the first argument raised to the power of the<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     * second argument. Special cases:<a name="line.495"></a>
+<span class="sourceLineNo">496</span>     *<a name="line.496"></a>
+<span class="sourceLineNo">497</span>     * &lt;ul&gt;&lt;li&gt;If the second argument is positive or negative zero, then the<a name="line.497"></a>
+<span class="sourceLineNo">498</span>     * result is 1.0.<a name="line.498"></a>
+<span class="sourceLineNo">499</span>     * &lt;li&gt;If the second argument is 1.0, then the result is the same as the<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     * first argument.<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * &lt;li&gt;If the second argument is NaN, then the result is NaN.<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * &lt;li&gt;If the first argument is NaN and the second argument is nonzero,<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * then the result is NaN.<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     *<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     * &lt;li&gt;If<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     * &lt;ul&gt;<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     * &lt;li&gt;the absolute value of the first argument is greater than 1<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     * and the second argument is positive infinity, or<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     * &lt;li&gt;the absolute value of the first argument is less than 1 and<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     * the second argument is negative infinity,<a name="line.510"></a>
+<span class="sourceLineNo">511</span>     * &lt;/ul&gt;<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     * then the result is positive infinity.<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     *<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     * &lt;li&gt;If<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     * &lt;ul&gt;<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     * &lt;li&gt;the absolute value of the first argument is greater than 1 and<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * the second argument is negative infinity, or<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     * &lt;li&gt;the absolute value of the<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     * first argument is less than 1 and the second argument is positive<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     * infinity,<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * &lt;/ul&gt;<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     * then the result is positive zero.<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     *<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     * &lt;li&gt;If the absolute value of the first argument equals 1 and the<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     * second argument is infinite, then the result is NaN.<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     *<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     * &lt;li&gt;If<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     * &lt;ul&gt;<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     * &lt;li&gt;the first argument is positive zero and the second argument<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     * is greater than zero, or<a name="line.530"></a>
+<span class="sourceLineNo">531</span>     * &lt;li&gt;the first argument is positive infinity and the second<a name="line.531"></a>
+<span class="sourceLineNo">532</span>     * argument is less than zero,<a name="line.532"></a>
+<span class="sourceLineNo">533</span>     * &lt;/ul&gt;<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * then the result is positive zero.<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     *<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * &lt;li&gt;If<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * &lt;ul&gt;<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     * &lt;li&gt;the first argument is positive zero and the second argument<a name="line.538"></a>
+<span class="sourceLineNo">539</span>     * is less than zero, or<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     * &lt;li&gt;the first argument is positive infinity and the second<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     * argument is greater than zero,<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * &lt;/ul&gt;<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * then the result is positive infinity.<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     *<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     * &lt;li&gt;If<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     * &lt;ul&gt;<a name="line.546"></a>
+<span class="sourceLineNo">547</span>     * &lt;li&gt;the first argument is negative zero and the second argument<a name="line.547"></a>
+<span class="sourceLineNo">548</span>     * is greater than zero but not a finite odd integer, or<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     * &lt;li&gt;the first argument is negative infinity and the second<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     * argument is less than zero but not a finite odd integer,<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     * &lt;/ul&gt;<a name="line.551"></a>
+<span class="sourceLineNo">552</span>     * then the result is positive zero.<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     *<a name="line.553"></a>
+<span class="sourceLineNo">554</span>     * &lt;li&gt;If<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     * &lt;ul&gt;<a name="line.555"></a>
+<span class="sourceLineNo">556</span>     * &lt;li&gt;the first argument is negative zero and the second argument<a name="line.556"></a>
+<span class="sourceLineNo">557</span>     * is a positive finite odd integer, or<a name="line.557"></a>
+<span class="sourceLineNo">558</span>     * &lt;li&gt;the first argument is negative infinity and the second<a name="line.558"></a>
+<span class="sourceLineNo">559</span>     * argument is a negative finite odd integer,<a name="line.559"></a>
+<span class="sourceLineNo">560</span>     * &lt;/ul&gt;<a name="line.560"></a>
+<span class="sourceLineNo">561</span>     * then the result is negative zero.<a name="line.561"></a>
+<span class="sourceLineNo">562</span>     *<a name="line.562"></a>
+<span class="sourceLineNo">563</span>     * &lt;li&gt;If<a name="line.563"></a>
+<span class="sourceLineNo">564</span>     * &lt;ul&gt;<a name="line.564"></a>
+<span class="sourceLineNo">565</span>     * &lt;li&gt;the first argument is negative zero and the second argument<a name="line.565"></a>
+<span class="sourceLineNo">566</span>     * is less than zero but not a finite odd integer, or<a name="line.566"></a>
+<span class="sourceLineNo">567</span>     * &lt;li&gt;the first argument is negative infinity and the second<a name="line.567"></a>
+<span class="sourceLineNo">568</span>     * argument is greater than zero but not a finite odd integer,<a name="line.568"></a>
+<span class="sourceLineNo">569</span>     * &lt;/ul&gt;<a name="line.569"></a>
+<span class="sourceLineNo">570</span>     * then the result is positive infinity.<a name="line.570"></a>
+<span class="sourceLineNo">571</span>     *<a name="line.571"></a>
+<span class="sourceLineNo">572</span>     * &lt;li&gt;If<a name="line.572"></a>
+<span class="sourceLineNo">573</span>     * &lt;ul&gt;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>     * &lt;li&gt;the first argument is negative zero and the second argument<a name="line.574"></a>
+<span class="sourceLineNo">575</span>     * is a negative finite odd integer, or<a name="line.575"></a>
+<span class="sourceLineNo">576</span>     * &lt;li&gt;the first argument is negative infinity and the second<a name="line.576"></a>
+<span class="sourceLineNo">577</span>     * argument is a positive finite odd integer,<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     * &lt;/ul&gt;<a name="line.578"></a>
+<span class="sourceLineNo">579</span>     * then the result is negative infinity.<a name="line.579"></a>
+<span class="sourceLineNo">580</span>     *<a name="line.580"></a>
+<span class="sourceLineNo">581</span>     * &lt;li&gt;If the first argument is finite and less than zero<a name="line.581"></a>
+<span class="sourceLineNo">582</span>     * &lt;ul&gt;<a name="line.582"></a>
+<span class="sourceLineNo">583</span>     * &lt;li&gt; if the second argument is a finite even integer, the<a name="line.583"></a>
+<span class="sourceLineNo">584</span>     * result is equal to the result of raising the absolute value of<a name="line.584"></a>
+<span class="sourceLineNo">585</span>     * the first argument to the power of the second argument<a name="line.585"></a>
+<span class="sourceLineNo">586</span>     *<a name="line.586"></a>
+<span class="sourceLineNo">587</span>     * &lt;li&gt;if the second argument is a finite odd integer, the result<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * is equal to the negative of the result of raising the absolute<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     * value of the first argument to the power of the second<a name="line.589"></a>
+<span class="sourceLineNo">590</span>     * argument<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     *<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * &lt;li&gt;if the second argument is finite and not an integer, then<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     * the result is NaN.<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * &lt;/ul&gt;<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     *<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     * &lt;li&gt;If both arguments are integers, then the result is exactly equal<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     * to the mathematical result of raising the first argument to the power<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * of the second argument if that result can in fact be represented<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * exactly as a {@code double} value.&lt;/ul&gt;<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     *<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     * &lt;p&gt;(In the foregoing descriptions, a floating-point value is<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     * considered to be an integer if and only if it is finite and a<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * fixed point of the method {@link #ceil ceil} or,<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * equivalently, a fixed point of the method {@link #floor<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * floor}. A value is a fixed point of a one-argument<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * method if and only if the result of applying the method to the<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     * value is equal to the value.)<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     *<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     * @param   a   base.<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     * @param   b   the exponent.<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     * @return  the value {@code a}&lt;sup&gt;{@code b}&lt;/sup&gt;.<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     */<a name="line.612"></a>
+<span class="sourceLineNo">613</span>    public static native double pow(double a, double b);<a name="line.613"></a>
+<span class="sourceLineNo">614</span><a name="line.614"></a>
+<span class="sourceLineNo">615</span>    /**<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     * Returns the closest {@code int} to the argument, with ties<a name="line.616"></a>
+<span class="sourceLineNo">617</span>     * rounding up.<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     *<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     * &lt;p&gt;Special cases:<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN, the result is 0.<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     * &lt;li&gt;If the argument is negative infinity or any value less than or<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     * equal to the value of {@code Integer.MIN_VALUE}, the result is<a name="line.622"></a>
+<span class="sourceLineNo">623</span>     * equal to the value of {@code Integer.MIN_VALUE}.<a name="line.623"></a>
+<span class="sourceLineNo">624</span>     * &lt;li&gt;If the argument is positive infinity or any value greater than or<a name="line.624"></a>
+<span class="sourceLineNo">625</span>     * equal to the value of {@code Integer.MAX_VALUE}, the result is<a name="line.625"></a>
+<span class="sourceLineNo">626</span>     * equal to the value of {@code Integer.MAX_VALUE}.&lt;/ul&gt;<a name="line.626"></a>
+<span class="sourceLineNo">627</span>     *<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     * @param   a   a floating-point value to be rounded to an integer.<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     * @return  the value of the argument rounded to the nearest<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     *          {@code int} value.<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * @see     java.lang.Integer#MAX_VALUE<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * @see     java.lang.Integer#MIN_VALUE<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     */<a name="line.633"></a>
+<span class="sourceLineNo">634</span>    public static int round(float a) {<a name="line.634"></a>
+<span class="sourceLineNo">635</span>        return Math.round(a);<a name="line.635"></a>
+<span class="sourceLineNo">636</span>    }<a name="line.636"></a>
+<span class="sourceLineNo">637</span><a name="line.637"></a>
+<span class="sourceLineNo">638</span>    /**<a name="line.638"></a>
+<span class="sourceLineNo">639</span>     * Returns the closest {@code long} to the argument, with ties<a name="line.639"></a>
+<span class="sourceLineNo">640</span>     * rounding up.<a name="line.640"></a>
+<span class="sourceLineNo">641</span>     *<a name="line.641"></a>
+<span class="sourceLineNo">642</span>     * &lt;p&gt;Special cases:<a name="line.642"></a>
+<span class="sourceLineNo">643</span>     * &lt;ul&gt;&lt;li&gt;If the argument is NaN, the result is 0.<a name="line.643"></a>
+<span class="sourceLineNo">644</span>     * &lt;li&gt;If the argument is negative infinity or any value less than or<a name="line.644"></a>
+<span class="sourceLineNo">645</span>     * equal to the value of {@code Long.MIN_VALUE}, the result is<a name="line.645"></a>
+<span class="sourceLineNo">646</span>     * equal to the value of {@code Long.MIN_VALUE}.<a name="line.646"></a>
+<span class="sourceLineNo">647</span>     * &lt;li&gt;If the argument is positive infinity or any value greater than or<a name="line.647"></a>
+<span class="sourceLineNo">648</span>     * equal to the value of {@code Long.MAX_VALUE}, the result is<a name="line.648"></a>
+<span class="sourceLineNo">649</span>     * equal to the value of {@code Long.MAX_VALUE}.&lt;/ul&gt;<a name="line.649"></a>
+<span class="sourceLineNo">650</span>     *<a name="line.650"></a>
+<span class="sourceLineNo">651</span>     * @param   a  a floating-point value to be rounded to a<a name="line.651"></a>
+<span class="sourceLineNo">652</span>     *          {@code long}.<a name="line.652"></a>
+<span class="sourceLineNo">653</span>     * @return  the value of the argument rounded to the nearest<a name="line.653"></a>
+<span class="sourceLineNo">654</span>     *          {@code long} value.<a name="line.654"></a>
+<span class="sourceLineNo">655</span>     * @see     java.lang.Long#MAX_VALUE<a name="line.655"></a>
+<span class="sourceLineNo">656</span>     * @see     java.lang.Long#MIN_VALUE<a name="line.656"></a>
+<span class="sourceLineNo">657</span>     */<a name="line.657"></a>
+<span class="sourceLineNo">658</span>    public static long round(double a) {<a name="line.658"></a>
+<span class="sourceLineNo">659</span>        return Math.round(a);<a name="line.659"></a>
+<span class="sourceLineNo">660</span>    }<a name="line.660"></a>
+<span class="sourceLineNo">661</span><a name="line.661"></a>
+<span class="sourceLineNo">662</span>    private static Random randomNumberGenerator;<a name="line.662"></a>
+<span class="sourceLineNo">663</span><a name="line.663"></a>
+<span class="sourceLineNo">664</span>    private static synchronized Random initRNG() {<a name="line.664"></a>
+<span class="sourceLineNo">665</span>        Random rnd = randomNumberGenerator;<a name="line.665"></a>
+<span class="sourceLineNo">666</span>        return (rnd == null) ? (randomNumberGenerator = new Random()) : rnd;<a name="line.666"></a>
+<span class="sourceLineNo">667</span>    }<a name="line.667"></a>
+<span class="sourceLineNo">668</span><a name="line.668"></a>
+<span class="sourceLineNo">669</span>    /**<a name="line.669"></a>
+<span class="sourceLineNo">670</span>     * Returns a {@code double} value with a positive sign, greater<a name="line.670"></a>
+<span class="sourceLineNo">671</span>     * than or equal to {@code 0.0} and less than {@code 1.0}.<a name="line.671"></a>
+<span class="sourceLineNo">672</span>     * Returned values are chosen pseudorandomly with (approximately)<a name="line.672"></a>
+<span class="sourceLineNo">673</span>     * uniform distribution from that range.<a name="line.673"></a>
+<span class="sourceLineNo">674</span>     *<a name="line.674"></a>
+<span class="sourceLineNo">675</span>     * &lt;p&gt;When this method is first called, it creates a single new<a name="line.675"></a>
+<span class="sourceLineNo">676</span>     * pseudorandom-number generator, exactly as if by the expression<a name="line.676"></a>
+<span class="sourceLineNo">677</span>     *<a name="line.677"></a>
+<span class="sourceLineNo">678</span>     * &lt;blockquote&gt;{@code new java.util.Random()}&lt;/blockquote&gt;<a name="line.678"></a>
+<span class="sourceLineNo">679</span>     *<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     * This new pseudorandom-number generator is used thereafter for<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     * all calls to this method and is used nowhere else.<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     *<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     * &lt;p&gt;This method is properly synchronized to allow correct use by<a name="line.683"></a>
+<span class="sourceLineNo">684</span>     * more than one thread. However, if many threads need to generate<a name="line.684"></a>
+<span class="sourceLineNo">685</span>     * pseudorandom numbers at a great rate, it may reduce contention<a name="line.685"></a>
+<span class="sourceLineNo">686</span>     * for each thread to have its own pseudorandom number generator.<a name="line.686"></a>
+<span class="sourceLineNo">687</span>     *<a name="line.687"></a>
+<span class="sourceLineNo">688</span>     * @return  a pseudorandom {@code double} greater than or equal<a name="line.688"></a>
+<span class="sourceLineNo">689</span>     * to {@code 0.0} and less than {@code 1.0}.<a name="line.689"></a>
+<span class="sourceLineNo">690</span>     * @see Random#nextDouble()<a name="line.690"></a>
+<span class="sourceLineNo">691</span>     */<a name="line.691"></a>
+<span class="sourceLineNo">692</span>    public static double random() {<a name="line.692"></a>
+<span class="sourceLineNo">693</span>        Random rnd = randomNumberGenerator;<a name="line.693"></a>
+<span class="sourceLineNo">694</span>        if (rnd == null) rnd = initRNG();<a name="line.694"></a>
+<span class="sourceLineNo">695</span>        return rnd.nextDouble();<a name="line.695"></a>
+<span class="sourceLineNo">696</span>    }<a name="line.696"></a>
+<span class="sourceLineNo">697</span><a name="line.697"></a>
+<span class="sourceLineNo">698</span>    /**<a name="line.698"></a>
+<span class="sourceLineNo">699</span>     * Returns the absolute value of an {@code int} value..<a name="line.699"></a>
+<span class="sourceLineNo">700</span>     * If the argument is not negative, the argument is returned.<a name="line.700"></a>
+<span class="sourceLineNo">701</span>     * If the argument is negative, the negation of the argument is returned.<a name="line.701"></a>
+<span class="sourceLineNo">702</span>     *<a name="line.702"></a>
+<span class="sourceLineNo">703</span>     * &lt;p&gt;Note that if the argument is equal to the value of<a name="line.703"></a>
+<span class="sourceLineNo">704</span>     * {@link Integer#MIN_VALUE}, the most negative representable<a name="line.704"></a>
+<span class="sourceLineNo">705</span>     * {@code int} value, the result is that same value, which is<a name="line.705"></a>
+<span class="sourceLineNo">706</span>     * negative.<a name="line.706"></a>
+<span class="sourceLineNo">707</span>     *<a name="line.707"></a>
+<span class="sourceLineNo">708</span>     * @param   a   the  argument whose absolute value is to be determined.<a name="line.708"></a>
+<span class="sourceLineNo">709</span>     * @return  the absolute value of the argument.<a name="line.709"></a>
+<span class="sourceLineNo">710</span>     */<a name="line.710"></a>
+<span class="sourceLineNo">711</span>    public static int abs(int a) {<a name="line.711"></a>
+<span class="sourceLineNo">712</span>        return (a &lt; 0) ? -a : a;<a name="line.712"></a>
+<span class="sourceLineNo">713</span>    }<a name="line.713"></a>
+<span class="sourceLineNo">714</span><a name="line.714"></a>
+<span class="sourceLineNo">715</span>    /**<a name="line.715"></a>
+<span class="sourceLineNo">716</span>     * Returns the absolute value of a {@code long} value.<a name="line.716"></a>
+<span class="sourceLineNo">717</span>     * If the argument is not negative, the argument is returned.<a name="line.717"></a>
+<span class="sourceLineNo">718</span>     * If the argument is negative, the negation of the argument is returned.<a name="line.718"></a>
+<span class="sourceLineNo">719</span>     *<a name="line.719"></a>
+<span class="sourceLineNo">720</span>     * &lt;p&gt;Note that if the argument is equal to the value of<a name="line.720"></a>
+<span class="sourceLineNo">721</span>     * {@link Long#MIN_VALUE}, the most negative representable<a name="line.721"></a>
+<span class="sourceLineNo">722</span>     * {@code long} value, the result is that same value, which<a name="line.722"></a>
+<span class="sourceLineNo">723</span>     * is negative.<a name="line.723"></a>
+<span class="sourceLineNo">724</span>     *<a name="line.724"></a>
+<span class="sourceLineNo">725</span>     * @param   a   the  argument whose absolute value is to be determined.<a name="line.725"></a>
+<span class="sourceLineNo">726</span>     * @return  the absolute value of the argument.<a name="line.726"></a>
+<span class="sourceLineNo">727</span>     */<a name="line.727"></a>
+<span class="sourceLineNo">728</span>    public static long abs(long a) {<a name="line.728"></a>
+<span class="sourceLineNo">729</span>        return (a &lt; 0) ? -a : a;<a name="line.729"></a>
+<span class="sourceLineNo">730</span>    }<a name="line.730"></a>
+<span class="sourceLineNo">731</span><a name="line.731"></a>
+<span class="sourceLineNo">732</span>    /**<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     * Returns the absolute value of a {@code float} value.<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     * If the argument is not negative, the argument is returned.<a name="line.734"></a>
+<span class="sourceLineNo">735</span>     * If the argument is negative, the negation of the argument is returned.<a name="line.735"></a>
+<span class="sourceLineNo">736</span>     * Special cases:<a name="line.736"></a>
+<span class="sourceLineNo">737</span>     * &lt;ul&gt;&lt;li&gt;If the argument is positive zero or negative zero, the<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * result is positive zero.<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     * &lt;li&gt;If the argument is infinite, the result is positive infinity.<a name="line.739"></a>
+<span class="sourceLineNo">740</span>     * &lt;li&gt;If the argument is NaN, the result is NaN.&lt;/ul&gt;<a name="line.740"></a>
+<span class="sourceLineNo">741</span>     * In other words, the result is the same as the value of the expression:<a name="line.741"></a>
+<span class="sourceLineNo">742</span>     * &lt;p&gt;{@code Float.intBitsToFloat(0x7fffffff &amp; Float.floatToIntBits(a))}<a name="line.742"></a>
+<span class="sourceLineNo">743</span>     *<a name="line.743"></a>
+<span class="sourceLineNo">744</span>     * @param   a   the argument whose absolute value is to be determined<a name="line.744"></a>
+<span class="sourceLineNo">745</span>     * @return  the absolute value of the argument.<a name="line.745"></a>
+<span class="sourceLineNo">746</span>     */<a name="line.746"></a>
+<span class="sourceLineNo">747</span>    public static float abs(float a) {<a name="line.747"></a>
+<span class="sourceLineNo">748</span>        return (a &lt;= 0.0F) ? 0.0F - a : a;<a name="line.748"></a>
+<span class="sourceLineNo">749</span>    }<a name="line.749"></a>
+<span class="sourceLineNo">750</span><a name="line.750"></a>
+<span class="sourceLineNo">751</span>    /**<a name="line.751"></a>
+<span class="sourceLineNo">752</span>     * Returns the absolute value of a {@code double} value.<a name="line.752"></a>
+<span class="sourceLineNo">753</span>     * If the argument is not negative, the argument is returned.<a name="line.753"></a>
+<span class="sourceLineNo">754</span>     * If the argument is negative, the negation of the argument is returned.<a name="line.754"></a>
+<span class="sourceLineNo">755</span>     * Special cases:<a name="line.755"></a>
+<span class="sourceLineNo">756</span>     * &lt;ul&gt;&lt;li&gt;If the argument is positive zero or negative zero, the result<a name="line.756"></a>
+<span class="sourceLineNo">757</span>     * is positive zero.<a name="line.757"></a>
+<span class="sourceLineNo">758</span>     * &lt;li&gt;If the argument is infinite, the result is positive infinity.<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     * &lt;li&gt;If the argument is NaN, the result is NaN.&lt;/ul&gt;<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     * In other words, the result is the same as the value of the expression:<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     * &lt;p&gt;{@code Double.longBitsToDouble((Double.doubleToLongBits(a)&lt;&lt;1)&gt;&gt;&gt;1)}<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     *<a name="line.762"></a>
+<span class="sourceLineNo">763</span>     * @param   a   the argument whose absolute value is to be determined<a name="line.763"></a>
+<span class="sourceLineNo">764</span>     * @return  the absolute value of the argument.<a name="line.764"></a>
+<span class="sourceLineNo">765</span>     */<a name="line.765"></a>
+<span class="sourceLineNo">766</span>    public static double abs(double a) {<a name="line.766"></a>
+<span class="sourceLineNo">767</span>        return (a &lt;= 0.0D) ? 0.0D - a : a;<a name="line.767"></a>
+<span class="sourceLineNo">768</span>    }<a name="line.768"></a>
+<span class="sourceLineNo">769</span><a name="line.769"></a>
+<span class="sourceLineNo">770</span>    /**<a name="line.770"></a>
+<span class="sourceLineNo">771</span>     * Returns the greater of two {@code int} values. That is, the<a name="line.771"></a>
+<span class="sourceLineNo">772</span>     * result is the argument closer to the value of<a name="line.772"></a>
+<span class="sourceLineNo">773</span>     * {@link Integer#MAX_VALUE}. If the arguments have the same value,<a name="line.773"></a>
+<span class="sourceLineNo">774</span>     * the result is that same value.<a name="line.774"></a>
+<span class="sourceLineNo">775</span>     *<a name="line.775"></a>
+<span class="sourceLineNo">776</span>     * @param   a   an argument.<a name="line.776"></a>
+<span class="sourceLineNo">777</span>     * @param   b   another argument.<a name="line.777"></a>
+<span class="sourceLineNo">778</span>     * @return  the larger of {@code a} and {@code b}.<a name="line.778"></a>
+<span class="sourceLineNo">779</span>     */<a name="line.779"></a>
+<span class="sourceLineNo">780</span>    public static int max(int a, int b) {<a name="line.780"></a>
+<span class="sourceLineNo">781</span>        return (a &gt;= b) ? a : b;<a name="line.781"></a>
+<span class="sourceLineNo">782</span>    }<a name="line.782"></a>
+<span class="sourceLineNo">783</span><a name="line.783"></a>
+<span class="sourceLineNo">784</span>    /**<a name="line.784"></a>
+<span class="sourceLineNo">785</span>     * Returns the greater of two {@code long} values. That is, the<a name="line.785"></a>
+<span class="sourceLineNo">786</span>     * result is the argument closer to the value of<a name="line.786"></a>
+<span class="sourceLineNo">787</span>     * {@link Long#MAX_VALUE}. If the arguments have the same value,<a name="line.787"></a>
+<span class="sourceLineNo">788</span>     * the result is that same value.<a name="line.788"></a>
+<span class="sourceLineNo">789</span>     *<a name="line.789"></a>
+<span class="sourceLineNo">790</span>     * @param   a   an argument.<a name="line.790"></a>
+<span class="sourceLineNo">791</span>     * @param   b   another argument.<a name="line.791"></a>
+<span class="sourceLineNo">792</span>     * @return  the larger of {@code a} and {@code b}.<a name="line.792"></a>
+<span class="sourceLineNo">793</span>        */<a name="line.793"></a>
+<span class="sourceLineNo">794</span>    public static long max(long a, long b) {<a name="line.794"></a>
+<span class="sourceLineNo">795</span>        return (a &gt;= b) ? a : b;<a name="line.795"></a>
+<span class="sourceLineNo">796</span>    }<a name="line.796"></a>
+<span class="sourceLineNo">797</span><a name="line.797"></a>
+<span class="sourceLineNo">798</span>    // Use raw bit-wise conversions on guaranteed non-NaN arguments.<a name="line.798"></a>
+<span class="sourceLineNo">799</span>    private static long negativeZeroFloatBits  = Float.floatToRawIntBits(-0.0f);<a name="line.799"></a>
+<span class="sourceLineNo">800</span>    private static long negativeZeroDoubleBits = Double.doubleToRawLongBits(-0.0d);<a name="line.800"></a>
+<span class="sourceLineNo">801</span><a name="line.801"></a>
+<span class="sourceLineNo">802</span>    /**<a name="line.802"></a>
+<span class="sourceLineNo">803</span>     * Returns the greater of two {@code float} values.  That is,<a name="line.803"></a>
+<span class="sourceLineNo">804</span>     * the result is the argument closer to positive infinity. If the<a name="line.804"></a>
+<span class="sourceLineNo">805</span>     * arguments have the same value, the result is that same<a name="line.805"></a>
+<span class="sourceLineNo">806</span>     * value. If either value is NaN, then the result is NaN.  Unlike<a name="line.806"></a>
+<span class="sourceLineNo">807</span>     * the numerical comparison operators, this method considers<a name="line.807"></a>
+<span class="sourceLineNo">808</span>     * negative zero to be strictly smaller than positive zero. If one<a name="line.808"></a>
+<span class="sourceLineNo">809</span>     * argument is positive zero and the other negative zero, the<a name="line.809"></a>
+<span class="sourceLineNo">810</span>     * result is positive zero.<a name="line.810"></a>
+<span class="sourceLineNo">811</span>     *<a name="line.811"></a>
+<span class="sourceLineNo">812</span>     * @param   a   an argument.<a name="line.812"></a>
+<span class="sourceLineNo">813</span>     * @param   b   another argument.<a name="line.813"></a>
+<span class="sourceLineNo">814</span>     * @return  the larger of {@code a} and {@code b}.<a name="line.814"></a>
+<span class="sourceLineNo">815</span>     */<a name="line.815"></a>
+<span class="sourceLineNo">816</span>    public static float max(float a, float b) {<a name="line.816"></a>
+<span class="sourceLineNo">817</span>        if (a != a)<a name="line.817"></a>
+<span class="sourceLineNo">818</span>            return a;   // a is NaN<a name="line.818"></a>
+<span class="sourceLineNo">819</span>        if ((a == 0.0f) &amp;&amp;<a name="line.819"></a>
+<span class="sourceLineNo">820</span>            (b == 0.0f) &amp;&amp;<a name="line.820"></a>
+<span class="sourceLineNo">821</span>            (Float.floatToRawIntBits(a) == negativeZeroFloatBits)) {<a name="line.821"></a>
+<span class="sourceLineNo">822</span>            // Raw conversion ok since NaN can't map to -0.0.<a name="line.822"></a>
+<span class="sourceLineNo">823</span>            return b;<a name="line.823"></a>
+<span class="sourceLineNo">824</span>        }<a name="line.824"></a>
+<span class="sourceLineNo">825</span>        return (a &gt;= b) ? a : b;<a name="line.825"></a>
+<span class="sourceLineNo">826</span>    }<a name="line.826"></a>
+<span class="sourceLineNo">827</span><a name="line.827"></a>
+<span class="sourceLineNo">828</span>    /**<a name="line.828"></a>
+<span class="sourceLineNo">829</span>     * Returns the greater of two {@code double} values.  That<a name="line.829"></a>
+<span class="sourceLineNo">830</span>     * is, the result is the argument closer to positive infinity. If<a name="line.830"></a>
+<span class="sourceLineNo">831</span>     * the arguments have the same value, the result is that same<a name="line.831"></a>
+<span class="sourceLineNo">832</span>     * value. If either value is NaN, then the result is NaN.  Unlike<a name="line.832"></a>
+<span class="sourceLineNo">833</span>     * the numerical comparison operators, this method considers<a name="line.833"></a>
+<span class="sourceLineNo">834</span>     * negative zero to be strictly smaller than positive zero. If one<a name="line.834"></a>
+<span class="sourceLineNo">835</span>     * argument is positive zero and the other negative zero, the<a name="line.835"></a>
+<span class="sourceLineNo">836</span>     * result is positive zero.<a name="line.836"></a>
+<span class="sourceLineNo">837</span>     *<a name="line.837"></a>
+<span class="sourceLineNo">838</span>     * @param   a   an argument.<a name="line.838"></a>
+<span class="sourceLineNo">839</span>     * @param   b   another argument.<a name="line.839"></a>
+<span class="sourceLineNo">840</span>     * @return  the larger of {@code a} and {@code b}.<a name="line.840"></a>
+<span class="sourceLineNo">841</span>     */<a name="line.841"></a>
+<span class="sourceLineNo">842</span>    public static double max(double a, double b) {<a name="line.842"></a>
+<span class="sourceLineNo">843</span>        if (a != a)<a name="line.843"></a>
+<span class="sourceLineNo">844</span>            return a;   // a is NaN<a name="line.844"></a>
+<span class="sourceLineNo">845</span>        if ((a == 0.0d) &amp;&amp;<a name="line.845"></a>
+<span class="sourceLineNo">846</span>            (b == 0.0d) &amp;&amp;<a name="line.846"></a>
+<span class="sourceLineNo">847</span>            (Double.doubleToRawLongBits(a) == negativeZeroDoubleBits)) {<a name="line.847"></a>
+<span class="sourceLineNo">848</span>            // Raw conversion ok since NaN can't map to -0.0.<a name="line.848"></a>
+<span class="sourceLineNo">849</span>            return b;<a name="line.849"></a>
+<span class="sourceLineNo">850</span>        }<a name="line.850"></a>
+<span class="sourceLineNo">851</span>        return (a &gt;= b) ? a : b;<a name="line.851"></a>
+<span class="sourceLineNo">852</span>    }<a name="line.852"></a>
+<span class="sourceLineNo">853</span><a name="line.853"></a>
+<span class="sourceLineNo">854</span>    /**<a name="line.854"></a>
+<span class="sourceLineNo">855</span>     * Returns the smaller of two {@code int} values. That is,<a name="line.855"></a>
+<span class="sourceLineNo">856</span>     * the result the argument closer to the value of<a name="line.856"></a>
+<span class="sourceLineNo">857</span>     * {@link Integer#MIN_VALUE}.  If the arguments have the same<a name="line.857"></a>
+<span class="sourceLineNo">858</span>     * value, the result is that same value.<a name="line.858"></a>
+<span class="sourceLineNo">859</span>     *<a name="line.859"></a>
+<span class="sourceLineNo">860</span>     * @param   a   an argument.<a name="line.860"></a>
+<span class="sourceLineNo">861</span>     * @param   b   another argument.<a name="line.861"></a>
+<span class="sourceLineNo">862</span>     * @return  the smaller of {@code a} and {@code b}.<a name="line.862"></a>
+<span class="sourceLineNo">863</span>     */<a name="line.863"></a>
+<span class="sourceLineNo">864</span>    public static int min(int a, int b) {<a name="line.864"></a>
+<span class="sourceLineNo">865</span>        return (a &lt;= b) ? a : b;<a name="line.865"></a>
+<span class="sourceLineNo">866</span>    }<a name="line.866"></a>
+<span class="sourceLineNo">867</span><a name="line.867"></a>
+<span class="sourceLineNo">868</span>    /**<a name="line.868"></a>
+<span class="sourceLineNo">869</span>     * Returns the smaller of two {@code long} values. That is,<a name="line.869"></a>
+<span class="sourceLineNo">870</span>     * the result is the argument closer to the value of<a name="line.870"></a>
+<span class="sourceLineNo">871</span>     * {@link Long#MIN_VALUE}. If the arguments have the same<a name="line.871"></a>
+<span class="sourceLineNo">872</span>     * value, the result is that same value.<a name="line.872"></a>
+<span class="sourceLineNo">873</span>     *<a name="line.873"></a>
+<span class="sourceLineNo">874</span>     * @param   a   an argument.<a name="line.874"></a>
+<span class="sourceLineNo">875</span>     * @param   b   another argument.<a name="line.875"></a>
+<span class="sourceLineNo">876</span>     * @return  the smaller of {@code a} and {@code b}.<a name="line.876"></a>
+<span class="sourceLineNo">877</span>     */<a name="line.877"></a>
+<span class="sourceLineNo">878</span>    public static long min(long a, long b) {<a name="line.878"></a>
+<span class="sourceLineNo">879</span>        return (a &lt;= b) ? a : b;<a name="line.879"></a>
+<span class="sourceLineNo">880</span>    }<a name="line.880"></a>
+<span class="sourceLineNo">881</span><a name="line.881"></a>
+<span class="sourceLineNo">882</span>    /**<a name="line.882"></a>
+<span class="sourceLineNo">883</span>     * Returns the smaller of two {@code float} values.  That is,<a name="line.883"></a>
+<span class="sourceLineNo">884</span>     * the result is the value closer to negative infinity. If the<a name="line.884"></a>
+<span class="sourceLineNo">885</span>     * arguments have the same value, the result is that same<a name="line.885"></a>
+<span class="sourceLineNo">886</span>     * value. If either value is NaN, then the result is NaN.  Unlike<a name="line.886"></a>
+<span class="sourceLineNo">887</span>     * the numerical comparison operators, this method considers<a name="line.887"></a>
+<span class="sourceLineNo">888</span>     * negative zero to be strictly smaller than positive zero.  If<a name="line.888"></a>
+<span class="sourceLineNo">889</span>     * one argument is positive zero and the other is negative zero,<a name="line.889"></a>
+<span class="sourceLineNo">890</span>     * the result is negative zero.<a name="line.890"></a>
+<span class="sourceLineNo">891</span>     *<a name="line.891"></a>
+<span class="sourceLineNo">892</span>     * @param   a   an argument.<a name="line.892"></a>
+<span class="sourceLineNo">893</span>     * @param   b   another argument.<a name="line.893"></a>
+<span class="sourceLineNo">894</span>     * @return  the smaller of {@code a} and {@code b.}<a name="line.894"></a>
+<span class="sourceLineNo">895</span>     */<a name="line.895"></a>
+<span class="sourceLineNo">896</span>    public static float min(float a, float b) {<a name="line.896"></a>
+<span class="sourceLineNo">897</span>        if (a != a)<a name="line.897"></a>
+<span class="sourceLineNo">898</span>            return a;   // a is NaN<a name="line.898"></a>
+<span class="sourceLineNo">899</span>        if ((a == 0.0f) &amp;&amp;<a name="line.899"></a>
+<span class="sourceLineNo">900</span>            (b == 0.0f) &amp;&amp;<a name="line.900"></a>
+<span class="sourceLineNo">901</span>            (Float.floatToRawIntBits(b) == negativeZeroFloatBits)) {<a name="line.901"></a>
+<span class="sourceLineNo">902</span>            // Raw conversion ok since NaN can't map to -0.0.<a name="line.902"></a>
+<span class="sourceLineNo">903</span>            return b;<a name="line.903"></a>
+<span class="sourceLineNo">904</span>        }<a name="line.904"></a>
+<span class="sourceLineNo">905</span>        return (a &lt;= b) ? a : b;<a name="line.905"></a>
+<span class="sourceLineNo">906</span>    }<a name="line.906"></a>
+<span class="sourceLineNo">907</span><a name="line.907"></a>
+<span class="sourceLineNo">908</span>    /**<a name="line.908"></a>
+<span class="sourceLineNo">909</span>     * Returns the smaller of two {@code double} values.  That<a name="line.909"></a>
+<span class="sourceLineNo">910</span>     * is, the result is the value closer to negative infinity. If the<a name="line.910"></a>
+<span class="sourceLineNo">911</span>     * arguments have the same value, the result is that same<a name="line.911"></a>
+<span class="sourceLineNo">912</span>     * value. If either value is NaN, then the result is NaN.  Unlike<a name="line.912"></a>
+<span class="sourceLineNo">913</span>     * the numerical comparison operators, this method considers<a name="line.913"></a>
+<span class="sourceLineNo">914</span>     * negative zero to be strictly smaller than positive zero. If one<a name="line.914"></a>
+<span class="sourceLineNo">915</span>     * argument is positive zero and the other is negative zero, the<a name="line.915"></a>
+<span class="sourceLineNo">916</span>     * result is negative zero.<a name="line.916"></a>
+<span class="sourceLineNo">917</span>     *<a name="line.917"></a>
+<span class="sourceLineNo">918</span>     * @param   a   an argument.<a name="line.918"></a>
+<span class="sourceLineNo">919</span>     * @param   b   another argument.<a name="line.919"></a>
+<span class="sourceLineNo">920</span>     * @return  the smaller of {@code a} and {@code b}.<a name="line.920"></a>
+<span class="sourceLineNo">921</span>     */<a name="line.921"></a>
+<span class="sourceLineNo">922</span>    public static double min(double a, double b) {<a name="line.922"></a>
+<span class="sourceLineNo">923</span>        if (a != a)<a name="line.923"></a>
+<span class="sourceLineNo">924</span>            return a;   // a is NaN<a name="line.924"></a>
+<span class="sourceLineNo">925</span>        if ((a == 0.0d) &amp;&amp;<a name="line.925"></a>
+<span class="sourceLineNo">926</span>            (b == 0.0d) &amp;&amp;<a name="line.926"></a>
+<span class="sourceLineNo">927</span>            (Double.doubleToRawLongBits(b) == negativeZeroDoubleBits)) {<a name="line.927"></a>
+<span class="sourceLineNo">928</span>            // Raw conversion ok since NaN can't map to -0.0.<a name="line.928"></a>
+<span class="sourceLineNo">929</span>            return b;<a name="line.929"></a>
+<span class="sourceLineNo">930</span>        }<a name="line.930"></a>
+<span class="sourceLineNo">931</span>        return (a &lt;= b) ? a : b;<a name="line.931"></a>
+<span class="sourceLineNo">932</span>    }<a name="line.932"></a>
+<span class="sourceLineNo">933</span><a name="line.933"></a>
+<span class="sourceLineNo">934</span>    /**<a name="line.934"></a>
+<span class="sourceLineNo">935</span>     * Returns the size of an ulp of the argument.  An ulp of a<a name="line.935"></a>
+<span class="sourceLineNo">936</span>     * {@code double} value is the positive distance between this<a name="line.936"></a>
+<span class="sourceLineNo">937</span>     * floating-point value and the {@code double} value next<a name="line.937"></a>
+<span class="sourceLineNo">938</span>     * larger in magnitude.  Note that for non-NaN &lt;i&gt;x&lt;/i&gt;,<a name="line.938"></a>
+<span class="sourceLineNo">939</span>     * &lt;code&gt;ulp(-&lt;i&gt;x&lt;/i&gt;) == ulp(&lt;i&gt;x&lt;/i&gt;)&lt;/code&gt;.<a name="line.939"></a>
+<span class="sourceLineNo">940</span>     *<a name="line.940"></a>
+<span class="sourceLineNo">941</span>     * &lt;p&gt;Special Cases:<a name="line.941"></a>
+<span class="sourceLineNo">942</span>     * &lt;ul&gt;<a name="line.942"></a>
+<span class="sourceLineNo">943</span>     * &lt;li&gt; If the argument is NaN, then the result is NaN.<a name="line.943"></a>
+<span class="sourceLineNo">944</span>     * &lt;li&gt; If the argument is positive or negative infinity, then the<a name="line.944"></a>
+<span class="sourceLineNo">945</span>     * result is positive infinity.<a name="line.945"></a>
+<span class="sourceLineNo">946</span>     * &lt;li&gt; If the argument is positive or negative zero, then the result is<a name="line.946"></a>
+<span class="sourceLineNo">947</span>     * {@code Double.MIN_VALUE}.<a name="line.947"></a>
+<span class="sourceLineNo">948</span>     * &lt;li&gt; If the argument is &amp;plusmn;{@code Double.MAX_VALUE}, then<a name="line.948"></a>
+<span class="sourceLineNo">949</span>     * the result is equal to 2&lt;sup&gt;971&lt;/sup&gt;.<a name="line.949"></a>
+<span class="sourceLineNo">950</span>     * &lt;/ul&gt;<a name="line.950"></a>
+<span class="sourceLineNo">951</span>     *<a name="line.951"></a>
+<span class="sourceLineNo">952</span>     * @param d the floating-point value whose ulp is to be returned<a name="line.952"></a>
+<span class="sourceLineNo">953</span>     * @return the size of an ulp of the argument<a name="line.953"></a>
+<span class="sourceLineNo">954</span>     * @author Joseph D. Darcy<a name="line.954"></a>
+<span class="sourceLineNo">955</span>     * @since 1.5<a name="line.955"></a>
+<span class="sourceLineNo">956</span>     */<a name="line.956"></a>
+<span class="sourceLineNo">957</span>    public static double ulp(double d) {<a name="line.957"></a>
+<span class="sourceLineNo">958</span>        return sun.misc.FpUtils.ulp(d);<a name="line.958"></a>
+<span class="sourceLineNo">959</span>    }<a name="line.959"></a>
+<span class="sourceLineNo">960</span><a name="line.960"></a>
+<span class="sourceLineNo">961</span>    /**<a name="line.961"></a>
+<span class="sourceLineNo">962</span>     * Returns the size of an ulp of the argument.  An ulp of a<a name="line.962"></a>
+<span class="sourceLineNo">963</span>     * {@code float} value is the positive distance between this<a name="line.963"></a>
+<span class="sourceLineNo">964</span>     * floating-point value and the {@code float} value next<a name="line.964"></a>
+<span class="sourceLineNo">965</span>     * larger in magnitude.  Note that for non-NaN &lt;i&gt;x&lt;/i&gt;,<a name="line.965"></a>
+<span class="sourceLineNo">966</span>     * &lt;code&gt;ulp(-&lt;i&gt;x&lt;/i&gt;) == ulp(&lt;i&gt;x&lt;/i&gt;)&lt;/code&gt;.<a name="line.966"></a>
+<span class="sourceLineNo">967</span>     *<a name="line.967"></a>
+<span class="sourceLineNo">968</span>     * &lt;p&gt;Special Cases:<a name="line.968"></a>
+<span class="sourceLineNo">969</span>     * &lt;ul&gt;<a name="line.969"></a>
+<span class="sourceLineNo">970</span>     * &lt;li&gt; If the argument is NaN, then the result is NaN.<a name="line.970"></a>
+<span class="sourceLineNo">971</span>     * &lt;li&gt; If the argument is positive or negative infinity, then the<a name="line.971"></a>
+<span class="sourceLineNo">972</span>     * result is positive infinity.<a name="line.972"></a>
+<span class="sourceLineNo">973</span>     * &lt;li&gt; If the argument is positive or negative zero, then the result is<a name="line.973"></a>
+<span class="sourceLineNo">974</span>     * {@code Float.MIN_VALUE}.<a name="line.974"></a>
+<span class="sourceLineNo">975</span>     * &lt;li&gt; If the argument is &amp;plusmn;{@code Float.MAX_VALUE}, then<a name="line.975"></a>
+<span class="sourceLineNo">976</span>     * the result is equal to 2&lt;sup&gt;104&lt;/sup&gt;.<a name="line.976"></a>
+<span class="sourceLineNo">977</span>     * &lt;/ul&gt;<a name="line.977"></a>
+<span class="sourceLineNo">978</span>     *<a name="line.978"></a>
+<span class="sourceLineNo">979</span>     * @param f the floating-point value whose ulp is to be returned<a name="line.979"></a>
+<span class="sourceLineNo">980</span>     * @return the size of an ulp of the argument<a name="line.980"></a>
+<span class="sourceLineNo">981</span>     * @author Joseph D. Darcy<a name="line.981"></a>
+<span class="sourceLineNo">982</span>     * @since 1.5<a name="line.982"></a>
+<span class="sourceLineNo">983</span>     */<a name="line.983"></a>
+<span class="sourceLineNo">984</span>    public static float ulp(float f) {<a name="line.984"></a>
+<span class="sourceLineNo">985</span>        return sun.misc.FpUtils.ulp(f);<a name="line.985"></a>
+<span class="sourceLineNo">986</span>    }<a name="line.986"></a>
+<span class="sourceLineNo">987</span><a name="line.987"></a>
+<span class="sourceLineNo">988</span>    /**<a name="line.988"></a>
+<span class="sourceLineNo">989</span>     * Returns the signum function of the argument; zero if the argument<a name="line.989"></a>
+<span class="sourceLineNo">990</span>     * is zero, 1.0 if the argument is greater than zero, -1.0 if the<a name="line.990"></a>
+<span class="sourceLineNo">991</span>     * argument is less than zero.<a name="line.991"></a>
+<span class="sourceLineNo">992</span>     *<a name="line.992"></a>
+<span class="sourceLineNo">993</span>     * &lt;p&gt;Special Cases:<a name="line.993"></a>
+<span class="sourceLineNo">994</span>     * &lt;ul&gt;<a name="line.994"></a>
+<span class="sourceLineNo">995</span>     * &lt;li&gt; If the argument is NaN, then the result is NaN.<a name="line.995"></a>
+<span class="sourceLineNo">996</span>     * &lt;li&gt; If the argument is positive zero or negative zero, then the<a name="line.996"></a>
+<span class="sourceLineNo">997</span>     *      result is the same as the argument.<a name="line.997"></a>
+<span class="sourceLineNo">998</span>     * &lt;/ul&gt;<a name="line.998"></a>
+<span class="sourceLineNo">999</span>     *<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>     * @param d the floating-point value whose signum is to be returned<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>     * @return the signum function of the argument<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>     * @author Joseph D. Darcy<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>     * @since 1.5<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>     */<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>    public static double signum(double d) {<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>        return sun.misc.FpUtils.signum(d);<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>    }<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span><a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>    /**<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>     * Returns the signum function of the argument; zero if the argument<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>     * is zero, 1.0f if the argument is greater than zero, -1.0f if the<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>     * argument is less than zero.<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>     *<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>     * &lt;p&gt;Special Cases:<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>     * &lt;ul&gt;<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>     * &lt;li&gt; If the argument is NaN, then the result is NaN.<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>     * &lt;li&gt; If the argument is positive zero or negative zero, then the<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>     *      result is the same as the argument.<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>     * &lt;/ul&gt;<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>     *<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>     * @param f the floating-point value whose signum is to be returned<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>     * @return the signum function of the argument<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>     * @author Joseph D. Darcy<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>     * @since 1.5<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>     */<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>    public static float signum(float f) {<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>        return sun.misc.FpUtils.signum(f);<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>    }<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span><a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>    /**<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>     * Returns the hyperbolic sine of a {@code double} value.<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>     * The hyperbolic sine of &lt;i&gt;x&lt;/i&gt; is defined to be<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>     * (&lt;i&gt;e&lt;sup&gt;x&lt;/sup&gt;&amp;nbsp;-&amp;nbsp;e&lt;sup&gt;-x&lt;/sup&gt;&lt;/i&gt;)/2<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>     * where &lt;i&gt;e&lt;/i&gt; is {@linkplain Math#E Euler's number}.<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>     *<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>     * &lt;p&gt;Special cases:<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>     * &lt;ul&gt;<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>     *<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>     * &lt;li&gt;If the argument is NaN, then the result is NaN.<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>     *<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>     * &lt;li&gt;If the argument is infinite, then the result is an infinity<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>     * with the same sign as the argument.<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>     *<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>     * &lt;li&gt;If the argument is zero, then the result is a zero with the<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>     * same sign as the argument.<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>     *<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>     * &lt;/ul&gt;<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>     *<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>     * @param   x The number whose hyperbolic sine is to be returned.<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>     * @return  The hyperbolic sine of {@code x}.<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>     * @since 1.5<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>     */<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>    public static native double sinh(double x);<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span><a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>    /**<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>     * Returns the hyperbolic cosine of a {@code double} value.<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>     * The hyperbolic cosine of &lt;i&gt;x&lt;/i&gt; is defined to be<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>     * (&lt;i&gt;e&lt;sup&gt;x&lt;/sup&gt;&amp;nbsp;+&amp;nbsp;e&lt;sup&gt;-x&lt;/sup&gt;&lt;/i&gt;)/2<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>     * where &lt;i&gt;e&lt;/i&gt; is {@linkplain Math#E Euler's number}.<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>     *<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>     * &lt;p&gt;Special cases:<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>     * &lt;ul&gt;<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>     *<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>     * &lt;li&gt;If the argument is NaN, then the result is NaN.<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span>     *<a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>     * &lt;li&gt;If the argument is infinite, then the result is positive<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>     * infinity.<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>     *<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>     * &lt;li&gt;If the argument is zero, then the result is {@code 1.0}.<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>     *<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>     * &lt;/ul&gt;<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>     *<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>     * @param   x The number whose hyperbolic cosine is to be returned.<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>     * @return  The hyperbolic cosine of {@code x}.<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>     * @since 1.5<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>     */<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>    public static native double cosh(double x);<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span><a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>    /**<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>     * Returns the hyperbolic tangent of a {@code double} value.<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>     * The hyperbolic tangent of &lt;i&gt;x&lt;/i&gt; is defined to be<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>     * (&lt;i&gt;e&lt;sup&gt;x&lt;/sup&gt;&amp;nbsp;-&amp;nbsp;e&lt;sup&gt;-x&lt;/sup&gt;&lt;/i&gt;)/(&lt;i&gt;e&lt;sup&gt;x&lt;/sup&gt;&amp;nbsp;+&amp;nbsp;e&lt;sup&gt;-x&lt;/sup&gt;&lt;/i&gt;),<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>     * in other words, {@linkplain Math#sinh<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>     * sinh(&lt;i&gt;x&lt;/i&gt;)}/{@linkplain Math#cosh cosh(&lt;i&gt;x&lt;/i&gt;)}.  Note<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>     * that the absolute value of the exact tanh is always less than<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>     * 1.<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>     *<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>     * &lt;p&gt;Special cases:<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>     * &lt;ul&gt;<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>     *<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>     * &lt;li&gt;If the argument is NaN, then the result is NaN.<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>     *<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>     * &lt;li&gt;If the argument is zero, then the result is a zero with the<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>     * same sign as the argument.<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>     *<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>     * &lt;li&gt;If the argument is positive infinity, then the result is<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>     * {@code +1.0}.<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>     *<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>     * &lt;li&gt;If the argument is negative infinity, then the result is<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>     * {@code -1.0}.<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>     *<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>     * &lt;/ul&gt;<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>     *<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>     * @param   x The number whose hyperbolic tangent is to be returned.<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>     * @return  The hyperbolic tangent of {@code x}.<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>     * @since 1.5<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>     */<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>    public static native double tanh(double x);<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span><a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>    /**<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>     * Returns sqrt(&lt;i&gt;x&lt;/i&gt;&lt;sup&gt;2&lt;/sup&gt;&amp;nbsp;+&lt;i&gt;y&lt;/i&gt;&lt;sup&gt;2&lt;/sup&gt;)<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>     * without intermediate overflow or underflow.<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>     *<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>     * &lt;p&gt;Special cases:<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>     * &lt;ul&gt;<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>     *<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>     * &lt;li&gt; If either argument is infinite, then the result<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>     * is positive infinity.<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>     *<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>     * &lt;li&gt; If either argument is NaN and neither argument is infinite,<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>     * then the result is NaN.<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>     *<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>     * &lt;/ul&gt;<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>     *<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>     * @param x a value<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>     * @param y a value<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>     * @return sqrt(&lt;i&gt;x&lt;/i&gt;&lt;sup&gt;2&lt;/sup&gt;&amp;nbsp;+&lt;i&gt;y&lt;/i&gt;&lt;sup&gt;2&lt;/sup&gt;)<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>     * without intermediate overflow or underflow<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>     * @since 1.5<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>     */<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>    public static native double hypot(double x, double y);<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span><a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>    /**<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>     * Returns &lt;i&gt;e&lt;/i&gt;&lt;sup&gt;x&lt;/sup&gt;&amp;nbsp;-1.  Note that for values of<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>     * &lt;i&gt;x&lt;/i&gt; near 0, the exact sum of<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>     * {@code expm1(x)}&amp;nbsp;+&amp;nbsp;1 is much closer to the true<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>     * result of &lt;i&gt;e&lt;/i&gt;&lt;sup&gt;x&lt;/sup&gt; than {@code exp(x)}.<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>     *<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>     * &lt;p&gt;Special cases:<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>     * &lt;ul&gt;<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>     * &lt;li&gt;If the argument is NaN, the result is NaN.<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>     *<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>     * &lt;li&gt;If the argument is positive infinity, then the result is<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>     * positive infinity.<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>     *<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>     * &lt;li&gt;If the argument is negative infinity, then the result is<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>     * -1.0.<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>     *<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>     * &lt;li&gt;If the argument is zero, then the result is a zero with the<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>     * same sign as the argument.<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>     *<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>     * &lt;/ul&gt;<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>     *<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>     * @param   x   the exponent to raise &lt;i&gt;e&lt;/i&gt; to in the computation of<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>     *              &lt;i&gt;e&lt;/i&gt;&lt;sup&gt;{@code x}&lt;/sup&gt;&amp;nbsp;-1.<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>     * @return  the value &lt;i&gt;e&lt;/i&gt;&lt;sup&gt;{@code x}&lt;/sup&gt;&amp;nbsp;-&amp;nbsp;1.<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span>     * @since 1.5<a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>     */<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>    public static native double expm1(double x);<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span><a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>    /**<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>     * Returns the natural logarithm of the sum of the argument and 1.<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>     * Note that for small values {@code x}, the result of<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>     * {@code log1p(x)} is much closer to the true result of ln(1<a name="line.1164"></a>
+<span class="sourceLineNo">1165</span>     * + {@code x}) than the floating-point evaluation of<a name="line.1165"></a>
+<span class="sourceLineNo">1166</span>     * {@code log(1.0+x)}.<a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>     *<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>     * &lt;p&gt;Special cases:<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>     * &lt;ul&gt;<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>     *<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>     * &lt;li&gt;If the argument is NaN or less than -1, then the result is<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>     * NaN.<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span>     *<a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>     * &lt;li&gt;If the argument is positive infinity, then the result is<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>     * positive infinity.<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>     *<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>     * &lt;li&gt;If the argument is negative one, then the result is<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>     * negative infinity.<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span>     *<a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>     * &lt;li&gt;If the argument is zero, then the result is a zero with the<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>     * same sign as the argument.<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span>     *<a name="line.1182"></a>
+<span class="sourceLineNo">1183</span>     * &lt;/ul&gt;<a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>     *<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>     * @param   x   a value<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>     * @return the value ln({@code x}&amp;nbsp;+&amp;nbsp;1), the natural<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>     * log of {@code x}&amp;nbsp;+&amp;nbsp;1<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>     * @since 1.5<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span>     */<a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>    public static native double log1p(double x);<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span><a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>    /**<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span>     * Returns the first floating-point argument with the sign of the<a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>     * second floating-point argument.  For this method, a NaN<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>     * {@code sign} argument is always treated as if it were<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>     * positive.<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>     *<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>     * @param magnitude  the parameter providing the magnitude of the result<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>     * @param sign   the parameter providing the sign of the result<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>     * @return a value with the magnitude of {@code magnitude}<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>     * and the sign of {@code sign}.<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span>     * @since 1.6<a name="line.1202"></a>
+<span class="sourceLineNo">1203</span>     */<a name="line.1203"></a>
+<span class="sourceLineNo">1204</span>    public static double copySign(double magnitude, double sign) {<a name="line.1204"></a>
+<span class="sourceLineNo">1205</span>        return sun.misc.FpUtils.copySign(magnitude, sign);<a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>    }<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span><a name="line.1207"></a>
+<span class="sourceLineNo">1208</span>    /**<a name="line.1208"></a>
+<span class="sourceLineNo">1209</span>     * Returns the first floating-point argument with the sign of the<a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>     * second floating-point argument.  For this method, a NaN<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span>     * {@code sign} argument is always treated as if it were<a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>     * positive.<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span>     *<a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>     * @param magnitude  the parameter providing the magnitude of the result<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>     * @param sign   the parameter providing the sign of the result<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>     * @return a value with the magnitude of {@code magnitude}<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>     * and the sign of {@code sign}.<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span>     * @since 1.6<a name="line.1218"></a>
+<span class="sourceLineNo">1219</span>     */<a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>    public static float copySign(float magnitude, float sign) {<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span>        return sun.misc.FpUtils.copySign(magnitude, sign);<a name="line.1221"></a>
+<span class="sourceLineNo">1222</span>    }<a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>    /**<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>     * Returns the unbiased exponent used in the representation of a<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span>     * {@code float}.  Special cases:<a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>     *<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span>     * &lt;ul&gt;<a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>     * &lt;li&gt;If the argument is NaN or infinite, then the result is<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span>     * {@link Float#MAX_EXPONENT} + 1.<a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>     * &lt;li&gt;If the argument is zero or subnormal, then the result is<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span>     * {@link Float#MIN_EXPONENT} -1.<a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>     * &lt;/ul&gt;<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>     * @param f a {@code float} value<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>     * @since 1.6<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span>     */<a name="line.1235"></a>
+<span class="sourceLineNo">1236</span>    public static int getExponent(float f) {<a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>        return sun.misc.FpUtils.getExponent(f);<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span>    }<a name="line.1238"></a>
+<span class="sourceLineNo">1239</span><a name="line.1239"></a>
+<span class="sourceLineNo">1240</span>    /**<a name="line.1240"></a>
+<span class="sourceLineNo">1241</span>     * Returns the unbiased exponent used in the representation of a<a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>     * {@code double}.  Special cases:<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>     *<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span>     * &lt;ul&gt;<a name="line.1244"></a>
+<span class="sourceLineNo">1245</span>     * &lt;li&gt;If the argument is NaN or infinite, then the result is<a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>     * {@link Double#MAX_EXPONENT} + 1.<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span>     * &lt;li&gt;If the argument is zero or subnormal, then the result is<a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>     * {@link Double#MIN_EXPONENT} -1.<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>     * &lt;/ul&gt;<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>     * @param d a {@code double} value<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span>     * @since 1.6<a name="line.1251"></a>
+<span class="sourceLineNo">1252</span>     */<a name="line.1252"></a>
+<span class="sourceLineNo">1253</span>    public static int getExponent(double d) {<a name="line.1253"></a>
+<span class="sourceLineNo">1254</span>        return sun.misc.FpUtils.getExponent(d);<a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>    }<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span><a name="line.1256"></a>
+<span class="sourceLineNo">1257</span>    /**<a name="line.1257"></a>
+<span class="sourceLineNo">1258</span>     * Returns the floating-point number adjacent to the first<a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>     * argument in the direction of the second argument.  If both<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span>     * arguments compare as equal the second argument is returned.<a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>     *<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>     * &lt;p&gt;Special cases:<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>     * &lt;ul&gt;<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>     * &lt;li&gt; If either argument is a NaN, then NaN is returned.<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span>     *<a name="line.1265"></a>
+<span class="sourceLineNo">1266</span>     * &lt;li&gt; If both arguments are signed zeros, {@code direction}<a name="line.1266"></a>
+<span class="sourceLineNo">1267</span>     * is returned unchanged (as implied by the requirement of<a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>     * returning the second argument if the arguments compare as<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span>     * equal).<a name="line.1269"></a>
+<span class="sourceLineNo">1270</span>     *<a name="line.1270"></a>
+<span class="sourceLineNo">1271</span>     * &lt;li&gt; If {@code start} is<a name="line.1271"></a>
+<span class="sourceLineNo">1272</span>     * &amp;plusmn;{@link Double#MIN_VALUE} and {@code direction}<a name="line.1272"></a>
+<span class="sourceLineNo">1273</span>     * has a value such that the result should have a smaller<a name="line.1273"></a>
+<span class="sourceLineNo">1274</span>     * magnitude, then a zero with the same sign as {@code start}<a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>     * is returned.<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span>     *<a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>     * &lt;li&gt; If {@code start} is infinite and<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span>     * {@code direction} has a value such that the result should<a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>     * have a smaller magnitude, {@link Double#MAX_VALUE} with the<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span>     * same sign as {@code start} is returned.<a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>     *<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span>     * &lt;li&gt; If {@code start} is equal to &amp;plusmn;<a name="line.1282"></a>
+<span class="sourceLineNo">1283</span>     * {@link Double#MAX_VALUE} and {@code direction} has a<a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>     * value such that the result should have a larger magnitude, an<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span>     * infinity with same sign as {@code start} is returned.<a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>     * &lt;/ul&gt;<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span>     *<a name="line.1287"></a>
+<span class="sourceLineNo">1288</span>     * @param start  starting floating-point value<a name="line.1288"></a>
+<span class="sourceLineNo">1289</span>     * @param direction value indicating which of<a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>     * {@code start}'s neighbors or {@code start} should<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span>     * be returned<a name="line.1291"></a>
+<span class="sourceLineNo">1292</span>     * @return The floating-point number adjacent to {@code start} in the<a name="line.1292"></a>
+<span class="sourceLineNo">1293</span>     * direction of {@code direction}.<a name="line.1293"></a>
+<span class="sourceLineNo">1294</span>     * @since 1.6<a name="line.1294"></a>
+<span class="sourceLineNo">1295</span>     */<a name="line.1295"></a>
+<span class="sourceLineNo">1296</span>    public static double nextAfter(double start, double direction) {<a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>        return sun.misc.FpUtils.nextAfter(start, direction);<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span>    }<a name="line.1298"></a>
+<span class="sourceLineNo">1299</span><a name="line.1299"></a>
+<span class="sourceLineNo">1300</span>    /**<a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>     * Returns the floating-point number adjacent to the first<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>     * argument in the direction of the second argument.  If both<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>     * arguments compare as equal a value equivalent to the second argument<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span>     * is returned.<a name="line.1304"></a>
+<span class="sourceLineNo">1305</span>     *<a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>     * &lt;p&gt;Special cases:<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span>     * &lt;ul&gt;<a name="line.1307"></a>
+<span class="sourceLineNo">1308</span>     * &lt;li&gt; If either argument is a NaN, then NaN is returned.<a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>     *<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span>     * &lt;li&gt; If both arguments are signed zeros, a value equivalent<a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>     * to {@code direction} is returned.<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>     *<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span>     * &lt;li&gt; If {@code start} is<a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>     * &amp;plusmn;{@link Float#MIN_VALUE} and {@code direction}<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span>     * has a value such that the result should have a smaller<a name="line.1315"></a>
+<span class="sourceLineNo">1316</span>     * magnitude, then a zero with the same sign as {@code start}<a name="line.1316"></a>
+<span class="sourceLineNo">1317</span>     * is returned.<a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>     *<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span>     * &lt;li&gt; If {@code start} is infinite and<a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>     * {@code direction} has a value such that the result should<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span>     * have a smaller magnitude, {@link Float#MAX_VALUE} with the<a name="line.1321"></a>
+<span class="sourceLineNo">1322</span>     * same sign as {@code start} is returned.<a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>     *<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>     * &lt;li&gt; If {@code start} is equal to &amp;plusmn;<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>     * {@link Float#MAX_VALUE} and {@code direction} has a<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span>     * value such that the result should have a larger magnitude, an<a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>     * infinity with same sign as {@code start} is returned.<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span>     * &lt;/ul&gt;<a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>     *<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>     * @param start  starting floating-point value<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>     * @param direction value indicating which of<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span>     * {@code start}'s neighbors or {@code start} should<a name="line.1332"></a>
+<span class="sourceLineNo">1333</span>     * be returned<a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>     * @return The floating-point number adjacent to {@code start} in the<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span>     * direction of {@code direction}.<a name="line.1335"></a>
+<span class="sourceLineNo">1336</span>     * @since 1.6<a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>     */<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span>    public static float nextAfter(float start, double direction) {<a name="line.1338"></a>
+<span class="sourceLineNo">1339</span>        return sun.misc.FpUtils.nextAfter(start, direction);<a name="line.1339"></a>
+<span class="sourceLineNo">1340</span>    }<a name="line.1340"></a>
+<span class="sourceLineNo">1341</span><a name="line.1341"></a>
+<span class="sourceLineNo">1342</span>    /**<a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>     * Returns the floating-point value adjacent to {@code d} in<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span>     * the direction of positive infinity.  This method is<a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>     * semantically equivalent to {@code nextAfter(d,<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>     * Double.POSITIVE_INFINITY)}; however, a {@code nextUp}<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>     * implementation may run faster than its equivalent<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span>     * {@code nextAfter} call.<a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>     *<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>     * &lt;p&gt;Special Cases:<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span>     * &lt;ul&gt;<a name="line.1351"></a>
+<span class="sourceLineNo">1352</span>     * &lt;li&gt; If the argument is NaN, the result is NaN.<a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>     *<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span>     * &lt;li&gt; If the argument is positive infinity, the result is<a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>     * positive infinity.<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span>     *<a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>     * &lt;li&gt; If the argument is zero, the result is<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span>     * {@link Double#MIN_VALUE}<a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>     *<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span>     * &lt;/ul&gt;<a name="line.1360"></a>
+<span class="sourceLineNo">1361</span>     *<a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>     * @param d starting floating-point value<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span>     * @return The adjacent floating-point value closer to positive<a name="line.1363"></a>
+<span class="sourceLineNo">1364</span>     * infinity.<a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>     * @since 1.6<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span>     */<a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>    public static double nextUp(double d) {<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span>        return sun.misc.FpUtils.nextUp(d);<a name="line.1368"></a>
+<span class="sourceLineNo">1369</span>    }<a name="line.1369"></a>
+<span class="sourceLineNo">1370</span><a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>    /**<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span>     * Returns the floating-point value adjacent to {@code f} in<a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>     * the direction of positive infinity.  This method is<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>     * semantically equivalent to {@code nextAfter(f,<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span>     * Float.POSITIVE_INFINITY)}; however, a {@code nextUp}<a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>     * implementation may run faster than its equivalent<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>     * {@code nextAfter} call.<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>     *<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span>     * &lt;p&gt;Special Cases:<a name="line.1379"></a>
+<span class="sourceLineNo">1380</span>     * &lt;ul&gt;<a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>     * &lt;li&gt; If the argument is NaN, the result is NaN.<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span>     *<a name="line.1382"></a>
+<span class="sourceLineNo">1383</span>     * &lt;li&gt; If the argument is positive infinity, the result is<a name="line.1383"></a>
+<span class="sourceLineNo">1384</span>     * positive infinity.<a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>     *<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span>     * &lt;li&gt; If the argument is zero, the result is<a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>     * {@link Float#MIN_VALUE}<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span>     *<a name="line.1388"></a>
+<span class="sourceLineNo">1389</span>     * &lt;/ul&gt;<a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>     *<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>     * @param f starting floating-point value<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span>     * @return The adjacent floating-point value closer to positive<a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>     * infinity.<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span>     * @since 1.6<a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>     */<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span>    public static float nextUp(float f) {<a name="line.1396"></a>
+<span class="sourceLineNo">1397</span>        return sun.misc.FpUtils.nextUp(f);<a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>    }<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span><a name="line.1399"></a>
+<span class="sourceLineNo">1400</span><a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>    /**<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span>     * Return {@code d} &amp;times;<a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>     * 2&lt;sup&gt;{@code scaleFactor}&lt;/sup&gt; rounded as if performed<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span>     * by a single correctly rounded floating-point multiply to a<a name="line.1404"></a>
+<span class="sourceLineNo">1405</span>     * member of the double value set.  See the Java<a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>     * Language Specification for a discussion of floating-point<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>     * value sets.  If the exponent of the result is between {@link<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span>     * Double#MIN_EXPONENT} and {@link Double#MAX_EXPONENT}, the<a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>     * answer is calculated exactly.  If the exponent of the result<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span>     * would be larger than {@code Double.MAX_EXPONENT}, an<a name="line.1410"></a>
+<span class="sourceLineNo">1411</span>     * infinity is returned.  Note that if the result is subnormal,<a name="line.1411"></a>
+<span class="sourceLineNo">1412</span>     * precision may be lost; that is, when {@code scalb(x, n)}<a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>     * is subnormal, {@code scalb(scalb(x, n), -n)} may not equal<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span>     * &lt;i&gt;x&lt;/i&gt;.  When the result is non-NaN, the result has the same<a name="line.1414"></a>
+<span class="sourceLineNo">1415</span>     * sign as {@code d}.<a name="line.1415"></a>
+<span class="sourceLineNo">1416</span>     *<a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>     * &lt;p&gt;Special cases:<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span>     * &lt;ul&gt;<a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>     * &lt;li&gt; If the first argument is NaN, NaN is returned.<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span>     * &lt;li&gt; If the first argument is infinite, then an infinity of the<a name="line.1420"></a>
+<span class="sourceLineNo">1421</span>     * same sign is returned.<a name="line.1421"></a>
+<span class="sourceLineNo">1422</span>     * &lt;li&gt; If the first argument is zero, then a zero of the same<a name="line.1422"></a>
+<span class="sourceLineNo">1423</span>     * sign is returned.<a name="line.1423"></a>
+<span class="sourceLineNo">1424</span>     * &lt;/ul&gt;<a name="line.1424"></a>
+<span class="sourceLineNo">1425</span>     *<a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>     * @param d number to be scaled by a power of two.<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span>     * @param scaleFactor power of 2 used to scale {@code d}<a name="line.1427"></a>
+<span class="sourceLineNo">1428</span>     * @return {@code d} &amp;times; 2&lt;sup&gt;{@code scaleFactor}&lt;/sup&gt;<a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>     * @since 1.6<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span>     */<a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>    public static double scalb(double d, int scaleFactor) {<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span>        return sun.misc.FpUtils.scalb(d, scaleFactor);<a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>    }<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span><a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>    /**<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span>     * Return {@code f} &amp;times;<a name="line.1436"></a>
+<span class="sourceLineNo">1437</span>     * 2&lt;sup&gt;{@code scaleFactor}&lt;/sup&gt; rounded as if performed<a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>     * by a single correctly rounded floating-point multiply to a<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>     * member of the float value set.  See the Java<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>     * Language Specification for a discussion of floating-point<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>     * value sets.  If the exponent of the result is between {@link<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span>     * Float#MIN_EXPONENT} and {@link Float#MAX_EXPONENT}, the<a name="line.1442"></a>
+<span class="sourceLineNo">1443</span>     * answer is calculated exactly.  If the exponent of the result<a name="line.1443"></a>
+<span class="sourceLineNo">1444</span>     * would be larger than {@code Float.MAX_EXPONENT}, an<a name="line.1444"></a>
+<span class="sourceLineNo">1445</span>     * infinity is returned.  Note that if the result is subnormal,<a name="line.1445"></a>
+<span class="sourceLineNo">1446</span>     * precision may be lost; that is, when {@code scalb(x, n)}<a name="line.1446"></a>
+<span class="sourceLineNo">1447</span>     * is subnormal, {@code scalb(scalb(x, n), -n)} may not equal<a name="line.1447"></a>
+<span class="sourceLineNo">1448</span>     * &lt;i&gt;x&lt;/i&gt;.  When the result is non-NaN, the result has the same<a name="line.1448"></a>
+<span class="sourceLineNo">1449</span>     * sign as {@code f}.<a name="line.1449"></a>
+<span class="sourceLineNo">1450</span>     *<a name="line.1450"></a>
+<span class="sourceLineNo">1451</span>     * &lt;p&gt;Special cases:<a name="line.1451"></a>
+<span class="sourceLineNo">1452</span>     * &lt;ul&gt;<a name="line.1452"></a>
+<span class="sourceLineNo">1453</span>     * &lt;li&gt; If the first argument is NaN, NaN is returned.<a name="line.1453"></a>
+<span class="sourceLineNo">1454</span>     * &lt;li&gt; If the first argument is infinite, then an infinity of the<a name="line.1454"></a>
+<span class="sourceLineNo">1455</span>     * same sign is returned.<a name="line.1455"></a>
+<span class="sourceLineNo">1456</span>     * &lt;li&gt; If the first argument is zero, then a zero of the same<a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>     * sign is returned.<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span>     * &lt;/ul&gt;<a name="line.1458"></a>
+<span class="sourceLineNo">1459</span>     *<a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>     * @param f number to be scaled by a power of two.<a name="line.1460"></a>
+<span class="sourceLineNo">1461</span>     * @param scaleFactor power of 2 used to scale {@code f}<a name="line.1461"></a>
+<span class="sourceLineNo">1462</span>     * @return {@code f} &amp;times; 2&lt;sup&gt;{@code scaleFactor}&lt;/sup&gt;<a name="line.1462"></a>
+<span class="sourceLineNo">1463</span>     * @since 1.6<a name="line.1463"></a>
+<span class="sourceLineNo">1464</span>     */<a name="line.1464"></a>
+<span class="sourceLineNo">1465</span>    public static float scalb(float f, int scaleFactor) {<a name="line.1465"></a>
+<span class="sourceLineNo">1466</span>        return sun.misc.FpUtils.scalb(f, scaleFactor);<a name="line.1466"></a>
+<span class="sourceLineNo">1467</span>    }<a name="line.1467"></a>
+<span class="sourceLineNo">1468</span>}<a name="line.1468"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

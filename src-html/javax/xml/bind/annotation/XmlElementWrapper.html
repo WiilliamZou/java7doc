@@ -1,0 +1,217 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.xml.bind.annotation;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import static java.lang.annotation.RetentionPolicy.RUNTIME;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import static java.lang.annotation.ElementType.FIELD;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import static java.lang.annotation.ElementType.METHOD;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.lang.annotation.Retention;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.lang.annotation.Target;<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>/**<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * Generates a wrapper element around XML representation.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * This is primarily intended to be used to produce a wrapper<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * XML element around collections. The annotation therefore supports<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * two forms of serialization shown below.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;pre&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *    //Example: code fragment<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *      int[] names;<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *    // XML Serialization Form 1 (Unwrapped collection)<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *    &amp;lt;names&gt; ... &amp;lt;/names&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *    &amp;lt;names&gt; ... &amp;lt;/names&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *    // XML Serialization Form 2 ( Wrapped collection )<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *    &amp;lt;wrapperElement&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *       &amp;lt;names&gt; value-of-item &amp;lt;/names&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *       &amp;lt;names&gt; value-of-item &amp;lt;/names&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *       ....<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *    &amp;lt;/wrapperElement&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;/pre&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;p&gt; The two serialized XML forms allow a null collection to be<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * represented either by absence or presence of an element with a<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * nillable attribute.<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * &lt;p&gt; &lt;b&gt;Usage&lt;/b&gt; &lt;/p&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;p&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * The &lt;tt&gt;@XmlElementWrapper&lt;/tt&gt; annotation can be used with the<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * following program elements:<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;ul&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *   &lt;li&gt; JavaBean property &lt;/li&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *   &lt;li&gt; non static, non transient field &lt;/li&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * &lt;/ul&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;p&gt;The usage is subject to the following constraints:<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;ul&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *   &lt;li&gt; The property must be a collection property &lt;/li&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *   &lt;li&gt; This annotation can be used with the following annotations:<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *            {@link XmlElement},<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *            {@link XmlElements},<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *            {@link XmlElementRef},<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *            {@link XmlElementRefs},<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *            {@link XmlJavaTypeAdapter}.&lt;/li&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * &lt;/ul&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;p&gt;See "Package Specification" in javax.xml.bind.package javadoc for<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * additional common information.&lt;/p&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * @author &lt;ul&gt;&lt;li&gt;Kohsuke Kawaguchi, Sun Microsystems, Inc.&lt;/li&gt;&lt;li&gt;Sekhar Vajjhala, Sun Microsystems, Inc.&lt;/li&gt;&lt;/ul&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * @see XmlElement<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * @see XmlElements<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * @see XmlElementRef<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * @see XmlElementRefs<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * @since JAXB2.0<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *<a name="line.91"></a>
+<span class="sourceLineNo">092</span> */<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>@Retention(RUNTIME) @Target({FIELD, METHOD})<a name="line.94"></a>
+<span class="sourceLineNo">095</span>public @interface XmlElementWrapper {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    /**<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * Name of the XML wrapper element. By default, the XML wrapper<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * element name is derived from the JavaBean property name.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     */<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    String name() default "##default";<a name="line.100"></a>
+<span class="sourceLineNo">101</span><a name="line.101"></a>
+<span class="sourceLineNo">102</span>    /**<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * XML target namespace of the XML wrapper element.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * &lt;p&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * If the value is "##default", then the namespace is determined<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * as follows:<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * &lt;ol&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     *  &lt;li&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     *  If the enclosing package has {@link XmlSchema} annotation,<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     *  and its {@link XmlSchema#elementFormDefault() elementFormDefault}<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *  is {@link XmlNsForm#QUALIFIED QUALIFIED}, then the namespace of<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     *  the enclosing class.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *  &lt;li&gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *  Otherwise "" (which produces unqualified element in the default<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *  namespace.<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * &lt;/ol&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     */<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    String namespace() default "##default";<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>    /**<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * If true, the absence of the collection is represented by<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * using &lt;tt&gt;xsi:nil='true'&lt;/tt&gt;. Otherwise, it is represented by<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * the absence of the element.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     */<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    boolean nillable() default false;<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span>    /**<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * Customize the wrapper element declaration to be required.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * &lt;p&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * If required() is true, then the corresponding generated<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * XML schema element declaration will have &lt;tt&gt;minOccurs="1"&lt;/tt&gt;,<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * to indicate that the wrapper element is always expected.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * &lt;p&gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * Note that this only affects the schema generation, and<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * not the unmarshalling or marshalling capability. This is<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * simply a mechanism to let users express their application constraints<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * better.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * @since JAXB 2.1<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     */<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    boolean required() default false;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>}<a name="line.145"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

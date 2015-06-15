@@ -1,0 +1,1166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.PrintStream;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.Arrays;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import sun.misc.VM;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * A thread group represents a set of threads. In addition, a thread<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * group can also include other thread groups. The thread groups form<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * a tree in which every thread group except the initial thread group<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * has a parent.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * A thread is allowed to access information about its own thread<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * group, but not to access information about its thread group's<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * parent thread group or any other thread groups.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * @author  unascribed<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * @since   JDK1.0<a name="line.43"></a>
+<span class="sourceLineNo">044</span> */<a name="line.44"></a>
+<span class="sourceLineNo">045</span>/* The locking strategy for this code is to try to lock only one level of the<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * tree wherever possible, but otherwise to lock from the bottom up.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * That is, from child thread groups to parents.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * This has the advantage of limiting the number of locks that need to be held<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * and in particular avoids having to grab the lock for the root thread group,<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * (or a global lock) which would be a source of contention on a<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * multi-processor system with many thread groups.<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * This policy often leads to taking a snapshot of the state of a thread group<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * and working off of that snapshot, rather than holding the thread group locked<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * while we work on the children.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> */<a name="line.55"></a>
+<span class="sourceLineNo">056</span>public<a name="line.56"></a>
+<span class="sourceLineNo">057</span>class ThreadGroup implements Thread.UncaughtExceptionHandler {<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    private final ThreadGroup parent;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>    String name;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    int maxPriority;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    boolean destroyed;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    boolean daemon;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    boolean vmAllowSuspension;<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>    int nUnstartedThreads = 0;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    int nthreads;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>    Thread threads[];<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>    int ngroups;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    ThreadGroup groups[];<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>    /**<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * Creates an empty Thread group that is not in any Thread group.<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * This method is used to create the system Thread group.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     */<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    private ThreadGroup() {     // called from C code<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        this.name = "system";<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        this.maxPriority = Thread.MAX_PRIORITY;<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        this.parent = null;<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    }<a name="line.80"></a>
+<span class="sourceLineNo">081</span><a name="line.81"></a>
+<span class="sourceLineNo">082</span>    /**<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * Constructs a new thread group. The parent of this new group is<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * the thread group of the currently running thread.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * &lt;p&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * The &lt;code&gt;checkAccess&lt;/code&gt; method of the parent thread group is<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * called with no arguments; this may result in a security exception.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @param   name   the name of the new thread group.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @exception  SecurityException  if the current thread cannot create a<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *               thread in the specified thread group.<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @see     java.lang.ThreadGroup#checkAccess()<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @since   JDK1.0<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     */<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    public ThreadGroup(String name) {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        this(Thread.currentThread().getThreadGroup(), name);<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    }<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * Creates a new thread group. The parent of this new group is the<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * specified thread group.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * &lt;p&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * The &lt;code&gt;checkAccess&lt;/code&gt; method of the parent thread group is<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * called with no arguments; this may result in a security exception.<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     *<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * @param     parent   the parent thread group.<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * @param     name     the name of the new thread group.<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * @exception  NullPointerException  if the thread group argument is<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     *               &lt;code&gt;null&lt;/code&gt;.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * @exception  SecurityException  if the current thread cannot create a<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *               thread in the specified thread group.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @see     java.lang.SecurityException<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * @see     java.lang.ThreadGroup#checkAccess()<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @since   JDK1.0<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     */<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    public ThreadGroup(ThreadGroup parent, String name) {<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        this(checkParentAccess(parent), parent, name);<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    }<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    private ThreadGroup(Void unused, ThreadGroup parent, String name) {<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        this.name = name;<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        this.maxPriority = parent.maxPriority;<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        this.daemon = parent.daemon;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        this.vmAllowSuspension = parent.vmAllowSuspension;<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        this.parent = parent;<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        parent.add(this);<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    }<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>    /*<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * @throws  NullPointerException  if the parent argument is {@code null}<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @throws  SecurityException     if the current thread cannot create a<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *                                thread in the specified thread group.<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     */<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    private static Void checkParentAccess(ThreadGroup parent) {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        parent.checkAccess();<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        return null;<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    }<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    /**<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * Returns the name of this thread group.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * @return  the name of this thread group.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @since   JDK1.0<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     */<a name="line.144"></a>
+<span class="sourceLineNo">145</span>    public final String getName() {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        return name;<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    }<a name="line.147"></a>
+<span class="sourceLineNo">148</span><a name="line.148"></a>
+<span class="sourceLineNo">149</span>    /**<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * Returns the parent of this thread group.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * &lt;p&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * First, if the parent is not &lt;code&gt;null&lt;/code&gt;, the<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * &lt;code&gt;checkAccess&lt;/code&gt; method of the parent thread group is<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * called with no arguments; this may result in a security exception.<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     *<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * @return  the parent of this thread group. The top-level thread group<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *          is the only thread group whose parent is &lt;code&gt;null&lt;/code&gt;.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * @exception  SecurityException  if the current thread cannot modify<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *               this thread group.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @see        java.lang.ThreadGroup#checkAccess()<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @see        java.lang.SecurityException<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @see        java.lang.RuntimePermission<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @since   JDK1.0<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     */<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    public final ThreadGroup getParent() {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        if (parent != null)<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            parent.checkAccess();<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        return parent;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>    }<a name="line.169"></a>
+<span class="sourceLineNo">170</span><a name="line.170"></a>
+<span class="sourceLineNo">171</span>    /**<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * Returns the maximum priority of this thread group. Threads that are<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * part of this group cannot have a higher priority than the maximum<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * priority.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @return  the maximum priority that a thread in this thread group<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *          can have.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * @see     #setMaxPriority<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @since   JDK1.0<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    public final int getMaxPriority() {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        return maxPriority;<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    }<a name="line.183"></a>
+<span class="sourceLineNo">184</span><a name="line.184"></a>
+<span class="sourceLineNo">185</span>    /**<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * Tests if this thread group is a daemon thread group. A<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * daemon thread group is automatically destroyed when its last<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * thread is stopped or its last thread group is destroyed.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * @return  &lt;code&gt;true&lt;/code&gt; if this thread group is a daemon thread group;<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     *          &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * @since   JDK1.0<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     */<a name="line.193"></a>
+<span class="sourceLineNo">194</span>    public final boolean isDaemon() {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        return daemon;<a name="line.195"></a>
+<span class="sourceLineNo">196</span>    }<a name="line.196"></a>
+<span class="sourceLineNo">197</span><a name="line.197"></a>
+<span class="sourceLineNo">198</span>    /**<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * Tests if this thread group has been destroyed.<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     *<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * @return  true if this object is destroyed<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * @since   JDK1.1<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     */<a name="line.203"></a>
+<span class="sourceLineNo">204</span>    public synchronized boolean isDestroyed() {<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        return destroyed;<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    }<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>    /**<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * Changes the daemon status of this thread group.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * &lt;p&gt;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * First, the &lt;code&gt;checkAccess&lt;/code&gt; method of this thread group is<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * called with no arguments; this may result in a security exception.<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * &lt;p&gt;<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * A daemon thread group is automatically destroyed when its last<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * thread is stopped or its last thread group is destroyed.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @param      daemon   if &lt;code&gt;true&lt;/code&gt;, marks this thread group as<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *                      a daemon thread group; otherwise, marks this<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     *                      thread group as normal.<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * @exception  SecurityException  if the current thread cannot modify<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     *               this thread group.<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * @see        java.lang.SecurityException<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * @see        java.lang.ThreadGroup#checkAccess()<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * @since      JDK1.0<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     */<a name="line.225"></a>
+<span class="sourceLineNo">226</span>    public final void setDaemon(boolean daemon) {<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        checkAccess();<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        this.daemon = daemon;<a name="line.228"></a>
+<span class="sourceLineNo">229</span>    }<a name="line.229"></a>
+<span class="sourceLineNo">230</span><a name="line.230"></a>
+<span class="sourceLineNo">231</span>    /**<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * Sets the maximum priority of the group. Threads in the thread<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * group that already have a higher priority are not affected.<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * &lt;p&gt;<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * First, the &lt;code&gt;checkAccess&lt;/code&gt; method of this thread group is<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * called with no arguments; this may result in a security exception.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * &lt;p&gt;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * If the &lt;code&gt;pri&lt;/code&gt; argument is less than<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * {@link Thread#MIN_PRIORITY} or greater than<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * {@link Thread#MAX_PRIORITY}, the maximum priority of the group<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * remains unchanged.<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * &lt;p&gt;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * Otherwise, the priority of this ThreadGroup object is set to the<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * smaller of the specified &lt;code&gt;pri&lt;/code&gt; and the maximum permitted<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * priority of the parent of this thread group. (If this thread group<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * is the system thread group, which has no parent, then its maximum<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * priority is simply set to &lt;code&gt;pri&lt;/code&gt;.) Then this method is<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * called recursively, with &lt;code&gt;pri&lt;/code&gt; as its argument, for<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * every thread group that belongs to this thread group.<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     *<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * @param      pri   the new priority of the thread group.<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * @exception  SecurityException  if the current thread cannot modify<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     *               this thread group.<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * @see        #getMaxPriority<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * @see        java.lang.SecurityException<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @see        java.lang.ThreadGroup#checkAccess()<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * @since      JDK1.0<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     */<a name="line.258"></a>
+<span class="sourceLineNo">259</span>    public final void setMaxPriority(int pri) {<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        int ngroupsSnapshot;<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        ThreadGroup[] groupsSnapshot;<a name="line.261"></a>
+<span class="sourceLineNo">262</span>        synchronized (this) {<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            checkAccess();<a name="line.263"></a>
+<span class="sourceLineNo">264</span>            if (pri &lt; Thread.MIN_PRIORITY || pri &gt; Thread.MAX_PRIORITY) {<a name="line.264"></a>
+<span class="sourceLineNo">265</span>                return;<a name="line.265"></a>
+<span class="sourceLineNo">266</span>            }<a name="line.266"></a>
+<span class="sourceLineNo">267</span>            maxPriority = (parent != null) ? Math.min(pri, parent.maxPriority) : pri;<a name="line.267"></a>
+<span class="sourceLineNo">268</span>            ngroupsSnapshot = ngroups;<a name="line.268"></a>
+<span class="sourceLineNo">269</span>            if (groups != null) {<a name="line.269"></a>
+<span class="sourceLineNo">270</span>                groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.270"></a>
+<span class="sourceLineNo">271</span>            } else {<a name="line.271"></a>
+<span class="sourceLineNo">272</span>                groupsSnapshot = null;<a name="line.272"></a>
+<span class="sourceLineNo">273</span>            }<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        }<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        for (int i = 0 ; i &lt; ngroupsSnapshot ; i++) {<a name="line.275"></a>
+<span class="sourceLineNo">276</span>            groupsSnapshot[i].setMaxPriority(pri);<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        }<a name="line.277"></a>
+<span class="sourceLineNo">278</span>    }<a name="line.278"></a>
+<span class="sourceLineNo">279</span><a name="line.279"></a>
+<span class="sourceLineNo">280</span>    /**<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * Tests if this thread group is either the thread group<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * argument or one of its ancestor thread groups.<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     *<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * @param   g   a thread group.<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * @return  &lt;code&gt;true&lt;/code&gt; if this thread group is the thread group<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     *          argument or one of its ancestor thread groups;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     *          &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * @since   JDK1.0<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     */<a name="line.289"></a>
+<span class="sourceLineNo">290</span>    public final boolean parentOf(ThreadGroup g) {<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        for (; g != null ; g = g.parent) {<a name="line.291"></a>
+<span class="sourceLineNo">292</span>            if (g == this) {<a name="line.292"></a>
+<span class="sourceLineNo">293</span>                return true;<a name="line.293"></a>
+<span class="sourceLineNo">294</span>            }<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        }<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        return false;<a name="line.296"></a>
+<span class="sourceLineNo">297</span>    }<a name="line.297"></a>
+<span class="sourceLineNo">298</span><a name="line.298"></a>
+<span class="sourceLineNo">299</span>    /**<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * Determines if the currently running thread has permission to<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * modify this thread group.<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * &lt;p&gt;<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * If there is a security manager, its &lt;code&gt;checkAccess&lt;/code&gt; method<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * is called with this thread group as its argument. This may result<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * in throwing a &lt;code&gt;SecurityException&lt;/code&gt;.<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     *<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * @exception  SecurityException  if the current thread is not allowed to<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     *               access this thread group.<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * @see        java.lang.SecurityManager#checkAccess(java.lang.ThreadGroup)<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * @since      JDK1.0<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     */<a name="line.311"></a>
+<span class="sourceLineNo">312</span>    public final void checkAccess() {<a name="line.312"></a>
+<span class="sourceLineNo">313</span>        SecurityManager security = System.getSecurityManager();<a name="line.313"></a>
+<span class="sourceLineNo">314</span>        if (security != null) {<a name="line.314"></a>
+<span class="sourceLineNo">315</span>            security.checkAccess(this);<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        }<a name="line.316"></a>
+<span class="sourceLineNo">317</span>    }<a name="line.317"></a>
+<span class="sourceLineNo">318</span><a name="line.318"></a>
+<span class="sourceLineNo">319</span>    /**<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * Returns an estimate of the number of active threads in this thread<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * group and its subgroups. Recursively iterates over all subgroups in<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * this thread group.<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     *<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * &lt;p&gt; The value returned is only an estimate because the number of<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * threads may change dynamically while this method traverses internal<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * data structures, and might be affected by the presence of certain<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * system threads. This method is intended primarily for debugging<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * and monitoring purposes.<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     *<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * @return  an estimate of the number of active threads in this thread<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     *          group and in any other thread group that has this thread<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     *          group as an ancestor<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     *<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * @since   JDK1.0<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     */<a name="line.335"></a>
+<span class="sourceLineNo">336</span>    public int activeCount() {<a name="line.336"></a>
+<span class="sourceLineNo">337</span>        int result;<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        // Snapshot sub-group data so we don't hold this lock<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        // while our children are computing.<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        int ngroupsSnapshot;<a name="line.340"></a>
+<span class="sourceLineNo">341</span>        ThreadGroup[] groupsSnapshot;<a name="line.341"></a>
+<span class="sourceLineNo">342</span>        synchronized (this) {<a name="line.342"></a>
+<span class="sourceLineNo">343</span>            if (destroyed) {<a name="line.343"></a>
+<span class="sourceLineNo">344</span>                return 0;<a name="line.344"></a>
+<span class="sourceLineNo">345</span>            }<a name="line.345"></a>
+<span class="sourceLineNo">346</span>            result = nthreads;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>            ngroupsSnapshot = ngroups;<a name="line.347"></a>
+<span class="sourceLineNo">348</span>            if (groups != null) {<a name="line.348"></a>
+<span class="sourceLineNo">349</span>                groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            } else {<a name="line.350"></a>
+<span class="sourceLineNo">351</span>                groupsSnapshot = null;<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            }<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        }<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        for (int i = 0 ; i &lt; ngroupsSnapshot ; i++) {<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            result += groupsSnapshot[i].activeCount();<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        }<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        return result;<a name="line.357"></a>
+<span class="sourceLineNo">358</span>    }<a name="line.358"></a>
+<span class="sourceLineNo">359</span><a name="line.359"></a>
+<span class="sourceLineNo">360</span>    /**<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * Copies into the specified array every active thread in this<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * thread group and its subgroups.<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     *<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * &lt;p&gt; An invocation of this method behaves in exactly the same<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * way as the invocation<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     *<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     * &lt;blockquote&gt;<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * {@linkplain #enumerate(Thread[], boolean) enumerate}{@code (list, true)}<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * &lt;/blockquote&gt;<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     *<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * @param  list<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     *         an array into which to put the list of threads<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     *<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * @return  the number of threads put into the array<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     *<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * @throws  SecurityException<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     *          if {@linkplain #checkAccess checkAccess} determines that<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     *          the current thread cannot access this thread group<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     *<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * @since   JDK1.0<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     */<a name="line.381"></a>
+<span class="sourceLineNo">382</span>    public int enumerate(Thread list[]) {<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        checkAccess();<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        return enumerate(list, 0, true);<a name="line.384"></a>
+<span class="sourceLineNo">385</span>    }<a name="line.385"></a>
+<span class="sourceLineNo">386</span><a name="line.386"></a>
+<span class="sourceLineNo">387</span>    /**<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * Copies into the specified array every active thread in this<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * thread group. If {@code recurse} is {@code true},<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * this method recursively enumerates all subgroups of this<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * thread group and references to every active thread in these<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * subgroups are also included. If the array is too short to<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * hold all the threads, the extra threads are silently ignored.<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     *<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * &lt;p&gt; An application might use the {@linkplain #activeCount activeCount}<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * method to get an estimate of how big the array should be, however<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * &lt;i&gt;if the array is too short to hold all the threads, the extra threads<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * are silently ignored.&lt;/i&gt;  If it is critical to obtain every active<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * thread in this thread group, the caller should verify that the returned<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * int value is strictly less than the length of {@code list}.<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     *<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * &lt;p&gt; Due to the inherent race condition in this method, it is recommended<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * that the method only be used for debugging and monitoring purposes.<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     *<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * @param  list<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     *         an array into which to put the list of threads<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     *<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * @param  recurse<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     *         if {@code true}, recursively enumerate all subgroups of this<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     *         thread group<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     *<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * @return  the number of threads put into the array<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     *<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     * @throws  SecurityException<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     *          if {@linkplain #checkAccess checkAccess} determines that<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     *          the current thread cannot access this thread group<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     *<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * @since   JDK1.0<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     */<a name="line.419"></a>
+<span class="sourceLineNo">420</span>    public int enumerate(Thread list[], boolean recurse) {<a name="line.420"></a>
+<span class="sourceLineNo">421</span>        checkAccess();<a name="line.421"></a>
+<span class="sourceLineNo">422</span>        return enumerate(list, 0, recurse);<a name="line.422"></a>
+<span class="sourceLineNo">423</span>    }<a name="line.423"></a>
+<span class="sourceLineNo">424</span><a name="line.424"></a>
+<span class="sourceLineNo">425</span>    private int enumerate(Thread list[], int n, boolean recurse) {<a name="line.425"></a>
+<span class="sourceLineNo">426</span>        int ngroupsSnapshot = 0;<a name="line.426"></a>
+<span class="sourceLineNo">427</span>        ThreadGroup[] groupsSnapshot = null;<a name="line.427"></a>
+<span class="sourceLineNo">428</span>        synchronized (this) {<a name="line.428"></a>
+<span class="sourceLineNo">429</span>            if (destroyed) {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                return 0;<a name="line.430"></a>
+<span class="sourceLineNo">431</span>            }<a name="line.431"></a>
+<span class="sourceLineNo">432</span>            int nt = nthreads;<a name="line.432"></a>
+<span class="sourceLineNo">433</span>            if (nt &gt; list.length - n) {<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                nt = list.length - n;<a name="line.434"></a>
+<span class="sourceLineNo">435</span>            }<a name="line.435"></a>
+<span class="sourceLineNo">436</span>            for (int i = 0; i &lt; nt; i++) {<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                if (threads[i].isAlive()) {<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                    list[n++] = threads[i];<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                }<a name="line.439"></a>
+<span class="sourceLineNo">440</span>            }<a name="line.440"></a>
+<span class="sourceLineNo">441</span>            if (recurse) {<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                ngroupsSnapshot = ngroups;<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                if (groups != null) {<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                    groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                } else {<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                    groupsSnapshot = null;<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                }<a name="line.447"></a>
+<span class="sourceLineNo">448</span>            }<a name="line.448"></a>
+<span class="sourceLineNo">449</span>        }<a name="line.449"></a>
+<span class="sourceLineNo">450</span>        if (recurse) {<a name="line.450"></a>
+<span class="sourceLineNo">451</span>            for (int i = 0 ; i &lt; ngroupsSnapshot ; i++) {<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                n = groupsSnapshot[i].enumerate(list, n, true);<a name="line.452"></a>
+<span class="sourceLineNo">453</span>            }<a name="line.453"></a>
+<span class="sourceLineNo">454</span>        }<a name="line.454"></a>
+<span class="sourceLineNo">455</span>        return n;<a name="line.455"></a>
+<span class="sourceLineNo">456</span>    }<a name="line.456"></a>
+<span class="sourceLineNo">457</span><a name="line.457"></a>
+<span class="sourceLineNo">458</span>    /**<a name="line.458"></a>
+<span class="sourceLineNo">459</span>     * Returns an estimate of the number of active groups in this<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     * thread group and its subgroups. Recursively iterates over<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     * all subgroups in this thread group.<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     *<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     * &lt;p&gt; The value returned is only an estimate because the number of<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     * thread groups may change dynamically while this method traverses<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     * internal data structures. This method is intended primarily for<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     * debugging and monitoring purposes.<a name="line.466"></a>
+<span class="sourceLineNo">467</span>     *<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     * @return  the number of active thread groups with this thread group as<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     *          an ancestor<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     *<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     * @since   JDK1.0<a name="line.471"></a>
+<span class="sourceLineNo">472</span>     */<a name="line.472"></a>
+<span class="sourceLineNo">473</span>    public int activeGroupCount() {<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        int ngroupsSnapshot;<a name="line.474"></a>
+<span class="sourceLineNo">475</span>        ThreadGroup[] groupsSnapshot;<a name="line.475"></a>
+<span class="sourceLineNo">476</span>        synchronized (this) {<a name="line.476"></a>
+<span class="sourceLineNo">477</span>            if (destroyed) {<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                return 0;<a name="line.478"></a>
+<span class="sourceLineNo">479</span>            }<a name="line.479"></a>
+<span class="sourceLineNo">480</span>            ngroupsSnapshot = ngroups;<a name="line.480"></a>
+<span class="sourceLineNo">481</span>            if (groups != null) {<a name="line.481"></a>
+<span class="sourceLineNo">482</span>                groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.482"></a>
+<span class="sourceLineNo">483</span>            } else {<a name="line.483"></a>
+<span class="sourceLineNo">484</span>                groupsSnapshot = null;<a name="line.484"></a>
+<span class="sourceLineNo">485</span>            }<a name="line.485"></a>
+<span class="sourceLineNo">486</span>        }<a name="line.486"></a>
+<span class="sourceLineNo">487</span>        int n = ngroupsSnapshot;<a name="line.487"></a>
+<span class="sourceLineNo">488</span>        for (int i = 0 ; i &lt; ngroupsSnapshot ; i++) {<a name="line.488"></a>
+<span class="sourceLineNo">489</span>            n += groupsSnapshot[i].activeGroupCount();<a name="line.489"></a>
+<span class="sourceLineNo">490</span>        }<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        return n;<a name="line.491"></a>
+<span class="sourceLineNo">492</span>    }<a name="line.492"></a>
+<span class="sourceLineNo">493</span><a name="line.493"></a>
+<span class="sourceLineNo">494</span>    /**<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     * Copies into the specified array references to every active<a name="line.495"></a>
+<span class="sourceLineNo">496</span>     * subgroup in this thread group and its subgroups.<a name="line.496"></a>
+<span class="sourceLineNo">497</span>     *<a name="line.497"></a>
+<span class="sourceLineNo">498</span>     * &lt;p&gt; An invocation of this method behaves in exactly the same<a name="line.498"></a>
+<span class="sourceLineNo">499</span>     * way as the invocation<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     *<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * &lt;blockquote&gt;<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * {@linkplain #enumerate(ThreadGroup[], boolean) enumerate}{@code (list, true)}<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * &lt;/blockquote&gt;<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     *<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     * @param  list<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     *         an array into which to put the list of thread groups<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     *<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     * @return  the number of thread groups put into the array<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     *<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     * @throws  SecurityException<a name="line.510"></a>
+<span class="sourceLineNo">511</span>     *          if {@linkplain #checkAccess checkAccess} determines that<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     *          the current thread cannot access this thread group<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     *<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     * @since   JDK1.0<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     */<a name="line.515"></a>
+<span class="sourceLineNo">516</span>    public int enumerate(ThreadGroup list[]) {<a name="line.516"></a>
+<span class="sourceLineNo">517</span>        checkAccess();<a name="line.517"></a>
+<span class="sourceLineNo">518</span>        return enumerate(list, 0, true);<a name="line.518"></a>
+<span class="sourceLineNo">519</span>    }<a name="line.519"></a>
+<span class="sourceLineNo">520</span><a name="line.520"></a>
+<span class="sourceLineNo">521</span>    /**<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     * Copies into the specified array references to every active<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     * subgroup in this thread group. If {@code recurse} is<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     * {@code true}, this method recursively enumerates all subgroups of this<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     * thread group and references to every active thread group in these<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     * subgroups are also included.<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     *<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     * &lt;p&gt; An application might use the<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     * {@linkplain #activeGroupCount activeGroupCount} method to<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     * get an estimate of how big the array should be, however &lt;i&gt;if the<a name="line.530"></a>
+<span class="sourceLineNo">531</span>     * array is too short to hold all the thread groups, the extra thread<a name="line.531"></a>
+<span class="sourceLineNo">532</span>     * groups are silently ignored.&lt;/i&gt;  If it is critical to obtain every<a name="line.532"></a>
+<span class="sourceLineNo">533</span>     * active subgroup in this thread group, the caller should verify that<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * the returned int value is strictly less than the length of<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     * {@code list}.<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     *<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * &lt;p&gt; Due to the inherent race condition in this method, it is recommended<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     * that the method only be used for debugging and monitoring purposes.<a name="line.538"></a>
+<span class="sourceLineNo">539</span>     *<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     * @param  list<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     *         an array into which to put the list of thread groups<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     *<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * @param  recurse<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     *         if {@code true}, recursively enumerate all subgroups<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     *<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     * @return  the number of thread groups put into the array<a name="line.546"></a>
+<span class="sourceLineNo">547</span>     *<a name="line.547"></a>
+<span class="sourceLineNo">548</span>     * @throws  SecurityException<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     *          if {@linkplain #checkAccess checkAccess} determines that<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     *          the current thread cannot access this thread group<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     *<a name="line.551"></a>
+<span class="sourceLineNo">552</span>     * @since   JDK1.0<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     */<a name="line.553"></a>
+<span class="sourceLineNo">554</span>    public int enumerate(ThreadGroup list[], boolean recurse) {<a name="line.554"></a>
+<span class="sourceLineNo">555</span>        checkAccess();<a name="line.555"></a>
+<span class="sourceLineNo">556</span>        return enumerate(list, 0, recurse);<a name="line.556"></a>
+<span class="sourceLineNo">557</span>    }<a name="line.557"></a>
+<span class="sourceLineNo">558</span><a name="line.558"></a>
+<span class="sourceLineNo">559</span>    private int enumerate(ThreadGroup list[], int n, boolean recurse) {<a name="line.559"></a>
+<span class="sourceLineNo">560</span>        int ngroupsSnapshot = 0;<a name="line.560"></a>
+<span class="sourceLineNo">561</span>        ThreadGroup[] groupsSnapshot = null;<a name="line.561"></a>
+<span class="sourceLineNo">562</span>        synchronized (this) {<a name="line.562"></a>
+<span class="sourceLineNo">563</span>            if (destroyed) {<a name="line.563"></a>
+<span class="sourceLineNo">564</span>                return 0;<a name="line.564"></a>
+<span class="sourceLineNo">565</span>            }<a name="line.565"></a>
+<span class="sourceLineNo">566</span>            int ng = ngroups;<a name="line.566"></a>
+<span class="sourceLineNo">567</span>            if (ng &gt; list.length - n) {<a name="line.567"></a>
+<span class="sourceLineNo">568</span>                ng = list.length - n;<a name="line.568"></a>
+<span class="sourceLineNo">569</span>            }<a name="line.569"></a>
+<span class="sourceLineNo">570</span>            if (ng &gt; 0) {<a name="line.570"></a>
+<span class="sourceLineNo">571</span>                System.arraycopy(groups, 0, list, n, ng);<a name="line.571"></a>
+<span class="sourceLineNo">572</span>                n += ng;<a name="line.572"></a>
+<span class="sourceLineNo">573</span>            }<a name="line.573"></a>
+<span class="sourceLineNo">574</span>            if (recurse) {<a name="line.574"></a>
+<span class="sourceLineNo">575</span>                ngroupsSnapshot = ngroups;<a name="line.575"></a>
+<span class="sourceLineNo">576</span>                if (groups != null) {<a name="line.576"></a>
+<span class="sourceLineNo">577</span>                    groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.577"></a>
+<span class="sourceLineNo">578</span>                } else {<a name="line.578"></a>
+<span class="sourceLineNo">579</span>                    groupsSnapshot = null;<a name="line.579"></a>
+<span class="sourceLineNo">580</span>                }<a name="line.580"></a>
+<span class="sourceLineNo">581</span>            }<a name="line.581"></a>
+<span class="sourceLineNo">582</span>        }<a name="line.582"></a>
+<span class="sourceLineNo">583</span>        if (recurse) {<a name="line.583"></a>
+<span class="sourceLineNo">584</span>            for (int i = 0 ; i &lt; ngroupsSnapshot ; i++) {<a name="line.584"></a>
+<span class="sourceLineNo">585</span>                n = groupsSnapshot[i].enumerate(list, n, true);<a name="line.585"></a>
+<span class="sourceLineNo">586</span>            }<a name="line.586"></a>
+<span class="sourceLineNo">587</span>        }<a name="line.587"></a>
+<span class="sourceLineNo">588</span>        return n;<a name="line.588"></a>
+<span class="sourceLineNo">589</span>    }<a name="line.589"></a>
+<span class="sourceLineNo">590</span><a name="line.590"></a>
+<span class="sourceLineNo">591</span>    /**<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * Stops all threads in this thread group.<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     * &lt;p&gt;<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * First, the &lt;code&gt;checkAccess&lt;/code&gt; method of this thread group is<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     * called with no arguments; this may result in a security exception.<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     * &lt;p&gt;<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     * This method then calls the &lt;code&gt;stop&lt;/code&gt; method on all the<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * threads in this thread group and in all of its subgroups.<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     *<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     * @exception  SecurityException  if the current thread is not allowed<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     *               to access this thread group or any of the threads in<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     *               the thread group.<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * @see        java.lang.SecurityException<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * @see        java.lang.Thread#stop()<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * @see        java.lang.ThreadGroup#checkAccess()<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * @since      JDK1.0<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     * @deprecated    This method is inherently unsafe.  See<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     *     {@link Thread#stop} for details.<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     */<a name="line.609"></a>
+<span class="sourceLineNo">610</span>    @Deprecated<a name="line.610"></a>
+<span class="sourceLineNo">611</span>    public final void stop() {<a name="line.611"></a>
+<span class="sourceLineNo">612</span>        if (stopOrSuspend(false))<a name="line.612"></a>
+<span class="sourceLineNo">613</span>            Thread.currentThread().stop();<a name="line.613"></a>
+<span class="sourceLineNo">614</span>    }<a name="line.614"></a>
+<span class="sourceLineNo">615</span><a name="line.615"></a>
+<span class="sourceLineNo">616</span>    /**<a name="line.616"></a>
+<span class="sourceLineNo">617</span>     * Interrupts all threads in this thread group.<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     * &lt;p&gt;<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     * First, the &lt;code&gt;checkAccess&lt;/code&gt; method of this thread group is<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     * called with no arguments; this may result in a security exception.<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     * &lt;p&gt;<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     * This method then calls the &lt;code&gt;interrupt&lt;/code&gt; method on all the<a name="line.622"></a>
+<span class="sourceLineNo">623</span>     * threads in this thread group and in all of its subgroups.<a name="line.623"></a>
+<span class="sourceLineNo">624</span>     *<a name="line.624"></a>
+<span class="sourceLineNo">625</span>     * @exception  SecurityException  if the current thread is not allowed<a name="line.625"></a>
+<span class="sourceLineNo">626</span>     *               to access this thread group or any of the threads in<a name="line.626"></a>
+<span class="sourceLineNo">627</span>     *               the thread group.<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     * @see        java.lang.Thread#interrupt()<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     * @see        java.lang.SecurityException<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     * @see        java.lang.ThreadGroup#checkAccess()<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * @since      1.2<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     */<a name="line.632"></a>
+<span class="sourceLineNo">633</span>    public final void interrupt() {<a name="line.633"></a>
+<span class="sourceLineNo">634</span>        int ngroupsSnapshot;<a name="line.634"></a>
+<span class="sourceLineNo">635</span>        ThreadGroup[] groupsSnapshot;<a name="line.635"></a>
+<span class="sourceLineNo">636</span>        synchronized (this) {<a name="line.636"></a>
+<span class="sourceLineNo">637</span>            checkAccess();<a name="line.637"></a>
+<span class="sourceLineNo">638</span>            for (int i = 0 ; i &lt; nthreads ; i++) {<a name="line.638"></a>
+<span class="sourceLineNo">639</span>                threads[i].interrupt();<a name="line.639"></a>
+<span class="sourceLineNo">640</span>            }<a name="line.640"></a>
+<span class="sourceLineNo">641</span>            ngroupsSnapshot = ngroups;<a name="line.641"></a>
+<span class="sourceLineNo">642</span>            if (groups != null) {<a name="line.642"></a>
+<span class="sourceLineNo">643</span>                groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.643"></a>
+<span class="sourceLineNo">644</span>            } else {<a name="line.644"></a>
+<span class="sourceLineNo">645</span>                groupsSnapshot = null;<a name="line.645"></a>
+<span class="sourceLineNo">646</span>            }<a name="line.646"></a>
+<span class="sourceLineNo">647</span>        }<a name="line.647"></a>
+<span class="sourceLineNo">648</span>        for (int i = 0 ; i &lt; ngroupsSnapshot ; i++) {<a name="line.648"></a>
+<span class="sourceLineNo">649</span>            groupsSnapshot[i].interrupt();<a name="line.649"></a>
+<span class="sourceLineNo">650</span>        }<a name="line.650"></a>
+<span class="sourceLineNo">651</span>    }<a name="line.651"></a>
+<span class="sourceLineNo">652</span><a name="line.652"></a>
+<span class="sourceLineNo">653</span>    /**<a name="line.653"></a>
+<span class="sourceLineNo">654</span>     * Suspends all threads in this thread group.<a name="line.654"></a>
+<span class="sourceLineNo">655</span>     * &lt;p&gt;<a name="line.655"></a>
+<span class="sourceLineNo">656</span>     * First, the &lt;code&gt;checkAccess&lt;/code&gt; method of this thread group is<a name="line.656"></a>
+<span class="sourceLineNo">657</span>     * called with no arguments; this may result in a security exception.<a name="line.657"></a>
+<span class="sourceLineNo">658</span>     * &lt;p&gt;<a name="line.658"></a>
+<span class="sourceLineNo">659</span>     * This method then calls the &lt;code&gt;suspend&lt;/code&gt; method on all the<a name="line.659"></a>
+<span class="sourceLineNo">660</span>     * threads in this thread group and in all of its subgroups.<a name="line.660"></a>
+<span class="sourceLineNo">661</span>     *<a name="line.661"></a>
+<span class="sourceLineNo">662</span>     * @exception  SecurityException  if the current thread is not allowed<a name="line.662"></a>
+<span class="sourceLineNo">663</span>     *               to access this thread group or any of the threads in<a name="line.663"></a>
+<span class="sourceLineNo">664</span>     *               the thread group.<a name="line.664"></a>
+<span class="sourceLineNo">665</span>     * @see        java.lang.Thread#suspend()<a name="line.665"></a>
+<span class="sourceLineNo">666</span>     * @see        java.lang.SecurityException<a name="line.666"></a>
+<span class="sourceLineNo">667</span>     * @see        java.lang.ThreadGroup#checkAccess()<a name="line.667"></a>
+<span class="sourceLineNo">668</span>     * @since      JDK1.0<a name="line.668"></a>
+<span class="sourceLineNo">669</span>     * @deprecated    This method is inherently deadlock-prone.  See<a name="line.669"></a>
+<span class="sourceLineNo">670</span>     *     {@link Thread#suspend} for details.<a name="line.670"></a>
+<span class="sourceLineNo">671</span>     */<a name="line.671"></a>
+<span class="sourceLineNo">672</span>    @Deprecated<a name="line.672"></a>
+<span class="sourceLineNo">673</span>    public final void suspend() {<a name="line.673"></a>
+<span class="sourceLineNo">674</span>        if (stopOrSuspend(true))<a name="line.674"></a>
+<span class="sourceLineNo">675</span>            Thread.currentThread().suspend();<a name="line.675"></a>
+<span class="sourceLineNo">676</span>    }<a name="line.676"></a>
+<span class="sourceLineNo">677</span><a name="line.677"></a>
+<span class="sourceLineNo">678</span>    /**<a name="line.678"></a>
+<span class="sourceLineNo">679</span>     * Helper method: recursively stops or suspends (as directed by the<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     * boolean argument) all of the threads in this thread group and its<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     * subgroups, except the current thread.  This method returns true<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     * if (and only if) the current thread is found to be in this thread<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     * group or one of its subgroups.<a name="line.683"></a>
+<span class="sourceLineNo">684</span>     */<a name="line.684"></a>
+<span class="sourceLineNo">685</span>    private boolean stopOrSuspend(boolean suspend) {<a name="line.685"></a>
+<span class="sourceLineNo">686</span>        boolean suicide = false;<a name="line.686"></a>
+<span class="sourceLineNo">687</span>        Thread us = Thread.currentThread();<a name="line.687"></a>
+<span class="sourceLineNo">688</span>        int ngroupsSnapshot;<a name="line.688"></a>
+<span class="sourceLineNo">689</span>        ThreadGroup[] groupsSnapshot = null;<a name="line.689"></a>
+<span class="sourceLineNo">690</span>        synchronized (this) {<a name="line.690"></a>
+<span class="sourceLineNo">691</span>            checkAccess();<a name="line.691"></a>
+<span class="sourceLineNo">692</span>            for (int i = 0 ; i &lt; nthreads ; i++) {<a name="line.692"></a>
+<span class="sourceLineNo">693</span>                if (threads[i]==us)<a name="line.693"></a>
+<span class="sourceLineNo">694</span>                    suicide = true;<a name="line.694"></a>
+<span class="sourceLineNo">695</span>                else if (suspend)<a name="line.695"></a>
+<span class="sourceLineNo">696</span>                    threads[i].suspend();<a name="line.696"></a>
+<span class="sourceLineNo">697</span>                else<a name="line.697"></a>
+<span class="sourceLineNo">698</span>                    threads[i].stop();<a name="line.698"></a>
+<span class="sourceLineNo">699</span>            }<a name="line.699"></a>
+<span class="sourceLineNo">700</span><a name="line.700"></a>
+<span class="sourceLineNo">701</span>            ngroupsSnapshot = ngroups;<a name="line.701"></a>
+<span class="sourceLineNo">702</span>            if (groups != null) {<a name="line.702"></a>
+<span class="sourceLineNo">703</span>                groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.703"></a>
+<span class="sourceLineNo">704</span>            }<a name="line.704"></a>
+<span class="sourceLineNo">705</span>        }<a name="line.705"></a>
+<span class="sourceLineNo">706</span>        for (int i = 0 ; i &lt; ngroupsSnapshot ; i++)<a name="line.706"></a>
+<span class="sourceLineNo">707</span>            suicide = groupsSnapshot[i].stopOrSuspend(suspend) || suicide;<a name="line.707"></a>
+<span class="sourceLineNo">708</span><a name="line.708"></a>
+<span class="sourceLineNo">709</span>        return suicide;<a name="line.709"></a>
+<span class="sourceLineNo">710</span>    }<a name="line.710"></a>
+<span class="sourceLineNo">711</span><a name="line.711"></a>
+<span class="sourceLineNo">712</span>    /**<a name="line.712"></a>
+<span class="sourceLineNo">713</span>     * Resumes all threads in this thread group.<a name="line.713"></a>
+<span class="sourceLineNo">714</span>     * &lt;p&gt;<a name="line.714"></a>
+<span class="sourceLineNo">715</span>     * First, the &lt;code&gt;checkAccess&lt;/code&gt; method of this thread group is<a name="line.715"></a>
+<span class="sourceLineNo">716</span>     * called with no arguments; this may result in a security exception.<a name="line.716"></a>
+<span class="sourceLineNo">717</span>     * &lt;p&gt;<a name="line.717"></a>
+<span class="sourceLineNo">718</span>     * This method then calls the &lt;code&gt;resume&lt;/code&gt; method on all the<a name="line.718"></a>
+<span class="sourceLineNo">719</span>     * threads in this thread group and in all of its sub groups.<a name="line.719"></a>
+<span class="sourceLineNo">720</span>     *<a name="line.720"></a>
+<span class="sourceLineNo">721</span>     * @exception  SecurityException  if the current thread is not allowed to<a name="line.721"></a>
+<span class="sourceLineNo">722</span>     *               access this thread group or any of the threads in the<a name="line.722"></a>
+<span class="sourceLineNo">723</span>     *               thread group.<a name="line.723"></a>
+<span class="sourceLineNo">724</span>     * @see        java.lang.SecurityException<a name="line.724"></a>
+<span class="sourceLineNo">725</span>     * @see        java.lang.Thread#resume()<a name="line.725"></a>
+<span class="sourceLineNo">726</span>     * @see        java.lang.ThreadGroup#checkAccess()<a name="line.726"></a>
+<span class="sourceLineNo">727</span>     * @since      JDK1.0<a name="line.727"></a>
+<span class="sourceLineNo">728</span>     * @deprecated    This method is used solely in conjunction with<a name="line.728"></a>
+<span class="sourceLineNo">729</span>     *      &lt;tt&gt;Thread.suspend&lt;/tt&gt; and &lt;tt&gt;ThreadGroup.suspend&lt;/tt&gt;,<a name="line.729"></a>
+<span class="sourceLineNo">730</span>     *       both of which have been deprecated, as they are inherently<a name="line.730"></a>
+<span class="sourceLineNo">731</span>     *       deadlock-prone.  See {@link Thread#suspend} for details.<a name="line.731"></a>
+<span class="sourceLineNo">732</span>     */<a name="line.732"></a>
+<span class="sourceLineNo">733</span>    @Deprecated<a name="line.733"></a>
+<span class="sourceLineNo">734</span>    public final void resume() {<a name="line.734"></a>
+<span class="sourceLineNo">735</span>        int ngroupsSnapshot;<a name="line.735"></a>
+<span class="sourceLineNo">736</span>        ThreadGroup[] groupsSnapshot;<a name="line.736"></a>
+<span class="sourceLineNo">737</span>        synchronized (this) {<a name="line.737"></a>
+<span class="sourceLineNo">738</span>            checkAccess();<a name="line.738"></a>
+<span class="sourceLineNo">739</span>            for (int i = 0 ; i &lt; nthreads ; i++) {<a name="line.739"></a>
+<span class="sourceLineNo">740</span>                threads[i].resume();<a name="line.740"></a>
+<span class="sourceLineNo">741</span>            }<a name="line.741"></a>
+<span class="sourceLineNo">742</span>            ngroupsSnapshot = ngroups;<a name="line.742"></a>
+<span class="sourceLineNo">743</span>            if (groups != null) {<a name="line.743"></a>
+<span class="sourceLineNo">744</span>                groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.744"></a>
+<span class="sourceLineNo">745</span>            } else {<a name="line.745"></a>
+<span class="sourceLineNo">746</span>                groupsSnapshot = null;<a name="line.746"></a>
+<span class="sourceLineNo">747</span>            }<a name="line.747"></a>
+<span class="sourceLineNo">748</span>        }<a name="line.748"></a>
+<span class="sourceLineNo">749</span>        for (int i = 0 ; i &lt; ngroupsSnapshot ; i++) {<a name="line.749"></a>
+<span class="sourceLineNo">750</span>            groupsSnapshot[i].resume();<a name="line.750"></a>
+<span class="sourceLineNo">751</span>        }<a name="line.751"></a>
+<span class="sourceLineNo">752</span>    }<a name="line.752"></a>
+<span class="sourceLineNo">753</span><a name="line.753"></a>
+<span class="sourceLineNo">754</span>    /**<a name="line.754"></a>
+<span class="sourceLineNo">755</span>     * Destroys this thread group and all of its subgroups. This thread<a name="line.755"></a>
+<span class="sourceLineNo">756</span>     * group must be empty, indicating that all threads that had been in<a name="line.756"></a>
+<span class="sourceLineNo">757</span>     * this thread group have since stopped.<a name="line.757"></a>
+<span class="sourceLineNo">758</span>     * &lt;p&gt;<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     * First, the &lt;code&gt;checkAccess&lt;/code&gt; method of this thread group is<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     * called with no arguments; this may result in a security exception.<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     *<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     * @exception  IllegalThreadStateException  if the thread group is not<a name="line.762"></a>
+<span class="sourceLineNo">763</span>     *               empty or if the thread group has already been destroyed.<a name="line.763"></a>
+<span class="sourceLineNo">764</span>     * @exception  SecurityException  if the current thread cannot modify this<a name="line.764"></a>
+<span class="sourceLineNo">765</span>     *               thread group.<a name="line.765"></a>
+<span class="sourceLineNo">766</span>     * @see        java.lang.ThreadGroup#checkAccess()<a name="line.766"></a>
+<span class="sourceLineNo">767</span>     * @since      JDK1.0<a name="line.767"></a>
+<span class="sourceLineNo">768</span>     */<a name="line.768"></a>
+<span class="sourceLineNo">769</span>    public final void destroy() {<a name="line.769"></a>
+<span class="sourceLineNo">770</span>        int ngroupsSnapshot;<a name="line.770"></a>
+<span class="sourceLineNo">771</span>        ThreadGroup[] groupsSnapshot;<a name="line.771"></a>
+<span class="sourceLineNo">772</span>        synchronized (this) {<a name="line.772"></a>
+<span class="sourceLineNo">773</span>            checkAccess();<a name="line.773"></a>
+<span class="sourceLineNo">774</span>            if (destroyed || (nthreads &gt; 0)) {<a name="line.774"></a>
+<span class="sourceLineNo">775</span>                throw new IllegalThreadStateException();<a name="line.775"></a>
+<span class="sourceLineNo">776</span>            }<a name="line.776"></a>
+<span class="sourceLineNo">777</span>            ngroupsSnapshot = ngroups;<a name="line.777"></a>
+<span class="sourceLineNo">778</span>            if (groups != null) {<a name="line.778"></a>
+<span class="sourceLineNo">779</span>                groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.779"></a>
+<span class="sourceLineNo">780</span>            } else {<a name="line.780"></a>
+<span class="sourceLineNo">781</span>                groupsSnapshot = null;<a name="line.781"></a>
+<span class="sourceLineNo">782</span>            }<a name="line.782"></a>
+<span class="sourceLineNo">783</span>            if (parent != null) {<a name="line.783"></a>
+<span class="sourceLineNo">784</span>                destroyed = true;<a name="line.784"></a>
+<span class="sourceLineNo">785</span>                ngroups = 0;<a name="line.785"></a>
+<span class="sourceLineNo">786</span>                groups = null;<a name="line.786"></a>
+<span class="sourceLineNo">787</span>                nthreads = 0;<a name="line.787"></a>
+<span class="sourceLineNo">788</span>                threads = null;<a name="line.788"></a>
+<span class="sourceLineNo">789</span>            }<a name="line.789"></a>
+<span class="sourceLineNo">790</span>        }<a name="line.790"></a>
+<span class="sourceLineNo">791</span>        for (int i = 0 ; i &lt; ngroupsSnapshot ; i += 1) {<a name="line.791"></a>
+<span class="sourceLineNo">792</span>            groupsSnapshot[i].destroy();<a name="line.792"></a>
+<span class="sourceLineNo">793</span>        }<a name="line.793"></a>
+<span class="sourceLineNo">794</span>        if (parent != null) {<a name="line.794"></a>
+<span class="sourceLineNo">795</span>            parent.remove(this);<a name="line.795"></a>
+<span class="sourceLineNo">796</span>        }<a name="line.796"></a>
+<span class="sourceLineNo">797</span>    }<a name="line.797"></a>
+<span class="sourceLineNo">798</span><a name="line.798"></a>
+<span class="sourceLineNo">799</span>    /**<a name="line.799"></a>
+<span class="sourceLineNo">800</span>     * Adds the specified Thread group to this group.<a name="line.800"></a>
+<span class="sourceLineNo">801</span>     * @param g the specified Thread group to be added<a name="line.801"></a>
+<span class="sourceLineNo">802</span>     * @exception IllegalThreadStateException If the Thread group has been destroyed.<a name="line.802"></a>
+<span class="sourceLineNo">803</span>     */<a name="line.803"></a>
+<span class="sourceLineNo">804</span>    private final void add(ThreadGroup g){<a name="line.804"></a>
+<span class="sourceLineNo">805</span>        synchronized (this) {<a name="line.805"></a>
+<span class="sourceLineNo">806</span>            if (destroyed) {<a name="line.806"></a>
+<span class="sourceLineNo">807</span>                throw new IllegalThreadStateException();<a name="line.807"></a>
+<span class="sourceLineNo">808</span>            }<a name="line.808"></a>
+<span class="sourceLineNo">809</span>            if (groups == null) {<a name="line.809"></a>
+<span class="sourceLineNo">810</span>                groups = new ThreadGroup[4];<a name="line.810"></a>
+<span class="sourceLineNo">811</span>            } else if (ngroups == groups.length) {<a name="line.811"></a>
+<span class="sourceLineNo">812</span>                groups = Arrays.copyOf(groups, ngroups * 2);<a name="line.812"></a>
+<span class="sourceLineNo">813</span>            }<a name="line.813"></a>
+<span class="sourceLineNo">814</span>            groups[ngroups] = g;<a name="line.814"></a>
+<span class="sourceLineNo">815</span><a name="line.815"></a>
+<span class="sourceLineNo">816</span>            // This is done last so it doesn't matter in case the<a name="line.816"></a>
+<span class="sourceLineNo">817</span>            // thread is killed<a name="line.817"></a>
+<span class="sourceLineNo">818</span>            ngroups++;<a name="line.818"></a>
+<span class="sourceLineNo">819</span>        }<a name="line.819"></a>
+<span class="sourceLineNo">820</span>    }<a name="line.820"></a>
+<span class="sourceLineNo">821</span><a name="line.821"></a>
+<span class="sourceLineNo">822</span>    /**<a name="line.822"></a>
+<span class="sourceLineNo">823</span>     * Removes the specified Thread group from this group.<a name="line.823"></a>
+<span class="sourceLineNo">824</span>     * @param g the Thread group to be removed<a name="line.824"></a>
+<span class="sourceLineNo">825</span>     * @return if this Thread has already been destroyed.<a name="line.825"></a>
+<span class="sourceLineNo">826</span>     */<a name="line.826"></a>
+<span class="sourceLineNo">827</span>    private void remove(ThreadGroup g) {<a name="line.827"></a>
+<span class="sourceLineNo">828</span>        synchronized (this) {<a name="line.828"></a>
+<span class="sourceLineNo">829</span>            if (destroyed) {<a name="line.829"></a>
+<span class="sourceLineNo">830</span>                return;<a name="line.830"></a>
+<span class="sourceLineNo">831</span>            }<a name="line.831"></a>
+<span class="sourceLineNo">832</span>            for (int i = 0 ; i &lt; ngroups ; i++) {<a name="line.832"></a>
+<span class="sourceLineNo">833</span>                if (groups[i] == g) {<a name="line.833"></a>
+<span class="sourceLineNo">834</span>                    ngroups -= 1;<a name="line.834"></a>
+<span class="sourceLineNo">835</span>                    System.arraycopy(groups, i + 1, groups, i, ngroups - i);<a name="line.835"></a>
+<span class="sourceLineNo">836</span>                    // Zap dangling reference to the dead group so that<a name="line.836"></a>
+<span class="sourceLineNo">837</span>                    // the garbage collector will collect it.<a name="line.837"></a>
+<span class="sourceLineNo">838</span>                    groups[ngroups] = null;<a name="line.838"></a>
+<span class="sourceLineNo">839</span>                    break;<a name="line.839"></a>
+<span class="sourceLineNo">840</span>                }<a name="line.840"></a>
+<span class="sourceLineNo">841</span>            }<a name="line.841"></a>
+<span class="sourceLineNo">842</span>            if (nthreads == 0) {<a name="line.842"></a>
+<span class="sourceLineNo">843</span>                notifyAll();<a name="line.843"></a>
+<span class="sourceLineNo">844</span>            }<a name="line.844"></a>
+<span class="sourceLineNo">845</span>            if (daemon &amp;&amp; (nthreads == 0) &amp;&amp;<a name="line.845"></a>
+<span class="sourceLineNo">846</span>                (nUnstartedThreads == 0) &amp;&amp; (ngroups == 0))<a name="line.846"></a>
+<span class="sourceLineNo">847</span>            {<a name="line.847"></a>
+<span class="sourceLineNo">848</span>                destroy();<a name="line.848"></a>
+<span class="sourceLineNo">849</span>            }<a name="line.849"></a>
+<span class="sourceLineNo">850</span>        }<a name="line.850"></a>
+<span class="sourceLineNo">851</span>    }<a name="line.851"></a>
+<span class="sourceLineNo">852</span><a name="line.852"></a>
+<span class="sourceLineNo">853</span><a name="line.853"></a>
+<span class="sourceLineNo">854</span>    /**<a name="line.854"></a>
+<span class="sourceLineNo">855</span>     * Increments the count of unstarted threads in the thread group.<a name="line.855"></a>
+<span class="sourceLineNo">856</span>     * Unstarted threads are not added to the thread group so that they<a name="line.856"></a>
+<span class="sourceLineNo">857</span>     * can be collected if they are never started, but they must be<a name="line.857"></a>
+<span class="sourceLineNo">858</span>     * counted so that daemon thread groups with unstarted threads in<a name="line.858"></a>
+<span class="sourceLineNo">859</span>     * them are not destroyed.<a name="line.859"></a>
+<span class="sourceLineNo">860</span>     */<a name="line.860"></a>
+<span class="sourceLineNo">861</span>    void addUnstarted() {<a name="line.861"></a>
+<span class="sourceLineNo">862</span>        synchronized(this) {<a name="line.862"></a>
+<span class="sourceLineNo">863</span>            if (destroyed) {<a name="line.863"></a>
+<span class="sourceLineNo">864</span>                throw new IllegalThreadStateException();<a name="line.864"></a>
+<span class="sourceLineNo">865</span>            }<a name="line.865"></a>
+<span class="sourceLineNo">866</span>            nUnstartedThreads++;<a name="line.866"></a>
+<span class="sourceLineNo">867</span>        }<a name="line.867"></a>
+<span class="sourceLineNo">868</span>    }<a name="line.868"></a>
+<span class="sourceLineNo">869</span><a name="line.869"></a>
+<span class="sourceLineNo">870</span>    /**<a name="line.870"></a>
+<span class="sourceLineNo">871</span>     * Adds the specified thread to this thread group.<a name="line.871"></a>
+<span class="sourceLineNo">872</span>     *<a name="line.872"></a>
+<span class="sourceLineNo">873</span>     * &lt;p&gt; Note: This method is called from both library code<a name="line.873"></a>
+<span class="sourceLineNo">874</span>     * and the Virtual Machine. It is called from VM to add<a name="line.874"></a>
+<span class="sourceLineNo">875</span>     * certain system threads to the system thread group.<a name="line.875"></a>
+<span class="sourceLineNo">876</span>     *<a name="line.876"></a>
+<span class="sourceLineNo">877</span>     * @param  t<a name="line.877"></a>
+<span class="sourceLineNo">878</span>     *         the Thread to be added<a name="line.878"></a>
+<span class="sourceLineNo">879</span>     *<a name="line.879"></a>
+<span class="sourceLineNo">880</span>     * @throws  IllegalThreadStateException<a name="line.880"></a>
+<span class="sourceLineNo">881</span>     *          if the Thread group has been destroyed<a name="line.881"></a>
+<span class="sourceLineNo">882</span>     */<a name="line.882"></a>
+<span class="sourceLineNo">883</span>    void add(Thread t) {<a name="line.883"></a>
+<span class="sourceLineNo">884</span>        synchronized (this) {<a name="line.884"></a>
+<span class="sourceLineNo">885</span>            if (destroyed) {<a name="line.885"></a>
+<span class="sourceLineNo">886</span>                throw new IllegalThreadStateException();<a name="line.886"></a>
+<span class="sourceLineNo">887</span>            }<a name="line.887"></a>
+<span class="sourceLineNo">888</span>            if (threads == null) {<a name="line.888"></a>
+<span class="sourceLineNo">889</span>                threads = new Thread[4];<a name="line.889"></a>
+<span class="sourceLineNo">890</span>            } else if (nthreads == threads.length) {<a name="line.890"></a>
+<span class="sourceLineNo">891</span>                threads = Arrays.copyOf(threads, nthreads * 2);<a name="line.891"></a>
+<span class="sourceLineNo">892</span>            }<a name="line.892"></a>
+<span class="sourceLineNo">893</span>            threads[nthreads] = t;<a name="line.893"></a>
+<span class="sourceLineNo">894</span><a name="line.894"></a>
+<span class="sourceLineNo">895</span>            // This is done last so it doesn't matter in case the<a name="line.895"></a>
+<span class="sourceLineNo">896</span>            // thread is killed<a name="line.896"></a>
+<span class="sourceLineNo">897</span>            nthreads++;<a name="line.897"></a>
+<span class="sourceLineNo">898</span><a name="line.898"></a>
+<span class="sourceLineNo">899</span>            // The thread is now a fully fledged member of the group, even<a name="line.899"></a>
+<span class="sourceLineNo">900</span>            // though it may, or may not, have been started yet. It will prevent<a name="line.900"></a>
+<span class="sourceLineNo">901</span>            // the group from being destroyed so the unstarted Threads count is<a name="line.901"></a>
+<span class="sourceLineNo">902</span>            // decremented.<a name="line.902"></a>
+<span class="sourceLineNo">903</span>            nUnstartedThreads--;<a name="line.903"></a>
+<span class="sourceLineNo">904</span>        }<a name="line.904"></a>
+<span class="sourceLineNo">905</span>    }<a name="line.905"></a>
+<span class="sourceLineNo">906</span><a name="line.906"></a>
+<span class="sourceLineNo">907</span>    /**<a name="line.907"></a>
+<span class="sourceLineNo">908</span>     * Notifies the group that the thread {@code t} has failed<a name="line.908"></a>
+<span class="sourceLineNo">909</span>     * an attempt to start.<a name="line.909"></a>
+<span class="sourceLineNo">910</span>     *<a name="line.910"></a>
+<span class="sourceLineNo">911</span>     * &lt;p&gt; The state of this thread group is rolled back as if the<a name="line.911"></a>
+<span class="sourceLineNo">912</span>     * attempt to start the thread has never occurred. The thread is again<a name="line.912"></a>
+<span class="sourceLineNo">913</span>     * considered an unstarted member of the thread group, and a subsequent<a name="line.913"></a>
+<span class="sourceLineNo">914</span>     * attempt to start the thread is permitted.<a name="line.914"></a>
+<span class="sourceLineNo">915</span>     *<a name="line.915"></a>
+<span class="sourceLineNo">916</span>     * @param  t<a name="line.916"></a>
+<span class="sourceLineNo">917</span>     *         the Thread whose start method was invoked<a name="line.917"></a>
+<span class="sourceLineNo">918</span>     *<a name="line.918"></a>
+<span class="sourceLineNo">919</span>     * @param  failed<a name="line.919"></a>
+<span class="sourceLineNo">920</span>     *         true if the thread could not be started successfully<a name="line.920"></a>
+<span class="sourceLineNo">921</span>     */<a name="line.921"></a>
+<span class="sourceLineNo">922</span>    void threadStartFailed(Thread t) {<a name="line.922"></a>
+<span class="sourceLineNo">923</span>        synchronized(this) {<a name="line.923"></a>
+<span class="sourceLineNo">924</span>            remove(t);<a name="line.924"></a>
+<span class="sourceLineNo">925</span>            nUnstartedThreads++;<a name="line.925"></a>
+<span class="sourceLineNo">926</span>        }<a name="line.926"></a>
+<span class="sourceLineNo">927</span>    }<a name="line.927"></a>
+<span class="sourceLineNo">928</span><a name="line.928"></a>
+<span class="sourceLineNo">929</span>    /**<a name="line.929"></a>
+<span class="sourceLineNo">930</span>     * Notifies the group that the thread {@code t} has terminated.<a name="line.930"></a>
+<span class="sourceLineNo">931</span>     *<a name="line.931"></a>
+<span class="sourceLineNo">932</span>     * &lt;p&gt; Destroy the group if all of the following conditions are<a name="line.932"></a>
+<span class="sourceLineNo">933</span>     * true: this is a daemon thread group; there are no more alive<a name="line.933"></a>
+<span class="sourceLineNo">934</span>     * or unstarted threads in the group; there are no subgroups in<a name="line.934"></a>
+<span class="sourceLineNo">935</span>     * this thread group.<a name="line.935"></a>
+<span class="sourceLineNo">936</span>     *<a name="line.936"></a>
+<span class="sourceLineNo">937</span>     * @param  t<a name="line.937"></a>
+<span class="sourceLineNo">938</span>     *         the Thread that has terminated<a name="line.938"></a>
+<span class="sourceLineNo">939</span>     */<a name="line.939"></a>
+<span class="sourceLineNo">940</span>    void threadTerminated(Thread t) {<a name="line.940"></a>
+<span class="sourceLineNo">941</span>        synchronized (this) {<a name="line.941"></a>
+<span class="sourceLineNo">942</span>            remove(t);<a name="line.942"></a>
+<span class="sourceLineNo">943</span><a name="line.943"></a>
+<span class="sourceLineNo">944</span>            if (nthreads == 0) {<a name="line.944"></a>
+<span class="sourceLineNo">945</span>                notifyAll();<a name="line.945"></a>
+<span class="sourceLineNo">946</span>            }<a name="line.946"></a>
+<span class="sourceLineNo">947</span>            if (daemon &amp;&amp; (nthreads == 0) &amp;&amp;<a name="line.947"></a>
+<span class="sourceLineNo">948</span>                (nUnstartedThreads == 0) &amp;&amp; (ngroups == 0))<a name="line.948"></a>
+<span class="sourceLineNo">949</span>            {<a name="line.949"></a>
+<span class="sourceLineNo">950</span>                destroy();<a name="line.950"></a>
+<span class="sourceLineNo">951</span>            }<a name="line.951"></a>
+<span class="sourceLineNo">952</span>        }<a name="line.952"></a>
+<span class="sourceLineNo">953</span>    }<a name="line.953"></a>
+<span class="sourceLineNo">954</span><a name="line.954"></a>
+<span class="sourceLineNo">955</span>    /**<a name="line.955"></a>
+<span class="sourceLineNo">956</span>     * Removes the specified Thread from this group. Invoking this method<a name="line.956"></a>
+<span class="sourceLineNo">957</span>     * on a thread group that has been destroyed has no effect.<a name="line.957"></a>
+<span class="sourceLineNo">958</span>     *<a name="line.958"></a>
+<span class="sourceLineNo">959</span>     * @param  t<a name="line.959"></a>
+<span class="sourceLineNo">960</span>     *         the Thread to be removed<a name="line.960"></a>
+<span class="sourceLineNo">961</span>     */<a name="line.961"></a>
+<span class="sourceLineNo">962</span>    private void remove(Thread t) {<a name="line.962"></a>
+<span class="sourceLineNo">963</span>        synchronized (this) {<a name="line.963"></a>
+<span class="sourceLineNo">964</span>            if (destroyed) {<a name="line.964"></a>
+<span class="sourceLineNo">965</span>                return;<a name="line.965"></a>
+<span class="sourceLineNo">966</span>            }<a name="line.966"></a>
+<span class="sourceLineNo">967</span>            for (int i = 0 ; i &lt; nthreads ; i++) {<a name="line.967"></a>
+<span class="sourceLineNo">968</span>                if (threads[i] == t) {<a name="line.968"></a>
+<span class="sourceLineNo">969</span>                    System.arraycopy(threads, i + 1, threads, i, --nthreads - i);<a name="line.969"></a>
+<span class="sourceLineNo">970</span>                    // Zap dangling reference to the dead thread so that<a name="line.970"></a>
+<span class="sourceLineNo">971</span>                    // the garbage collector will collect it.<a name="line.971"></a>
+<span class="sourceLineNo">972</span>                    threads[nthreads] = null;<a name="line.972"></a>
+<span class="sourceLineNo">973</span>                    break;<a name="line.973"></a>
+<span class="sourceLineNo">974</span>                }<a name="line.974"></a>
+<span class="sourceLineNo">975</span>            }<a name="line.975"></a>
+<span class="sourceLineNo">976</span>        }<a name="line.976"></a>
+<span class="sourceLineNo">977</span>    }<a name="line.977"></a>
+<span class="sourceLineNo">978</span><a name="line.978"></a>
+<span class="sourceLineNo">979</span>    /**<a name="line.979"></a>
+<span class="sourceLineNo">980</span>     * Prints information about this thread group to the standard<a name="line.980"></a>
+<span class="sourceLineNo">981</span>     * output. This method is useful only for debugging.<a name="line.981"></a>
+<span class="sourceLineNo">982</span>     *<a name="line.982"></a>
+<span class="sourceLineNo">983</span>     * @since   JDK1.0<a name="line.983"></a>
+<span class="sourceLineNo">984</span>     */<a name="line.984"></a>
+<span class="sourceLineNo">985</span>    public void list() {<a name="line.985"></a>
+<span class="sourceLineNo">986</span>        list(System.out, 0);<a name="line.986"></a>
+<span class="sourceLineNo">987</span>    }<a name="line.987"></a>
+<span class="sourceLineNo">988</span>    void list(PrintStream out, int indent) {<a name="line.988"></a>
+<span class="sourceLineNo">989</span>        int ngroupsSnapshot;<a name="line.989"></a>
+<span class="sourceLineNo">990</span>        ThreadGroup[] groupsSnapshot;<a name="line.990"></a>
+<span class="sourceLineNo">991</span>        synchronized (this) {<a name="line.991"></a>
+<span class="sourceLineNo">992</span>            for (int j = 0 ; j &lt; indent ; j++) {<a name="line.992"></a>
+<span class="sourceLineNo">993</span>                out.print(" ");<a name="line.993"></a>
+<span class="sourceLineNo">994</span>            }<a name="line.994"></a>
+<span class="sourceLineNo">995</span>            out.println(this);<a name="line.995"></a>
+<span class="sourceLineNo">996</span>            indent += 4;<a name="line.996"></a>
+<span class="sourceLineNo">997</span>            for (int i = 0 ; i &lt; nthreads ; i++) {<a name="line.997"></a>
+<span class="sourceLineNo">998</span>                for (int j = 0 ; j &lt; indent ; j++) {<a name="line.998"></a>
+<span class="sourceLineNo">999</span>                    out.print(" ");<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>                }<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>                out.println(threads[i]);<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>            }<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>            ngroupsSnapshot = ngroups;<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>            if (groups != null) {<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>                groupsSnapshot = Arrays.copyOf(groups, ngroupsSnapshot);<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>            } else {<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>                groupsSnapshot = null;<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>            }<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>        }<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>        for (int i = 0 ; i &lt; ngroupsSnapshot ; i++) {<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>            groupsSnapshot[i].list(out, indent);<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>        }<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>    }<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span><a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>    /**<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>     * Called by the Java Virtual Machine when a thread in this<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>     * thread group stops because of an uncaught exception, and the thread<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>     * does not have a specific {@link Thread.UncaughtExceptionHandler}<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>     * installed.<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>     * &lt;p&gt;<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>     * The &lt;code&gt;uncaughtException&lt;/code&gt; method of<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>     * &lt;code&gt;ThreadGroup&lt;/code&gt; does the following:<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>     * &lt;ul&gt;<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>     * &lt;li&gt;If this thread group has a parent thread group, the<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>     *     &lt;code&gt;uncaughtException&lt;/code&gt; method of that parent is called<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>     *     with the same two arguments.<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>     * &lt;li&gt;Otherwise, this method checks to see if there is a<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>     *     {@linkplain Thread#getDefaultUncaughtExceptionHandler default<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>     *     uncaught exception handler} installed, and if so, its<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>     *     &lt;code&gt;uncaughtException&lt;/code&gt; method is called with the same<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>     *     two arguments.<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>     * &lt;li&gt;Otherwise, this method determines if the &lt;code&gt;Throwable&lt;/code&gt;<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>     *     argument is an instance of {@link ThreadDeath}. If so, nothing<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>     *     special is done. Otherwise, a message containing the<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>     *     thread's name, as returned from the thread's {@link<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>     *     Thread#getName getName} method, and a stack backtrace,<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>     *     using the &lt;code&gt;Throwable&lt;/code&gt;'s {@link<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>     *     Throwable#printStackTrace printStackTrace} method, is<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>     *     printed to the {@linkplain System#err standard error stream}.<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>     * &lt;/ul&gt;<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>     * &lt;p&gt;<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>     * Applications can override this method in subclasses of<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>     * &lt;code&gt;ThreadGroup&lt;/code&gt; to provide alternative handling of<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>     * uncaught exceptions.<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>     *<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>     * @param   t   the thread that is about to exit.<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>     * @param   e   the uncaught exception.<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>     * @since   JDK1.0<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>     */<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>    public void uncaughtException(Thread t, Throwable e) {<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>        if (parent != null) {<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>            parent.uncaughtException(t, e);<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>        } else {<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>            Thread.UncaughtExceptionHandler ueh =<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>                Thread.getDefaultUncaughtExceptionHandler();<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>            if (ueh != null) {<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>                ueh.uncaughtException(t, e);<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>            } else if (!(e instanceof ThreadDeath)) {<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>                System.err.print("Exception in thread \""<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>                                 + t.getName() + "\" ");<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>                e.printStackTrace(System.err);<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>            }<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>        }<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>    }<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span><a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>    /**<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>     * Used by VM to control lowmem implicit suspension.<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>     *<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>     * @param b boolean to allow or disallow suspension<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>     * @return true on success<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>     * @since   JDK1.1<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>     * @deprecated The definition of this call depends on {@link #suspend},<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>     *             which is deprecated.  Further, the behavior of this call<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>     *             was never specified.<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>     */<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>    @Deprecated<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>    public boolean allowThreadSuspension(boolean b) {<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>        this.vmAllowSuspension = b;<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>        if (!b) {<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>            VM.unsuspendSomeThreads();<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>        }<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>        return true;<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>    }<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span><a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>    /**<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>     * Returns a string representation of this Thread group.<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>     *<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>     * @return  a string representation of this thread group.<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>     * @since   JDK1.0<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>     */<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>    public String toString() {<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>        return getClass().getName() + "[name=" + getName() + ",maxpri=" + maxPriority + "]";<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>    }<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>}<a name="line.1094"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

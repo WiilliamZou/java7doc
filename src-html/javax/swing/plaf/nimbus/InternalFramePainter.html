@@ -1,0 +1,474 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package javax.swing.plaf.nimbus;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.awt.*;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.geom.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.image.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.swing.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.swing.Painter;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>final class InternalFramePainter extends AbstractRegionPainter {<a name="line.34"></a>
+<span class="sourceLineNo">035</span>    //package private integers representing the available states that<a name="line.35"></a>
+<span class="sourceLineNo">036</span>    //this painter will paint. These are used when creating a new instance<a name="line.36"></a>
+<span class="sourceLineNo">037</span>    //of InternalFramePainter to determine which region/state is being painted<a name="line.37"></a>
+<span class="sourceLineNo">038</span>    //by that instance.<a name="line.38"></a>
+<span class="sourceLineNo">039</span>    static final int BACKGROUND_ENABLED = 1;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>    static final int BACKGROUND_ENABLED_WINDOWFOCUSED = 2;<a name="line.40"></a>
+<span class="sourceLineNo">041</span><a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>    private int state; //refers to one of the static final ints above<a name="line.43"></a>
+<span class="sourceLineNo">044</span>    private PaintContext ctx;<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>    //the following 4 variables are reused during the painting code of the layers<a name="line.46"></a>
+<span class="sourceLineNo">047</span>    private Path2D path = new Path2D.Float();<a name="line.47"></a>
+<span class="sourceLineNo">048</span>    private Rectangle2D rect = new Rectangle2D.Float(0, 0, 0, 0);<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    private RoundRectangle2D roundRect = new RoundRectangle2D.Float(0, 0, 0, 0, 0, 0);<a name="line.49"></a>
+<span class="sourceLineNo">050</span>    private Ellipse2D ellipse = new Ellipse2D.Float(0, 0, 0, 0);<a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span>    //All Colors used for painting are stored here. Ideally, only those colors being used<a name="line.52"></a>
+<span class="sourceLineNo">053</span>    //by a particular instance of InternalFramePainter would be created. For the moment at least,<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    //however, all are created for each instance.<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    private Color color1 = decodeColor("nimbusBase", 0.032459438f, -0.53637654f, 0.043137252f, 0);<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    private Color color2 = decodeColor("nimbusBlueGrey", 0.004273474f, -0.039488062f, -0.027450979f, 0);<a name="line.56"></a>
+<span class="sourceLineNo">057</span>    private Color color3 = decodeColor("nimbusBlueGrey", -0.00505054f, -0.056339122f, 0.05098039f, 0);<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    private Color color4 = decodeColor("nimbusBlueGrey", -0.01111114f, -0.06357796f, 0.09019607f, 0);<a name="line.58"></a>
+<span class="sourceLineNo">059</span>    private Color color5 = decodeColor("nimbusBlueGrey", 0.0f, -0.023821115f, -0.06666666f, 0);<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    private Color color6 = decodeColor("control", 0.0f, 0.0f, 0.0f, 0);<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    private Color color7 = decodeColor("nimbusBlueGrey", -0.006944418f, -0.07399663f, 0.11372548f, 0);<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    private Color color8 = decodeColor("nimbusBase", 0.02551502f, -0.47885156f, -0.34901965f, 0);<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    private Color color9 = new Color(255, 200, 0, 255);<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    private Color color10 = decodeColor("nimbusBase", 0.004681647f, -0.6274498f, 0.39999998f, 0);<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    private Color color11 = decodeColor("nimbusBase", 0.032459438f, -0.5934608f, 0.2862745f, 0);<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    private Color color12 = new Color(204, 207, 213, 255);<a name="line.66"></a>
+<span class="sourceLineNo">067</span>    private Color color13 = decodeColor("nimbusBase", 0.032459438f, -0.55506915f, 0.18039215f, 0);<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    private Color color14 = decodeColor("nimbusBase", 0.004681647f, -0.52792984f, 0.10588235f, 0);<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    private Color color15 = decodeColor("nimbusBase", 0.03801495f, -0.4794643f, -0.04705882f, 0);<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    private Color color16 = decodeColor("nimbusBase", 0.021348298f, -0.61416256f, 0.3607843f, 0);<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    private Color color17 = decodeColor("nimbusBase", 0.032459438f, -0.5546332f, 0.17647058f, 0);<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    private Color color18 = new Color(235, 236, 238, 255);<a name="line.72"></a>
+<span class="sourceLineNo">073</span><a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    //Array of current component colors, updated in each paint call<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    private Object[] componentColors;<a name="line.76"></a>
+<span class="sourceLineNo">077</span><a name="line.77"></a>
+<span class="sourceLineNo">078</span>    public InternalFramePainter(PaintContext ctx, int state) {<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        super();<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        this.state = state;<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        this.ctx = ctx;<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    }<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    @Override<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    protected void doPaint(Graphics2D g, JComponent c, int width, int height, Object[] extendedCacheKeys) {<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        //populate componentColors array with colors calculated in getExtendedCacheKeys call<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        componentColors = extendedCacheKeys;<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        //generate this entire method. Each state/bg/fg/border combo that has<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        //been painted gets its own KEY and paint method.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        switch(state) {<a name="line.90"></a>
+<span class="sourceLineNo">091</span>            case BACKGROUND_ENABLED: paintBackgroundEnabled(g); break;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>            case BACKGROUND_ENABLED_WINDOWFOCUSED: paintBackgroundEnabledAndWindowFocused(g); break;<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>        }<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    }<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        <a name="line.96"></a>
+<span class="sourceLineNo">097</span><a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    @Override<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    protected final PaintContext getPaintContext() {<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        return ctx;<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    }<a name="line.102"></a>
+<span class="sourceLineNo">103</span><a name="line.103"></a>
+<span class="sourceLineNo">104</span>    private void paintBackgroundEnabled(Graphics2D g) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        roundRect = decodeRoundRect1();<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        g.setPaint(color1);<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        g.fill(roundRect);<a name="line.107"></a>
+<span class="sourceLineNo">108</span>        path = decodePath1();<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        g.setPaint(decodeGradient1(path));<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        g.fill(path);<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        path = decodePath2();<a name="line.111"></a>
+<span class="sourceLineNo">112</span>        g.setPaint(color3);<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        g.fill(path);<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        path = decodePath3();<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        g.setPaint(color4);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        g.fill(path);<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        path = decodePath4();<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        g.setPaint(color5);<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        g.fill(path);<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        rect = decodeRect1();<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        g.setPaint(color6);<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        g.fill(rect);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        rect = decodeRect2();<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        g.setPaint(color7);<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        g.fill(rect);<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>    }<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>    private void paintBackgroundEnabledAndWindowFocused(Graphics2D g) {<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        roundRect = decodeRoundRect2();<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        g.setPaint(color8);<a name="line.131"></a>
+<span class="sourceLineNo">132</span>        g.fill(roundRect);<a name="line.132"></a>
+<span class="sourceLineNo">133</span>        path = decodePath5();<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        g.setPaint(color9);<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        g.fill(path);<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        path = decodePath1();<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        g.setPaint(decodeGradient2(path));<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        g.fill(path);<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        path = decodePath6();<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        g.setPaint(color12);<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        g.fill(path);<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        path = decodePath7();<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        g.setPaint(color13);<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        g.fill(path);<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        path = decodePath8();<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        g.setPaint(color14);<a name="line.146"></a>
+<span class="sourceLineNo">147</span>        g.fill(path);<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        path = decodePath9();<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        g.setPaint(color15);<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        g.fill(path);<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        rect = decodeRect1();<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        g.setPaint(color6);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        g.fill(rect);<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        rect = decodeRect3();<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        g.setPaint(color9);<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        g.fill(rect);<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        rect = decodeRect3();<a name="line.157"></a>
+<span class="sourceLineNo">158</span>        g.setPaint(color9);<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        g.fill(rect);<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        rect = decodeRect3();<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        g.setPaint(color9);<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        g.fill(rect);<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        rect = decodeRect4();<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        g.setPaint(decodeGradient3(rect));<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        g.fill(rect);<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        rect = decodeRect2();<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        g.setPaint(color18);<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        g.fill(rect);<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    }<a name="line.170"></a>
+<span class="sourceLineNo">171</span><a name="line.171"></a>
+<span class="sourceLineNo">172</span><a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>    private RoundRectangle2D decodeRoundRect1() {<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        roundRect.setRoundRect(decodeX(0.0f), //x<a name="line.175"></a>
+<span class="sourceLineNo">176</span>                               decodeY(0.0f), //y<a name="line.176"></a>
+<span class="sourceLineNo">177</span>                               decodeX(3.0f) - decodeX(0.0f), //width<a name="line.177"></a>
+<span class="sourceLineNo">178</span>                               decodeY(3.0f) - decodeY(0.0f), //height<a name="line.178"></a>
+<span class="sourceLineNo">179</span>                               4.6666665f, 4.6666665f); //rounding<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        return roundRect;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    }<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    private Path2D decodePath1() {<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        path.reset();<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        path.moveTo(decodeX(0.16666667f), decodeY(0.12f));<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        path.curveTo(decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(0.11999999731779099f, -1.0f), decodeAnchorX(0.5f, -1.0f), decodeAnchorY(0.03999999910593033f, 0.0f), decodeX(0.5f), decodeY(0.04f));<a name="line.186"></a>
+<span class="sourceLineNo">187</span>        path.curveTo(decodeAnchorX(0.5f, 1.0f), decodeAnchorY(0.03999999910593033f, 0.0f), decodeAnchorX(2.5f, -1.0f), decodeAnchorY(0.03999999910593033f, 0.0f), decodeX(2.5f), decodeY(0.04f));<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        path.curveTo(decodeAnchorX(2.5f, 1.0f), decodeAnchorY(0.03999999910593033f, 0.0f), decodeAnchorX(2.8333332538604736f, 0.0f), decodeAnchorY(0.11999999731779099f, -1.0f), decodeX(2.8333333f), decodeY(0.12f));<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        path.curveTo(decodeAnchorX(2.8333332538604736f, 0.0f), decodeAnchorY(0.11999999731779099f, 1.0f), decodeAnchorX(2.8333332538604736f, 0.0f), decodeAnchorY(0.9599999785423279f, 0.0f), decodeX(2.8333333f), decodeY(0.96f));<a name="line.189"></a>
+<span class="sourceLineNo">190</span>        path.lineTo(decodeX(0.16666667f), decodeY(0.96f));<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        path.curveTo(decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(0.9599999785423279f, 0.0f), decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(0.11999999731779099f, 1.0f), decodeX(0.16666667f), decodeY(0.12f));<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        path.closePath();<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        return path;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>    }<a name="line.194"></a>
+<span class="sourceLineNo">195</span><a name="line.195"></a>
+<span class="sourceLineNo">196</span>    private Path2D decodePath2() {<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        path.reset();<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        path.moveTo(decodeX(0.6666667f), decodeY(0.96f));<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        path.lineTo(decodeX(0.16666667f), decodeY(0.96f));<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        path.curveTo(decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(0.9599999785423279f, 0.0f), decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(2.5f, -1.0f), decodeX(0.16666667f), decodeY(2.5f));<a name="line.200"></a>
+<span class="sourceLineNo">201</span>        path.curveTo(decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(2.5f, 1.0f), decodeAnchorX(0.5f, -1.0f), decodeAnchorY(2.8333332538604736f, 0.0f), decodeX(0.5f), decodeY(2.8333333f));<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        path.curveTo(decodeAnchorX(0.5f, 1.0f), decodeAnchorY(2.8333332538604736f, 0.0f), decodeAnchorX(2.5f, -1.0f), decodeAnchorY(2.8333332538604736f, 0.0f), decodeX(2.5f), decodeY(2.8333333f));<a name="line.202"></a>
+<span class="sourceLineNo">203</span>        path.curveTo(decodeAnchorX(2.5f, 1.0f), decodeAnchorY(2.8333332538604736f, 0.0f), decodeAnchorX(2.8333332538604736f, 0.0f), decodeAnchorY(2.5f, 1.0f), decodeX(2.8333333f), decodeY(2.5f));<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        path.curveTo(decodeAnchorX(2.8333332538604736f, 0.0f), decodeAnchorY(2.5f, -1.0f), decodeAnchorX(2.8333332538604736f, 0.0f), decodeAnchorY(0.9599999785423279f, 0.0f), decodeX(2.8333333f), decodeY(0.96f));<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        path.lineTo(decodeX(2.3333333f), decodeY(0.96f));<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        path.lineTo(decodeX(2.3333333f), decodeY(2.3333333f));<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        path.lineTo(decodeX(0.6666667f), decodeY(2.3333333f));<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        path.lineTo(decodeX(0.6666667f), decodeY(0.96f));<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        path.closePath();<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        return path;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>    }<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>    private Path2D decodePath3() {<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        path.reset();<a name="line.214"></a>
+<span class="sourceLineNo">215</span>        path.moveTo(decodeX(0.8333333f), decodeY(0.96f));<a name="line.215"></a>
+<span class="sourceLineNo">216</span>        path.lineTo(decodeX(0.6666667f), decodeY(0.96f));<a name="line.216"></a>
+<span class="sourceLineNo">217</span>        path.lineTo(decodeX(0.6666667f), decodeY(2.3333333f));<a name="line.217"></a>
+<span class="sourceLineNo">218</span>        path.lineTo(decodeX(2.3333333f), decodeY(2.3333333f));<a name="line.218"></a>
+<span class="sourceLineNo">219</span>        path.lineTo(decodeX(2.3333333f), decodeY(0.96f));<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        path.lineTo(decodeX(2.1666667f), decodeY(0.96f));<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        path.lineTo(decodeX(2.1666667f), decodeY(2.1666667f));<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        path.lineTo(decodeX(0.8333333f), decodeY(2.1666667f));<a name="line.222"></a>
+<span class="sourceLineNo">223</span>        path.lineTo(decodeX(0.8333333f), decodeY(0.96f));<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        path.closePath();<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        return path;<a name="line.225"></a>
+<span class="sourceLineNo">226</span>    }<a name="line.226"></a>
+<span class="sourceLineNo">227</span><a name="line.227"></a>
+<span class="sourceLineNo">228</span>    private Path2D decodePath4() {<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        path.reset();<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        path.moveTo(decodeX(2.1666667f), decodeY(1.0f));<a name="line.230"></a>
+<span class="sourceLineNo">231</span>        path.lineTo(decodeX(1.0f), decodeY(1.0f));<a name="line.231"></a>
+<span class="sourceLineNo">232</span>        path.lineTo(decodeX(1.0f), decodeY(2.0f));<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        path.lineTo(decodeX(2.0f), decodeY(2.0f));<a name="line.233"></a>
+<span class="sourceLineNo">234</span>        path.lineTo(decodeX(2.0f), decodeY(1.0f));<a name="line.234"></a>
+<span class="sourceLineNo">235</span>        path.lineTo(decodeX(2.1666667f), decodeY(1.0f));<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        path.lineTo(decodeX(2.1666667f), decodeY(2.1666667f));<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        path.lineTo(decodeX(0.8333333f), decodeY(2.1666667f));<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        path.lineTo(decodeX(0.8333333f), decodeY(0.96f));<a name="line.238"></a>
+<span class="sourceLineNo">239</span>        path.lineTo(decodeX(2.1666667f), decodeY(0.96f));<a name="line.239"></a>
+<span class="sourceLineNo">240</span>        path.lineTo(decodeX(2.1666667f), decodeY(1.0f));<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        path.closePath();<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        return path;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>    }<a name="line.243"></a>
+<span class="sourceLineNo">244</span><a name="line.244"></a>
+<span class="sourceLineNo">245</span>    private Rectangle2D decodeRect1() {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            rect.setRect(decodeX(1.0f), //x<a name="line.246"></a>
+<span class="sourceLineNo">247</span>                         decodeY(1.0f), //y<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                         decodeX(2.0f) - decodeX(1.0f), //width<a name="line.248"></a>
+<span class="sourceLineNo">249</span>                         decodeY(2.0f) - decodeY(1.0f)); //height<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        return rect;<a name="line.250"></a>
+<span class="sourceLineNo">251</span>    }<a name="line.251"></a>
+<span class="sourceLineNo">252</span><a name="line.252"></a>
+<span class="sourceLineNo">253</span>    private Rectangle2D decodeRect2() {<a name="line.253"></a>
+<span class="sourceLineNo">254</span>            rect.setRect(decodeX(0.33333334f), //x<a name="line.254"></a>
+<span class="sourceLineNo">255</span>                         decodeY(2.6666667f), //y<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                         decodeX(2.6666667f) - decodeX(0.33333334f), //width<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                         decodeY(2.8333333f) - decodeY(2.6666667f)); //height<a name="line.257"></a>
+<span class="sourceLineNo">258</span>        return rect;<a name="line.258"></a>
+<span class="sourceLineNo">259</span>    }<a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>    private RoundRectangle2D decodeRoundRect2() {<a name="line.261"></a>
+<span class="sourceLineNo">262</span>        roundRect.setRoundRect(decodeX(0.0f), //x<a name="line.262"></a>
+<span class="sourceLineNo">263</span>                               decodeY(0.0f), //y<a name="line.263"></a>
+<span class="sourceLineNo">264</span>                               decodeX(3.0f) - decodeX(0.0f), //width<a name="line.264"></a>
+<span class="sourceLineNo">265</span>                               decodeY(3.0f) - decodeY(0.0f), //height<a name="line.265"></a>
+<span class="sourceLineNo">266</span>                               4.8333335f, 4.8333335f); //rounding<a name="line.266"></a>
+<span class="sourceLineNo">267</span>        return roundRect;<a name="line.267"></a>
+<span class="sourceLineNo">268</span>    }<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span>    private Path2D decodePath5() {<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        path.reset();<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        path.moveTo(decodeX(0.16666667f), decodeY(0.08f));<a name="line.272"></a>
+<span class="sourceLineNo">273</span>        path.curveTo(decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(0.07999999821186066f, 1.0f), decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(0.07999999821186066f, -1.0f), decodeX(0.16666667f), decodeY(0.08f));<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        path.closePath();<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        return path;<a name="line.275"></a>
+<span class="sourceLineNo">276</span>    }<a name="line.276"></a>
+<span class="sourceLineNo">277</span><a name="line.277"></a>
+<span class="sourceLineNo">278</span>    private Path2D decodePath6() {<a name="line.278"></a>
+<span class="sourceLineNo">279</span>        path.reset();<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        path.moveTo(decodeX(0.5f), decodeY(0.96f));<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        path.lineTo(decodeX(0.16666667f), decodeY(0.96f));<a name="line.281"></a>
+<span class="sourceLineNo">282</span>        path.curveTo(decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(0.9599999785423279f, 0.0f), decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(2.5f, -1.0f), decodeX(0.16666667f), decodeY(2.5f));<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        path.curveTo(decodeAnchorX(0.1666666716337204f, 0.0f), decodeAnchorY(2.5f, 1.0f), decodeAnchorX(0.5f, -1.0f), decodeAnchorY(2.8333332538604736f, 0.0f), decodeX(0.5f), decodeY(2.8333333f));<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        path.curveTo(decodeAnchorX(0.5f, 1.0f), decodeAnchorY(2.8333332538604736f, 0.0f), decodeAnchorX(2.5f, -1.0f), decodeAnchorY(2.8333332538604736f, 0.0f), decodeX(2.5f), decodeY(2.8333333f));<a name="line.284"></a>
+<span class="sourceLineNo">285</span>        path.curveTo(decodeAnchorX(2.5f, 1.0f), decodeAnchorY(2.8333332538604736f, 0.0f), decodeAnchorX(2.8333332538604736f, 0.0f), decodeAnchorY(2.5f, 1.0f), decodeX(2.8333333f), decodeY(2.5f));<a name="line.285"></a>
+<span class="sourceLineNo">286</span>        path.curveTo(decodeAnchorX(2.8333332538604736f, 0.0f), decodeAnchorY(2.5f, -1.0f), decodeAnchorX(2.8333332538604736f, 0.0f), decodeAnchorY(0.9599999785423279f, 0.0f), decodeX(2.8333333f), decodeY(0.96f));<a name="line.286"></a>
+<span class="sourceLineNo">287</span>        path.lineTo(decodeX(2.5f), decodeY(0.96f));<a name="line.287"></a>
+<span class="sourceLineNo">288</span>        path.lineTo(decodeX(2.5f), decodeY(2.5f));<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        path.lineTo(decodeX(0.5f), decodeY(2.5f));<a name="line.289"></a>
+<span class="sourceLineNo">290</span>        path.lineTo(decodeX(0.5f), decodeY(0.96f));<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        path.closePath();<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        return path;<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    }<a name="line.293"></a>
+<span class="sourceLineNo">294</span><a name="line.294"></a>
+<span class="sourceLineNo">295</span>    private Path2D decodePath7() {<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        path.reset();<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        path.moveTo(decodeX(0.6666667f), decodeY(0.96f));<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        path.lineTo(decodeX(0.33333334f), decodeY(0.96f));<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        path.curveTo(decodeAnchorX(0.3333333432674408f, 0.0f), decodeAnchorY(0.9599999785423279f, 0.0f), decodeAnchorX(0.3333333432674408f, 0.0f), decodeAnchorY(2.3333332538604736f, -1.0f), decodeX(0.33333334f), decodeY(2.3333333f));<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        path.curveTo(decodeAnchorX(0.3333333432674408f, 0.0f), decodeAnchorY(2.3333332538604736f, 1.0f), decodeAnchorX(0.6666666865348816f, -1.0f), decodeAnchorY(2.6666667461395264f, 0.0f), decodeX(0.6666667f), decodeY(2.6666667f));<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        path.curveTo(decodeAnchorX(0.6666666865348816f, 1.0f), decodeAnchorY(2.6666667461395264f, 0.0f), decodeAnchorX(2.3333332538604736f, -1.0f), decodeAnchorY(2.6666667461395264f, 0.0f), decodeX(2.3333333f), decodeY(2.6666667f));<a name="line.301"></a>
+<span class="sourceLineNo">302</span>        path.curveTo(decodeAnchorX(2.3333332538604736f, 1.0f), decodeAnchorY(2.6666667461395264f, 0.0f), decodeAnchorX(2.6666667461395264f, 0.0f), decodeAnchorY(2.3333332538604736f, 1.0f), decodeX(2.6666667f), decodeY(2.3333333f));<a name="line.302"></a>
+<span class="sourceLineNo">303</span>        path.curveTo(decodeAnchorX(2.6666667461395264f, 0.0f), decodeAnchorY(2.3333332538604736f, -1.0f), decodeAnchorX(2.6666667461395264f, 0.0f), decodeAnchorY(0.9599999785423279f, 0.0f), decodeX(2.6666667f), decodeY(0.96f));<a name="line.303"></a>
+<span class="sourceLineNo">304</span>        path.lineTo(decodeX(2.3333333f), decodeY(0.96f));<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        path.lineTo(decodeX(2.3333333f), decodeY(2.3333333f));<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        path.lineTo(decodeX(0.6666667f), decodeY(2.3333333f));<a name="line.306"></a>
+<span class="sourceLineNo">307</span>        path.lineTo(decodeX(0.6666667f), decodeY(0.96f));<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        path.closePath();<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        return path;<a name="line.309"></a>
+<span class="sourceLineNo">310</span>    }<a name="line.310"></a>
+<span class="sourceLineNo">311</span><a name="line.311"></a>
+<span class="sourceLineNo">312</span>    private Path2D decodePath8() {<a name="line.312"></a>
+<span class="sourceLineNo">313</span>        path.reset();<a name="line.313"></a>
+<span class="sourceLineNo">314</span>        path.moveTo(decodeX(2.3333333f), decodeY(0.96f));<a name="line.314"></a>
+<span class="sourceLineNo">315</span>        path.lineTo(decodeX(2.1666667f), decodeY(0.96f));<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        path.lineTo(decodeX(2.1666667f), decodeY(2.1666667f));<a name="line.316"></a>
+<span class="sourceLineNo">317</span>        path.lineTo(decodeX(0.8333333f), decodeY(2.1666667f));<a name="line.317"></a>
+<span class="sourceLineNo">318</span>        path.lineTo(decodeX(0.8333333f), decodeY(0.96f));<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        path.lineTo(decodeX(0.6666667f), decodeY(0.96f));<a name="line.319"></a>
+<span class="sourceLineNo">320</span>        path.lineTo(decodeX(0.6666667f), decodeY(2.3333333f));<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        path.lineTo(decodeX(2.3333333f), decodeY(2.3333333f));<a name="line.321"></a>
+<span class="sourceLineNo">322</span>        path.lineTo(decodeX(2.3333333f), decodeY(0.96f));<a name="line.322"></a>
+<span class="sourceLineNo">323</span>        path.closePath();<a name="line.323"></a>
+<span class="sourceLineNo">324</span>        return path;<a name="line.324"></a>
+<span class="sourceLineNo">325</span>    }<a name="line.325"></a>
+<span class="sourceLineNo">326</span><a name="line.326"></a>
+<span class="sourceLineNo">327</span>    private Path2D decodePath9() {<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        path.reset();<a name="line.328"></a>
+<span class="sourceLineNo">329</span>        path.moveTo(decodeX(0.8333333f), decodeY(1.0f));<a name="line.329"></a>
+<span class="sourceLineNo">330</span>        path.lineTo(decodeX(0.8333333f), decodeY(2.1666667f));<a name="line.330"></a>
+<span class="sourceLineNo">331</span>        path.lineTo(decodeX(2.1666667f), decodeY(2.1666667f));<a name="line.331"></a>
+<span class="sourceLineNo">332</span>        path.lineTo(decodeX(2.1666667f), decodeY(0.96f));<a name="line.332"></a>
+<span class="sourceLineNo">333</span>        path.lineTo(decodeX(0.8333333f), decodeY(0.96f));<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        path.lineTo(decodeX(0.8333333f), decodeY(1.0f));<a name="line.334"></a>
+<span class="sourceLineNo">335</span>        path.lineTo(decodeX(2.0f), decodeY(1.0f));<a name="line.335"></a>
+<span class="sourceLineNo">336</span>        path.lineTo(decodeX(2.0f), decodeY(2.0f));<a name="line.336"></a>
+<span class="sourceLineNo">337</span>        path.lineTo(decodeX(1.0f), decodeY(2.0f));<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        path.lineTo(decodeX(1.0f), decodeY(1.0f));<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        path.lineTo(decodeX(0.8333333f), decodeY(1.0f));<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        path.closePath();<a name="line.340"></a>
+<span class="sourceLineNo">341</span>        return path;<a name="line.341"></a>
+<span class="sourceLineNo">342</span>    }<a name="line.342"></a>
+<span class="sourceLineNo">343</span><a name="line.343"></a>
+<span class="sourceLineNo">344</span>    private Rectangle2D decodeRect3() {<a name="line.344"></a>
+<span class="sourceLineNo">345</span>            rect.setRect(decodeX(0.0f), //x<a name="line.345"></a>
+<span class="sourceLineNo">346</span>                         decodeY(0.0f), //y<a name="line.346"></a>
+<span class="sourceLineNo">347</span>                         decodeX(0.0f) - decodeX(0.0f), //width<a name="line.347"></a>
+<span class="sourceLineNo">348</span>                         decodeY(0.0f) - decodeY(0.0f)); //height<a name="line.348"></a>
+<span class="sourceLineNo">349</span>        return rect;<a name="line.349"></a>
+<span class="sourceLineNo">350</span>    }<a name="line.350"></a>
+<span class="sourceLineNo">351</span><a name="line.351"></a>
+<span class="sourceLineNo">352</span>    private Rectangle2D decodeRect4() {<a name="line.352"></a>
+<span class="sourceLineNo">353</span>            rect.setRect(decodeX(0.33333334f), //x<a name="line.353"></a>
+<span class="sourceLineNo">354</span>                         decodeY(0.08f), //y<a name="line.354"></a>
+<span class="sourceLineNo">355</span>                         decodeX(2.6666667f) - decodeX(0.33333334f), //width<a name="line.355"></a>
+<span class="sourceLineNo">356</span>                         decodeY(0.96f) - decodeY(0.08f)); //height<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        return rect;<a name="line.357"></a>
+<span class="sourceLineNo">358</span>    }<a name="line.358"></a>
+<span class="sourceLineNo">359</span><a name="line.359"></a>
+<span class="sourceLineNo">360</span><a name="line.360"></a>
+<span class="sourceLineNo">361</span><a name="line.361"></a>
+<span class="sourceLineNo">362</span>    private Paint decodeGradient1(Shape s) {<a name="line.362"></a>
+<span class="sourceLineNo">363</span>        Rectangle2D bounds = s.getBounds2D();<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        float x = (float)bounds.getX();<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        float y = (float)bounds.getY();<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        float w = (float)bounds.getWidth();<a name="line.366"></a>
+<span class="sourceLineNo">367</span>        float h = (float)bounds.getHeight();<a name="line.367"></a>
+<span class="sourceLineNo">368</span>        return decodeGradient((0.5f * w) + x, (0.0f * h) + y, (0.5f * w) + x, (1.0f * h) + y,<a name="line.368"></a>
+<span class="sourceLineNo">369</span>                new float[] { 0.0f,0.3203593f,1.0f },<a name="line.369"></a>
+<span class="sourceLineNo">370</span>                new Color[] { color2,<a name="line.370"></a>
+<span class="sourceLineNo">371</span>                            decodeColor(color2,color3,0.5f),<a name="line.371"></a>
+<span class="sourceLineNo">372</span>                            color3});<a name="line.372"></a>
+<span class="sourceLineNo">373</span>    }<a name="line.373"></a>
+<span class="sourceLineNo">374</span><a name="line.374"></a>
+<span class="sourceLineNo">375</span>    private Paint decodeGradient2(Shape s) {<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        Rectangle2D bounds = s.getBounds2D();<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        float x = (float)bounds.getX();<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        float y = (float)bounds.getY();<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        float w = (float)bounds.getWidth();<a name="line.379"></a>
+<span class="sourceLineNo">380</span>        float h = (float)bounds.getHeight();<a name="line.380"></a>
+<span class="sourceLineNo">381</span>        return decodeGradient((0.5f * w) + x, (0.0f * h) + y, (0.5f * w) + x, (1.0f * h) + y,<a name="line.381"></a>
+<span class="sourceLineNo">382</span>                new float[] { 0.0f,0.5f,1.0f },<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                new Color[] { color10,<a name="line.383"></a>
+<span class="sourceLineNo">384</span>                            decodeColor(color10,color11,0.5f),<a name="line.384"></a>
+<span class="sourceLineNo">385</span>                            color11});<a name="line.385"></a>
+<span class="sourceLineNo">386</span>    }<a name="line.386"></a>
+<span class="sourceLineNo">387</span><a name="line.387"></a>
+<span class="sourceLineNo">388</span>    private Paint decodeGradient3(Shape s) {<a name="line.388"></a>
+<span class="sourceLineNo">389</span>        Rectangle2D bounds = s.getBounds2D();<a name="line.389"></a>
+<span class="sourceLineNo">390</span>        float x = (float)bounds.getX();<a name="line.390"></a>
+<span class="sourceLineNo">391</span>        float y = (float)bounds.getY();<a name="line.391"></a>
+<span class="sourceLineNo">392</span>        float w = (float)bounds.getWidth();<a name="line.392"></a>
+<span class="sourceLineNo">393</span>        float h = (float)bounds.getHeight();<a name="line.393"></a>
+<span class="sourceLineNo">394</span>        return decodeGradient((0.5f * w) + x, (0.0f * h) + y, (0.5f * w) + x, (1.0f * h) + y,<a name="line.394"></a>
+<span class="sourceLineNo">395</span>                new float[] { 0.0f,0.24251497f,1.0f },<a name="line.395"></a>
+<span class="sourceLineNo">396</span>                new Color[] { color16,<a name="line.396"></a>
+<span class="sourceLineNo">397</span>                            decodeColor(color16,color17,0.5f),<a name="line.397"></a>
+<span class="sourceLineNo">398</span>                            color17});<a name="line.398"></a>
+<span class="sourceLineNo">399</span>    }<a name="line.399"></a>
+<span class="sourceLineNo">400</span><a name="line.400"></a>
+<span class="sourceLineNo">401</span><a name="line.401"></a>
+<span class="sourceLineNo">402</span>}<a name="line.402"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

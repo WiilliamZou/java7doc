@@ -1,0 +1,715 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang.management;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * The management interface for a memory pool.  A memory pool<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * represents the memory resource managed by the Java virtual machine<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * and is managed by one or more {@link MemoryManagerMXBean memory managers}.<a name="line.31"></a>
+<span class="sourceLineNo">032</span> *<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * &lt;p&gt; A Java virtual machine has one or more instances of the<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * implementation class of this interface.  An instance<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * implementing this interface is<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * an &lt;a href="ManagementFactory.html#MXBean"&gt;MXBean&lt;/a&gt;<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * that can be obtained by calling<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * the {@link ManagementFactory#getMemoryPoolMXBeans} method or<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * from the {@link ManagementFactory#getPlatformMBeanServer<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * platform &lt;tt&gt;MBeanServer&lt;/tt&gt;} method.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;The &lt;tt&gt;ObjectName&lt;/tt&gt; for uniquely identifying the MXBean for<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * a memory pool within an &lt;tt&gt;MBeanServer&lt;/tt&gt; is:<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;blockquote&gt;<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *    {@link ManagementFactory#MEMORY_POOL_MXBEAN_DOMAIN_TYPE<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *    &lt;tt&gt;java.lang:type=MemoryPool&lt;/tt&gt;}&lt;tt&gt;,name=&lt;/tt&gt;&lt;i&gt;pool's name&lt;/i&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;/blockquote&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * It can be obtained by calling the<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * {@link PlatformManagedObject#getObjectName} method.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;h4&gt;Memory Type&lt;/h4&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;p&gt;The Java virtual machine has a heap for object allocation and also<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * maintains non-heap memory for the method area and the Java virtual<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * machine execution.  The Java virtual machine can have one or more<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * memory pools.  Each memory pool represents a memory area<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * of one of the following types:<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;ul&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *   &lt;li&gt;{@link MemoryType#HEAP heap}&lt;/li&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *   &lt;li&gt;{@link MemoryType#NON_HEAP non-heap}&lt;/li&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;/ul&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;h4&gt;Memory Usage Monitoring&lt;/h4&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * A memory pool has the following attributes:<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;ul&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *   &lt;li&gt;&lt;a href="#Usage"&gt;Memory usage&lt;/a&gt;&lt;/li&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *   &lt;li&gt;&lt;a href="#PeakUsage"&gt;Peak memory usage&lt;/a&gt;&lt;/li&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *   &lt;li&gt;&lt;a href="#UsageThreshold"&gt;Usage Threshold&lt;/a&gt;&lt;/li&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *   &lt;li&gt;&lt;a href="#CollectionThreshold"&gt;Collection Usage Threshold&lt;/a&gt;<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *       (only supported by some &lt;em&gt;garbage-collected&lt;/em&gt; memory pools)&lt;/li&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;/ul&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;h4&gt;&lt;a name="Usage"&gt;1. Memory Usage&lt;/a&gt;&lt;/h4&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * The {@link #getUsage} method provides an estimate<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * of the current usage of a memory pool.<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * For a garbage-collected memory pool, the amount of used memory<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * includes the memory occupied by all objects in the pool<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * including both &lt;em&gt;reachable&lt;/em&gt; and &lt;em&gt;unreachable&lt;/em&gt; objects.<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;p&gt;In general, this method is a lightweight operation for getting<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * an approximate memory usage.  For some memory pools, for example,<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * when objects are not packed contiguously, this method may be<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * an expensive operation that requires some computation to determine<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * the current memory usage.  An implementation should document when<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * this is the case.<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * &lt;h4&gt;&lt;a name="PeakUsage"&gt;2. Peak Memory Usage&lt;/a&gt;&lt;/h4&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * The Java virtual machine maintains the peak memory usage of a memory<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * pool since the virtual machine was started or the peak was reset.<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * The peak memory usage is returned by the {@link #getPeakUsage} method<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * and reset by calling the {@link #resetPeakUsage} method.<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;h4&gt;&lt;a name="UsageThreshold"&gt;3. Usage Threshold&lt;/a&gt;&lt;/h4&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span> *<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * Each memory pool has a manageable attribute<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * called the &lt;i&gt;usage threshold&lt;/i&gt; which has a default value supplied<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * by the Java virtual machine.  The default value is platform-dependent.<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * The usage threshold can be set via the<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * {@link #setUsageThreshold setUsageThreshold} method.<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * If the threshold is set to a positive value, the usage threshold crossing<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * checking is enabled in this memory pool.<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * If the usage threshold is set to zero, usage<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * threshold crossing checking on this memory pool is disabled.<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * The {@link MemoryPoolMXBean#isUsageThresholdSupported} method can<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * be used to determine if this functionality is supported.<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * &lt;p&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * A Java virtual machine performs usage threshold crossing checking on a<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * memory pool basis at its best appropriate time, typically,<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * at garbage collection time.<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * Each memory pool maintains a {@link #getUsageThresholdCount<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * usage threshold count} that will get incremented<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * every time when the Java virtual machine<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * detects that the memory pool usage is crossing the threshold.<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * &lt;p&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * This manageable usage threshold attribute is designed for monitoring the<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * increasing trend of memory usage with low overhead.<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * Usage threshold may not be appropriate for some memory pools.<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * For example, a generational garbage collector, a common garbage collection<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * algorithm used in many Java virtual machine implementations,<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * manages two or more generations segregating objects by age.<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * Most of the objects are allocated in<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * the &lt;em&gt;youngest generation&lt;/em&gt; (say a nursery memory pool).<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * The nursery memory pool is designed to be filled up and<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * collecting the nursery memory pool will free most of its memory space<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * since it is expected to contain mostly short-lived objects<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * and mostly are unreachable at garbage collection time.<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * In this case, it is more appropriate for the nursery memory pool<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * not to support a usage threshold.  In addition,<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * if the cost of an object allocation<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * in one memory pool is very low (for example, just atomic pointer exchange),<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * the Java virtual machine would probably not support the usage threshold<a name="line.134"></a>
+<span class="sourceLineNo">135</span> * for that memory pool since the overhead in comparing the usage with<a name="line.135"></a>
+<span class="sourceLineNo">136</span> * the threshold is higher than the cost of object allocation.<a name="line.136"></a>
+<span class="sourceLineNo">137</span> *<a name="line.137"></a>
+<span class="sourceLineNo">138</span> * &lt;p&gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span> * The memory usage of the system can be monitored using<a name="line.139"></a>
+<span class="sourceLineNo">140</span> * &lt;a href="#Polling"&gt;polling&lt;/a&gt; or<a name="line.140"></a>
+<span class="sourceLineNo">141</span> * &lt;a href="#ThresholdNotification"&gt;threshold notification&lt;/a&gt; mechanisms.<a name="line.141"></a>
+<span class="sourceLineNo">142</span> *<a name="line.142"></a>
+<span class="sourceLineNo">143</span> * &lt;ol type="a"&gt;<a name="line.143"></a>
+<span class="sourceLineNo">144</span> *   &lt;li&gt;&lt;a name="Polling"&gt;&lt;b&gt;Polling&lt;/b&gt;&lt;/a&gt;<a name="line.144"></a>
+<span class="sourceLineNo">145</span> *       &lt;p&gt;<a name="line.145"></a>
+<span class="sourceLineNo">146</span> *       An application can continuously monitor its memory usage<a name="line.146"></a>
+<span class="sourceLineNo">147</span> *       by calling either the {@link #getUsage} method for all<a name="line.147"></a>
+<span class="sourceLineNo">148</span> *       memory pools or the {@link #isUsageThresholdExceeded} method<a name="line.148"></a>
+<span class="sourceLineNo">149</span> *       for those memory pools that support a usage threshold.<a name="line.149"></a>
+<span class="sourceLineNo">150</span> *       Below is example code that has a thread delicated for<a name="line.150"></a>
+<span class="sourceLineNo">151</span> *       task distribution and processing.  At every interval,<a name="line.151"></a>
+<span class="sourceLineNo">152</span> *       it will determine if it should receive and process new tasks based<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *       on its memory usage.  If the memory usage exceeds its usage threshold,<a name="line.153"></a>
+<span class="sourceLineNo">154</span> *       it will redistribute all outstanding tasks to other VMs and<a name="line.154"></a>
+<span class="sourceLineNo">155</span> *       stop receiving new tasks until the memory usage returns<a name="line.155"></a>
+<span class="sourceLineNo">156</span> *       below its usage threshold.<a name="line.156"></a>
+<span class="sourceLineNo">157</span> *<a name="line.157"></a>
+<span class="sourceLineNo">158</span> *       &lt;pre&gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span> *       // Assume the usage threshold is supported for this pool.<a name="line.159"></a>
+<span class="sourceLineNo">160</span> *       // Set the threshold to myThreshold above which no new tasks<a name="line.160"></a>
+<span class="sourceLineNo">161</span> *       // should be taken.<a name="line.161"></a>
+<span class="sourceLineNo">162</span> *       pool.setUsageThreshold(myThreshold);<a name="line.162"></a>
+<span class="sourceLineNo">163</span> *       ....<a name="line.163"></a>
+<span class="sourceLineNo">164</span> *<a name="line.164"></a>
+<span class="sourceLineNo">165</span> *       boolean lowMemory = false;<a name="line.165"></a>
+<span class="sourceLineNo">166</span> *       while (true) {<a name="line.166"></a>
+<span class="sourceLineNo">167</span> *          if (pool.isUsageThresholdExceeded()) {<a name="line.167"></a>
+<span class="sourceLineNo">168</span> *              // potential low memory, so redistribute tasks to other VMs<a name="line.168"></a>
+<span class="sourceLineNo">169</span> *              lowMemory = true;<a name="line.169"></a>
+<span class="sourceLineNo">170</span> *              redistributeTasks();<a name="line.170"></a>
+<span class="sourceLineNo">171</span> *              // stop receiving new tasks<a name="line.171"></a>
+<span class="sourceLineNo">172</span> *              stopReceivingTasks();<a name="line.172"></a>
+<span class="sourceLineNo">173</span> *          } else {<a name="line.173"></a>
+<span class="sourceLineNo">174</span> *              if (lowMemory) {<a name="line.174"></a>
+<span class="sourceLineNo">175</span> *                  // resume receiving tasks<a name="line.175"></a>
+<span class="sourceLineNo">176</span> *                  lowMemory = false;<a name="line.176"></a>
+<span class="sourceLineNo">177</span> *                  resumeReceivingTasks();<a name="line.177"></a>
+<span class="sourceLineNo">178</span> *              }<a name="line.178"></a>
+<span class="sourceLineNo">179</span> *              // processing outstanding task<a name="line.179"></a>
+<span class="sourceLineNo">180</span> *              ...<a name="line.180"></a>
+<span class="sourceLineNo">181</span> *          }<a name="line.181"></a>
+<span class="sourceLineNo">182</span> *          // sleep for sometime<a name="line.182"></a>
+<span class="sourceLineNo">183</span> *          try {<a name="line.183"></a>
+<span class="sourceLineNo">184</span> *              Thread.sleep(sometime);<a name="line.184"></a>
+<span class="sourceLineNo">185</span> *          } catch (InterruptedException e) {<a name="line.185"></a>
+<span class="sourceLineNo">186</span> *              ...<a name="line.186"></a>
+<span class="sourceLineNo">187</span> *          }<a name="line.187"></a>
+<span class="sourceLineNo">188</span> *       }<a name="line.188"></a>
+<span class="sourceLineNo">189</span> *       &lt;/pre&gt;<a name="line.189"></a>
+<span class="sourceLineNo">190</span> *<a name="line.190"></a>
+<span class="sourceLineNo">191</span> * &lt;hr&gt;<a name="line.191"></a>
+<span class="sourceLineNo">192</span> *       The above example does not differentiate the case where<a name="line.192"></a>
+<span class="sourceLineNo">193</span> *       the memory usage has temporarily dropped below the usage threshold<a name="line.193"></a>
+<span class="sourceLineNo">194</span> *       from the case where the memory usage remains above the threshould<a name="line.194"></a>
+<span class="sourceLineNo">195</span> *       between two iterations.  The usage threshold count returned by<a name="line.195"></a>
+<span class="sourceLineNo">196</span> *       the {@link #getUsageThresholdCount} method<a name="line.196"></a>
+<span class="sourceLineNo">197</span> *       can be used to determine<a name="line.197"></a>
+<span class="sourceLineNo">198</span> *       if the memory usage has returned below the threshold<a name="line.198"></a>
+<span class="sourceLineNo">199</span> *       between two polls.<a name="line.199"></a>
+<span class="sourceLineNo">200</span> *       &lt;p&gt;<a name="line.200"></a>
+<span class="sourceLineNo">201</span> *       Below shows another example that takes some action if a<a name="line.201"></a>
+<span class="sourceLineNo">202</span> *       memory pool is under low memory and ignores the memory usage<a name="line.202"></a>
+<span class="sourceLineNo">203</span> *       changes during the action processing time.<a name="line.203"></a>
+<span class="sourceLineNo">204</span> *<a name="line.204"></a>
+<span class="sourceLineNo">205</span> *       &lt;pre&gt;<a name="line.205"></a>
+<span class="sourceLineNo">206</span> *       // Assume the usage threshold is supported for this pool.<a name="line.206"></a>
+<span class="sourceLineNo">207</span> *       // Set the threshold to myThreshold which determines if<a name="line.207"></a>
+<span class="sourceLineNo">208</span> *       // the application will take some action under low memory condition.<a name="line.208"></a>
+<span class="sourceLineNo">209</span> *       pool.setUsageThreshold(myThreshold);<a name="line.209"></a>
+<span class="sourceLineNo">210</span> *<a name="line.210"></a>
+<span class="sourceLineNo">211</span> *       int prevCrossingCount = 0;<a name="line.211"></a>
+<span class="sourceLineNo">212</span> *       while (true) {<a name="line.212"></a>
+<span class="sourceLineNo">213</span> *           // A busy loop to detect when the memory usage<a name="line.213"></a>
+<span class="sourceLineNo">214</span> *           // has exceeded the threshold.<a name="line.214"></a>
+<span class="sourceLineNo">215</span> *           while (!pool.isUsageThresholdExceeded() ||<a name="line.215"></a>
+<span class="sourceLineNo">216</span> *                  pool.getUsageThresholdCount() == prevCrossingCount) {<a name="line.216"></a>
+<span class="sourceLineNo">217</span> *               try {<a name="line.217"></a>
+<span class="sourceLineNo">218</span> *                   Thread.sleep(sometime)<a name="line.218"></a>
+<span class="sourceLineNo">219</span> *               } catch (InterruptException e) {<a name="line.219"></a>
+<span class="sourceLineNo">220</span> *                   ....<a name="line.220"></a>
+<span class="sourceLineNo">221</span> *               }<a name="line.221"></a>
+<span class="sourceLineNo">222</span> *           }<a name="line.222"></a>
+<span class="sourceLineNo">223</span> *<a name="line.223"></a>
+<span class="sourceLineNo">224</span> *           // Do some processing such as check for memory usage<a name="line.224"></a>
+<span class="sourceLineNo">225</span> *           // and issue a warning<a name="line.225"></a>
+<span class="sourceLineNo">226</span> *           ....<a name="line.226"></a>
+<span class="sourceLineNo">227</span> *<a name="line.227"></a>
+<span class="sourceLineNo">228</span> *           // Gets the current threshold count. The busy loop will then<a name="line.228"></a>
+<span class="sourceLineNo">229</span> *           // ignore any crossing of threshold happens during the processing.<a name="line.229"></a>
+<span class="sourceLineNo">230</span> *           prevCrossingCount = pool.getUsageThresholdCount();<a name="line.230"></a>
+<span class="sourceLineNo">231</span> *       }<a name="line.231"></a>
+<span class="sourceLineNo">232</span> *       &lt;/pre&gt;&lt;hr&gt;<a name="line.232"></a>
+<span class="sourceLineNo">233</span> *   &lt;/li&gt;<a name="line.233"></a>
+<span class="sourceLineNo">234</span> *   &lt;li&gt;&lt;a name="ThresholdNotification"&gt;&lt;b&gt;Usage Threshold Notifications&lt;/b&gt;&lt;/a&gt;<a name="line.234"></a>
+<span class="sourceLineNo">235</span> *       &lt;p&gt;<a name="line.235"></a>
+<span class="sourceLineNo">236</span> *       Usage threshold notification will be emitted by {@link MemoryMXBean}.<a name="line.236"></a>
+<span class="sourceLineNo">237</span> *       When the Java virtual machine detects that the memory usage of<a name="line.237"></a>
+<span class="sourceLineNo">238</span> *       a memory pool has reached or exceeded the usage threshold<a name="line.238"></a>
+<span class="sourceLineNo">239</span> *       the virtual machine will trigger the &lt;tt&gt;MemoryMXBean&lt;/tt&gt; to emit an<a name="line.239"></a>
+<span class="sourceLineNo">240</span> *       {@link MemoryNotificationInfo#MEMORY_THRESHOLD_EXCEEDED<a name="line.240"></a>
+<span class="sourceLineNo">241</span> *       usage threshold exceeded notification}.<a name="line.241"></a>
+<span class="sourceLineNo">242</span> *       Another usage threshold exceeded notification will not be<a name="line.242"></a>
+<span class="sourceLineNo">243</span> *       generated until the usage has fallen below the threshold and<a name="line.243"></a>
+<span class="sourceLineNo">244</span> *       then exceeded it again.<a name="line.244"></a>
+<span class="sourceLineNo">245</span> *       &lt;p&gt;<a name="line.245"></a>
+<span class="sourceLineNo">246</span> *       Below is an example code implementing the same logic as the<a name="line.246"></a>
+<span class="sourceLineNo">247</span> *       first example above but using the usage threshold notification<a name="line.247"></a>
+<span class="sourceLineNo">248</span> *       mechanism to detect low memory conditions instead of polling.<a name="line.248"></a>
+<span class="sourceLineNo">249</span> *       In this example code, upon receiving notification, the notification<a name="line.249"></a>
+<span class="sourceLineNo">250</span> *       listener notifies another thread to perform the actual action<a name="line.250"></a>
+<span class="sourceLineNo">251</span> *       such as to redistribute outstanding tasks, stop receiving tasks,<a name="line.251"></a>
+<span class="sourceLineNo">252</span> *       or resume receiving tasks.<a name="line.252"></a>
+<span class="sourceLineNo">253</span> *       The &lt;tt&gt;handleNotification&lt;/tt&gt; method should be designed to<a name="line.253"></a>
+<span class="sourceLineNo">254</span> *       do a very minimal amount of work and return without delay to avoid<a name="line.254"></a>
+<span class="sourceLineNo">255</span> *       causing delay in delivering subsequent notifications.  Time-consuming<a name="line.255"></a>
+<span class="sourceLineNo">256</span> *       actions should be performed by a separate thread.<a name="line.256"></a>
+<span class="sourceLineNo">257</span> *       The notification listener may be invoked by multiple threads<a name="line.257"></a>
+<span class="sourceLineNo">258</span> *       concurrently; so the tasks performed by the listener<a name="line.258"></a>
+<span class="sourceLineNo">259</span> *       should be properly synchronized.<a name="line.259"></a>
+<span class="sourceLineNo">260</span> *<a name="line.260"></a>
+<span class="sourceLineNo">261</span> *       &lt;pre&gt;<a name="line.261"></a>
+<span class="sourceLineNo">262</span> *       class MyListener implements javax.management.NotificationListener {<a name="line.262"></a>
+<span class="sourceLineNo">263</span> *            public void handleNotification(Notification notification, Object handback)  {<a name="line.263"></a>
+<span class="sourceLineNo">264</span> *                String notifType = notification.getType();<a name="line.264"></a>
+<span class="sourceLineNo">265</span> *                if (notifType.equals(MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED)) {<a name="line.265"></a>
+<span class="sourceLineNo">266</span> *                    // potential low memory, notify another thread<a name="line.266"></a>
+<span class="sourceLineNo">267</span> *                    // to redistribute outstanding tasks to other VMs<a name="line.267"></a>
+<span class="sourceLineNo">268</span> *                    // and stop receiving new tasks.<a name="line.268"></a>
+<span class="sourceLineNo">269</span> *                    lowMemory = true;<a name="line.269"></a>
+<span class="sourceLineNo">270</span> *                    notifyAnotherThread(lowMemory);<a name="line.270"></a>
+<span class="sourceLineNo">271</span> *                }<a name="line.271"></a>
+<span class="sourceLineNo">272</span> *            }<a name="line.272"></a>
+<span class="sourceLineNo">273</span> *       }<a name="line.273"></a>
+<span class="sourceLineNo">274</span> *<a name="line.274"></a>
+<span class="sourceLineNo">275</span> *       // Register MyListener with MemoryMXBean<a name="line.275"></a>
+<span class="sourceLineNo">276</span> *       MemoryMXBean mbean = ManagementFactory.getMemoryMXBean();<a name="line.276"></a>
+<span class="sourceLineNo">277</span> *       NotificationEmitter emitter = (NotificationEmitter) mbean;<a name="line.277"></a>
+<span class="sourceLineNo">278</span> *       MyListener listener = new MyListener();<a name="line.278"></a>
+<span class="sourceLineNo">279</span> *       emitter.addNotificationListener(listener, null, null);<a name="line.279"></a>
+<span class="sourceLineNo">280</span> *<a name="line.280"></a>
+<span class="sourceLineNo">281</span> *       // Assume this pool supports a usage threshold.<a name="line.281"></a>
+<span class="sourceLineNo">282</span> *       // Set the threshold to myThreshold above which no new tasks<a name="line.282"></a>
+<span class="sourceLineNo">283</span> *       // should be taken.<a name="line.283"></a>
+<span class="sourceLineNo">284</span> *       pool.setUsageThreshold(myThreshold);<a name="line.284"></a>
+<span class="sourceLineNo">285</span> *<a name="line.285"></a>
+<span class="sourceLineNo">286</span> *       // Usage threshold detection is enabled and notification will be<a name="line.286"></a>
+<span class="sourceLineNo">287</span> *       // handled by MyListener.  Continue for other processing.<a name="line.287"></a>
+<span class="sourceLineNo">288</span> *       ....<a name="line.288"></a>
+<span class="sourceLineNo">289</span> *<a name="line.289"></a>
+<span class="sourceLineNo">290</span> *       &lt;/pre&gt;<a name="line.290"></a>
+<span class="sourceLineNo">291</span> * &lt;hr&gt;<a name="line.291"></a>
+<span class="sourceLineNo">292</span> *       &lt;p&gt;<a name="line.292"></a>
+<span class="sourceLineNo">293</span> *       There is no guarantee about when the &lt;tt&gt;MemoryMXBean&lt;/tt&gt; will emit<a name="line.293"></a>
+<span class="sourceLineNo">294</span> *       a threshold notification and when the notification will be delivered.<a name="line.294"></a>
+<span class="sourceLineNo">295</span> *       When a notification listener is invoked, the memory usage of<a name="line.295"></a>
+<span class="sourceLineNo">296</span> *       the memory pool may have crossed the usage threshold more<a name="line.296"></a>
+<span class="sourceLineNo">297</span> *       than once.<a name="line.297"></a>
+<span class="sourceLineNo">298</span> *       The {@link MemoryNotificationInfo#getCount} method returns the number<a name="line.298"></a>
+<span class="sourceLineNo">299</span> *       of times that the memory usage has crossed the usage threshold<a name="line.299"></a>
+<span class="sourceLineNo">300</span> *       at the point in time when the notification was constructed.<a name="line.300"></a>
+<span class="sourceLineNo">301</span> *       It can be compared with the current usage threshold count returned<a name="line.301"></a>
+<span class="sourceLineNo">302</span> *       by the {@link #getUsageThresholdCount} method to determine if<a name="line.302"></a>
+<span class="sourceLineNo">303</span> *       such situation has occurred.<a name="line.303"></a>
+<span class="sourceLineNo">304</span> *   &lt;/li&gt;<a name="line.304"></a>
+<span class="sourceLineNo">305</span> * &lt;/ol&gt;<a name="line.305"></a>
+<span class="sourceLineNo">306</span> *<a name="line.306"></a>
+<span class="sourceLineNo">307</span> * &lt;h4&gt;&lt;a name="CollectionThreshold"&gt;4. Collection Usage Threshold&lt;/a&gt;&lt;/h4&gt;<a name="line.307"></a>
+<span class="sourceLineNo">308</span> *<a name="line.308"></a>
+<span class="sourceLineNo">309</span> * Collection usage threshold is a manageable attribute only applicable<a name="line.309"></a>
+<span class="sourceLineNo">310</span> * to some garbage-collected memory pools.<a name="line.310"></a>
+<span class="sourceLineNo">311</span> * After a Java virtual machine has expended effort in reclaiming memory<a name="line.311"></a>
+<span class="sourceLineNo">312</span> * space by recycling unused objects in a memory pool at garbage collection<a name="line.312"></a>
+<span class="sourceLineNo">313</span> * time, some number of bytes in the memory pools that are garbaged<a name="line.313"></a>
+<span class="sourceLineNo">314</span> * collected will still be in use.  The collection usage threshold<a name="line.314"></a>
+<span class="sourceLineNo">315</span> * allows a value to be set for this number of bytes such<a name="line.315"></a>
+<span class="sourceLineNo">316</span> * that if the threshold is exceeded,<a name="line.316"></a>
+<span class="sourceLineNo">317</span> * a {@link MemoryNotificationInfo#MEMORY_THRESHOLD_EXCEEDED<a name="line.317"></a>
+<span class="sourceLineNo">318</span> * collection usage threshold exceeded notification}<a name="line.318"></a>
+<span class="sourceLineNo">319</span> * will be emitted by the {@link MemoryMXBean}.<a name="line.319"></a>
+<span class="sourceLineNo">320</span> * In addition, the {@link #getCollectionUsageThresholdCount<a name="line.320"></a>
+<span class="sourceLineNo">321</span> * collection usage threshold count} will then be incremented.<a name="line.321"></a>
+<span class="sourceLineNo">322</span> *<a name="line.322"></a>
+<span class="sourceLineNo">323</span> * &lt;p&gt;<a name="line.323"></a>
+<span class="sourceLineNo">324</span> * The {@link MemoryPoolMXBean#isCollectionUsageThresholdSupported} method can<a name="line.324"></a>
+<span class="sourceLineNo">325</span> * be used to determine if this functionality is supported.<a name="line.325"></a>
+<span class="sourceLineNo">326</span> *<a name="line.326"></a>
+<span class="sourceLineNo">327</span> * &lt;p&gt;<a name="line.327"></a>
+<span class="sourceLineNo">328</span> * A Java virtual machine performs collection usage threshold checking<a name="line.328"></a>
+<span class="sourceLineNo">329</span> * on a memory pool basis.  This checking is enabled if the collection<a name="line.329"></a>
+<span class="sourceLineNo">330</span> * usage threshold is set to a positive value.<a name="line.330"></a>
+<span class="sourceLineNo">331</span> * If the collection usage threshold is set to zero, this checking<a name="line.331"></a>
+<span class="sourceLineNo">332</span> * is disabled on this memory pool.  Default value is zero.<a name="line.332"></a>
+<span class="sourceLineNo">333</span> * The Java virtual machine performs the collection usage threshold<a name="line.333"></a>
+<span class="sourceLineNo">334</span> * checking at garbage collection time.<a name="line.334"></a>
+<span class="sourceLineNo">335</span> *<a name="line.335"></a>
+<span class="sourceLineNo">336</span> * &lt;p&gt;<a name="line.336"></a>
+<span class="sourceLineNo">337</span> * Some garbage-collected memory pools may<a name="line.337"></a>
+<span class="sourceLineNo">338</span> * choose not to support the collection usage threshold.  For example,<a name="line.338"></a>
+<span class="sourceLineNo">339</span> * a memory pool is only managed by a continuous concurrent garbage<a name="line.339"></a>
+<span class="sourceLineNo">340</span> * collector.  Objects can be allocated in this memory pool by some thread<a name="line.340"></a>
+<span class="sourceLineNo">341</span> * while the unused objects are reclaimed by the concurrent garbage<a name="line.341"></a>
+<span class="sourceLineNo">342</span> * collector simultaneously.  Unless there is a well-defined<a name="line.342"></a>
+<span class="sourceLineNo">343</span> * garbage collection time which is the best appropriate time<a name="line.343"></a>
+<span class="sourceLineNo">344</span> * to check the memory usage, the collection usage threshold should not<a name="line.344"></a>
+<span class="sourceLineNo">345</span> * be supported.<a name="line.345"></a>
+<span class="sourceLineNo">346</span> *<a name="line.346"></a>
+<span class="sourceLineNo">347</span> * &lt;p&gt;<a name="line.347"></a>
+<span class="sourceLineNo">348</span> * The collection usage threshold is designed for monitoring the memory usage<a name="line.348"></a>
+<span class="sourceLineNo">349</span> * after the Java virtual machine has expended effort in reclaiming<a name="line.349"></a>
+<span class="sourceLineNo">350</span> * memory space.  The collection usage could also be monitored<a name="line.350"></a>
+<span class="sourceLineNo">351</span> * by the polling and threshold notification mechanism<a name="line.351"></a>
+<span class="sourceLineNo">352</span> * described above for the &lt;a href="#UsageThreshold"&gt;usage threshold&lt;/a&gt;<a name="line.352"></a>
+<span class="sourceLineNo">353</span> * in a similar fashion.<a name="line.353"></a>
+<span class="sourceLineNo">354</span> *<a name="line.354"></a>
+<span class="sourceLineNo">355</span> * @see ManagementFactory#getPlatformMXBeans(Class)<a name="line.355"></a>
+<span class="sourceLineNo">356</span> * @see &lt;a href="../../../javax/management/package-summary.html"&gt;<a name="line.356"></a>
+<span class="sourceLineNo">357</span> *      JMX Specification.&lt;/a&gt;<a name="line.357"></a>
+<span class="sourceLineNo">358</span> * @see &lt;a href="package-summary.html#examples"&gt;<a name="line.358"></a>
+<span class="sourceLineNo">359</span> *      Ways to Access MXBeans&lt;/a&gt;<a name="line.359"></a>
+<span class="sourceLineNo">360</span> *<a name="line.360"></a>
+<span class="sourceLineNo">361</span> * @author  Mandy Chung<a name="line.361"></a>
+<span class="sourceLineNo">362</span> * @since   1.5<a name="line.362"></a>
+<span class="sourceLineNo">363</span> */<a name="line.363"></a>
+<span class="sourceLineNo">364</span>public interface MemoryPoolMXBean extends PlatformManagedObject {<a name="line.364"></a>
+<span class="sourceLineNo">365</span>    /**<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * Returns the name representing this memory pool.<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     *<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * @return the name of this memory pool.<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     */<a name="line.369"></a>
+<span class="sourceLineNo">370</span>    public String getName();<a name="line.370"></a>
+<span class="sourceLineNo">371</span><a name="line.371"></a>
+<span class="sourceLineNo">372</span>    /**<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * Returns the type of this memory pool.<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     *<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * &lt;p&gt;<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * &lt;b&gt;MBeanServer access&lt;/b&gt;:&lt;br&gt;<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * The mapped type of &lt;tt&gt;MemoryType&lt;/tt&gt; is &lt;tt&gt;String&lt;/tt&gt;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     * and the value is the name of the &lt;tt&gt;MemoryType&lt;/tt&gt;.<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     *<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * @return the type of this memory pool.<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     */<a name="line.381"></a>
+<span class="sourceLineNo">382</span>    public MemoryType getType();<a name="line.382"></a>
+<span class="sourceLineNo">383</span><a name="line.383"></a>
+<span class="sourceLineNo">384</span>    /**<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * Returns an estimate of the memory usage of this memory pool.<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * This method returns &lt;tt&gt;null&lt;/tt&gt;<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * if this memory pool is not valid (i.e. no longer exists).<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     *<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * &lt;p&gt;<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * This method requests the Java virtual machine to make<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * a best-effort estimate of the current memory usage of this<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * memory pool. For some memory pools, this method may be an<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * expensive operation that requires some computation to determine<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * the estimate.  An implementation should document when<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * this is the case.<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     *<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * &lt;p&gt;This method is designed for use in monitoring system<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * memory usage and detecting low memory condition.<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     *<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * &lt;p&gt;<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     * &lt;b&gt;MBeanServer access&lt;/b&gt;:&lt;br&gt;<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * The mapped type of &lt;tt&gt;MemoryUsage&lt;/tt&gt; is<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * &lt;tt&gt;CompositeData&lt;/tt&gt; with attributes as specified in<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * {@link MemoryUsage#from MemoryUsage}.<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     *<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * @return a {@link MemoryUsage} object; or &lt;tt&gt;null&lt;/tt&gt; if<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * this pool not valid.<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     */<a name="line.408"></a>
+<span class="sourceLineNo">409</span>    public MemoryUsage getUsage();<a name="line.409"></a>
+<span class="sourceLineNo">410</span><a name="line.410"></a>
+<span class="sourceLineNo">411</span>    /**<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * Returns the peak memory usage of this memory pool since the<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     * Java virtual machine was started or since the peak was reset.<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     * This method returns &lt;tt&gt;null&lt;/tt&gt;<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     * if this memory pool is not valid (i.e. no longer exists).<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     *<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     * &lt;p&gt;<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * &lt;b&gt;MBeanServer access&lt;/b&gt;:&lt;br&gt;<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * The mapped type of &lt;tt&gt;MemoryUsage&lt;/tt&gt; is<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * &lt;tt&gt;CompositeData&lt;/tt&gt; with attributes as specified in<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * {@link MemoryUsage#from MemoryUsage}.<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     *<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     * @return a {@link MemoryUsage} object representing the peak<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * memory usage; or &lt;tt&gt;null&lt;/tt&gt; if this pool is not valid.<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     *<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     */<a name="line.426"></a>
+<span class="sourceLineNo">427</span>    public MemoryUsage getPeakUsage();<a name="line.427"></a>
+<span class="sourceLineNo">428</span><a name="line.428"></a>
+<span class="sourceLineNo">429</span>    /**<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * Resets the peak memory usage statistic of this memory pool<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * to the current memory usage.<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     *<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     * @throws java.lang.SecurityException if a security manager<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     *         exists and the caller does not have<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     *         ManagementPermission("control").<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     */<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    public void resetPeakUsage();<a name="line.437"></a>
+<span class="sourceLineNo">438</span><a name="line.438"></a>
+<span class="sourceLineNo">439</span>    /**<a name="line.439"></a>
+<span class="sourceLineNo">440</span>     * Tests if this memory pool is valid in the Java virtual<a name="line.440"></a>
+<span class="sourceLineNo">441</span>     * machine.  A memory pool becomes invalid once the Java virtual<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     * machine removes it from the memory system.<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     *<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if the memory pool is valid in the running<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     *              Java virtual machine;<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     *         &lt;tt&gt;false&lt;/tt&gt; otherwise.<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     */<a name="line.447"></a>
+<span class="sourceLineNo">448</span>    public boolean isValid();<a name="line.448"></a>
+<span class="sourceLineNo">449</span><a name="line.449"></a>
+<span class="sourceLineNo">450</span>    /**<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     * Returns the name of memory managers that manages this memory pool.<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     * Each memory pool will be managed by at least one memory manager.<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     *<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     * @return an array of &lt;tt&gt;String&lt;/tt&gt; objects, each is the name of<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * a memory manager managing this memory pool.<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     */<a name="line.456"></a>
+<span class="sourceLineNo">457</span>    public String[] getMemoryManagerNames();<a name="line.457"></a>
+<span class="sourceLineNo">458</span><a name="line.458"></a>
+<span class="sourceLineNo">459</span>    /**<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     * Returns the usage threshold value of this memory pool in bytes.<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     * Each memory pool has a platform-dependent default threshold value.<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     * The current usage threshold can be changed via the<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     * {@link #setUsageThreshold setUsageThreshold} method.<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     *<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     * @return the usage threshold value of this memory pool in bytes.<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     *<a name="line.466"></a>
+<span class="sourceLineNo">467</span>     * @throws UnsupportedOperationException if this memory pool<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     *         does not support a usage threshold.<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     *<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     * @see #isUsageThresholdSupported<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     */<a name="line.471"></a>
+<span class="sourceLineNo">472</span>    public long getUsageThreshold();<a name="line.472"></a>
+<span class="sourceLineNo">473</span><a name="line.473"></a>
+<span class="sourceLineNo">474</span>    /**<a name="line.474"></a>
+<span class="sourceLineNo">475</span>     * Sets the threshold of this memory pool to the given &lt;tt&gt;threshold&lt;/tt&gt;<a name="line.475"></a>
+<span class="sourceLineNo">476</span>     * value if this memory pool supports the usage threshold.<a name="line.476"></a>
+<span class="sourceLineNo">477</span>     * The usage threshold crossing checking is enabled in this memory pool<a name="line.477"></a>
+<span class="sourceLineNo">478</span>     * if the threshold is set to a positive value.<a name="line.478"></a>
+<span class="sourceLineNo">479</span>     * The usage threshold crossing checking is disabled<a name="line.479"></a>
+<span class="sourceLineNo">480</span>     * if it is set to zero.<a name="line.480"></a>
+<span class="sourceLineNo">481</span>     *<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     * @param threshold the new threshold value in bytes. Must be non-negative.<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     *<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * @throws IllegalArgumentException if &lt;tt&gt;threshold&lt;/tt&gt; is negative<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     *         or greater than the maximum amount of memory for<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     *         this memory pool if defined.<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     *<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     * @throws UnsupportedOperationException if this memory pool<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     *         does not support a usage threshold.<a name="line.489"></a>
+<span class="sourceLineNo">490</span>     *<a name="line.490"></a>
+<span class="sourceLineNo">491</span>     * @throws java.lang.SecurityException if a security manager<a name="line.491"></a>
+<span class="sourceLineNo">492</span>     *         exists and the caller does not have<a name="line.492"></a>
+<span class="sourceLineNo">493</span>     *         ManagementPermission("control").<a name="line.493"></a>
+<span class="sourceLineNo">494</span>     *<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     * @see #isUsageThresholdSupported<a name="line.495"></a>
+<span class="sourceLineNo">496</span>     * @see &lt;a href="#UsageThreshold"&gt;Usage threshold&lt;/a&gt;<a name="line.496"></a>
+<span class="sourceLineNo">497</span>     */<a name="line.497"></a>
+<span class="sourceLineNo">498</span>    public void setUsageThreshold(long threshold);<a name="line.498"></a>
+<span class="sourceLineNo">499</span><a name="line.499"></a>
+<span class="sourceLineNo">500</span>    /**<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * Tests if the memory usage of this memory pool<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * reaches or exceeds its usage threshold value.<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     *<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if the memory usage of<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     * this memory pool reaches or exceeds the threshold value;<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     * &lt;tt&gt;false&lt;/tt&gt; otherwise.<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     *<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     * @throws UnsupportedOperationException if this memory pool<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     *         does not support a usage threshold.<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     */<a name="line.510"></a>
+<span class="sourceLineNo">511</span>    public boolean isUsageThresholdExceeded();<a name="line.511"></a>
+<span class="sourceLineNo">512</span><a name="line.512"></a>
+<span class="sourceLineNo">513</span>    /**<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     * Returns the number of times that the memory usage has crossed<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     * the usage threshold.<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     *<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * @return the number of times that the memory usage<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     * has crossed its usage threshold value.<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     *<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     * @throws UnsupportedOperationException if this memory pool<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * does not support a usage threshold.<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     */<a name="line.522"></a>
+<span class="sourceLineNo">523</span>    public long getUsageThresholdCount();<a name="line.523"></a>
+<span class="sourceLineNo">524</span><a name="line.524"></a>
+<span class="sourceLineNo">525</span>    /**<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     * Tests if this memory pool supports usage threshold.<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     *<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this memory pool supports usage threshold;<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     * &lt;tt&gt;false&lt;/tt&gt; otherwise.<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     */<a name="line.530"></a>
+<span class="sourceLineNo">531</span>    public boolean isUsageThresholdSupported();<a name="line.531"></a>
+<span class="sourceLineNo">532</span><a name="line.532"></a>
+<span class="sourceLineNo">533</span>    /**<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * Returns the collection usage threshold value of this memory pool<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     * in bytes.  The default value is zero. The collection usage<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * threshold can be changed via the<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * {@link #setCollectionUsageThreshold setCollectionUsageThreshold} method.<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     *<a name="line.538"></a>
+<span class="sourceLineNo">539</span>     * @return the collection usage threshold of this memory pool in bytes.<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     *<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     * @throws UnsupportedOperationException if this memory pool<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     *         does not support a collection usage threshold.<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     *<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     * @see #isCollectionUsageThresholdSupported<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     */<a name="line.545"></a>
+<span class="sourceLineNo">546</span>    public long getCollectionUsageThreshold();<a name="line.546"></a>
+<span class="sourceLineNo">547</span><a name="line.547"></a>
+<span class="sourceLineNo">548</span>    /**<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     * Sets the collection usage threshold of this memory pool to<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     * the given &lt;tt&gt;threshold&lt;/tt&gt; value.<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     * When this threshold is set to positive, the Java virtual machine<a name="line.551"></a>
+<span class="sourceLineNo">552</span>     * will check the memory usage at its best appropriate time after it has<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     * expended effort in recycling unused objects in this memory pool.<a name="line.553"></a>
+<span class="sourceLineNo">554</span>     * &lt;p&gt;<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     * The collection usage threshold crossing checking is enabled<a name="line.555"></a>
+<span class="sourceLineNo">556</span>     * in this memory pool if the threshold is set to a positive value.<a name="line.556"></a>
+<span class="sourceLineNo">557</span>     * The collection usage threshold crossing checking is disabled<a name="line.557"></a>
+<span class="sourceLineNo">558</span>     * if it is set to zero.<a name="line.558"></a>
+<span class="sourceLineNo">559</span>     *<a name="line.559"></a>
+<span class="sourceLineNo">560</span>     * @param threshold the new collection usage threshold value in bytes.<a name="line.560"></a>
+<span class="sourceLineNo">561</span>     *              Must be non-negative.<a name="line.561"></a>
+<span class="sourceLineNo">562</span>     *<a name="line.562"></a>
+<span class="sourceLineNo">563</span>     * @throws IllegalArgumentException if &lt;tt&gt;threshold&lt;/tt&gt; is negative<a name="line.563"></a>
+<span class="sourceLineNo">564</span>     *         or greater than the maximum amount of memory for<a name="line.564"></a>
+<span class="sourceLineNo">565</span>     *         this memory pool if defined.<a name="line.565"></a>
+<span class="sourceLineNo">566</span>     *<a name="line.566"></a>
+<span class="sourceLineNo">567</span>     * @throws UnsupportedOperationException if this memory pool<a name="line.567"></a>
+<span class="sourceLineNo">568</span>     *         does not support a collection usage threshold.<a name="line.568"></a>
+<span class="sourceLineNo">569</span>     *<a name="line.569"></a>
+<span class="sourceLineNo">570</span>     * @throws java.lang.SecurityException if a security manager<a name="line.570"></a>
+<span class="sourceLineNo">571</span>     *         exists and the caller does not have<a name="line.571"></a>
+<span class="sourceLineNo">572</span>     *         ManagementPermission("control").<a name="line.572"></a>
+<span class="sourceLineNo">573</span>     *<a name="line.573"></a>
+<span class="sourceLineNo">574</span>     * @see #isCollectionUsageThresholdSupported<a name="line.574"></a>
+<span class="sourceLineNo">575</span>     * @see &lt;a href="#CollectionThreshold"&gt;Collection usage threshold&lt;/a&gt;<a name="line.575"></a>
+<span class="sourceLineNo">576</span>     */<a name="line.576"></a>
+<span class="sourceLineNo">577</span>    public void setCollectionUsageThreshold(long threshold);<a name="line.577"></a>
+<span class="sourceLineNo">578</span><a name="line.578"></a>
+<span class="sourceLineNo">579</span>    /**<a name="line.579"></a>
+<span class="sourceLineNo">580</span>     * Tests if the memory usage of this memory pool after<a name="line.580"></a>
+<span class="sourceLineNo">581</span>     * the most recent collection on which the Java virtual<a name="line.581"></a>
+<span class="sourceLineNo">582</span>     * machine has expended effort has reached or<a name="line.582"></a>
+<span class="sourceLineNo">583</span>     * exceeded its collection usage threshold.<a name="line.583"></a>
+<span class="sourceLineNo">584</span>     * This method does not request the Java virtual<a name="line.584"></a>
+<span class="sourceLineNo">585</span>     * machine to perform any garbage collection other than its normal<a name="line.585"></a>
+<span class="sourceLineNo">586</span>     * automatic memory management.<a name="line.586"></a>
+<span class="sourceLineNo">587</span>     *<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if the memory usage of this memory pool<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     * reaches or exceeds the collection usage threshold value<a name="line.589"></a>
+<span class="sourceLineNo">590</span>     * in the most recent collection;<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * &lt;tt&gt;false&lt;/tt&gt; otherwise.<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     *<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     * @throws UnsupportedOperationException if this memory pool<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     *         does not support a usage threshold.<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     */<a name="line.595"></a>
+<span class="sourceLineNo">596</span>    public boolean isCollectionUsageThresholdExceeded();<a name="line.596"></a>
+<span class="sourceLineNo">597</span><a name="line.597"></a>
+<span class="sourceLineNo">598</span>    /**<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * Returns the number of times that the Java virtual machine<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     * has detected that the memory usage has reached or<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     * exceeded the collection usage threshold.<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     *<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * @return the number of times that the memory<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * usage has reached or exceeded the collection usage threshold.<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     *<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * @throws UnsupportedOperationException if this memory pool<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     *         does not support a collection usage threshold.<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     *<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     * @see #isCollectionUsageThresholdSupported<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     */<a name="line.610"></a>
+<span class="sourceLineNo">611</span>    public long getCollectionUsageThresholdCount();<a name="line.611"></a>
+<span class="sourceLineNo">612</span><a name="line.612"></a>
+<span class="sourceLineNo">613</span>    /**<a name="line.613"></a>
+<span class="sourceLineNo">614</span>     * Returns the memory usage after the Java virtual machine<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     * most recently expended effort in recycling unused objects<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     * in this memory pool.<a name="line.616"></a>
+<span class="sourceLineNo">617</span>     * This method does not request the Java virtual<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     * machine to perform any garbage collection other than its normal<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     * automatic memory management.<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     * This method returns &lt;tt&gt;null&lt;/tt&gt; if the Java virtual<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     * machine does not support this method.<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     *<a name="line.622"></a>
+<span class="sourceLineNo">623</span>     * &lt;p&gt;<a name="line.623"></a>
+<span class="sourceLineNo">624</span>     * &lt;b&gt;MBeanServer access&lt;/b&gt;:&lt;br&gt;<a name="line.624"></a>
+<span class="sourceLineNo">625</span>     * The mapped type of &lt;tt&gt;MemoryUsage&lt;/tt&gt; is<a name="line.625"></a>
+<span class="sourceLineNo">626</span>     * &lt;tt&gt;CompositeData&lt;/tt&gt; with attributes as specified in<a name="line.626"></a>
+<span class="sourceLineNo">627</span>     * {@link MemoryUsage#from MemoryUsage}.<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     *<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     * @return a {@link MemoryUsage} representing the memory usage of<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     * this memory pool after the Java virtual machine most recently<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * expended effort in recycling unused objects;<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * &lt;tt&gt;null&lt;/tt&gt; if this method is not supported.<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     */<a name="line.633"></a>
+<span class="sourceLineNo">634</span>    public MemoryUsage getCollectionUsage();<a name="line.634"></a>
+<span class="sourceLineNo">635</span><a name="line.635"></a>
+<span class="sourceLineNo">636</span>    /**<a name="line.636"></a>
+<span class="sourceLineNo">637</span>     * Tests if this memory pool supports a collection usage threshold.<a name="line.637"></a>
+<span class="sourceLineNo">638</span>     *<a name="line.638"></a>
+<span class="sourceLineNo">639</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this memory pool supports the<a name="line.639"></a>
+<span class="sourceLineNo">640</span>     * collection usage threshold; &lt;tt&gt;false&lt;/tt&gt; otherwise.<a name="line.640"></a>
+<span class="sourceLineNo">641</span>     */<a name="line.641"></a>
+<span class="sourceLineNo">642</span>    public boolean isCollectionUsageThresholdSupported();<a name="line.642"></a>
+<span class="sourceLineNo">643</span>}<a name="line.643"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

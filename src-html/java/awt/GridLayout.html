@@ -1,0 +1,553 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1995, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * The &lt;code&gt;GridLayout&lt;/code&gt; class is a layout manager that<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * lays out a container's components in a rectangular grid.<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * The container is divided into equal-sized rectangles,<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * and one component is placed in each rectangle.<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * For example, the following is an applet that lays out six buttons<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * into three rows and two columns:<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;p&gt;<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;hr&gt;&lt;blockquote&gt;<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;pre&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * import java.awt.*;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * import java.applet.Applet;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * public class ButtonGrid extends Applet {<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *     public void init() {<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *         setLayout(new GridLayout(3,2));<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *         add(new Button("1"));<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *         add(new Button("2"));<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *         add(new Button("3"));<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *         add(new Button("4"));<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *         add(new Button("5"));<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *         add(new Button("6"));<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *     }<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * }<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;/pre&gt;&lt;/blockquote&gt;&lt;hr&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;p&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * If the container's &lt;code&gt;ComponentOrientation&lt;/code&gt; property is horizontal<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * and left-to-right, the above example produces the output shown in Figure 1.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * If the container's &lt;code&gt;ComponentOrientation&lt;/code&gt; property is horizontal<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * and right-to-left, the example produces the output shown in Figure 2.<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;p&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;center&gt;&lt;table COLS=2 WIDTH=600 summary="layout"&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * &lt;tr ALIGN=CENTER&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;td&gt;&lt;img SRC="doc-files/GridLayout-1.gif"<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *      alt="Shows 6 buttons in rows of 2. Row 1 shows buttons 1 then 2.<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * Row 2 shows buttons 3 then 4. Row 3 shows buttons 5 then 6."&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;/td&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * &lt;td ALIGN=CENTER&gt;&lt;img SRC="doc-files/GridLayout-2.gif"<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *                   alt="Shows 6 buttons in rows of 2. Row 1 shows buttons 2 then 1.<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * Row 2 shows buttons 4 then 3. Row 3 shows buttons 6 then 5."&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;/td&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * &lt;/tr&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;tr ALIGN=CENTER&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;td&gt;Figure 1: Horizontal, Left-to-Right&lt;/td&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;td&gt;Figure 2: Horizontal, Right-to-Left&lt;/td&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;/tr&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * &lt;/table&gt;&lt;/center&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &lt;p&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * When both the number of rows and the number of columns have<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * been set to non-zero values, either by a constructor or<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * by the &lt;tt&gt;setRows&lt;/tt&gt; and &lt;tt&gt;setColumns&lt;/tt&gt; methods, the number of<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * columns specified is ignored.  Instead, the number of<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * columns is determined from the specified number of rows<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * and the total number of components in the layout. So, for<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * example, if three rows and two columns have been specified<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * and nine components are added to the layout, they will<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * be displayed as three rows of three columns.  Specifying<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * the number of columns affects the layout only when the<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * number of rows is set to zero.<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * @author  Arthur van Hoff<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * @since   JDK1.0<a name="line.91"></a>
+<span class="sourceLineNo">092</span> */<a name="line.92"></a>
+<span class="sourceLineNo">093</span>public class GridLayout implements LayoutManager, java.io.Serializable {<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    /*<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * serialVersionUID<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     */<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    private static final long serialVersionUID = -7411804673224730901L;<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * This is the horizontal gap (in pixels) which specifies the space<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * between columns.  They can be changed at any time.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * This should be a non-negative integer.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     *<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @serial<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * @see #getHgap()<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * @see #setHgap(int)<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     */<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    int hgap;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    /**<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * This is the vertical gap (in pixels) which specifies the space<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * between rows.  They can be changed at any time.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * This should be a non negative integer.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @serial<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @see #getVgap()<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * @see #setVgap(int)<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     */<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    int vgap;<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    /**<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * This is the number of rows specified for the grid.  The number<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * of rows can be changed at any time.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * This should be a non negative integer, where '0' means<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * 'any number' meaning that the number of Rows in that<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * dimension depends on the other dimension.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     *<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * @serial<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * @see #getRows()<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @see #setRows(int)<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     */<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    int rows;<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    /**<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * This is the number of columns specified for the grid.  The number<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * of columns can be changed at any time.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * This should be a non negative integer, where '0' means<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * 'any number' meaning that the number of Columns in that<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * dimension depends on the other dimension.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @serial<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @see #getColumns()<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * @see #setColumns(int)<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     */<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    int cols;<a name="line.142"></a>
+<span class="sourceLineNo">143</span><a name="line.143"></a>
+<span class="sourceLineNo">144</span>    /**<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * Creates a grid layout with a default of one column per component,<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * in a single row.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @since JDK1.1<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    public GridLayout() {<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        this(1, 0, 0, 0);<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    }<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    /**<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * Creates a grid layout with the specified number of rows and<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * columns. All components in the layout are given equal size.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * &lt;p&gt;<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * One, but not both, of &lt;code&gt;rows&lt;/code&gt; and &lt;code&gt;cols&lt;/code&gt; can<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * be zero, which means that any number of objects can be placed in a<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * row or in a column.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @param     rows   the rows, with the value zero meaning<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *                   any number of rows.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @param     cols   the columns, with the value zero meaning<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     *                   any number of columns.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     */<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    public GridLayout(int rows, int cols) {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        this(rows, cols, 0, 0);<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    }<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>    /**<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * Creates a grid layout with the specified number of rows and<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * columns. All components in the layout are given equal size.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * &lt;p&gt;<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * In addition, the horizontal and vertical gaps are set to the<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * specified values. Horizontal gaps are placed between each<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * of the columns. Vertical gaps are placed between each of<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * the rows.<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * &lt;p&gt;<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * One, but not both, of &lt;code&gt;rows&lt;/code&gt; and &lt;code&gt;cols&lt;/code&gt; can<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * be zero, which means that any number of objects can be placed in a<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * row or in a column.<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * &lt;p&gt;<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * All &lt;code&gt;GridLayout&lt;/code&gt; constructors defer to this one.<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * @param     rows   the rows, with the value zero meaning<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     *                   any number of rows<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * @param     cols   the columns, with the value zero meaning<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *                   any number of columns<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * @param     hgap   the horizontal gap<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * @param     vgap   the vertical gap<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * @exception   IllegalArgumentException  if the value of both<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     *                  &lt;code&gt;rows&lt;/code&gt; and &lt;code&gt;cols&lt;/code&gt; is<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     *                  set to zero<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     */<a name="line.192"></a>
+<span class="sourceLineNo">193</span>    public GridLayout(int rows, int cols, int hgap, int vgap) {<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        if ((rows == 0) &amp;&amp; (cols == 0)) {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>            throw new IllegalArgumentException("rows and cols cannot both be zero");<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        }<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        this.rows = rows;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        this.cols = cols;<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        this.hgap = hgap;<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        this.vgap = vgap;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>    }<a name="line.201"></a>
+<span class="sourceLineNo">202</span><a name="line.202"></a>
+<span class="sourceLineNo">203</span>    /**<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * Gets the number of rows in this layout.<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * @return    the number of rows in this layout<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * @since     JDK1.1<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     */<a name="line.207"></a>
+<span class="sourceLineNo">208</span>    public int getRows() {<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        return rows;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    }<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>    /**<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * Sets the number of rows in this layout to the specified value.<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * @param        rows   the number of rows in this layout<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * @exception    IllegalArgumentException  if the value of both<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *               &lt;code&gt;rows&lt;/code&gt; and &lt;code&gt;cols&lt;/code&gt; is set to zero<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @since        JDK1.1<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     */<a name="line.218"></a>
+<span class="sourceLineNo">219</span>    public void setRows(int rows) {<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        if ((rows == 0) &amp;&amp; (this.cols == 0)) {<a name="line.220"></a>
+<span class="sourceLineNo">221</span>            throw new IllegalArgumentException("rows and cols cannot both be zero");<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        }<a name="line.222"></a>
+<span class="sourceLineNo">223</span>        this.rows = rows;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    }<a name="line.224"></a>
+<span class="sourceLineNo">225</span><a name="line.225"></a>
+<span class="sourceLineNo">226</span>    /**<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * Gets the number of columns in this layout.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * @return     the number of columns in this layout<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * @since      JDK1.1<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     */<a name="line.230"></a>
+<span class="sourceLineNo">231</span>    public int getColumns() {<a name="line.231"></a>
+<span class="sourceLineNo">232</span>        return cols;<a name="line.232"></a>
+<span class="sourceLineNo">233</span>    }<a name="line.233"></a>
+<span class="sourceLineNo">234</span><a name="line.234"></a>
+<span class="sourceLineNo">235</span>    /**<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * Sets the number of columns in this layout to the specified value.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * Setting the number of columns has no affect on the layout<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * if the number of rows specified by a constructor or by<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * the &lt;tt&gt;setRows&lt;/tt&gt; method is non-zero. In that case, the number<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * of columns displayed in the layout is determined by the total<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * number of components and the number of rows specified.<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * @param        cols   the number of columns in this layout<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * @exception    IllegalArgumentException  if the value of both<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     *               &lt;code&gt;rows&lt;/code&gt; and &lt;code&gt;cols&lt;/code&gt; is set to zero<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * @since        JDK1.1<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     */<a name="line.246"></a>
+<span class="sourceLineNo">247</span>    public void setColumns(int cols) {<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        if ((cols == 0) &amp;&amp; (this.rows == 0)) {<a name="line.248"></a>
+<span class="sourceLineNo">249</span>            throw new IllegalArgumentException("rows and cols cannot both be zero");<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        }<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        this.cols = cols;<a name="line.251"></a>
+<span class="sourceLineNo">252</span>    }<a name="line.252"></a>
+<span class="sourceLineNo">253</span><a name="line.253"></a>
+<span class="sourceLineNo">254</span>    /**<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * Gets the horizontal gap between components.<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @return       the horizontal gap between components<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * @since        JDK1.1<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     */<a name="line.258"></a>
+<span class="sourceLineNo">259</span>    public int getHgap() {<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        return hgap;<a name="line.260"></a>
+<span class="sourceLineNo">261</span>    }<a name="line.261"></a>
+<span class="sourceLineNo">262</span><a name="line.262"></a>
+<span class="sourceLineNo">263</span>    /**<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * Sets the horizontal gap between components to the specified value.<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * @param        hgap   the horizontal gap between components<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * @since        JDK1.1<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     */<a name="line.267"></a>
+<span class="sourceLineNo">268</span>    public void setHgap(int hgap) {<a name="line.268"></a>
+<span class="sourceLineNo">269</span>        this.hgap = hgap;<a name="line.269"></a>
+<span class="sourceLineNo">270</span>    }<a name="line.270"></a>
+<span class="sourceLineNo">271</span><a name="line.271"></a>
+<span class="sourceLineNo">272</span>    /**<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * Gets the vertical gap between components.<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * @return       the vertical gap between components<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * @since        JDK1.1<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     */<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    public int getVgap() {<a name="line.277"></a>
+<span class="sourceLineNo">278</span>        return vgap;<a name="line.278"></a>
+<span class="sourceLineNo">279</span>    }<a name="line.279"></a>
+<span class="sourceLineNo">280</span><a name="line.280"></a>
+<span class="sourceLineNo">281</span>    /**<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * Sets the vertical gap between components to the specified value.<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * @param         vgap  the vertical gap between components<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * @since        JDK1.1<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     */<a name="line.285"></a>
+<span class="sourceLineNo">286</span>    public void setVgap(int vgap) {<a name="line.286"></a>
+<span class="sourceLineNo">287</span>        this.vgap = vgap;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>    }<a name="line.288"></a>
+<span class="sourceLineNo">289</span><a name="line.289"></a>
+<span class="sourceLineNo">290</span>    /**<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * Adds the specified component with the specified name to the layout.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * @param name the name of the component<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * @param comp the component to be added<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     */<a name="line.294"></a>
+<span class="sourceLineNo">295</span>    public void addLayoutComponent(String name, Component comp) {<a name="line.295"></a>
+<span class="sourceLineNo">296</span>    }<a name="line.296"></a>
+<span class="sourceLineNo">297</span><a name="line.297"></a>
+<span class="sourceLineNo">298</span>    /**<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * Removes the specified component from the layout.<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * @param comp the component to be removed<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     */<a name="line.301"></a>
+<span class="sourceLineNo">302</span>    public void removeLayoutComponent(Component comp) {<a name="line.302"></a>
+<span class="sourceLineNo">303</span>    }<a name="line.303"></a>
+<span class="sourceLineNo">304</span><a name="line.304"></a>
+<span class="sourceLineNo">305</span>    /**<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * Determines the preferred size of the container argument using<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * this grid layout.<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * &lt;p&gt;<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * The preferred width of a grid layout is the largest preferred<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * width of all of the components in the container times the number of<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * columns, plus the horizontal padding times the number of columns<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * minus one, plus the left and right insets of the target container.<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * &lt;p&gt;<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * The preferred height of a grid layout is the largest preferred<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * height of all of the components in the container times the number of<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * rows, plus the vertical padding times the number of rows minus one,<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * plus the top and bottom insets of the target container.<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     *<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * @param     parent   the container in which to do the layout<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * @return    the preferred dimensions to lay out the<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     *                      subcomponents of the specified container<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * @see       java.awt.GridLayout#minimumLayoutSize<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * @see       java.awt.Container#getPreferredSize()<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     */<a name="line.324"></a>
+<span class="sourceLineNo">325</span>    public Dimension preferredLayoutSize(Container parent) {<a name="line.325"></a>
+<span class="sourceLineNo">326</span>      synchronized (parent.getTreeLock()) {<a name="line.326"></a>
+<span class="sourceLineNo">327</span>        Insets insets = parent.getInsets();<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        int ncomponents = parent.getComponentCount();<a name="line.328"></a>
+<span class="sourceLineNo">329</span>        int nrows = rows;<a name="line.329"></a>
+<span class="sourceLineNo">330</span>        int ncols = cols;<a name="line.330"></a>
+<span class="sourceLineNo">331</span><a name="line.331"></a>
+<span class="sourceLineNo">332</span>        if (nrows &gt; 0) {<a name="line.332"></a>
+<span class="sourceLineNo">333</span>            ncols = (ncomponents + nrows - 1) / nrows;<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        } else {<a name="line.334"></a>
+<span class="sourceLineNo">335</span>            nrows = (ncomponents + ncols - 1) / ncols;<a name="line.335"></a>
+<span class="sourceLineNo">336</span>        }<a name="line.336"></a>
+<span class="sourceLineNo">337</span>        int w = 0;<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        int h = 0;<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        for (int i = 0 ; i &lt; ncomponents ; i++) {<a name="line.339"></a>
+<span class="sourceLineNo">340</span>            Component comp = parent.getComponent(i);<a name="line.340"></a>
+<span class="sourceLineNo">341</span>            Dimension d = comp.getPreferredSize();<a name="line.341"></a>
+<span class="sourceLineNo">342</span>            if (w &lt; d.width) {<a name="line.342"></a>
+<span class="sourceLineNo">343</span>                w = d.width;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>            }<a name="line.344"></a>
+<span class="sourceLineNo">345</span>            if (h &lt; d.height) {<a name="line.345"></a>
+<span class="sourceLineNo">346</span>                h = d.height;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>            }<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        }<a name="line.348"></a>
+<span class="sourceLineNo">349</span>        return new Dimension(insets.left + insets.right + ncols*w + (ncols-1)*hgap,<a name="line.349"></a>
+<span class="sourceLineNo">350</span>                             insets.top + insets.bottom + nrows*h + (nrows-1)*vgap);<a name="line.350"></a>
+<span class="sourceLineNo">351</span>      }<a name="line.351"></a>
+<span class="sourceLineNo">352</span>    }<a name="line.352"></a>
+<span class="sourceLineNo">353</span><a name="line.353"></a>
+<span class="sourceLineNo">354</span>    /**<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * Determines the minimum size of the container argument using this<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * grid layout.<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * &lt;p&gt;<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * The minimum width of a grid layout is the largest minimum width<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * of all of the components in the container times the number of columns,<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * plus the horizontal padding times the number of columns minus one,<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * plus the left and right insets of the target container.<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * &lt;p&gt;<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * The minimum height of a grid layout is the largest minimum height<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * of all of the components in the container times the number of rows,<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * plus the vertical padding times the number of rows minus one, plus<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * the top and bottom insets of the target container.<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     *<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * @param       parent   the container in which to do the layout<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * @return      the minimum dimensions needed to lay out the<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     *                      subcomponents of the specified container<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * @see         java.awt.GridLayout#preferredLayoutSize<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * @see         java.awt.Container#doLayout<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     */<a name="line.373"></a>
+<span class="sourceLineNo">374</span>    public Dimension minimumLayoutSize(Container parent) {<a name="line.374"></a>
+<span class="sourceLineNo">375</span>      synchronized (parent.getTreeLock()) {<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        Insets insets = parent.getInsets();<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        int ncomponents = parent.getComponentCount();<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        int nrows = rows;<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        int ncols = cols;<a name="line.379"></a>
+<span class="sourceLineNo">380</span><a name="line.380"></a>
+<span class="sourceLineNo">381</span>        if (nrows &gt; 0) {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            ncols = (ncomponents + nrows - 1) / nrows;<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        } else {<a name="line.383"></a>
+<span class="sourceLineNo">384</span>            nrows = (ncomponents + ncols - 1) / ncols;<a name="line.384"></a>
+<span class="sourceLineNo">385</span>        }<a name="line.385"></a>
+<span class="sourceLineNo">386</span>        int w = 0;<a name="line.386"></a>
+<span class="sourceLineNo">387</span>        int h = 0;<a name="line.387"></a>
+<span class="sourceLineNo">388</span>        for (int i = 0 ; i &lt; ncomponents ; i++) {<a name="line.388"></a>
+<span class="sourceLineNo">389</span>            Component comp = parent.getComponent(i);<a name="line.389"></a>
+<span class="sourceLineNo">390</span>            Dimension d = comp.getMinimumSize();<a name="line.390"></a>
+<span class="sourceLineNo">391</span>            if (w &lt; d.width) {<a name="line.391"></a>
+<span class="sourceLineNo">392</span>                w = d.width;<a name="line.392"></a>
+<span class="sourceLineNo">393</span>            }<a name="line.393"></a>
+<span class="sourceLineNo">394</span>            if (h &lt; d.height) {<a name="line.394"></a>
+<span class="sourceLineNo">395</span>                h = d.height;<a name="line.395"></a>
+<span class="sourceLineNo">396</span>            }<a name="line.396"></a>
+<span class="sourceLineNo">397</span>        }<a name="line.397"></a>
+<span class="sourceLineNo">398</span>        return new Dimension(insets.left + insets.right + ncols*w + (ncols-1)*hgap,<a name="line.398"></a>
+<span class="sourceLineNo">399</span>                             insets.top + insets.bottom + nrows*h + (nrows-1)*vgap);<a name="line.399"></a>
+<span class="sourceLineNo">400</span>      }<a name="line.400"></a>
+<span class="sourceLineNo">401</span>    }<a name="line.401"></a>
+<span class="sourceLineNo">402</span><a name="line.402"></a>
+<span class="sourceLineNo">403</span>    /**<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * Lays out the specified container using this layout.<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * &lt;p&gt;<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * This method reshapes the components in the specified target<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * container in order to satisfy the constraints of the<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * &lt;code&gt;GridLayout&lt;/code&gt; object.<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * &lt;p&gt;<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * The grid layout manager determines the size of individual<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * components by dividing the free space in the container into<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * equal-sized portions according to the number of rows and columns<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     * in the layout. The container's free space equals the container's<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     * size minus any insets and any specified horizontal or vertical<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     * gap. All components in a grid layout are given the same size.<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     *<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     * @param      parent   the container in which to do the layout<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * @see        java.awt.Container<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * @see        java.awt.Container#doLayout<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     */<a name="line.420"></a>
+<span class="sourceLineNo">421</span>    public void layoutContainer(Container parent) {<a name="line.421"></a>
+<span class="sourceLineNo">422</span>      synchronized (parent.getTreeLock()) {<a name="line.422"></a>
+<span class="sourceLineNo">423</span>        Insets insets = parent.getInsets();<a name="line.423"></a>
+<span class="sourceLineNo">424</span>        int ncomponents = parent.getComponentCount();<a name="line.424"></a>
+<span class="sourceLineNo">425</span>        int nrows = rows;<a name="line.425"></a>
+<span class="sourceLineNo">426</span>        int ncols = cols;<a name="line.426"></a>
+<span class="sourceLineNo">427</span>        boolean ltr = parent.getComponentOrientation().isLeftToRight();<a name="line.427"></a>
+<span class="sourceLineNo">428</span><a name="line.428"></a>
+<span class="sourceLineNo">429</span>        if (ncomponents == 0) {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>            return;<a name="line.430"></a>
+<span class="sourceLineNo">431</span>        }<a name="line.431"></a>
+<span class="sourceLineNo">432</span>        if (nrows &gt; 0) {<a name="line.432"></a>
+<span class="sourceLineNo">433</span>            ncols = (ncomponents + nrows - 1) / nrows;<a name="line.433"></a>
+<span class="sourceLineNo">434</span>        } else {<a name="line.434"></a>
+<span class="sourceLineNo">435</span>            nrows = (ncomponents + ncols - 1) / ncols;<a name="line.435"></a>
+<span class="sourceLineNo">436</span>        }<a name="line.436"></a>
+<span class="sourceLineNo">437</span>        // 4370316. To position components in the center we should:<a name="line.437"></a>
+<span class="sourceLineNo">438</span>        // 1. get an amount of extra space within Container<a name="line.438"></a>
+<span class="sourceLineNo">439</span>        // 2. incorporate half of that value to the left/top position<a name="line.439"></a>
+<span class="sourceLineNo">440</span>        // Note that we use trancating division for widthOnComponent<a name="line.440"></a>
+<span class="sourceLineNo">441</span>        // The reminder goes to extraWidthAvailable<a name="line.441"></a>
+<span class="sourceLineNo">442</span>        int totalGapsWidth = (ncols - 1) * hgap;<a name="line.442"></a>
+<span class="sourceLineNo">443</span>        int widthWOInsets = parent.width - (insets.left + insets.right);<a name="line.443"></a>
+<span class="sourceLineNo">444</span>        int widthOnComponent = (widthWOInsets - totalGapsWidth) / ncols;<a name="line.444"></a>
+<span class="sourceLineNo">445</span>        int extraWidthAvailable = (widthWOInsets - (widthOnComponent * ncols + totalGapsWidth)) / 2;<a name="line.445"></a>
+<span class="sourceLineNo">446</span><a name="line.446"></a>
+<span class="sourceLineNo">447</span>        int totalGapsHeight = (nrows - 1) * vgap;<a name="line.447"></a>
+<span class="sourceLineNo">448</span>        int heightWOInsets = parent.height - (insets.top + insets.bottom);<a name="line.448"></a>
+<span class="sourceLineNo">449</span>        int heightOnComponent = (heightWOInsets - totalGapsHeight) / nrows;<a name="line.449"></a>
+<span class="sourceLineNo">450</span>        int extraHeightAvailable = (heightWOInsets - (heightOnComponent * nrows + totalGapsHeight)) / 2;<a name="line.450"></a>
+<span class="sourceLineNo">451</span>        if (ltr) {<a name="line.451"></a>
+<span class="sourceLineNo">452</span>            for (int c = 0, x = insets.left + extraWidthAvailable; c &lt; ncols ; c++, x += widthOnComponent + hgap) {<a name="line.452"></a>
+<span class="sourceLineNo">453</span>                for (int r = 0, y = insets.top + extraHeightAvailable; r &lt; nrows ; r++, y += heightOnComponent + vgap) {<a name="line.453"></a>
+<span class="sourceLineNo">454</span>                    int i = r * ncols + c;<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                    if (i &lt; ncomponents) {<a name="line.455"></a>
+<span class="sourceLineNo">456</span>                        parent.getComponent(i).setBounds(x, y, widthOnComponent, heightOnComponent);<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                    }<a name="line.457"></a>
+<span class="sourceLineNo">458</span>                }<a name="line.458"></a>
+<span class="sourceLineNo">459</span>            }<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        } else {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>            for (int c = 0, x = (parent.width - insets.right - widthOnComponent) - extraWidthAvailable; c &lt; ncols ; c++, x -= widthOnComponent + hgap) {<a name="line.461"></a>
+<span class="sourceLineNo">462</span>                for (int r = 0, y = insets.top + extraHeightAvailable; r &lt; nrows ; r++, y += heightOnComponent + vgap) {<a name="line.462"></a>
+<span class="sourceLineNo">463</span>                    int i = r * ncols + c;<a name="line.463"></a>
+<span class="sourceLineNo">464</span>                    if (i &lt; ncomponents) {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                        parent.getComponent(i).setBounds(x, y, widthOnComponent, heightOnComponent);<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                    }<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                }<a name="line.467"></a>
+<span class="sourceLineNo">468</span>            }<a name="line.468"></a>
+<span class="sourceLineNo">469</span>        }<a name="line.469"></a>
+<span class="sourceLineNo">470</span>      }<a name="line.470"></a>
+<span class="sourceLineNo">471</span>    }<a name="line.471"></a>
+<span class="sourceLineNo">472</span><a name="line.472"></a>
+<span class="sourceLineNo">473</span>    /**<a name="line.473"></a>
+<span class="sourceLineNo">474</span>     * Returns the string representation of this grid layout's values.<a name="line.474"></a>
+<span class="sourceLineNo">475</span>     * @return     a string representation of this grid layout<a name="line.475"></a>
+<span class="sourceLineNo">476</span>     */<a name="line.476"></a>
+<span class="sourceLineNo">477</span>    public String toString() {<a name="line.477"></a>
+<span class="sourceLineNo">478</span>        return getClass().getName() + "[hgap=" + hgap + ",vgap=" + vgap +<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                                       ",rows=" + rows + ",cols=" + cols + "]";<a name="line.479"></a>
+<span class="sourceLineNo">480</span>    }<a name="line.480"></a>
+<span class="sourceLineNo">481</span>}<a name="line.481"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

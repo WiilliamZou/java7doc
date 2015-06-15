@@ -1,0 +1,528 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.util;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * The root interface in the &lt;i&gt;collection hierarchy&lt;/i&gt;.  A collection<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * represents a group of objects, known as its &lt;i&gt;elements&lt;/i&gt;.  Some<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * collections allow duplicate elements and others do not.  Some are ordered<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * and others unordered.  The JDK does not provide any &lt;i&gt;direct&lt;/i&gt;<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * implementations of this interface: it provides implementations of more<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * specific subinterfaces like &lt;tt&gt;Set&lt;/tt&gt; and &lt;tt&gt;List&lt;/tt&gt;.  This interface<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * is typically used to pass collections around and manipulate them where<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * maximum generality is desired.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;p&gt;&lt;i&gt;Bags&lt;/i&gt; or &lt;i&gt;multisets&lt;/i&gt; (unordered collections that may contain<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * duplicate elements) should implement this interface directly.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;p&gt;All general-purpose &lt;tt&gt;Collection&lt;/tt&gt; implementation classes (which<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * typically implement &lt;tt&gt;Collection&lt;/tt&gt; indirectly through one of its<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * subinterfaces) should provide two "standard" constructors: a void (no<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * arguments) constructor, which creates an empty collection, and a<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * constructor with a single argument of type &lt;tt&gt;Collection&lt;/tt&gt;, which<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * creates a new collection with the same elements as its argument.  In<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * effect, the latter constructor allows the user to copy any collection,<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * producing an equivalent collection of the desired implementation type.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * There is no way to enforce this convention (as interfaces cannot contain<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * constructors) but all of the general-purpose &lt;tt&gt;Collection&lt;/tt&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * implementations in the Java platform libraries comply.<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;p&gt;The "destructive" methods contained in this interface, that is, the<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * methods that modify the collection on which they operate, are specified to<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * throw &lt;tt&gt;UnsupportedOperationException&lt;/tt&gt; if this collection does not<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * support the operation.  If this is the case, these methods may, but are not<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * required to, throw an &lt;tt&gt;UnsupportedOperationException&lt;/tt&gt; if the<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * invocation would have no effect on the collection.  For example, invoking<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * the {@link #addAll(Collection)} method on an unmodifiable collection may,<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * but is not required to, throw the exception if the collection to be added<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * is empty.<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;p&gt;&lt;a name="optional-restrictions"/&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * Some collection implementations have restrictions on the elements that<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * they may contain.  For example, some implementations prohibit null elements,<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * and some have restrictions on the types of their elements.  Attempting to<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * add an ineligible element throws an unchecked exception, typically<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;tt&gt;NullPointerException&lt;/tt&gt; or &lt;tt&gt;ClassCastException&lt;/tt&gt;.  Attempting<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * to query the presence of an ineligible element may throw an exception,<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * or it may simply return false; some implementations will exhibit the former<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * behavior and some will exhibit the latter.  More generally, attempting an<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * operation on an ineligible element whose completion would not result in<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * the insertion of an ineligible element into the collection may throw an<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * exception or it may succeed, at the option of the implementation.<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * Such exceptions are marked as "optional" in the specification for this<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * interface.<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * &lt;p&gt;It is up to each collection to determine its own synchronization<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * policy.  In the absence of a stronger guarantee by the<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * implementation, undefined behavior may result from the invocation<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * of any method on a collection that is being mutated by another<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * thread; this includes direct invocations, passing the collection to<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * a method that might perform invocations, and using an existing<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * iterator to examine the collection.<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;p&gt;Many methods in Collections Framework interfaces are defined in<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * terms of the {@link Object#equals(Object) equals} method.  For example,<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * the specification for the {@link #contains(Object) contains(Object o)}<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * method says: "returns &lt;tt&gt;true&lt;/tt&gt; if and only if this collection<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * contains at least one element &lt;tt&gt;e&lt;/tt&gt; such that<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;tt&gt;(o==null ? e==null : o.equals(e))&lt;/tt&gt;."  This specification should<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * &lt;i&gt;not&lt;/i&gt; be construed to imply that invoking &lt;tt&gt;Collection.contains&lt;/tt&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * with a non-null argument &lt;tt&gt;o&lt;/tt&gt; will cause &lt;tt&gt;o.equals(e)&lt;/tt&gt; to be<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * invoked for any element &lt;tt&gt;e&lt;/tt&gt;.  Implementations are free to implement<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * optimizations whereby the &lt;tt&gt;equals&lt;/tt&gt; invocation is avoided, for<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * example, by first comparing the hash codes of the two elements.  (The<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * {@link Object#hashCode()} specification guarantees that two objects with<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * unequal hash codes cannot be equal.)  More generally, implementations of<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * the various Collections Framework interfaces are free to take advantage of<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * the specified behavior of underlying {@link Object} methods wherever the<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * implementor deems it appropriate.<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * &lt;p&gt;This interface is a member of the<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * &lt;a href="{@docRoot}/../technotes/guides/collections/index.html"&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * Java Collections Framework&lt;/a&gt;.<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * @param &lt;E&gt; the type of elements in this collection<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * @author  Josh Bloch<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * @author  Neal Gafter<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * @see     Set<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * @see     List<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * @see     Map<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * @see     SortedSet<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * @see     SortedMap<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * @see     HashSet<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * @see     TreeSet<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * @see     ArrayList<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * @see     LinkedList<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * @see     Vector<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * @see     Collections<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * @see     Arrays<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * @see     AbstractCollection<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * @since 1.2<a name="line.124"></a>
+<span class="sourceLineNo">125</span> */<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>public interface Collection&lt;E&gt; extends Iterable&lt;E&gt; {<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    // Query Operations<a name="line.128"></a>
+<span class="sourceLineNo">129</span><a name="line.129"></a>
+<span class="sourceLineNo">130</span>    /**<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * Returns the number of elements in this collection.  If this collection<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * contains more than &lt;tt&gt;Integer.MAX_VALUE&lt;/tt&gt; elements, returns<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * &lt;tt&gt;Integer.MAX_VALUE&lt;/tt&gt;.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * @return the number of elements in this collection<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     */<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    int size();<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    /**<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * Returns &lt;tt&gt;true&lt;/tt&gt; if this collection contains no elements.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this collection contains no elements<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     */<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    boolean isEmpty();<a name="line.144"></a>
+<span class="sourceLineNo">145</span><a name="line.145"></a>
+<span class="sourceLineNo">146</span>    /**<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * Returns &lt;tt&gt;true&lt;/tt&gt; if this collection contains the specified element.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * More formally, returns &lt;tt&gt;true&lt;/tt&gt; if and only if this collection<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * contains at least one element &lt;tt&gt;e&lt;/tt&gt; such that<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * &lt;tt&gt;(o==null&amp;nbsp;?&amp;nbsp;e==null&amp;nbsp;:&amp;nbsp;o.equals(e))&lt;/tt&gt;.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     *<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * @param o element whose presence in this collection is to be tested<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this collection contains the specified<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *         element<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @throws ClassCastException if the type of the specified element<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *         is incompatible with this collection<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * @throws NullPointerException if the specified element is null and this<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *         collection does not permit null elements<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     */<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    boolean contains(Object o);<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>    /**<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * Returns an iterator over the elements in this collection.  There are no<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * guarantees concerning the order in which the elements are returned<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * (unless this collection is an instance of some class that provides a<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * guarantee).<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * @return an &lt;tt&gt;Iterator&lt;/tt&gt; over the elements in this collection<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     */<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    Iterator&lt;E&gt; iterator();<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>    /**<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * Returns an array containing all of the elements in this collection.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * If this collection makes any guarantees as to what order its elements<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * are returned by its iterator, this method must return the elements in<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * the same order.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * &lt;p&gt;The returned array will be "safe" in that no references to it are<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * maintained by this collection.  (In other words, this method must<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * allocate a new array even if this collection is backed by an array).<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * The caller is thus free to modify the returned array.<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     *<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * &lt;p&gt;This method acts as bridge between array-based and collection-based<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * APIs.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     *<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * @return an array containing all of the elements in this collection<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     */<a name="line.189"></a>
+<span class="sourceLineNo">190</span>    Object[] toArray();<a name="line.190"></a>
+<span class="sourceLineNo">191</span><a name="line.191"></a>
+<span class="sourceLineNo">192</span>    /**<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * Returns an array containing all of the elements in this collection;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * the runtime type of the returned array is that of the specified array.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * If the collection fits in the specified array, it is returned therein.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * Otherwise, a new array is allocated with the runtime type of the<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * specified array and the size of this collection.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     *<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * &lt;p&gt;If this collection fits in the specified array with room to spare<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * (i.e., the array has more elements than this collection), the element<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * in the array immediately following the end of the collection is set to<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * &lt;tt&gt;null&lt;/tt&gt;.  (This is useful in determining the length of this<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * collection &lt;i&gt;only&lt;/i&gt; if the caller knows that this collection does<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * not contain any &lt;tt&gt;null&lt;/tt&gt; elements.)<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     *<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * &lt;p&gt;If this collection makes any guarantees as to what order its elements<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * are returned by its iterator, this method must return the elements in<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * the same order.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     *<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * &lt;p&gt;Like the {@link #toArray()} method, this method acts as bridge between<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * array-based and collection-based APIs.  Further, this method allows<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * precise control over the runtime type of the output array, and may,<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * under certain circumstances, be used to save allocation costs.<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     *<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * &lt;p&gt;Suppose &lt;tt&gt;x&lt;/tt&gt; is a collection known to contain only strings.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * The following code can be used to dump the collection into a newly<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * allocated array of &lt;tt&gt;String&lt;/tt&gt;:<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * &lt;pre&gt;<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     *     String[] y = x.toArray(new String[0]);&lt;/pre&gt;<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     *<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * Note that &lt;tt&gt;toArray(new Object[0])&lt;/tt&gt; is identical in function to<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * &lt;tt&gt;toArray()&lt;/tt&gt;.<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     *<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * @param a the array into which the elements of this collection are to be<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     *        stored, if it is big enough; otherwise, a new array of the same<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     *        runtime type is allocated for this purpose.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * @return an array containing all of the elements in this collection<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * @throws ArrayStoreException if the runtime type of the specified array<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     *         is not a supertype of the runtime type of every element in<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     *         this collection<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * @throws NullPointerException if the specified array is null<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     */<a name="line.233"></a>
+<span class="sourceLineNo">234</span>    &lt;T&gt; T[] toArray(T[] a);<a name="line.234"></a>
+<span class="sourceLineNo">235</span><a name="line.235"></a>
+<span class="sourceLineNo">236</span>    // Modification Operations<a name="line.236"></a>
+<span class="sourceLineNo">237</span><a name="line.237"></a>
+<span class="sourceLineNo">238</span>    /**<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * Ensures that this collection contains the specified element (optional<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * operation).  Returns &lt;tt&gt;true&lt;/tt&gt; if this collection changed as a<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * result of the call.  (Returns &lt;tt&gt;false&lt;/tt&gt; if this collection does<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * not permit duplicates and already contains the specified element.)&lt;p&gt;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     *<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * Collections that support this operation may place limitations on what<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * elements may be added to this collection.  In particular, some<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * collections will refuse to add &lt;tt&gt;null&lt;/tt&gt; elements, and others will<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * impose restrictions on the type of elements that may be added.<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * Collection classes should clearly specify in their documentation any<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * restrictions on what elements may be added.&lt;p&gt;<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     *<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * If a collection refuses to add a particular element for any reason<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * other than that it already contains the element, it &lt;i&gt;must&lt;/i&gt; throw<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * an exception (rather than returning &lt;tt&gt;false&lt;/tt&gt;).  This preserves<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * the invariant that a collection always contains the specified element<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * after this call returns.<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     *<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * @param e element whose presence in this collection is to be ensured<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this collection changed as a result of the<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     *         call<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;add&lt;/tt&gt; operation<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     *         is not supported by this collection<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * @throws ClassCastException if the class of the specified element<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     *         prevents it from being added to this collection<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * @throws NullPointerException if the specified element is null and this<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     *         collection does not permit null elements<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * @throws IllegalArgumentException if some property of the element<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     *         prevents it from being added to this collection<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * @throws IllegalStateException if the element cannot be added at this<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     *         time due to insertion restrictions<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     */<a name="line.270"></a>
+<span class="sourceLineNo">271</span>    boolean add(E e);<a name="line.271"></a>
+<span class="sourceLineNo">272</span><a name="line.272"></a>
+<span class="sourceLineNo">273</span>    /**<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * Removes a single instance of the specified element from this<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * collection, if it is present (optional operation).  More formally,<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * removes an element &lt;tt&gt;e&lt;/tt&gt; such that<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * &lt;tt&gt;(o==null&amp;nbsp;?&amp;nbsp;e==null&amp;nbsp;:&amp;nbsp;o.equals(e))&lt;/tt&gt;, if<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * this collection contains one or more such elements.  Returns<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * &lt;tt&gt;true&lt;/tt&gt; if this collection contained the specified element (or<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * equivalently, if this collection changed as a result of the call).<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     *<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * @param o element to be removed from this collection, if present<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if an element was removed as a result of this call<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * @throws ClassCastException if the type of the specified element<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     *         is incompatible with this collection<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * @throws NullPointerException if the specified element is null and this<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     *         collection does not permit null elements<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;remove&lt;/tt&gt; operation<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     *         is not supported by this collection<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     */<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    boolean remove(Object o);<a name="line.293"></a>
+<span class="sourceLineNo">294</span><a name="line.294"></a>
+<span class="sourceLineNo">295</span><a name="line.295"></a>
+<span class="sourceLineNo">296</span>    // Bulk Operations<a name="line.296"></a>
+<span class="sourceLineNo">297</span><a name="line.297"></a>
+<span class="sourceLineNo">298</span>    /**<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * Returns &lt;tt&gt;true&lt;/tt&gt; if this collection contains all of the elements<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * in the specified collection.<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     *<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * @param  c collection to be checked for containment in this collection<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this collection contains all of the elements<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     *         in the specified collection<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * @throws ClassCastException if the types of one or more elements<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     *         in the specified collection are incompatible with this<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     *         collection<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * @throws NullPointerException if the specified collection contains one<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     *         or more null elements and this collection does not permit null<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     *         elements<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;),<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     *         or if the specified collection is null.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * @see    #contains(Object)<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     */<a name="line.315"></a>
+<span class="sourceLineNo">316</span>    boolean containsAll(Collection&lt;?&gt; c);<a name="line.316"></a>
+<span class="sourceLineNo">317</span><a name="line.317"></a>
+<span class="sourceLineNo">318</span>    /**<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * Adds all of the elements in the specified collection to this collection<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * (optional operation).  The behavior of this operation is undefined if<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * the specified collection is modified while the operation is in progress.<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * (This implies that the behavior of this call is undefined if the<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * specified collection is this collection, and this collection is<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * nonempty.)<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     *<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * @param c collection containing elements to be added to this collection<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this collection changed as a result of the call<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;addAll&lt;/tt&gt; operation<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     *         is not supported by this collection<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * @throws ClassCastException if the class of an element of the specified<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     *         collection prevents it from being added to this collection<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * @throws NullPointerException if the specified collection contains a<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     *         null element and this collection does not permit null elements,<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     *         or if the specified collection is null<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * @throws IllegalArgumentException if some property of an element of the<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     *         specified collection prevents it from being added to this<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     *         collection<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * @throws IllegalStateException if not all the elements can be added at<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     *         this time due to insertion restrictions<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * @see #add(Object)<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     */<a name="line.341"></a>
+<span class="sourceLineNo">342</span>    boolean addAll(Collection&lt;? extends E&gt; c);<a name="line.342"></a>
+<span class="sourceLineNo">343</span><a name="line.343"></a>
+<span class="sourceLineNo">344</span>    /**<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * Removes all of this collection's elements that are also contained in the<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * specified collection (optional operation).  After this call returns,<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * this collection will contain no elements in common with the specified<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * collection.<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     *<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     * @param c collection containing elements to be removed from this collection<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this collection changed as a result of the<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     *         call<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;removeAll&lt;/tt&gt; method<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     *         is not supported by this collection<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * @throws ClassCastException if the types of one or more elements<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     *         in this collection are incompatible with the specified<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     *         collection<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * @throws NullPointerException if this collection contains one or more<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     *         null elements and the specified collection does not support<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     *         null elements<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;),<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     *         or if the specified collection is null<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * @see #remove(Object)<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * @see #contains(Object)<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     */<a name="line.366"></a>
+<span class="sourceLineNo">367</span>    boolean removeAll(Collection&lt;?&gt; c);<a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>    /**<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * Retains only the elements in this collection that are contained in the<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * specified collection (optional operation).  In other words, removes from<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * this collection all of its elements that are not contained in the<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * specified collection.<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     *<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * @param c collection containing elements to be retained in this collection<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this collection changed as a result of the call<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;retainAll&lt;/tt&gt; operation<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     *         is not supported by this collection<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * @throws ClassCastException if the types of one or more elements<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     *         in this collection are incompatible with the specified<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     *         collection<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * @throws NullPointerException if this collection contains one or more<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     *         null elements and the specified collection does not permit null<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     *         elements<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     *         (&lt;a href="#optional-restrictions"&gt;optional&lt;/a&gt;),<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     *         or if the specified collection is null<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * @see #remove(Object)<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * @see #contains(Object)<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     */<a name="line.390"></a>
+<span class="sourceLineNo">391</span>    boolean retainAll(Collection&lt;?&gt; c);<a name="line.391"></a>
+<span class="sourceLineNo">392</span><a name="line.392"></a>
+<span class="sourceLineNo">393</span>    /**<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * Removes all of the elements from this collection (optional operation).<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * The collection will be empty after this method returns.<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     *<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;clear&lt;/tt&gt; operation<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     *         is not supported by this collection<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     */<a name="line.399"></a>
+<span class="sourceLineNo">400</span>    void clear();<a name="line.400"></a>
+<span class="sourceLineNo">401</span><a name="line.401"></a>
+<span class="sourceLineNo">402</span><a name="line.402"></a>
+<span class="sourceLineNo">403</span>    // Comparison and hashing<a name="line.403"></a>
+<span class="sourceLineNo">404</span><a name="line.404"></a>
+<span class="sourceLineNo">405</span>    /**<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * Compares the specified object with this collection for equality. &lt;p&gt;<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     *<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * While the &lt;tt&gt;Collection&lt;/tt&gt; interface adds no stipulations to the<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * general contract for the &lt;tt&gt;Object.equals&lt;/tt&gt;, programmers who<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * implement the &lt;tt&gt;Collection&lt;/tt&gt; interface "directly" (in other words,<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * create a class that is a &lt;tt&gt;Collection&lt;/tt&gt; but is not a &lt;tt&gt;Set&lt;/tt&gt;<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * or a &lt;tt&gt;List&lt;/tt&gt;) must exercise care if they choose to override the<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     * &lt;tt&gt;Object.equals&lt;/tt&gt;.  It is not necessary to do so, and the simplest<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     * course of action is to rely on &lt;tt&gt;Object&lt;/tt&gt;'s implementation, but<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     * the implementor may wish to implement a "value comparison" in place of<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     * the default "reference comparison."  (The &lt;tt&gt;List&lt;/tt&gt; and<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     * &lt;tt&gt;Set&lt;/tt&gt; interfaces mandate such value comparisons.)&lt;p&gt;<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     *<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * The general contract for the &lt;tt&gt;Object.equals&lt;/tt&gt; method states that<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * equals must be symmetric (in other words, &lt;tt&gt;a.equals(b)&lt;/tt&gt; if and<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * only if &lt;tt&gt;b.equals(a)&lt;/tt&gt;).  The contracts for &lt;tt&gt;List.equals&lt;/tt&gt;<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     * and &lt;tt&gt;Set.equals&lt;/tt&gt; state that lists are only equal to other lists,<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     * and sets to other sets.  Thus, a custom &lt;tt&gt;equals&lt;/tt&gt; method for a<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * collection class that implements neither the &lt;tt&gt;List&lt;/tt&gt; nor<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     * &lt;tt&gt;Set&lt;/tt&gt; interface must return &lt;tt&gt;false&lt;/tt&gt; when this collection<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     * is compared to any list or set.  (By the same logic, it is not possible<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * to write a class that correctly implements both the &lt;tt&gt;Set&lt;/tt&gt; and<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     * &lt;tt&gt;List&lt;/tt&gt; interfaces.)<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     *<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * @param o object to be compared for equality with this collection<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if the specified object is equal to this<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     * collection<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     *<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     * @see Object#equals(Object)<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     * @see Set#equals(Object)<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     * @see List#equals(Object)<a name="line.436"></a>
+<span class="sourceLineNo">437</span>     */<a name="line.437"></a>
+<span class="sourceLineNo">438</span>    boolean equals(Object o);<a name="line.438"></a>
+<span class="sourceLineNo">439</span><a name="line.439"></a>
+<span class="sourceLineNo">440</span>    /**<a name="line.440"></a>
+<span class="sourceLineNo">441</span>     * Returns the hash code value for this collection.  While the<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     * &lt;tt&gt;Collection&lt;/tt&gt; interface adds no stipulations to the general<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * contract for the &lt;tt&gt;Object.hashCode&lt;/tt&gt; method, programmers should<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     * take note that any class that overrides the &lt;tt&gt;Object.equals&lt;/tt&gt;<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     * method must also override the &lt;tt&gt;Object.hashCode&lt;/tt&gt; method in order<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     * to satisfy the general contract for the &lt;tt&gt;Object.hashCode&lt;/tt&gt; method.<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     * In particular, &lt;tt&gt;c1.equals(c2)&lt;/tt&gt; implies that<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * &lt;tt&gt;c1.hashCode()==c2.hashCode()&lt;/tt&gt;.<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     *<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * @return the hash code value for this collection<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     *<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     * @see Object#hashCode()<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     * @see Object#equals(Object)<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     */<a name="line.454"></a>
+<span class="sourceLineNo">455</span>    int hashCode();<a name="line.455"></a>
+<span class="sourceLineNo">456</span>}<a name="line.456"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,796 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2006, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.MultipleGradientPaint.CycleMethod;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.MultipleGradientPaint.ColorSpaceType;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.color.ColorSpace;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.geom.AffineTransform;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.geom.NoninvertibleTransformException;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.awt.geom.Rectangle2D;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.awt.image.ColorModel;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.awt.image.DataBuffer;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.awt.image.DataBufferInt;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.awt.image.DirectColorModel;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.awt.image.Raster;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import java.awt.image.SinglePixelPackedSampleModel;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import java.awt.image.WritableRaster;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import java.lang.ref.SoftReference;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import java.lang.ref.WeakReference;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import java.util.Arrays;<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>/**<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * This is the superclass for all PaintContexts which use a multiple color<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * gradient to fill in their raster.  It provides the actual color<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * interpolation functionality.  Subclasses only have to deal with using<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * the gradient to fill pixels in a raster.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * @author Nicholas Talian, Vincent Hardy, Jim Graham, Jerry Evans<a name="line.51"></a>
+<span class="sourceLineNo">052</span> */<a name="line.52"></a>
+<span class="sourceLineNo">053</span>abstract class MultipleGradientPaintContext implements PaintContext {<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>    /**<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * The PaintContext's ColorModel.  This is ARGB if colors are not all<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * opaque, otherwise it is RGB.<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     */<a name="line.58"></a>
+<span class="sourceLineNo">059</span>    protected ColorModel model;<a name="line.59"></a>
+<span class="sourceLineNo">060</span><a name="line.60"></a>
+<span class="sourceLineNo">061</span>    /** Color model used if gradient colors are all opaque. */<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    private static ColorModel xrgbmodel =<a name="line.62"></a>
+<span class="sourceLineNo">063</span>        new DirectColorModel(24, 0x00ff0000, 0x0000ff00, 0x000000ff);<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>    /** The cached ColorModel. */<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    protected static ColorModel cachedModel;<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>    /** The cached raster, which is reusable among instances. */<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    protected static WeakReference&lt;Raster&gt; cached;<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    /** Raster is reused whenever possible. */<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    protected Raster saved;<a name="line.72"></a>
+<span class="sourceLineNo">073</span><a name="line.73"></a>
+<span class="sourceLineNo">074</span>    /** The method to use when painting out of the gradient bounds. */<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    protected CycleMethod cycleMethod;<a name="line.75"></a>
+<span class="sourceLineNo">076</span><a name="line.76"></a>
+<span class="sourceLineNo">077</span>    /** The ColorSpace in which to perform the interpolation */<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    protected ColorSpaceType colorSpace;<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>    /** Elements of the inverse transform matrix. */<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    protected float a00, a01, a10, a11, a02, a12;<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    /**<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * This boolean specifies wether we are in simple lookup mode, where an<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * input value between 0 and 1 may be used to directly index into a single<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * array of gradient colors.  If this boolean value is false, then we have<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * to use a 2-step process where we have to determine which gradient array<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * we fall into, then determine the index into that array.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     */<a name="line.89"></a>
+<span class="sourceLineNo">090</span>    protected boolean isSimpleLookup;<a name="line.90"></a>
+<span class="sourceLineNo">091</span><a name="line.91"></a>
+<span class="sourceLineNo">092</span>    /**<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * Size of gradients array for scaling the 0-1 index when looking up<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * colors the fast way.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     */<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    protected int fastGradientArraySize;<a name="line.96"></a>
+<span class="sourceLineNo">097</span><a name="line.97"></a>
+<span class="sourceLineNo">098</span>    /**<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * Array which contains the interpolated color values for each interval,<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * used by calculateSingleArrayGradient().  It is protected for possible<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * direct access by subclasses.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     */<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    protected int[] gradient;<a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span>    /**<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * Array of gradient arrays, one array for each interval.  Used by<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * calculateMultipleArrayGradient().<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     */<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    private int[][] gradients;<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>    /** Normalized intervals array. */<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    private float[] normalizedIntervals;<a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>    /** Fractions array. */<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    private float[] fractions;<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>    /** Used to determine if gradient colors are all opaque. */<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    private int transparencyTest;<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    /** Color space conversion lookup tables. */<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    private static final int SRGBtoLinearRGB[] = new int[256];<a name="line.121"></a>
+<span class="sourceLineNo">122</span>    private static final int LinearRGBtoSRGB[] = new int[256];<a name="line.122"></a>
+<span class="sourceLineNo">123</span><a name="line.123"></a>
+<span class="sourceLineNo">124</span>    static {<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        // build the tables<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        for (int k = 0; k &lt; 256; k++) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            SRGBtoLinearRGB[k] = convertSRGBtoLinearRGB(k);<a name="line.127"></a>
+<span class="sourceLineNo">128</span>            LinearRGBtoSRGB[k] = convertLinearRGBtoSRGB(k);<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        }<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    }<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /**<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * Constant number of max colors between any 2 arbitrary colors.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * Used for creating and indexing gradients arrays.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     */<a name="line.135"></a>
+<span class="sourceLineNo">136</span>    protected static final int GRADIENT_SIZE = 256;<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    protected static final int GRADIENT_SIZE_INDEX = GRADIENT_SIZE -1;<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>    /**<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * Maximum length of the fast single-array.  If the estimated array size<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * is greater than this, switch over to the slow lookup method.<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * No particular reason for choosing this number, but it seems to provide<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * satisfactory performance for the common case (fast lookup).<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     */<a name="line.144"></a>
+<span class="sourceLineNo">145</span>    private static final int MAX_GRADIENT_ARRAY_SIZE = 5000;<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>    /**<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * Constructor for MultipleGradientPaintContext superclass.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     */<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    protected MultipleGradientPaintContext(MultipleGradientPaint mgp,<a name="line.150"></a>
+<span class="sourceLineNo">151</span>                                           ColorModel cm,<a name="line.151"></a>
+<span class="sourceLineNo">152</span>                                           Rectangle deviceBounds,<a name="line.152"></a>
+<span class="sourceLineNo">153</span>                                           Rectangle2D userBounds,<a name="line.153"></a>
+<span class="sourceLineNo">154</span>                                           AffineTransform t,<a name="line.154"></a>
+<span class="sourceLineNo">155</span>                                           RenderingHints hints,<a name="line.155"></a>
+<span class="sourceLineNo">156</span>                                           float[] fractions,<a name="line.156"></a>
+<span class="sourceLineNo">157</span>                                           Color[] colors,<a name="line.157"></a>
+<span class="sourceLineNo">158</span>                                           CycleMethod cycleMethod,<a name="line.158"></a>
+<span class="sourceLineNo">159</span>                                           ColorSpaceType colorSpace)<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    {<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        if (deviceBounds == null) {<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            throw new NullPointerException("Device bounds cannot be null");<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        }<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>        if (userBounds == null) {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            throw new NullPointerException("User bounds cannot be null");<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        }<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>        if (t == null) {<a name="line.169"></a>
+<span class="sourceLineNo">170</span>            throw new NullPointerException("Transform cannot be null");<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        }<a name="line.171"></a>
+<span class="sourceLineNo">172</span><a name="line.172"></a>
+<span class="sourceLineNo">173</span>        if (hints == null) {<a name="line.173"></a>
+<span class="sourceLineNo">174</span>            throw new NullPointerException("RenderingHints cannot be null");<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        }<a name="line.175"></a>
+<span class="sourceLineNo">176</span><a name="line.176"></a>
+<span class="sourceLineNo">177</span>        // The inverse transform is needed to go from device to user space.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        // Get all the components of the inverse transform matrix.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        AffineTransform tInv;<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        try {<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            // the following assumes that the caller has copied the incoming<a name="line.181"></a>
+<span class="sourceLineNo">182</span>            // transform and is not concerned about it being modified<a name="line.182"></a>
+<span class="sourceLineNo">183</span>            t.invert();<a name="line.183"></a>
+<span class="sourceLineNo">184</span>            tInv = t;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        } catch (NoninvertibleTransformException e) {<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            // just use identity transform in this case; better to show<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            // (incorrect) results than to throw an exception and/or no-op<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            tInv = new AffineTransform();<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        }<a name="line.189"></a>
+<span class="sourceLineNo">190</span>        double m[] = new double[6];<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        tInv.getMatrix(m);<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        a00 = (float)m[0];<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        a10 = (float)m[1];<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        a01 = (float)m[2];<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        a11 = (float)m[3];<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        a02 = (float)m[4];<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        a12 = (float)m[5];<a name="line.197"></a>
+<span class="sourceLineNo">198</span><a name="line.198"></a>
+<span class="sourceLineNo">199</span>        // copy some flags<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        this.cycleMethod = cycleMethod;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>        this.colorSpace = colorSpace;<a name="line.201"></a>
+<span class="sourceLineNo">202</span><a name="line.202"></a>
+<span class="sourceLineNo">203</span>        // we can avoid copying this array since we do not modify its values<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        this.fractions = fractions;<a name="line.204"></a>
+<span class="sourceLineNo">205</span><a name="line.205"></a>
+<span class="sourceLineNo">206</span>        // note that only one of these values can ever be non-null (we either<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        // store the fast gradient array or the slow one, but never both<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        // at the same time)<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        int[] gradient =<a name="line.209"></a>
+<span class="sourceLineNo">210</span>            (mgp.gradient != null) ? mgp.gradient.get() : null;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        int[][] gradients =<a name="line.211"></a>
+<span class="sourceLineNo">212</span>            (mgp.gradients != null) ? mgp.gradients.get() : null;<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>        if (gradient == null &amp;&amp; gradients == null) {<a name="line.214"></a>
+<span class="sourceLineNo">215</span>            // we need to (re)create the appropriate values<a name="line.215"></a>
+<span class="sourceLineNo">216</span>            calculateLookupData(colors);<a name="line.216"></a>
+<span class="sourceLineNo">217</span><a name="line.217"></a>
+<span class="sourceLineNo">218</span>            // now cache the calculated values in the<a name="line.218"></a>
+<span class="sourceLineNo">219</span>            // MultipleGradientPaint instance for future use<a name="line.219"></a>
+<span class="sourceLineNo">220</span>            mgp.model               = this.model;<a name="line.220"></a>
+<span class="sourceLineNo">221</span>            mgp.normalizedIntervals = this.normalizedIntervals;<a name="line.221"></a>
+<span class="sourceLineNo">222</span>            mgp.isSimpleLookup      = this.isSimpleLookup;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            if (isSimpleLookup) {<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                // only cache the fast array<a name="line.224"></a>
+<span class="sourceLineNo">225</span>                mgp.fastGradientArraySize = this.fastGradientArraySize;<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                mgp.gradient = new SoftReference&lt;int[]&gt;(this.gradient);<a name="line.226"></a>
+<span class="sourceLineNo">227</span>            } else {<a name="line.227"></a>
+<span class="sourceLineNo">228</span>                // only cache the slow array<a name="line.228"></a>
+<span class="sourceLineNo">229</span>                mgp.gradients = new SoftReference&lt;int[][]&gt;(this.gradients);<a name="line.229"></a>
+<span class="sourceLineNo">230</span>            }<a name="line.230"></a>
+<span class="sourceLineNo">231</span>        } else {<a name="line.231"></a>
+<span class="sourceLineNo">232</span>            // use the values cached in the MultipleGradientPaint instance<a name="line.232"></a>
+<span class="sourceLineNo">233</span>            this.model                 = mgp.model;<a name="line.233"></a>
+<span class="sourceLineNo">234</span>            this.normalizedIntervals   = mgp.normalizedIntervals;<a name="line.234"></a>
+<span class="sourceLineNo">235</span>            this.isSimpleLookup        = mgp.isSimpleLookup;<a name="line.235"></a>
+<span class="sourceLineNo">236</span>            this.gradient              = gradient;<a name="line.236"></a>
+<span class="sourceLineNo">237</span>            this.fastGradientArraySize = mgp.fastGradientArraySize;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>            this.gradients             = gradients;<a name="line.238"></a>
+<span class="sourceLineNo">239</span>        }<a name="line.239"></a>
+<span class="sourceLineNo">240</span>    }<a name="line.240"></a>
+<span class="sourceLineNo">241</span><a name="line.241"></a>
+<span class="sourceLineNo">242</span>    /**<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * This function is the meat of this class.  It calculates an array of<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * gradient colors based on an array of fractions and color values at<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * those fractions.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     */<a name="line.246"></a>
+<span class="sourceLineNo">247</span>    private void calculateLookupData(Color[] colors) {<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        Color[] normalizedColors;<a name="line.248"></a>
+<span class="sourceLineNo">249</span>        if (colorSpace == ColorSpaceType.LINEAR_RGB) {<a name="line.249"></a>
+<span class="sourceLineNo">250</span>            // create a new colors array<a name="line.250"></a>
+<span class="sourceLineNo">251</span>            normalizedColors = new Color[colors.length];<a name="line.251"></a>
+<span class="sourceLineNo">252</span>            // convert the colors using the lookup table<a name="line.252"></a>
+<span class="sourceLineNo">253</span>            for (int i = 0; i &lt; colors.length; i++) {<a name="line.253"></a>
+<span class="sourceLineNo">254</span>                int argb = colors[i].getRGB();<a name="line.254"></a>
+<span class="sourceLineNo">255</span>                int a = argb &gt;&gt;&gt; 24;<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                int r = SRGBtoLinearRGB[(argb &gt;&gt; 16) &amp; 0xff];<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                int g = SRGBtoLinearRGB[(argb &gt;&gt;  8) &amp; 0xff];<a name="line.257"></a>
+<span class="sourceLineNo">258</span>                int b = SRGBtoLinearRGB[(argb      ) &amp; 0xff];<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                normalizedColors[i] = new Color(r, g, b, a);<a name="line.259"></a>
+<span class="sourceLineNo">260</span>            }<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        } else {<a name="line.261"></a>
+<span class="sourceLineNo">262</span>            // we can just use this array by reference since we do not<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            // modify its values in the case of SRGB<a name="line.263"></a>
+<span class="sourceLineNo">264</span>            normalizedColors = colors;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>        }<a name="line.265"></a>
+<span class="sourceLineNo">266</span><a name="line.266"></a>
+<span class="sourceLineNo">267</span>        // this will store the intervals (distances) between gradient stops<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        normalizedIntervals = new float[fractions.length-1];<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span>        // convert from fractions into intervals<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        for (int i = 0; i &lt; normalizedIntervals.length; i++) {<a name="line.271"></a>
+<span class="sourceLineNo">272</span>            // interval distance is equal to the difference in positions<a name="line.272"></a>
+<span class="sourceLineNo">273</span>            normalizedIntervals[i] = this.fractions[i+1] - this.fractions[i];<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        }<a name="line.274"></a>
+<span class="sourceLineNo">275</span><a name="line.275"></a>
+<span class="sourceLineNo">276</span>        // initialize to be fully opaque for ANDing with colors<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        transparencyTest = 0xff000000;<a name="line.277"></a>
+<span class="sourceLineNo">278</span><a name="line.278"></a>
+<span class="sourceLineNo">279</span>        // array of interpolation arrays<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        gradients = new int[normalizedIntervals.length][];<a name="line.280"></a>
+<span class="sourceLineNo">281</span><a name="line.281"></a>
+<span class="sourceLineNo">282</span>        // find smallest interval<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        float Imin = 1;<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        for (int i = 0; i &lt; normalizedIntervals.length; i++) {<a name="line.284"></a>
+<span class="sourceLineNo">285</span>            Imin = (Imin &gt; normalizedIntervals[i]) ?<a name="line.285"></a>
+<span class="sourceLineNo">286</span>                normalizedIntervals[i] : Imin;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>        }<a name="line.287"></a>
+<span class="sourceLineNo">288</span><a name="line.288"></a>
+<span class="sourceLineNo">289</span>        // Estimate the size of the entire gradients array.<a name="line.289"></a>
+<span class="sourceLineNo">290</span>        // This is to prevent a tiny interval from causing the size of array<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        // to explode.  If the estimated size is too large, break to using<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        // separate arrays for each interval, and using an indexing scheme at<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        // look-up time.<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        int estimatedSize = 0;<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        for (int i = 0; i &lt; normalizedIntervals.length; i++) {<a name="line.295"></a>
+<span class="sourceLineNo">296</span>            estimatedSize += (normalizedIntervals[i]/Imin) * GRADIENT_SIZE;<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        }<a name="line.297"></a>
+<span class="sourceLineNo">298</span><a name="line.298"></a>
+<span class="sourceLineNo">299</span>        if (estimatedSize &gt; MAX_GRADIENT_ARRAY_SIZE) {<a name="line.299"></a>
+<span class="sourceLineNo">300</span>            // slow method<a name="line.300"></a>
+<span class="sourceLineNo">301</span>            calculateMultipleArrayGradient(normalizedColors);<a name="line.301"></a>
+<span class="sourceLineNo">302</span>        } else {<a name="line.302"></a>
+<span class="sourceLineNo">303</span>            // fast method<a name="line.303"></a>
+<span class="sourceLineNo">304</span>            calculateSingleArrayGradient(normalizedColors, Imin);<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        }<a name="line.305"></a>
+<span class="sourceLineNo">306</span><a name="line.306"></a>
+<span class="sourceLineNo">307</span>        // use the most "economical" model<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        if ((transparencyTest &gt;&gt;&gt; 24) == 0xff) {<a name="line.308"></a>
+<span class="sourceLineNo">309</span>            model = xrgbmodel;<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        } else {<a name="line.310"></a>
+<span class="sourceLineNo">311</span>            model = ColorModel.getRGBdefault();<a name="line.311"></a>
+<span class="sourceLineNo">312</span>        }<a name="line.312"></a>
+<span class="sourceLineNo">313</span>    }<a name="line.313"></a>
+<span class="sourceLineNo">314</span><a name="line.314"></a>
+<span class="sourceLineNo">315</span>    /**<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * FAST LOOKUP METHOD<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     *<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * This method calculates the gradient color values and places them in a<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * single int array, gradient[].  It does this by allocating space for<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * each interval based on its size relative to the smallest interval in<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * the array.  The smallest interval is allocated 255 interpolated values<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * (the maximum number of unique in-between colors in a 24 bit color<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * system), and all other intervals are allocated<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * size = (255 * the ratio of their size to the smallest interval).<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     *<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * This scheme expedites a speedy retrieval because the colors are<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * distributed along the array according to their user-specified<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * distribution.  All that is needed is a relative index from 0 to 1.<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     *<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * The only problem with this method is that the possibility exists for<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * the array size to balloon in the case where there is a<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * disproportionately small gradient interval.  In this case the other<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * intervals will be allocated huge space, but much of that data is<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * redundant.  We thus need to use the space conserving scheme below.<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     *<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * @param Imin the size of the smallest interval<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     */<a name="line.337"></a>
+<span class="sourceLineNo">338</span>    private void calculateSingleArrayGradient(Color[] colors, float Imin) {<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        // set the flag so we know later it is a simple (fast) lookup<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        isSimpleLookup = true;<a name="line.340"></a>
+<span class="sourceLineNo">341</span><a name="line.341"></a>
+<span class="sourceLineNo">342</span>        // 2 colors to interpolate<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        int rgb1, rgb2;<a name="line.343"></a>
+<span class="sourceLineNo">344</span><a name="line.344"></a>
+<span class="sourceLineNo">345</span>        //the eventual size of the single array<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        int gradientsTot = 1;<a name="line.346"></a>
+<span class="sourceLineNo">347</span><a name="line.347"></a>
+<span class="sourceLineNo">348</span>        // for every interval (transition between 2 colors)<a name="line.348"></a>
+<span class="sourceLineNo">349</span>        for (int i = 0; i &lt; gradients.length; i++) {<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            // create an array whose size is based on the ratio to the<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            // smallest interval<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            int nGradients = (int)((normalizedIntervals[i]/Imin)*255f);<a name="line.352"></a>
+<span class="sourceLineNo">353</span>            gradientsTot += nGradients;<a name="line.353"></a>
+<span class="sourceLineNo">354</span>            gradients[i] = new int[nGradients];<a name="line.354"></a>
+<span class="sourceLineNo">355</span><a name="line.355"></a>
+<span class="sourceLineNo">356</span>            // the 2 colors (keyframes) to interpolate between<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            rgb1 = colors[i].getRGB();<a name="line.357"></a>
+<span class="sourceLineNo">358</span>            rgb2 = colors[i+1].getRGB();<a name="line.358"></a>
+<span class="sourceLineNo">359</span><a name="line.359"></a>
+<span class="sourceLineNo">360</span>            // fill this array with the colors in between rgb1 and rgb2<a name="line.360"></a>
+<span class="sourceLineNo">361</span>            interpolate(rgb1, rgb2, gradients[i]);<a name="line.361"></a>
+<span class="sourceLineNo">362</span><a name="line.362"></a>
+<span class="sourceLineNo">363</span>            // if the colors are opaque, transparency should still<a name="line.363"></a>
+<span class="sourceLineNo">364</span>            // be 0xff000000<a name="line.364"></a>
+<span class="sourceLineNo">365</span>            transparencyTest &amp;= rgb1;<a name="line.365"></a>
+<span class="sourceLineNo">366</span>            transparencyTest &amp;= rgb2;<a name="line.366"></a>
+<span class="sourceLineNo">367</span>        }<a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>        // put all gradients in a single array<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        gradient = new int[gradientsTot];<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        int curOffset = 0;<a name="line.371"></a>
+<span class="sourceLineNo">372</span>        for (int i = 0; i &lt; gradients.length; i++){<a name="line.372"></a>
+<span class="sourceLineNo">373</span>            System.arraycopy(gradients[i], 0, gradient,<a name="line.373"></a>
+<span class="sourceLineNo">374</span>                             curOffset, gradients[i].length);<a name="line.374"></a>
+<span class="sourceLineNo">375</span>            curOffset += gradients[i].length;<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        }<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        gradient[gradient.length-1] = colors[colors.length-1].getRGB();<a name="line.377"></a>
+<span class="sourceLineNo">378</span><a name="line.378"></a>
+<span class="sourceLineNo">379</span>        // if interpolation occurred in Linear RGB space, convert the<a name="line.379"></a>
+<span class="sourceLineNo">380</span>        // gradients back to sRGB using the lookup table<a name="line.380"></a>
+<span class="sourceLineNo">381</span>        if (colorSpace == ColorSpaceType.LINEAR_RGB) {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            for (int i = 0; i &lt; gradient.length; i++) {<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                gradient[i] = convertEntireColorLinearRGBtoSRGB(gradient[i]);<a name="line.383"></a>
+<span class="sourceLineNo">384</span>            }<a name="line.384"></a>
+<span class="sourceLineNo">385</span>        }<a name="line.385"></a>
+<span class="sourceLineNo">386</span><a name="line.386"></a>
+<span class="sourceLineNo">387</span>        fastGradientArraySize = gradient.length - 1;<a name="line.387"></a>
+<span class="sourceLineNo">388</span>    }<a name="line.388"></a>
+<span class="sourceLineNo">389</span><a name="line.389"></a>
+<span class="sourceLineNo">390</span>    /**<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * SLOW LOOKUP METHOD<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     *<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * This method calculates the gradient color values for each interval and<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * places each into its own 255 size array.  The arrays are stored in<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * gradients[][].  (255 is used because this is the maximum number of<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * unique colors between 2 arbitrary colors in a 24 bit color system.)<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     *<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * This method uses the minimum amount of space (only 255 * number of<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * intervals), but it aggravates the lookup procedure, because now we<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * have to find out which interval to select, then calculate the index<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     * within that interval.  This causes a significant performance hit,<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * because it requires this calculation be done for every point in<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * the rendering loop.<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     *<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * For those of you who are interested, this is a classic example of the<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * time-space tradeoff.<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     */<a name="line.407"></a>
+<span class="sourceLineNo">408</span>    private void calculateMultipleArrayGradient(Color[] colors) {<a name="line.408"></a>
+<span class="sourceLineNo">409</span>        // set the flag so we know later it is a non-simple lookup<a name="line.409"></a>
+<span class="sourceLineNo">410</span>        isSimpleLookup = false;<a name="line.410"></a>
+<span class="sourceLineNo">411</span><a name="line.411"></a>
+<span class="sourceLineNo">412</span>        // 2 colors to interpolate<a name="line.412"></a>
+<span class="sourceLineNo">413</span>        int rgb1, rgb2;<a name="line.413"></a>
+<span class="sourceLineNo">414</span><a name="line.414"></a>
+<span class="sourceLineNo">415</span>        // for every interval (transition between 2 colors)<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        for (int i = 0; i &lt; gradients.length; i++){<a name="line.416"></a>
+<span class="sourceLineNo">417</span>            // create an array of the maximum theoretical size for<a name="line.417"></a>
+<span class="sourceLineNo">418</span>            // each interval<a name="line.418"></a>
+<span class="sourceLineNo">419</span>            gradients[i] = new int[GRADIENT_SIZE];<a name="line.419"></a>
+<span class="sourceLineNo">420</span><a name="line.420"></a>
+<span class="sourceLineNo">421</span>            // get the the 2 colors<a name="line.421"></a>
+<span class="sourceLineNo">422</span>            rgb1 = colors[i].getRGB();<a name="line.422"></a>
+<span class="sourceLineNo">423</span>            rgb2 = colors[i+1].getRGB();<a name="line.423"></a>
+<span class="sourceLineNo">424</span><a name="line.424"></a>
+<span class="sourceLineNo">425</span>            // fill this array with the colors in between rgb1 and rgb2<a name="line.425"></a>
+<span class="sourceLineNo">426</span>            interpolate(rgb1, rgb2, gradients[i]);<a name="line.426"></a>
+<span class="sourceLineNo">427</span><a name="line.427"></a>
+<span class="sourceLineNo">428</span>            // if the colors are opaque, transparency should still<a name="line.428"></a>
+<span class="sourceLineNo">429</span>            // be 0xff000000<a name="line.429"></a>
+<span class="sourceLineNo">430</span>            transparencyTest &amp;= rgb1;<a name="line.430"></a>
+<span class="sourceLineNo">431</span>            transparencyTest &amp;= rgb2;<a name="line.431"></a>
+<span class="sourceLineNo">432</span>        }<a name="line.432"></a>
+<span class="sourceLineNo">433</span><a name="line.433"></a>
+<span class="sourceLineNo">434</span>        // if interpolation occurred in Linear RGB space, convert the<a name="line.434"></a>
+<span class="sourceLineNo">435</span>        // gradients back to SRGB using the lookup table<a name="line.435"></a>
+<span class="sourceLineNo">436</span>        if (colorSpace == ColorSpaceType.LINEAR_RGB) {<a name="line.436"></a>
+<span class="sourceLineNo">437</span>            for (int j = 0; j &lt; gradients.length; j++) {<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                for (int i = 0; i &lt; gradients[j].length; i++) {<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                    gradients[j][i] =<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                        convertEntireColorLinearRGBtoSRGB(gradients[j][i]);<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                }<a name="line.441"></a>
+<span class="sourceLineNo">442</span>            }<a name="line.442"></a>
+<span class="sourceLineNo">443</span>        }<a name="line.443"></a>
+<span class="sourceLineNo">444</span>    }<a name="line.444"></a>
+<span class="sourceLineNo">445</span><a name="line.445"></a>
+<span class="sourceLineNo">446</span>    /**<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     * Yet another helper function.  This one linearly interpolates between<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * 2 colors, filling up the output array.<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     *<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * @param rgb1 the start color<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     * @param rgb2 the end color<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     * @param output the output array of colors; must not be null<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     */<a name="line.453"></a>
+<span class="sourceLineNo">454</span>    private void interpolate(int rgb1, int rgb2, int[] output) {<a name="line.454"></a>
+<span class="sourceLineNo">455</span>        // color components<a name="line.455"></a>
+<span class="sourceLineNo">456</span>        int a1, r1, g1, b1, da, dr, dg, db;<a name="line.456"></a>
+<span class="sourceLineNo">457</span><a name="line.457"></a>
+<span class="sourceLineNo">458</span>        // step between interpolated values<a name="line.458"></a>
+<span class="sourceLineNo">459</span>        float stepSize = 1.0f / output.length;<a name="line.459"></a>
+<span class="sourceLineNo">460</span><a name="line.460"></a>
+<span class="sourceLineNo">461</span>        // extract color components from packed integer<a name="line.461"></a>
+<span class="sourceLineNo">462</span>        a1 = (rgb1 &gt;&gt; 24) &amp; 0xff;<a name="line.462"></a>
+<span class="sourceLineNo">463</span>        r1 = (rgb1 &gt;&gt; 16) &amp; 0xff;<a name="line.463"></a>
+<span class="sourceLineNo">464</span>        g1 = (rgb1 &gt;&gt;  8) &amp; 0xff;<a name="line.464"></a>
+<span class="sourceLineNo">465</span>        b1 = (rgb1      ) &amp; 0xff;<a name="line.465"></a>
+<span class="sourceLineNo">466</span><a name="line.466"></a>
+<span class="sourceLineNo">467</span>        // calculate the total change in alpha, red, green, blue<a name="line.467"></a>
+<span class="sourceLineNo">468</span>        da = ((rgb2 &gt;&gt; 24) &amp; 0xff) - a1;<a name="line.468"></a>
+<span class="sourceLineNo">469</span>        dr = ((rgb2 &gt;&gt; 16) &amp; 0xff) - r1;<a name="line.469"></a>
+<span class="sourceLineNo">470</span>        dg = ((rgb2 &gt;&gt;  8) &amp; 0xff) - g1;<a name="line.470"></a>
+<span class="sourceLineNo">471</span>        db = ((rgb2      ) &amp; 0xff) - b1;<a name="line.471"></a>
+<span class="sourceLineNo">472</span><a name="line.472"></a>
+<span class="sourceLineNo">473</span>        // for each step in the interval calculate the in-between color by<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        // multiplying the normalized current position by the total color<a name="line.474"></a>
+<span class="sourceLineNo">475</span>        // change (0.5 is added to prevent truncation round-off error)<a name="line.475"></a>
+<span class="sourceLineNo">476</span>        for (int i = 0; i &lt; output.length; i++) {<a name="line.476"></a>
+<span class="sourceLineNo">477</span>            output[i] =<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                (((int) ((a1 + i * da * stepSize) + 0.5) &lt;&lt; 24)) |<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                (((int) ((r1 + i * dr * stepSize) + 0.5) &lt;&lt; 16)) |<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                (((int) ((g1 + i * dg * stepSize) + 0.5) &lt;&lt;  8)) |<a name="line.480"></a>
+<span class="sourceLineNo">481</span>                (((int) ((b1 + i * db * stepSize) + 0.5)      ));<a name="line.481"></a>
+<span class="sourceLineNo">482</span>        }<a name="line.482"></a>
+<span class="sourceLineNo">483</span>    }<a name="line.483"></a>
+<span class="sourceLineNo">484</span><a name="line.484"></a>
+<span class="sourceLineNo">485</span>    /**<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     * Yet another helper function.  This one extracts the color components<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     * of an integer RGB triple, converts them from LinearRGB to SRGB, then<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     * recompacts them into an int.<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     */<a name="line.489"></a>
+<span class="sourceLineNo">490</span>    private int convertEntireColorLinearRGBtoSRGB(int rgb) {<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        // color components<a name="line.491"></a>
+<span class="sourceLineNo">492</span>        int a1, r1, g1, b1;<a name="line.492"></a>
+<span class="sourceLineNo">493</span><a name="line.493"></a>
+<span class="sourceLineNo">494</span>        // extract red, green, blue components<a name="line.494"></a>
+<span class="sourceLineNo">495</span>        a1 = (rgb &gt;&gt; 24) &amp; 0xff;<a name="line.495"></a>
+<span class="sourceLineNo">496</span>        r1 = (rgb &gt;&gt; 16) &amp; 0xff;<a name="line.496"></a>
+<span class="sourceLineNo">497</span>        g1 = (rgb &gt;&gt;  8) &amp; 0xff;<a name="line.497"></a>
+<span class="sourceLineNo">498</span>        b1 = (rgb      ) &amp; 0xff;<a name="line.498"></a>
+<span class="sourceLineNo">499</span><a name="line.499"></a>
+<span class="sourceLineNo">500</span>        // use the lookup table<a name="line.500"></a>
+<span class="sourceLineNo">501</span>        r1 = LinearRGBtoSRGB[r1];<a name="line.501"></a>
+<span class="sourceLineNo">502</span>        g1 = LinearRGBtoSRGB[g1];<a name="line.502"></a>
+<span class="sourceLineNo">503</span>        b1 = LinearRGBtoSRGB[b1];<a name="line.503"></a>
+<span class="sourceLineNo">504</span><a name="line.504"></a>
+<span class="sourceLineNo">505</span>        // re-compact the components<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        return ((a1 &lt;&lt; 24) |<a name="line.506"></a>
+<span class="sourceLineNo">507</span>                (r1 &lt;&lt; 16) |<a name="line.507"></a>
+<span class="sourceLineNo">508</span>                (g1 &lt;&lt;  8) |<a name="line.508"></a>
+<span class="sourceLineNo">509</span>                (b1      ));<a name="line.509"></a>
+<span class="sourceLineNo">510</span>    }<a name="line.510"></a>
+<span class="sourceLineNo">511</span><a name="line.511"></a>
+<span class="sourceLineNo">512</span>    /**<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     * Helper function to index into the gradients array.  This is necessary<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     * because each interval has an array of colors with uniform size 255.<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     * However, the color intervals are not necessarily of uniform length, so<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     * a conversion is required.<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     *<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     * @param position the unmanipulated position, which will be mapped<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     *                 into the range 0 to 1<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     * @returns integer color to display<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     */<a name="line.521"></a>
+<span class="sourceLineNo">522</span>    protected final int indexIntoGradientsArrays(float position) {<a name="line.522"></a>
+<span class="sourceLineNo">523</span>        // first, manipulate position value depending on the cycle method<a name="line.523"></a>
+<span class="sourceLineNo">524</span>        if (cycleMethod == CycleMethod.NO_CYCLE) {<a name="line.524"></a>
+<span class="sourceLineNo">525</span>            if (position &gt; 1) {<a name="line.525"></a>
+<span class="sourceLineNo">526</span>                // upper bound is 1<a name="line.526"></a>
+<span class="sourceLineNo">527</span>                position = 1;<a name="line.527"></a>
+<span class="sourceLineNo">528</span>            } else if (position &lt; 0) {<a name="line.528"></a>
+<span class="sourceLineNo">529</span>                // lower bound is 0<a name="line.529"></a>
+<span class="sourceLineNo">530</span>                position = 0;<a name="line.530"></a>
+<span class="sourceLineNo">531</span>            }<a name="line.531"></a>
+<span class="sourceLineNo">532</span>        } else if (cycleMethod == CycleMethod.REPEAT) {<a name="line.532"></a>
+<span class="sourceLineNo">533</span>            // get the fractional part<a name="line.533"></a>
+<span class="sourceLineNo">534</span>            // (modulo behavior discards integer component)<a name="line.534"></a>
+<span class="sourceLineNo">535</span>            position = position - (int)position;<a name="line.535"></a>
+<span class="sourceLineNo">536</span><a name="line.536"></a>
+<span class="sourceLineNo">537</span>            //position should now be between -1 and 1<a name="line.537"></a>
+<span class="sourceLineNo">538</span>            if (position &lt; 0) {<a name="line.538"></a>
+<span class="sourceLineNo">539</span>                // force it to be in the range 0-1<a name="line.539"></a>
+<span class="sourceLineNo">540</span>                position = position + 1;<a name="line.540"></a>
+<span class="sourceLineNo">541</span>            }<a name="line.541"></a>
+<span class="sourceLineNo">542</span>        } else { // cycleMethod == CycleMethod.REFLECT<a name="line.542"></a>
+<span class="sourceLineNo">543</span>            if (position &lt; 0) {<a name="line.543"></a>
+<span class="sourceLineNo">544</span>                // take absolute value<a name="line.544"></a>
+<span class="sourceLineNo">545</span>                position = -position;<a name="line.545"></a>
+<span class="sourceLineNo">546</span>            }<a name="line.546"></a>
+<span class="sourceLineNo">547</span><a name="line.547"></a>
+<span class="sourceLineNo">548</span>            // get the integer part<a name="line.548"></a>
+<span class="sourceLineNo">549</span>            int part = (int)position;<a name="line.549"></a>
+<span class="sourceLineNo">550</span><a name="line.550"></a>
+<span class="sourceLineNo">551</span>            // get the fractional part<a name="line.551"></a>
+<span class="sourceLineNo">552</span>            position = position - part;<a name="line.552"></a>
+<span class="sourceLineNo">553</span><a name="line.553"></a>
+<span class="sourceLineNo">554</span>            if ((part &amp; 1) == 1) {<a name="line.554"></a>
+<span class="sourceLineNo">555</span>                // integer part is odd, get reflected color instead<a name="line.555"></a>
+<span class="sourceLineNo">556</span>                position = 1 - position;<a name="line.556"></a>
+<span class="sourceLineNo">557</span>            }<a name="line.557"></a>
+<span class="sourceLineNo">558</span>        }<a name="line.558"></a>
+<span class="sourceLineNo">559</span><a name="line.559"></a>
+<span class="sourceLineNo">560</span>        // now, get the color based on this 0-1 position...<a name="line.560"></a>
+<span class="sourceLineNo">561</span><a name="line.561"></a>
+<span class="sourceLineNo">562</span>        if (isSimpleLookup) {<a name="line.562"></a>
+<span class="sourceLineNo">563</span>            // easy to compute: just scale index by array size<a name="line.563"></a>
+<span class="sourceLineNo">564</span>            return gradient[(int)(position * fastGradientArraySize)];<a name="line.564"></a>
+<span class="sourceLineNo">565</span>        } else {<a name="line.565"></a>
+<span class="sourceLineNo">566</span>            // more complicated computation, to save space<a name="line.566"></a>
+<span class="sourceLineNo">567</span><a name="line.567"></a>
+<span class="sourceLineNo">568</span>            // for all the gradient interval arrays<a name="line.568"></a>
+<span class="sourceLineNo">569</span>            for (int i = 0; i &lt; gradients.length; i++) {<a name="line.569"></a>
+<span class="sourceLineNo">570</span>                if (position &lt; fractions[i+1]) {<a name="line.570"></a>
+<span class="sourceLineNo">571</span>                    // this is the array we want<a name="line.571"></a>
+<span class="sourceLineNo">572</span>                    float delta = position - fractions[i];<a name="line.572"></a>
+<span class="sourceLineNo">573</span><a name="line.573"></a>
+<span class="sourceLineNo">574</span>                    // this is the interval we want<a name="line.574"></a>
+<span class="sourceLineNo">575</span>                    int index = (int)((delta / normalizedIntervals[i])<a name="line.575"></a>
+<span class="sourceLineNo">576</span>                                      * (GRADIENT_SIZE_INDEX));<a name="line.576"></a>
+<span class="sourceLineNo">577</span><a name="line.577"></a>
+<span class="sourceLineNo">578</span>                    return gradients[i][index];<a name="line.578"></a>
+<span class="sourceLineNo">579</span>                }<a name="line.579"></a>
+<span class="sourceLineNo">580</span>            }<a name="line.580"></a>
+<span class="sourceLineNo">581</span>        }<a name="line.581"></a>
+<span class="sourceLineNo">582</span><a name="line.582"></a>
+<span class="sourceLineNo">583</span>        return gradients[gradients.length - 1][GRADIENT_SIZE_INDEX];<a name="line.583"></a>
+<span class="sourceLineNo">584</span>    }<a name="line.584"></a>
+<span class="sourceLineNo">585</span><a name="line.585"></a>
+<span class="sourceLineNo">586</span>    /**<a name="line.586"></a>
+<span class="sourceLineNo">587</span>     * Helper function to convert a color component in sRGB space to linear<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * RGB space.  Used to build a static lookup table.<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     */<a name="line.589"></a>
+<span class="sourceLineNo">590</span>    private static int convertSRGBtoLinearRGB(int color) {<a name="line.590"></a>
+<span class="sourceLineNo">591</span>        float input, output;<a name="line.591"></a>
+<span class="sourceLineNo">592</span><a name="line.592"></a>
+<span class="sourceLineNo">593</span>        input = color / 255.0f;<a name="line.593"></a>
+<span class="sourceLineNo">594</span>        if (input &lt;= 0.04045f) {<a name="line.594"></a>
+<span class="sourceLineNo">595</span>            output = input / 12.92f;<a name="line.595"></a>
+<span class="sourceLineNo">596</span>        } else {<a name="line.596"></a>
+<span class="sourceLineNo">597</span>            output = (float)Math.pow((input + 0.055) / 1.055, 2.4);<a name="line.597"></a>
+<span class="sourceLineNo">598</span>        }<a name="line.598"></a>
+<span class="sourceLineNo">599</span><a name="line.599"></a>
+<span class="sourceLineNo">600</span>        return Math.round(output * 255.0f);<a name="line.600"></a>
+<span class="sourceLineNo">601</span>    }<a name="line.601"></a>
+<span class="sourceLineNo">602</span><a name="line.602"></a>
+<span class="sourceLineNo">603</span>    /**<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * Helper function to convert a color component in linear RGB space to<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * SRGB space.  Used to build a static lookup table.<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     */<a name="line.606"></a>
+<span class="sourceLineNo">607</span>    private static int convertLinearRGBtoSRGB(int color) {<a name="line.607"></a>
+<span class="sourceLineNo">608</span>        float input, output;<a name="line.608"></a>
+<span class="sourceLineNo">609</span><a name="line.609"></a>
+<span class="sourceLineNo">610</span>        input = color/255.0f;<a name="line.610"></a>
+<span class="sourceLineNo">611</span>        if (input &lt;= 0.0031308) {<a name="line.611"></a>
+<span class="sourceLineNo">612</span>            output = input * 12.92f;<a name="line.612"></a>
+<span class="sourceLineNo">613</span>        } else {<a name="line.613"></a>
+<span class="sourceLineNo">614</span>            output = (1.055f *<a name="line.614"></a>
+<span class="sourceLineNo">615</span>                ((float) Math.pow(input, (1.0 / 2.4)))) - 0.055f;<a name="line.615"></a>
+<span class="sourceLineNo">616</span>        }<a name="line.616"></a>
+<span class="sourceLineNo">617</span><a name="line.617"></a>
+<span class="sourceLineNo">618</span>        return Math.round(output * 255.0f);<a name="line.618"></a>
+<span class="sourceLineNo">619</span>    }<a name="line.619"></a>
+<span class="sourceLineNo">620</span><a name="line.620"></a>
+<span class="sourceLineNo">621</span>    /**<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     * {@inheritDoc}<a name="line.622"></a>
+<span class="sourceLineNo">623</span>     */<a name="line.623"></a>
+<span class="sourceLineNo">624</span>    public final Raster getRaster(int x, int y, int w, int h) {<a name="line.624"></a>
+<span class="sourceLineNo">625</span>        // If working raster is big enough, reuse it. Otherwise,<a name="line.625"></a>
+<span class="sourceLineNo">626</span>        // build a large enough new one.<a name="line.626"></a>
+<span class="sourceLineNo">627</span>        Raster raster = saved;<a name="line.627"></a>
+<span class="sourceLineNo">628</span>        if (raster == null ||<a name="line.628"></a>
+<span class="sourceLineNo">629</span>            raster.getWidth() &lt; w || raster.getHeight() &lt; h)<a name="line.629"></a>
+<span class="sourceLineNo">630</span>        {<a name="line.630"></a>
+<span class="sourceLineNo">631</span>            raster = getCachedRaster(model, w, h);<a name="line.631"></a>
+<span class="sourceLineNo">632</span>            saved = raster;<a name="line.632"></a>
+<span class="sourceLineNo">633</span>        }<a name="line.633"></a>
+<span class="sourceLineNo">634</span><a name="line.634"></a>
+<span class="sourceLineNo">635</span>        // Access raster internal int array. Because we use a DirectColorModel,<a name="line.635"></a>
+<span class="sourceLineNo">636</span>        // we know the DataBuffer is of type DataBufferInt and the SampleModel<a name="line.636"></a>
+<span class="sourceLineNo">637</span>        // is SinglePixelPackedSampleModel.<a name="line.637"></a>
+<span class="sourceLineNo">638</span>        // Adjust for initial offset in DataBuffer and also for the scanline<a name="line.638"></a>
+<span class="sourceLineNo">639</span>        // stride.<a name="line.639"></a>
+<span class="sourceLineNo">640</span>        // These calls make the DataBuffer non-acceleratable, but the<a name="line.640"></a>
+<span class="sourceLineNo">641</span>        // Raster is never Stable long enough to accelerate anyway...<a name="line.641"></a>
+<span class="sourceLineNo">642</span>        DataBufferInt rasterDB = (DataBufferInt)raster.getDataBuffer();<a name="line.642"></a>
+<span class="sourceLineNo">643</span>        int[] pixels = rasterDB.getData(0);<a name="line.643"></a>
+<span class="sourceLineNo">644</span>        int off = rasterDB.getOffset();<a name="line.644"></a>
+<span class="sourceLineNo">645</span>        int scanlineStride = ((SinglePixelPackedSampleModel)<a name="line.645"></a>
+<span class="sourceLineNo">646</span>                              raster.getSampleModel()).getScanlineStride();<a name="line.646"></a>
+<span class="sourceLineNo">647</span>        int adjust = scanlineStride - w;<a name="line.647"></a>
+<span class="sourceLineNo">648</span><a name="line.648"></a>
+<span class="sourceLineNo">649</span>        fillRaster(pixels, off, adjust, x, y, w, h); // delegate to subclass<a name="line.649"></a>
+<span class="sourceLineNo">650</span><a name="line.650"></a>
+<span class="sourceLineNo">651</span>        return raster;<a name="line.651"></a>
+<span class="sourceLineNo">652</span>    }<a name="line.652"></a>
+<span class="sourceLineNo">653</span><a name="line.653"></a>
+<span class="sourceLineNo">654</span>    protected abstract void fillRaster(int pixels[], int off, int adjust,<a name="line.654"></a>
+<span class="sourceLineNo">655</span>                                       int x, int y, int w, int h);<a name="line.655"></a>
+<span class="sourceLineNo">656</span><a name="line.656"></a>
+<span class="sourceLineNo">657</span><a name="line.657"></a>
+<span class="sourceLineNo">658</span>    /**<a name="line.658"></a>
+<span class="sourceLineNo">659</span>     * Took this cacheRaster code from GradientPaint. It appears to recycle<a name="line.659"></a>
+<span class="sourceLineNo">660</span>     * rasters for use by any other instance, as long as they are sufficiently<a name="line.660"></a>
+<span class="sourceLineNo">661</span>     * large.<a name="line.661"></a>
+<span class="sourceLineNo">662</span>     */<a name="line.662"></a>
+<span class="sourceLineNo">663</span>    private static synchronized Raster getCachedRaster(ColorModel cm,<a name="line.663"></a>
+<span class="sourceLineNo">664</span>                                                       int w, int h)<a name="line.664"></a>
+<span class="sourceLineNo">665</span>    {<a name="line.665"></a>
+<span class="sourceLineNo">666</span>        if (cm == cachedModel) {<a name="line.666"></a>
+<span class="sourceLineNo">667</span>            if (cached != null) {<a name="line.667"></a>
+<span class="sourceLineNo">668</span>                Raster ras = (Raster) cached.get();<a name="line.668"></a>
+<span class="sourceLineNo">669</span>                if (ras != null &amp;&amp;<a name="line.669"></a>
+<span class="sourceLineNo">670</span>                    ras.getWidth() &gt;= w &amp;&amp;<a name="line.670"></a>
+<span class="sourceLineNo">671</span>                    ras.getHeight() &gt;= h)<a name="line.671"></a>
+<span class="sourceLineNo">672</span>                {<a name="line.672"></a>
+<span class="sourceLineNo">673</span>                    cached = null;<a name="line.673"></a>
+<span class="sourceLineNo">674</span>                    return ras;<a name="line.674"></a>
+<span class="sourceLineNo">675</span>                }<a name="line.675"></a>
+<span class="sourceLineNo">676</span>            }<a name="line.676"></a>
+<span class="sourceLineNo">677</span>        }<a name="line.677"></a>
+<span class="sourceLineNo">678</span>        return cm.createCompatibleWritableRaster(w, h);<a name="line.678"></a>
+<span class="sourceLineNo">679</span>    }<a name="line.679"></a>
+<span class="sourceLineNo">680</span><a name="line.680"></a>
+<span class="sourceLineNo">681</span>    /**<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     * Took this cacheRaster code from GradientPaint. It appears to recycle<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     * rasters for use by any other instance, as long as they are sufficiently<a name="line.683"></a>
+<span class="sourceLineNo">684</span>     * large.<a name="line.684"></a>
+<span class="sourceLineNo">685</span>     */<a name="line.685"></a>
+<span class="sourceLineNo">686</span>    private static synchronized void putCachedRaster(ColorModel cm,<a name="line.686"></a>
+<span class="sourceLineNo">687</span>                                                     Raster ras)<a name="line.687"></a>
+<span class="sourceLineNo">688</span>    {<a name="line.688"></a>
+<span class="sourceLineNo">689</span>        if (cached != null) {<a name="line.689"></a>
+<span class="sourceLineNo">690</span>            Raster cras = (Raster) cached.get();<a name="line.690"></a>
+<span class="sourceLineNo">691</span>            if (cras != null) {<a name="line.691"></a>
+<span class="sourceLineNo">692</span>                int cw = cras.getWidth();<a name="line.692"></a>
+<span class="sourceLineNo">693</span>                int ch = cras.getHeight();<a name="line.693"></a>
+<span class="sourceLineNo">694</span>                int iw = ras.getWidth();<a name="line.694"></a>
+<span class="sourceLineNo">695</span>                int ih = ras.getHeight();<a name="line.695"></a>
+<span class="sourceLineNo">696</span>                if (cw &gt;= iw &amp;&amp; ch &gt;= ih) {<a name="line.696"></a>
+<span class="sourceLineNo">697</span>                    return;<a name="line.697"></a>
+<span class="sourceLineNo">698</span>                }<a name="line.698"></a>
+<span class="sourceLineNo">699</span>                if (cw * ch &gt;= iw * ih) {<a name="line.699"></a>
+<span class="sourceLineNo">700</span>                    return;<a name="line.700"></a>
+<span class="sourceLineNo">701</span>                }<a name="line.701"></a>
+<span class="sourceLineNo">702</span>            }<a name="line.702"></a>
+<span class="sourceLineNo">703</span>        }<a name="line.703"></a>
+<span class="sourceLineNo">704</span>        cachedModel = cm;<a name="line.704"></a>
+<span class="sourceLineNo">705</span>        cached = new WeakReference&lt;Raster&gt;(ras);<a name="line.705"></a>
+<span class="sourceLineNo">706</span>    }<a name="line.706"></a>
+<span class="sourceLineNo">707</span><a name="line.707"></a>
+<span class="sourceLineNo">708</span>    /**<a name="line.708"></a>
+<span class="sourceLineNo">709</span>     * {@inheritDoc}<a name="line.709"></a>
+<span class="sourceLineNo">710</span>     */<a name="line.710"></a>
+<span class="sourceLineNo">711</span>    public final void dispose() {<a name="line.711"></a>
+<span class="sourceLineNo">712</span>        if (saved != null) {<a name="line.712"></a>
+<span class="sourceLineNo">713</span>            putCachedRaster(model, saved);<a name="line.713"></a>
+<span class="sourceLineNo">714</span>            saved = null;<a name="line.714"></a>
+<span class="sourceLineNo">715</span>        }<a name="line.715"></a>
+<span class="sourceLineNo">716</span>    }<a name="line.716"></a>
+<span class="sourceLineNo">717</span><a name="line.717"></a>
+<span class="sourceLineNo">718</span>    /**<a name="line.718"></a>
+<span class="sourceLineNo">719</span>     * {@inheritDoc}<a name="line.719"></a>
+<span class="sourceLineNo">720</span>     */<a name="line.720"></a>
+<span class="sourceLineNo">721</span>    public final ColorModel getColorModel() {<a name="line.721"></a>
+<span class="sourceLineNo">722</span>        return model;<a name="line.722"></a>
+<span class="sourceLineNo">723</span>    }<a name="line.723"></a>
+<span class="sourceLineNo">724</span>}<a name="line.724"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

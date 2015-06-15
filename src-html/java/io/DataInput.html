@@ -1,0 +1,707 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1995, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.io;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * The &lt;code&gt;DataInput&lt;/code&gt; interface provides<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * for reading bytes from a binary stream and<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * reconstructing from them data in any of<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * the Java primitive types. There is also<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * a<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * facility for reconstructing a &lt;code&gt;String&lt;/code&gt;<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * from data in<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;a href="#modified-utf-8"&gt;modified UTF-8&lt;/a&gt;<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * format.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;p&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * It is generally true of all the reading<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * routines in this interface that if end of<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * file is reached before the desired number<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * of bytes has been read, an &lt;code&gt;EOFException&lt;/code&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * (which is a kind of &lt;code&gt;IOException&lt;/code&gt;)<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * is thrown. If any byte cannot be read for<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * any reason other than end of file, an &lt;code&gt;IOException&lt;/code&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * other than &lt;code&gt;EOFException&lt;/code&gt; is<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * thrown. In particular, an &lt;code&gt;IOException&lt;/code&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * may be thrown if the input stream has been<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * closed.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;h4&gt;&lt;a name="modified-utf-8"&gt;Modified UTF-8&lt;/a&gt;&lt;/h4&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;p&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * Implementations of the DataInput and DataOutput interfaces represent<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * Unicode strings in a format that is a slight modification of UTF-8.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * (For information regarding the standard UTF-8 format, see section<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;i&gt;3.9 Unicode Encoding Forms&lt;/i&gt; of &lt;i&gt;The Unicode Standard, Version<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * 4.0&lt;/i&gt;).<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * Note that in the following tables, the most significant bit appears in the<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * far left-hand column.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;p&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * All characters in the range &lt;code&gt;'&amp;#92;u0001'&lt;/code&gt; to<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * &lt;code&gt;'&amp;#92;u007F'&lt;/code&gt; are represented by a single byte:<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;blockquote&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *   &lt;table border="1" cellspacing="0" cellpadding="8" width="50%"<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *          summary="Bit values and bytes"&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *     &lt;tr&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *       &lt;td&gt;&lt;/td&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *       &lt;th id="bit"&gt;Bit Values&lt;/th&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *     &lt;/tr&gt;<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *     &lt;tr&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *       &lt;th id="byte1"&gt;Byte 1&lt;/th&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *       &lt;td&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *         &lt;table border="1" cellspacing="0" width="100%"&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *           &lt;tr&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *             &lt;td width="12%"&gt;&lt;center&gt;0&lt;/center&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *             &lt;td colspan="7"&gt;&lt;center&gt;bits 6-0&lt;/center&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *           &lt;/tr&gt;<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *         &lt;/table&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *       &lt;/td&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *     &lt;/tr&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *   &lt;/table&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * &lt;/blockquote&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;p&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * The null character &lt;code&gt;'&amp;#92;u0000'&lt;/code&gt; and characters in the<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * range &lt;code&gt;'&amp;#92;u0080'&lt;/code&gt; to &lt;code&gt;'&amp;#92;u07FF'&lt;/code&gt; are<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * represented by a pair of bytes:<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * &lt;blockquote&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *   &lt;table border="1" cellspacing="0" cellpadding="8" width="50%"<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *          summary="Bit values and bytes"&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *     &lt;tr&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *       &lt;td&gt;&lt;/td&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *       &lt;th id="bit"&gt;Bit Values&lt;/th&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> *     &lt;/tr&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span> *     &lt;tr&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> *       &lt;th id="byte1"&gt;Byte 1&lt;/th&gt;<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *       &lt;td&gt;<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *         &lt;table border="1" cellspacing="0" width="100%"&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *           &lt;tr&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *             &lt;td width="12%"&gt;&lt;center&gt;1&lt;/center&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *             &lt;td width="13%"&gt;&lt;center&gt;1&lt;/center&gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *             &lt;td width="12%"&gt;&lt;center&gt;0&lt;/center&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *             &lt;td colspan="5"&gt;&lt;center&gt;bits 10-6&lt;/center&gt;<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *           &lt;/tr&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *         &lt;/table&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *       &lt;/td&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *     &lt;/tr&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *     &lt;tr&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *       &lt;th id="byte2"&gt;Byte 2&lt;/th&gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *       &lt;td&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *         &lt;table border="1" cellspacing="0" width="100%"&gt;<a name="line.113"></a>
+<span class="sourceLineNo">114</span> *           &lt;tr&gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *             &lt;td width="12%"&gt;&lt;center&gt;1&lt;/center&gt;<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *             &lt;td width="13%"&gt;&lt;center&gt;0&lt;/center&gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span> *             &lt;td colspan="6"&gt;&lt;center&gt;bits 5-0&lt;/center&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span> *           &lt;/tr&gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *         &lt;/table&gt;<a name="line.119"></a>
+<span class="sourceLineNo">120</span> *       &lt;/td&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span> *     &lt;/tr&gt;<a name="line.121"></a>
+<span class="sourceLineNo">122</span> *   &lt;/table&gt;<a name="line.122"></a>
+<span class="sourceLineNo">123</span> *  &lt;/blockquote&gt;<a name="line.123"></a>
+<span class="sourceLineNo">124</span> *<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * &lt;br&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * &lt;code&gt;char&lt;/code&gt; values in the range &lt;code&gt;'&amp;#92;u0800'&lt;/code&gt; to<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * &lt;code&gt;'&amp;#92;uFFFF'&lt;/code&gt; are represented by three bytes:<a name="line.127"></a>
+<span class="sourceLineNo">128</span> *<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * &lt;blockquote&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span> *   &lt;table border="1" cellspacing="0" cellpadding="8" width="50%"<a name="line.130"></a>
+<span class="sourceLineNo">131</span> *          summary="Bit values and bytes"&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span> *     &lt;tr&gt;<a name="line.132"></a>
+<span class="sourceLineNo">133</span> *       &lt;td&gt;&lt;/td&gt;<a name="line.133"></a>
+<span class="sourceLineNo">134</span> *       &lt;th id="bit"&gt;Bit Values&lt;/th&gt;<a name="line.134"></a>
+<span class="sourceLineNo">135</span> *     &lt;/tr&gt;<a name="line.135"></a>
+<span class="sourceLineNo">136</span> *     &lt;tr&gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span> *       &lt;th id="byte1"&gt;Byte 1&lt;/th&gt;<a name="line.137"></a>
+<span class="sourceLineNo">138</span> *       &lt;td&gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span> *         &lt;table border="1" cellspacing="0" width="100%"&gt;<a name="line.139"></a>
+<span class="sourceLineNo">140</span> *           &lt;tr&gt;<a name="line.140"></a>
+<span class="sourceLineNo">141</span> *             &lt;td width="12%"&gt;&lt;center&gt;1&lt;/center&gt;<a name="line.141"></a>
+<span class="sourceLineNo">142</span> *             &lt;td width="13%"&gt;&lt;center&gt;1&lt;/center&gt;<a name="line.142"></a>
+<span class="sourceLineNo">143</span> *             &lt;td width="12%"&gt;&lt;center&gt;1&lt;/center&gt;<a name="line.143"></a>
+<span class="sourceLineNo">144</span> *             &lt;td width="13%"&gt;&lt;center&gt;0&lt;/center&gt;<a name="line.144"></a>
+<span class="sourceLineNo">145</span> *             &lt;td colspan="4"&gt;&lt;center&gt;bits 15-12&lt;/center&gt;<a name="line.145"></a>
+<span class="sourceLineNo">146</span> *           &lt;/tr&gt;<a name="line.146"></a>
+<span class="sourceLineNo">147</span> *         &lt;/table&gt;<a name="line.147"></a>
+<span class="sourceLineNo">148</span> *       &lt;/td&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span> *     &lt;/tr&gt;<a name="line.149"></a>
+<span class="sourceLineNo">150</span> *     &lt;tr&gt;<a name="line.150"></a>
+<span class="sourceLineNo">151</span> *       &lt;th id="byte2"&gt;Byte 2&lt;/th&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span> *       &lt;td&gt;<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *         &lt;table border="1" cellspacing="0" width="100%"&gt;<a name="line.153"></a>
+<span class="sourceLineNo">154</span> *           &lt;tr&gt;<a name="line.154"></a>
+<span class="sourceLineNo">155</span> *             &lt;td width="12%"&gt;&lt;center&gt;1&lt;/center&gt;<a name="line.155"></a>
+<span class="sourceLineNo">156</span> *             &lt;td width="13%"&gt;&lt;center&gt;0&lt;/center&gt;<a name="line.156"></a>
+<span class="sourceLineNo">157</span> *             &lt;td colspan="6"&gt;&lt;center&gt;bits 11-6&lt;/center&gt;<a name="line.157"></a>
+<span class="sourceLineNo">158</span> *           &lt;/tr&gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span> *         &lt;/table&gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span> *       &lt;/td&gt;<a name="line.160"></a>
+<span class="sourceLineNo">161</span> *     &lt;/tr&gt;<a name="line.161"></a>
+<span class="sourceLineNo">162</span> *     &lt;tr&gt;<a name="line.162"></a>
+<span class="sourceLineNo">163</span> *       &lt;th id="byte3"&gt;Byte 3&lt;/th&gt;<a name="line.163"></a>
+<span class="sourceLineNo">164</span> *       &lt;td&gt;<a name="line.164"></a>
+<span class="sourceLineNo">165</span> *         &lt;table border="1" cellspacing="0" width="100%"&gt;<a name="line.165"></a>
+<span class="sourceLineNo">166</span> *           &lt;tr&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span> *             &lt;td width="12%"&gt;&lt;center&gt;1&lt;/center&gt;<a name="line.167"></a>
+<span class="sourceLineNo">168</span> *             &lt;td width="13%"&gt;&lt;center&gt;0&lt;/center&gt;<a name="line.168"></a>
+<span class="sourceLineNo">169</span> *             &lt;td colspan="6"&gt;&lt;center&gt;bits 5-0&lt;/center&gt;<a name="line.169"></a>
+<span class="sourceLineNo">170</span> *           &lt;/tr&gt;<a name="line.170"></a>
+<span class="sourceLineNo">171</span> *         &lt;/table&gt;<a name="line.171"></a>
+<span class="sourceLineNo">172</span> *       &lt;/td&gt;<a name="line.172"></a>
+<span class="sourceLineNo">173</span> *     &lt;/tr&gt;<a name="line.173"></a>
+<span class="sourceLineNo">174</span> *   &lt;/table&gt;<a name="line.174"></a>
+<span class="sourceLineNo">175</span> *  &lt;/blockquote&gt;<a name="line.175"></a>
+<span class="sourceLineNo">176</span> *<a name="line.176"></a>
+<span class="sourceLineNo">177</span> * &lt;p&gt;<a name="line.177"></a>
+<span class="sourceLineNo">178</span> * The differences between this format and the<a name="line.178"></a>
+<span class="sourceLineNo">179</span> * standard UTF-8 format are the following:<a name="line.179"></a>
+<span class="sourceLineNo">180</span> * &lt;ul&gt;<a name="line.180"></a>
+<span class="sourceLineNo">181</span> * &lt;li&gt;The null byte &lt;code&gt;'&amp;#92;u0000'&lt;/code&gt; is encoded in 2-byte format<a name="line.181"></a>
+<span class="sourceLineNo">182</span> *     rather than 1-byte, so that the encoded strings never have<a name="line.182"></a>
+<span class="sourceLineNo">183</span> *     embedded nulls.<a name="line.183"></a>
+<span class="sourceLineNo">184</span> * &lt;li&gt;Only the 1-byte, 2-byte, and 3-byte formats are used.<a name="line.184"></a>
+<span class="sourceLineNo">185</span> * &lt;li&gt;&lt;a href="../lang/Character.html#unicode"&gt;Supplementary characters&lt;/a&gt;<a name="line.185"></a>
+<span class="sourceLineNo">186</span> *     are represented in the form of surrogate pairs.<a name="line.186"></a>
+<span class="sourceLineNo">187</span> * &lt;/ul&gt;<a name="line.187"></a>
+<span class="sourceLineNo">188</span> * @author  Frank Yellin<a name="line.188"></a>
+<span class="sourceLineNo">189</span> * @see     java.io.DataInputStream<a name="line.189"></a>
+<span class="sourceLineNo">190</span> * @see     java.io.DataOutput<a name="line.190"></a>
+<span class="sourceLineNo">191</span> * @since   JDK1.0<a name="line.191"></a>
+<span class="sourceLineNo">192</span> */<a name="line.192"></a>
+<span class="sourceLineNo">193</span>public<a name="line.193"></a>
+<span class="sourceLineNo">194</span>interface DataInput {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    /**<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * Reads some bytes from an input<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * stream and stores them into the buffer<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * array &lt;code&gt;b&lt;/code&gt;. The number of bytes<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * read is equal<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * to the length of &lt;code&gt;b&lt;/code&gt;.<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * &lt;p&gt;<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * This method blocks until one of the<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * following conditions occurs:&lt;p&gt;<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * &lt;ul&gt;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * &lt;li&gt;&lt;code&gt;b.length&lt;/code&gt;<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * bytes of input data are available, in which<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * case a normal return is made.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     *<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * &lt;li&gt;End of<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * file is detected, in which case an &lt;code&gt;EOFException&lt;/code&gt;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * is thrown.<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     *<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * &lt;li&gt;An I/O error occurs, in<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * which case an &lt;code&gt;IOException&lt;/code&gt; other<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * than &lt;code&gt;EOFException&lt;/code&gt; is thrown.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * &lt;/ul&gt;<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * &lt;p&gt;<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * If &lt;code&gt;b&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;,<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * a &lt;code&gt;NullPointerException&lt;/code&gt; is thrown.<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * If &lt;code&gt;b.length&lt;/code&gt; is zero, then<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * no bytes are read. Otherwise, the first<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * byte read is stored into element &lt;code&gt;b[0]&lt;/code&gt;,<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * the next one into &lt;code&gt;b[1]&lt;/code&gt;, and<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * so on.<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * If an exception is thrown from<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * this method, then it may be that some but<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * not all bytes of &lt;code&gt;b&lt;/code&gt; have been<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * updated with data from the input stream.<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     *<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * @param     b   the buffer into which the data is read.<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     *               all the bytes.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @exception  IOException   if an I/O error occurs.<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     */<a name="line.234"></a>
+<span class="sourceLineNo">235</span>    void readFully(byte b[]) throws IOException;<a name="line.235"></a>
+<span class="sourceLineNo">236</span><a name="line.236"></a>
+<span class="sourceLineNo">237</span>    /**<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     *<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * Reads &lt;code&gt;len&lt;/code&gt;<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * bytes from<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * an input stream.<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * &lt;p&gt;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * This method<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * blocks until one of the following conditions<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * occurs:&lt;p&gt;<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * &lt;ul&gt;<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * &lt;li&gt;&lt;code&gt;len&lt;/code&gt; bytes<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * of input data are available, in which case<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * a normal return is made.<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     *<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * &lt;li&gt;End of file<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * is detected, in which case an &lt;code&gt;EOFException&lt;/code&gt;<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * is thrown.<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     *<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * &lt;li&gt;An I/O error occurs, in<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * which case an &lt;code&gt;IOException&lt;/code&gt; other<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * than &lt;code&gt;EOFException&lt;/code&gt; is thrown.<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * &lt;/ul&gt;<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * &lt;p&gt;<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * If &lt;code&gt;b&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;,<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * a &lt;code&gt;NullPointerException&lt;/code&gt; is thrown.<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * If &lt;code&gt;off&lt;/code&gt; is negative, or &lt;code&gt;len&lt;/code&gt;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * is negative, or &lt;code&gt;off+len&lt;/code&gt; is<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * greater than the length of the array &lt;code&gt;b&lt;/code&gt;,<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * then an &lt;code&gt;IndexOutOfBoundsException&lt;/code&gt;<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * is thrown.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * If &lt;code&gt;len&lt;/code&gt; is zero,<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * then no bytes are read. Otherwise, the first<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * byte read is stored into element &lt;code&gt;b[off]&lt;/code&gt;,<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * the next one into &lt;code&gt;b[off+1]&lt;/code&gt;,<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * and so on. The number of bytes read is,<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * at most, equal to &lt;code&gt;len&lt;/code&gt;.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     *<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * @param     b   the buffer into which the data is read.<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * @param off  an int specifying the offset into the data.<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * @param len  an int specifying the number of bytes to read.<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     *               all the bytes.<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * @exception  IOException   if an I/O error occurs.<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     */<a name="line.280"></a>
+<span class="sourceLineNo">281</span>    void readFully(byte b[], int off, int len) throws IOException;<a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>    /**<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * Makes an attempt to skip over<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * &lt;code&gt;n&lt;/code&gt; bytes<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * of data from the input<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * stream, discarding the skipped bytes. However,<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * it may skip<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * over some smaller number of<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * bytes, possibly zero. This may result from<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * any of a<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * number of conditions; reaching<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * end of file before &lt;code&gt;n&lt;/code&gt; bytes<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * have been skipped is<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * only one possibility.<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * This method never throws an &lt;code&gt;EOFException&lt;/code&gt;.<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * The actual<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * number of bytes skipped is returned.<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     *<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * @param      n   the number of bytes to be skipped.<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * @return     the number of bytes actually skipped.<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * @exception  IOException   if an I/O error occurs.<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     */<a name="line.303"></a>
+<span class="sourceLineNo">304</span>    int skipBytes(int n) throws IOException;<a name="line.304"></a>
+<span class="sourceLineNo">305</span><a name="line.305"></a>
+<span class="sourceLineNo">306</span>    /**<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * Reads one input byte and returns<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * &lt;code&gt;true&lt;/code&gt; if that byte is nonzero,<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * &lt;code&gt;false&lt;/code&gt; if that byte is zero.<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * This method is suitable for reading<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * the byte written by the &lt;code&gt;writeBoolean&lt;/code&gt;<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * method of interface &lt;code&gt;DataOutput&lt;/code&gt;.<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     *<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * @return     the &lt;code&gt;boolean&lt;/code&gt; value read.<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     *               all the bytes.<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * @exception  IOException   if an I/O error occurs.<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     */<a name="line.318"></a>
+<span class="sourceLineNo">319</span>    boolean readBoolean() throws IOException;<a name="line.319"></a>
+<span class="sourceLineNo">320</span><a name="line.320"></a>
+<span class="sourceLineNo">321</span>    /**<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * Reads and returns one input byte.<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * The byte is treated as a signed value in<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * the range &lt;code&gt;-128&lt;/code&gt; through &lt;code&gt;127&lt;/code&gt;,<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * inclusive.<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * This method is suitable for<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * reading the byte written by the &lt;code&gt;writeByte&lt;/code&gt;<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * method of interface &lt;code&gt;DataOutput&lt;/code&gt;.<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     *<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * @return     the 8-bit value read.<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     *               all the bytes.<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * @exception  IOException   if an I/O error occurs.<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     */<a name="line.334"></a>
+<span class="sourceLineNo">335</span>    byte readByte() throws IOException;<a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span>    /**<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * Reads one input byte, zero-extends<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * it to type &lt;code&gt;int&lt;/code&gt;, and returns<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * the result, which is therefore in the range<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * &lt;code&gt;0&lt;/code&gt;<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * through &lt;code&gt;255&lt;/code&gt;.<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * This method is suitable for reading<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * the byte written by the &lt;code&gt;writeByte&lt;/code&gt;<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * method of interface &lt;code&gt;DataOutput&lt;/code&gt;<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * if the argument to &lt;code&gt;writeByte&lt;/code&gt;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * was intended to be a value in the range<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * &lt;code&gt;0&lt;/code&gt; through &lt;code&gt;255&lt;/code&gt;.<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     *<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     * @return     the unsigned 8-bit value read.<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     *               all the bytes.<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * @exception  IOException   if an I/O error occurs.<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     */<a name="line.354"></a>
+<span class="sourceLineNo">355</span>    int readUnsignedByte() throws IOException;<a name="line.355"></a>
+<span class="sourceLineNo">356</span><a name="line.356"></a>
+<span class="sourceLineNo">357</span>    /**<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * Reads two input bytes and returns<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * a &lt;code&gt;short&lt;/code&gt; value. Let &lt;code&gt;a&lt;/code&gt;<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * be the first byte read and &lt;code&gt;b&lt;/code&gt;<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * be the second byte. The value<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * returned<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * is:<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * &lt;p&gt;&lt;pre&gt;&lt;code&gt;(short)((a &amp;lt;&amp;lt; 8) | (b &amp;amp; 0xff))<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * &lt;/code&gt;&lt;/pre&gt;<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * This method<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     * is suitable for reading the bytes written<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * by the &lt;code&gt;writeShort&lt;/code&gt; method of<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * interface &lt;code&gt;DataOutput&lt;/code&gt;.<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     *<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * @return     the 16-bit value read.<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     *               all the bytes.<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * @exception  IOException   if an I/O error occurs.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     */<a name="line.375"></a>
+<span class="sourceLineNo">376</span>    short readShort() throws IOException;<a name="line.376"></a>
+<span class="sourceLineNo">377</span><a name="line.377"></a>
+<span class="sourceLineNo">378</span>    /**<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * Reads two input bytes and returns<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * an &lt;code&gt;int&lt;/code&gt; value in the range &lt;code&gt;0&lt;/code&gt;<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * through &lt;code&gt;65535&lt;/code&gt;. Let &lt;code&gt;a&lt;/code&gt;<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     * be the first byte read and<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * &lt;code&gt;b&lt;/code&gt;<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     * be the second byte. The value returned is:<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * &lt;p&gt;&lt;pre&gt;&lt;code&gt;(((a &amp;amp; 0xff) &amp;lt;&amp;lt; 8) | (b &amp;amp; 0xff))<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * &lt;/code&gt;&lt;/pre&gt;<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * This method is suitable for reading the bytes<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * written by the &lt;code&gt;writeShort&lt;/code&gt; method<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * of interface &lt;code&gt;DataOutput&lt;/code&gt;  if<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * the argument to &lt;code&gt;writeShort&lt;/code&gt;<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * was intended to be a value in the range<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * &lt;code&gt;0&lt;/code&gt; through &lt;code&gt;65535&lt;/code&gt;.<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     *<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * @return     the unsigned 16-bit value read.<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     *               all the bytes.<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * @exception  IOException   if an I/O error occurs.<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     */<a name="line.398"></a>
+<span class="sourceLineNo">399</span>    int readUnsignedShort() throws IOException;<a name="line.399"></a>
+<span class="sourceLineNo">400</span><a name="line.400"></a>
+<span class="sourceLineNo">401</span>    /**<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * Reads two input bytes and returns a &lt;code&gt;char&lt;/code&gt; value.<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * Let &lt;code&gt;a&lt;/code&gt;<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * be the first byte read and &lt;code&gt;b&lt;/code&gt;<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * be the second byte. The value<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * returned is:<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * &lt;p&gt;&lt;pre&gt;&lt;code&gt;(char)((a &amp;lt;&amp;lt; 8) | (b &amp;amp; 0xff))<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * &lt;/code&gt;&lt;/pre&gt;<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * This method<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * is suitable for reading bytes written by<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * the &lt;code&gt;writeChar&lt;/code&gt; method of interface<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * &lt;code&gt;DataOutput&lt;/code&gt;.<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     *<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     * @return     the &lt;code&gt;char&lt;/code&gt; value read.<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     *               all the bytes.<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     * @exception  IOException   if an I/O error occurs.<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     */<a name="line.418"></a>
+<span class="sourceLineNo">419</span>    char readChar() throws IOException;<a name="line.419"></a>
+<span class="sourceLineNo">420</span><a name="line.420"></a>
+<span class="sourceLineNo">421</span>    /**<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     * Reads four input bytes and returns an<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     * &lt;code&gt;int&lt;/code&gt; value. Let &lt;code&gt;a-d&lt;/code&gt;<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * be the first through fourth bytes read. The value returned is:<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     * &lt;p&gt;&lt;pre&gt;<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     * &lt;code&gt;<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * (((a &amp;amp; 0xff) &amp;lt;&amp;lt; 24) | ((b &amp;amp; 0xff) &amp;lt;&amp;lt; 16) |<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     * &amp;#32;((c &amp;amp; 0xff) &amp;lt;&amp;lt; 8) | (d &amp;amp; 0xff))<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * &lt;/code&gt;&lt;/pre&gt;<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * This method is suitable<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * for reading bytes written by the &lt;code&gt;writeInt&lt;/code&gt;<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     * method of interface &lt;code&gt;DataOutput&lt;/code&gt;.<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     *<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     * @return     the &lt;code&gt;int&lt;/code&gt; value read.<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     *               all the bytes.<a name="line.436"></a>
+<span class="sourceLineNo">437</span>     * @exception  IOException   if an I/O error occurs.<a name="line.437"></a>
+<span class="sourceLineNo">438</span>     */<a name="line.438"></a>
+<span class="sourceLineNo">439</span>    int readInt() throws IOException;<a name="line.439"></a>
+<span class="sourceLineNo">440</span><a name="line.440"></a>
+<span class="sourceLineNo">441</span>    /**<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     * Reads eight input bytes and returns<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * a &lt;code&gt;long&lt;/code&gt; value. Let &lt;code&gt;a-h&lt;/code&gt;<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     * be the first through eighth bytes read.<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     * The value returned is:<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     * &lt;p&gt;&lt;pre&gt; &lt;code&gt;<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     * (((long)(a &amp;amp; 0xff) &amp;lt;&amp;lt; 56) |<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     *  ((long)(b &amp;amp; 0xff) &amp;lt;&amp;lt; 48) |<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     *  ((long)(c &amp;amp; 0xff) &amp;lt;&amp;lt; 40) |<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     *  ((long)(d &amp;amp; 0xff) &amp;lt;&amp;lt; 32) |<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     *  ((long)(e &amp;amp; 0xff) &amp;lt;&amp;lt; 24) |<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     *  ((long)(f &amp;amp; 0xff) &amp;lt;&amp;lt; 16) |<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     *  ((long)(g &amp;amp; 0xff) &amp;lt;&amp;lt;  8) |<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     *  ((long)(h &amp;amp; 0xff)))<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * &lt;/code&gt;&lt;/pre&gt;<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     * &lt;p&gt;<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     * This method is suitable<a name="line.457"></a>
+<span class="sourceLineNo">458</span>     * for reading bytes written by the &lt;code&gt;writeLong&lt;/code&gt;<a name="line.458"></a>
+<span class="sourceLineNo">459</span>     * method of interface &lt;code&gt;DataOutput&lt;/code&gt;.<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     *<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     * @return     the &lt;code&gt;long&lt;/code&gt; value read.<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     *               all the bytes.<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     * @exception  IOException   if an I/O error occurs.<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     */<a name="line.465"></a>
+<span class="sourceLineNo">466</span>    long readLong() throws IOException;<a name="line.466"></a>
+<span class="sourceLineNo">467</span><a name="line.467"></a>
+<span class="sourceLineNo">468</span>    /**<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     * Reads four input bytes and returns<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     * a &lt;code&gt;float&lt;/code&gt; value. It does this<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     * by first constructing an &lt;code&gt;int&lt;/code&gt;<a name="line.471"></a>
+<span class="sourceLineNo">472</span>     * value in exactly the manner<a name="line.472"></a>
+<span class="sourceLineNo">473</span>     * of the &lt;code&gt;readInt&lt;/code&gt;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>     * method, then converting this &lt;code&gt;int&lt;/code&gt;<a name="line.474"></a>
+<span class="sourceLineNo">475</span>     * value to a &lt;code&gt;float&lt;/code&gt; in<a name="line.475"></a>
+<span class="sourceLineNo">476</span>     * exactly the manner of the method &lt;code&gt;Float.intBitsToFloat&lt;/code&gt;.<a name="line.476"></a>
+<span class="sourceLineNo">477</span>     * This method is suitable for reading<a name="line.477"></a>
+<span class="sourceLineNo">478</span>     * bytes written by the &lt;code&gt;writeFloat&lt;/code&gt;<a name="line.478"></a>
+<span class="sourceLineNo">479</span>     * method of interface &lt;code&gt;DataOutput&lt;/code&gt;.<a name="line.479"></a>
+<span class="sourceLineNo">480</span>     *<a name="line.480"></a>
+<span class="sourceLineNo">481</span>     * @return     the &lt;code&gt;float&lt;/code&gt; value read.<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     *               all the bytes.<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * @exception  IOException   if an I/O error occurs.<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     */<a name="line.485"></a>
+<span class="sourceLineNo">486</span>    float readFloat() throws IOException;<a name="line.486"></a>
+<span class="sourceLineNo">487</span><a name="line.487"></a>
+<span class="sourceLineNo">488</span>    /**<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     * Reads eight input bytes and returns<a name="line.489"></a>
+<span class="sourceLineNo">490</span>     * a &lt;code&gt;double&lt;/code&gt; value. It does this<a name="line.490"></a>
+<span class="sourceLineNo">491</span>     * by first constructing a &lt;code&gt;long&lt;/code&gt;<a name="line.491"></a>
+<span class="sourceLineNo">492</span>     * value in exactly the manner<a name="line.492"></a>
+<span class="sourceLineNo">493</span>     * of the &lt;code&gt;readlong&lt;/code&gt;<a name="line.493"></a>
+<span class="sourceLineNo">494</span>     * method, then converting this &lt;code&gt;long&lt;/code&gt;<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     * value to a &lt;code&gt;double&lt;/code&gt; in exactly<a name="line.495"></a>
+<span class="sourceLineNo">496</span>     * the manner of the method &lt;code&gt;Double.longBitsToDouble&lt;/code&gt;.<a name="line.496"></a>
+<span class="sourceLineNo">497</span>     * This method is suitable for reading<a name="line.497"></a>
+<span class="sourceLineNo">498</span>     * bytes written by the &lt;code&gt;writeDouble&lt;/code&gt;<a name="line.498"></a>
+<span class="sourceLineNo">499</span>     * method of interface &lt;code&gt;DataOutput&lt;/code&gt;.<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     *<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * @return     the &lt;code&gt;double&lt;/code&gt; value read.<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * @exception  EOFException  if this stream reaches the end before reading<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     *               all the bytes.<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * @exception  IOException   if an I/O error occurs.<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     */<a name="line.505"></a>
+<span class="sourceLineNo">506</span>    double readDouble() throws IOException;<a name="line.506"></a>
+<span class="sourceLineNo">507</span><a name="line.507"></a>
+<span class="sourceLineNo">508</span>    /**<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     * Reads the next line of text from the input stream.<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     * It reads successive bytes, converting<a name="line.510"></a>
+<span class="sourceLineNo">511</span>     * each byte separately into a character,<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     * until it encounters a line terminator or<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     * end of<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     * file; the characters read are then<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     * returned as a &lt;code&gt;String&lt;/code&gt;. Note<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     * that because this<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * method processes bytes,<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     * it does not support input of the full Unicode<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     * character set.<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     * &lt;p&gt;<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * If end of file is encountered<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     * before even one byte can be read, then &lt;code&gt;null&lt;/code&gt;<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     * is returned. Otherwise, each byte that is<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     * read is converted to type &lt;code&gt;char&lt;/code&gt;<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     * by zero-extension. If the character &lt;code&gt;'\n'&lt;/code&gt;<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     * is encountered, it is discarded and reading<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     * ceases. If the character &lt;code&gt;'\r'&lt;/code&gt;<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     * is encountered, it is discarded and, if<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     * the following byte converts &amp;#32;to the<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     * character &lt;code&gt;'\n'&lt;/code&gt;, then that is<a name="line.530"></a>
+<span class="sourceLineNo">531</span>     * discarded also; reading then ceases. If<a name="line.531"></a>
+<span class="sourceLineNo">532</span>     * end of file is encountered before either<a name="line.532"></a>
+<span class="sourceLineNo">533</span>     * of the characters &lt;code&gt;'\n'&lt;/code&gt; and<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * &lt;code&gt;'\r'&lt;/code&gt; is encountered, reading<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     * ceases. Once reading has ceased, a &lt;code&gt;String&lt;/code&gt;<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * is returned that contains all the characters<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * read and not discarded, taken in order.<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     * Note that every character in this string<a name="line.538"></a>
+<span class="sourceLineNo">539</span>     * will have a value less than &lt;code&gt;&amp;#92;u0100&lt;/code&gt;,<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     * that is, &lt;code&gt;(char)256&lt;/code&gt;.<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     *<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * @return the next line of text from the input stream,<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     *         or &lt;CODE&gt;null&lt;/CODE&gt; if the end of file is<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     *         encountered before a byte can be read.<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     * @exception  IOException  if an I/O error occurs.<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     */<a name="line.546"></a>
+<span class="sourceLineNo">547</span>    String readLine() throws IOException;<a name="line.547"></a>
+<span class="sourceLineNo">548</span><a name="line.548"></a>
+<span class="sourceLineNo">549</span>    /**<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     * Reads in a string that has been encoded using a<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     * &lt;a href="#modified-utf-8"&gt;modified UTF-8&lt;/a&gt;<a name="line.551"></a>
+<span class="sourceLineNo">552</span>     * format.<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     * The general contract of &lt;code&gt;readUTF&lt;/code&gt;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>     * is that it reads a representation of a Unicode<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     * character string encoded in modified<a name="line.555"></a>
+<span class="sourceLineNo">556</span>     * UTF-8 format; this string of characters<a name="line.556"></a>
+<span class="sourceLineNo">557</span>     * is then returned as a &lt;code&gt;String&lt;/code&gt;.<a name="line.557"></a>
+<span class="sourceLineNo">558</span>     * &lt;p&gt;<a name="line.558"></a>
+<span class="sourceLineNo">559</span>     * First, two bytes are read and used to<a name="line.559"></a>
+<span class="sourceLineNo">560</span>     * construct an unsigned 16-bit integer in<a name="line.560"></a>
+<span class="sourceLineNo">561</span>     * exactly the manner of the &lt;code&gt;readUnsignedShort&lt;/code&gt;<a name="line.561"></a>
+<span class="sourceLineNo">562</span>     * method . This integer value is called the<a name="line.562"></a>
+<span class="sourceLineNo">563</span>     * &lt;i&gt;UTF length&lt;/i&gt; and specifies the number<a name="line.563"></a>
+<span class="sourceLineNo">564</span>     * of additional bytes to be read. These bytes<a name="line.564"></a>
+<span class="sourceLineNo">565</span>     * are then converted to characters by considering<a name="line.565"></a>
+<span class="sourceLineNo">566</span>     * them in groups. The length of each group<a name="line.566"></a>
+<span class="sourceLineNo">567</span>     * is computed from the value of the first<a name="line.567"></a>
+<span class="sourceLineNo">568</span>     * byte of the group. The byte following a<a name="line.568"></a>
+<span class="sourceLineNo">569</span>     * group, if any, is the first byte of the<a name="line.569"></a>
+<span class="sourceLineNo">570</span>     * next group.<a name="line.570"></a>
+<span class="sourceLineNo">571</span>     * &lt;p&gt;<a name="line.571"></a>
+<span class="sourceLineNo">572</span>     * If the first byte of a group<a name="line.572"></a>
+<span class="sourceLineNo">573</span>     * matches the bit pattern &lt;code&gt;0xxxxxxx&lt;/code&gt;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>     * (where &lt;code&gt;x&lt;/code&gt; means "may be &lt;code&gt;0&lt;/code&gt;<a name="line.574"></a>
+<span class="sourceLineNo">575</span>     * or &lt;code&gt;1&lt;/code&gt;"), then the group consists<a name="line.575"></a>
+<span class="sourceLineNo">576</span>     * of just that byte. The byte is zero-extended<a name="line.576"></a>
+<span class="sourceLineNo">577</span>     * to form a character.<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     * &lt;p&gt;<a name="line.578"></a>
+<span class="sourceLineNo">579</span>     * If the first byte<a name="line.579"></a>
+<span class="sourceLineNo">580</span>     * of a group matches the bit pattern &lt;code&gt;110xxxxx&lt;/code&gt;,<a name="line.580"></a>
+<span class="sourceLineNo">581</span>     * then the group consists of that byte &lt;code&gt;a&lt;/code&gt;<a name="line.581"></a>
+<span class="sourceLineNo">582</span>     * and a second byte &lt;code&gt;b&lt;/code&gt;. If there<a name="line.582"></a>
+<span class="sourceLineNo">583</span>     * is no byte &lt;code&gt;b&lt;/code&gt; (because byte<a name="line.583"></a>
+<span class="sourceLineNo">584</span>     * &lt;code&gt;a&lt;/code&gt; was the last of the bytes<a name="line.584"></a>
+<span class="sourceLineNo">585</span>     * to be read), or if byte &lt;code&gt;b&lt;/code&gt; does<a name="line.585"></a>
+<span class="sourceLineNo">586</span>     * not match the bit pattern &lt;code&gt;10xxxxxx&lt;/code&gt;,<a name="line.586"></a>
+<span class="sourceLineNo">587</span>     * then a &lt;code&gt;UTFDataFormatException&lt;/code&gt;<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * is thrown. Otherwise, the group is converted<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     * to the character:&lt;p&gt;<a name="line.589"></a>
+<span class="sourceLineNo">590</span>     * &lt;pre&gt;&lt;code&gt;(char)(((a&amp;amp; 0x1F) &amp;lt;&amp;lt; 6) | (b &amp;amp; 0x3F))<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * &lt;/code&gt;&lt;/pre&gt;<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * If the first byte of a group<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     * matches the bit pattern &lt;code&gt;1110xxxx&lt;/code&gt;,<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * then the group consists of that byte &lt;code&gt;a&lt;/code&gt;<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     * and two more bytes &lt;code&gt;b&lt;/code&gt; and &lt;code&gt;c&lt;/code&gt;.<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     * If there is no byte &lt;code&gt;c&lt;/code&gt; (because<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     * byte &lt;code&gt;a&lt;/code&gt; was one of the last<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * two of the bytes to be read), or either<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * byte &lt;code&gt;b&lt;/code&gt; or byte &lt;code&gt;c&lt;/code&gt;<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     * does not match the bit pattern &lt;code&gt;10xxxxxx&lt;/code&gt;,<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     * then a &lt;code&gt;UTFDataFormatException&lt;/code&gt;<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     * is thrown. Otherwise, the group is converted<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * to the character:&lt;p&gt;<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * &lt;pre&gt;&lt;code&gt;<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * (char)(((a &amp;amp; 0x0F) &amp;lt;&amp;lt; 12) | ((b &amp;amp; 0x3F) &amp;lt;&amp;lt; 6) | (c &amp;amp; 0x3F))<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * &lt;/code&gt;&lt;/pre&gt;<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     * If the first byte of a group matches the<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     * pattern &lt;code&gt;1111xxxx&lt;/code&gt; or the pattern<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     * &lt;code&gt;10xxxxxx&lt;/code&gt;, then a &lt;code&gt;UTFDataFormatException&lt;/code&gt;<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     * is thrown.<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     * &lt;p&gt;<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     * If end of file is encountered<a name="line.612"></a>
+<span class="sourceLineNo">613</span>     * at any time during this entire process,<a name="line.613"></a>
+<span class="sourceLineNo">614</span>     * then an &lt;code&gt;EOFException&lt;/code&gt; is thrown.<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     * &lt;p&gt;<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     * After every group has been converted to<a name="line.616"></a>
+<span class="sourceLineNo">617</span>     * a character by this process, the characters<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     * are gathered, in the same order in which<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     * their corresponding groups were read from<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     * the input stream, to form a &lt;code&gt;String&lt;/code&gt;,<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     * which is returned.<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     * &lt;p&gt;<a name="line.622"></a>
+<span class="sourceLineNo">623</span>     * The &lt;code&gt;writeUTF&lt;/code&gt;<a name="line.623"></a>
+<span class="sourceLineNo">624</span>     * method of interface &lt;code&gt;DataOutput&lt;/code&gt;<a name="line.624"></a>
+<span class="sourceLineNo">625</span>     * may be used to write data that is suitable<a name="line.625"></a>
+<span class="sourceLineNo">626</span>     * for reading by this method.<a name="line.626"></a>
+<span class="sourceLineNo">627</span>     * @return     a Unicode string.<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     * @exception  EOFException            if this stream reaches the end<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     *               before reading all the bytes.<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     * @exception  IOException             if an I/O error occurs.<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * @exception  UTFDataFormatException  if the bytes do not represent a<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     *               valid modified UTF-8 encoding of a string.<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     */<a name="line.633"></a>
+<span class="sourceLineNo">634</span>    String readUTF() throws IOException;<a name="line.634"></a>
+<span class="sourceLineNo">635</span>}<a name="line.635"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

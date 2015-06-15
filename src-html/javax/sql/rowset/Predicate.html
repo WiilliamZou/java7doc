@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.sql.rowset;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.sql.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.sql.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>/**<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * The standard interface that provides the framework for all<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * &lt;code&gt;FilteredRowSet&lt;/code&gt; objects to describe their filters.<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * &lt;p&gt;<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;h3&gt;1.0 Background&lt;/h3&gt;<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * The &lt;code&gt;Predicate&lt;/code&gt; interface is a standard interface that<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * applications can implement to define the filter they wish to apply to a<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * a &lt;code&gt;FilteredRowSet&lt;/code&gt; object. A &lt;code&gt;FilteredRowSet&lt;/code&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * object consumes implementations of this interface and enforces the<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * constraints defined in the implementation of the method &lt;code&gt;evaluate&lt;/code&gt;.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * A &lt;code&gt;FilteredRowSet&lt;/code&gt; object enforces the filter constraints in a<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * bi-directional manner: It outputs only rows that are within<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * the constraints of the filter; and conversely, it inserts, modifies, or updates<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * only rows that are within the constraints of the filter.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;h3&gt;2.0 Implementation Guidelines&lt;/h3&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * In order to supply a predicate for the &lt;code&gt;FilteredRowSet&lt;/code&gt;.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * this interface must be implemented.  At this time, the JDBC RowSet<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * Implementations (JSR-114) does not specify any standard filters definitions.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * By specifying a standard means and mechanism for a range of filters to be<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * defined and deployed with both the reference and vendor implementations<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * of the &lt;code&gt;FilteredRowSet&lt;/code&gt; interface, this allows for a flexible<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * and application motivated implementations of &lt;code&gt;Predicate&lt;/code&gt; to emerge.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * A sample implementation would look something like this:<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;pre&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;code&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *    public class Range implements Predicate {<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *       private Object lo[];<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *       private Object hi[];<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *       private int idx[];<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *       public Range(Object[] lo, Object[] hi, int[] idx) {<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *          this.lo = lo;<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *          this.hi = hi;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *          this.idx = idx;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *       }<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *      public boolean evaluate(RowSet rs) {<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *          CachedRowSet crs = (CachedRowSet)rs;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *          boolean bool1,bool2;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *          // Check the present row determine if it lies<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *          // within the filtering criteria.<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *          for (int i = 0; i &lt; idx.length; i++) {<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *              if ((rs.getObject(idx[i]) &gt;= lo[i]) &amp;&amp;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *                  (rs.getObject(idx[i]) &gt;= hi[i]) {<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *                  bool1 = true; // within filter constraints<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *          } else {<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *            bool2 = true; // outside of filter constraints<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *          }<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *      }<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *<a name="line.86"></a>
+<span class="sourceLineNo">087</span> *      if (bool2) {<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *         return false;<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *      } else {<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *         return true;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *      }<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *  }<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;/code&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;/pre&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * &lt;P&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * The example above implements a simple range predicate. Note, that<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * implementations should but are not required to provider &lt;code&gt;String&lt;/code&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * and integer index based constructors to provide for JDBC RowSet Implementation<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * applications that use both column identification conventions.<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * @author Jonathan Bruce, Amit Handa<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *<a name="line.102"></a>
+<span class="sourceLineNo">103</span> */<a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span> // &lt;h3&gt;3.0 FilteredRowSet Internals&lt;/h3&gt;<a name="line.105"></a>
+<span class="sourceLineNo">106</span> // internalNext, Frist, Last. Discuss guidelines on how to approach this<a name="line.106"></a>
+<span class="sourceLineNo">107</span> // and cite examples in reference implementations.<a name="line.107"></a>
+<span class="sourceLineNo">108</span>public interface Predicate {<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    /**<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * This method is typically called a &lt;code&gt;FilteredRowSet&lt;/code&gt; object<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * internal methods (not public) that control the &lt;code&gt;RowSet&lt;/code&gt; object's<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * cursor moving  from row to the next. In addition, if this internal method<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * moves the cursor onto a row that has been deleted, the internal method will<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * continue to ove the cursor until a valid row is found.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * @return &lt;code&gt;true&lt;/code&gt; if there are more rows in the filter;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     *     &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     */<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    public boolean evaluate(RowSet rs);<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>    /**<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * This method is called by a &lt;code&gt;FilteredRowSet&lt;/code&gt; object<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * to check whether the value lies between the filtering criterion (or criteria<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * if multiple constraints exist) set using the &lt;code&gt;setFilter()&lt;/code&gt; method.<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * &lt;P&gt;<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * The &lt;code&gt;FilteredRowSet&lt;/code&gt; object will use this method internally<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * while inserting new rows to a &lt;code&gt;FilteredRowSet&lt;/code&gt; instance.<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     *<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * @param value An &lt;code&gt;Object&lt;/code&gt; value which needs to be checked,<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *        whether it can be part of this &lt;code&gt;FilterRowSet&lt;/code&gt; object.<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @param column a &lt;code&gt;int&lt;/code&gt; object that must match the<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *        SQL index of a column in this &lt;code&gt;RowSet&lt;/code&gt; object. This must<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *        have been passed to &lt;code&gt;Predicate&lt;/code&gt; as one of the columns<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *        for filtering while initializing a &lt;code&gt;Predicate&lt;/code&gt;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @return &lt;code&gt;true&lt;/code&gt; ifrow value lies within the filter;<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *     &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @throws SQLException if the column is not part of filtering criteria<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     */<a name="line.139"></a>
+<span class="sourceLineNo">140</span>    public boolean evaluate(Object value, int column) throws SQLException;<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>    /**<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * This method is called by the &lt;code&gt;FilteredRowSet&lt;/code&gt; object<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * to check whether the value lies between the filtering criteria set<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * using the setFilter method.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * &lt;P&gt;<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * The &lt;code&gt;FilteredRowSet&lt;/code&gt; object will use this method internally<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * while inserting new rows to a &lt;code&gt;FilteredRowSet&lt;/code&gt; instance.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * @param value An &lt;code&gt;Object&lt;/code&gt; value which needs to be checked,<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * whether it can be part of this &lt;code&gt;FilterRowSet&lt;/code&gt;.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @param columnName a &lt;code&gt;String&lt;/code&gt; object that must match the<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *        SQL name of a column in this &lt;code&gt;RowSet&lt;/code&gt;, ignoring case. This must<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     *        have been passed to &lt;code&gt;Predicate&lt;/code&gt; as one of the columns for filtering<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *        while initializing a &lt;code&gt;Predicate&lt;/code&gt;<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * @return &lt;code&gt;true&lt;/code&gt; if value lies within the filter; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @throws SQLException if the column is not part of filtering criteria<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     */<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    public boolean evaluate(Object value, String columnName) throws SQLException;<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>}<a name="line.164"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

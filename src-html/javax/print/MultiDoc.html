@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.print;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.IOException;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * Interface MultiDoc specifies the interface for an object that supplies more<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * than one piece of print data for a Print Job. "Doc" is a short,<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * easy-to-pronounce term that means "a piece of print data," and a "multidoc"<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * is a group of several docs. The client passes to the Print Job an object<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * that implements interface MultiDoc, and the Print Job calls methods on<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *  that object to obtain the print data.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;P&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * Interface MultiDoc provides an abstraction similar to a "linked list" of<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * docs. A multidoc object is like a node in the linked list, containing the<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * current doc in the list and a pointer to the next node (multidoc) in the<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * list. The Print Job can call the multidoc's {@link #getDoc()<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;CODE&gt;getDoc()&lt;/CODE&gt;} method to get the current doc. When it's ready to go<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * on to the next doc, the Print Job can call the multidoc's {@link #next()<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;CODE&gt;next()&lt;/CODE&gt;} method to get the next multidoc, which contains the<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * next doc. So Print Job code for accessing a multidoc might look like this:<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;PRE&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *      void processMultiDoc(MultiDoc theMultiDoc) {<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *          MultiDoc current = theMultiDoc;<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span> *          while (current != null) {<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *              processDoc (current.getDoc());<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *              current = current.next();<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *          }<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *      }<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;/PRE&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;P&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * Of course, interface MultiDoc can be implemented in any way that fulfills<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * the contract; it doesn't have to use a linked list in the implementation.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;P&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * To get all the print data for a multidoc print job, a Print Service<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * proxy could use either of two patterns:<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;OL TYPE=1&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;LI&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * The &lt;B&gt;interleaved&lt;/B&gt; pattern: Get the doc from the current multidoc. Get<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * the print data representation object from the current doc. Get all the print<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * data from the print data representation object. Get the next multidoc from<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * the current multidoc, and repeat until there are no more. (The code example<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * above uses the interleaved pattern.)<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * &lt;P&gt;<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;LI&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * The &lt;B&gt;all-at-once&lt;/B&gt; pattern: Get the doc from the current multidoc, and<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * save the doc in a list. Get the next multidoc from the current multidoc, and<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * repeat until there are no more. Then iterate over the list of saved docs. Get<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * the print data representation object from the current doc. Get all the print<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * data from the print data representation object. Go to the next doc in the<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * list, and repeat until there are no more.<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * &lt;/OL&gt;<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * Now, consider a printing client that is generating print data on the fly and<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * does not have the resources to store more than one piece of print data at a<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * time. If the print service proxy used the all-at-once pattern to get the<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * print data, it would pose a problem for such a client; the client would have<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * to keep all the docs' print data around until the print service proxy comes<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * back and asks for them, which the client is not able to do. To work with such<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * a client, the print service proxy must use the interleaved pattern.<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;P&gt;<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * To address this problem, and to simplify the design of clients providing<a name="line.87"></a>
+<span class="sourceLineNo">088</span>* multiple docs to a Print Job, every Print Service proxy that supports<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * multidoc print jobs is required to access a MultiDoc object using the<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * interleaved pattern. That is, given a MultiDoc object, the print service<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * proxy will call {@link #getDoc() &lt;CODE&gt;getDoc()&lt;/CODE&gt;} one or more times<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * until it successfully obtains the current Doc object. The print service proxy<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * will then obtain the current doc's print data, not proceeding until all the<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * print data is obtained or an unrecoverable error occurs. If it is able to<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * continue, the print service proxy will then call {@link #next()<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;CODE&gt;next()&lt;/CODE&gt;} one or more times until it successfully obtains either<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * the next MultiDoc object or an indication that there are no more. An<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * implementation of interface MultiDoc can assume the print service proxy will<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * follow this interleaved pattern; for any other pattern of usage, the MultiDoc<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * implementation's behavior is unspecified.<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * &lt;P&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * There is no restriction on the number of client threads that may be<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * simultaneously accessing the same multidoc. Therefore, all implementations of<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * interface MultiDoc must be designed to be multiple thread safe. In fact, a<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * client thread could be adding docs to the end of the (conceptual) list while<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * a Print Job thread is simultaneously obtaining docs from the beginning of the<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * list; provided the multidoc object synchronizes the threads properly, the two<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * threads will not interfere with each other<a name="line.108"></a>
+<span class="sourceLineNo">109</span> */<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>public interface MultiDoc {<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>    /**<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * Obtain the current doc object.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @return  Current doc object.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * @exception  IOException<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     *     Thrown if a error ocurred reading the document.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     */<a name="line.121"></a>
+<span class="sourceLineNo">122</span>    public Doc getDoc() throws IOException;<a name="line.122"></a>
+<span class="sourceLineNo">123</span><a name="line.123"></a>
+<span class="sourceLineNo">124</span>    /**<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * Go to the multidoc object that contains the next doc object in the<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * sequence of doc objects.<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     *<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @return  Multidoc object containing the next doc object, or null if<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * there are no further doc objects.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @exception  IOException<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *     Thrown if an error occurred locating the next document<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     */<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    public MultiDoc next() throws IOException;<a name="line.134"></a>
+<span class="sourceLineNo">135</span><a name="line.135"></a>
+<span class="sourceLineNo">136</span>}<a name="line.136"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

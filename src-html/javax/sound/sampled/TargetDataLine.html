@@ -1,0 +1,264 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.sound.sampled;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * A target data line is a type of &lt;code&gt;{@link DataLine}&lt;/code&gt; from which<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * audio data can be read.  The most common example is a data line that gets<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * its data from an audio capture device.  (The device is implemented as a<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * mixer that writes to the target data line.)<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * &lt;p&gt;<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * Note that the naming convention for this interface reflects the relationship<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * between the line and its mixer.  From the perspective of an application,<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * a target data line may act as a source for audio data.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * The target data line can be obtained from a mixer by invoking the<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;code&gt;{@link Mixer#getLine getLine}&lt;/code&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * method of &lt;code&gt;Mixer&lt;/code&gt; with an appropriate<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;code&gt;{@link DataLine.Info}&lt;/code&gt; object.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * The &lt;code&gt;TargetDataLine&lt;/code&gt; interface provides a method for reading the<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * captured data from the target data line's buffer.Applications<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * that record audio should read data from the target data line quickly enough<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * to keep the buffer from overflowing, which could cause discontinuities in<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * the captured data that are perceived as clicks.  Applications can use the<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;code&gt;{@link DataLine#available available}&lt;/code&gt; method defined in the<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;code&gt;DataLine&lt;/code&gt; interface to determine the amount of data currently<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * queued in the data line's buffer.  If the buffer does overflow,<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * the oldest queued data is discarded and replaced by new data.<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * @author Kara Kytle<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * @see Mixer<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * @see DataLine<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * @see SourceDataLine<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * @since 1.3<a name="line.57"></a>
+<span class="sourceLineNo">058</span> */<a name="line.58"></a>
+<span class="sourceLineNo">059</span>public interface TargetDataLine extends DataLine {<a name="line.59"></a>
+<span class="sourceLineNo">060</span><a name="line.60"></a>
+<span class="sourceLineNo">061</span><a name="line.61"></a>
+<span class="sourceLineNo">062</span>    /**<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * Opens the line with the specified format and requested buffer size,<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * causing the line to acquire any required system resources and become<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * operational.<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * &lt;p&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * The buffer size is specified in bytes, but must represent an integral<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * number of sample frames.  Invoking this method with a requested buffer<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * size that does not meet this requirement may result in an<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * IllegalArgumentException.  The actual buffer size for the open line may<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * differ from the requested buffer size.  The value actually set may be<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * queried by subsequently calling &lt;code&gt;{@link DataLine#getBufferSize}&lt;/code&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * &lt;p&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * If this operation succeeds, the line is marked as open, and an<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * &lt;code&gt;{@link LineEvent.Type#OPEN OPEN}&lt;/code&gt; event is dispatched to the<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * line's listeners.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * &lt;p&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * Invoking this method on a line that is already open is illegal<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * and may result in an &lt;code&gt;IllegalStateException&lt;/code&gt;.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * &lt;p&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * Some lines, once closed, cannot be reopened.  Attempts<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * to reopen such a line will always result in a<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * &lt;code&gt;LineUnavailableException&lt;/code&gt;.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     *<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * @param format the desired audio format<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * @param bufferSize the desired buffer size, in bytes.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @throws LineUnavailableException if the line cannot be<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * opened due to resource restrictions<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @throws IllegalArgumentException if the buffer size does not represent<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * an integral number of sample frames,<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * or if &lt;code&gt;format&lt;/code&gt; is not fully specified or invalid<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @throws IllegalStateException if the line is already open<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @throws SecurityException if the line cannot be<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * opened due to security restrictions<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @see #open(AudioFormat)<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @see Line#open<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * @see Line#close<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @see Line#isOpen<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * @see LineEvent<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     */<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    public void open(AudioFormat format, int bufferSize) throws LineUnavailableException;<a name="line.102"></a>
+<span class="sourceLineNo">103</span><a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span>    /**<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * Opens the line with the specified format, causing the line to acquire any<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * required system resources and become operational.<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     *<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * &lt;p&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * The implementation chooses a buffer size, which is measured in bytes but<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * which encompasses an integral number of sample frames.  The buffer size<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * that the system has chosen may be queried by subsequently calling &lt;code&gt;{@link DataLine#getBufferSize}&lt;/code&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * &lt;p&gt;<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * If this operation succeeds, the line is marked as open, and an<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * &lt;code&gt;{@link LineEvent.Type#OPEN OPEN}&lt;/code&gt; event is dispatched to the<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * line's listeners.<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * &lt;p&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * Invoking this method on a line that is already open is illegal<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * and may result in an &lt;code&gt;IllegalStateException&lt;/code&gt;.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * &lt;p&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * Some lines, once closed, cannot be reopened.  Attempts<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * to reopen such a line will always result in a<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * &lt;code&gt;LineUnavailableException&lt;/code&gt;.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     *<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @param format the desired audio format<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * @throws LineUnavailableException if the line cannot be<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * opened due to resource restrictions<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @throws IllegalArgumentException if &lt;code&gt;format&lt;/code&gt;<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * is not fully specified or invalid<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * @throws IllegalStateException if the line is already open<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @throws SecurityException if the line cannot be<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * opened due to security restrictions<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * @see #open(AudioFormat, int)<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * @see Line#open<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @see Line#close<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * @see Line#isOpen<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @see LineEvent<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     */<a name="line.139"></a>
+<span class="sourceLineNo">140</span>    public void open(AudioFormat format) throws LineUnavailableException;<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span>    /**<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * Reads audio data from the data line's input buffer.   The requested<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * number of bytes is read into the specified array, starting at<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * the specified offset into the array in bytes.  This method blocks until<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * the requested amount of data has been read.  However, if the data line<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * is closed, stopped, drained, or flushed before the requested amount has<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * been read, the method no longer blocks, but returns the number of bytes<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * read thus far.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * &lt;p&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * The number of bytes that can be read without blocking can be ascertained<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * using the &lt;code&gt;{@link DataLine#available available}&lt;/code&gt; method of the<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * &lt;code&gt;DataLine&lt;/code&gt; interface.  (While it is guaranteed that<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * this number of bytes can be read without blocking, there is no guarantee<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * that attempts to read additional data will block.)<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * &lt;p&gt;<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * The number of bytes to be read must represent an integral number of<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * sample frames, such that:<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * &lt;br&gt;<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * &lt;center&gt;&lt;code&gt;[ bytes read ] % [frame size in bytes ] == 0&lt;/code&gt;&lt;/center&gt;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * &lt;br&gt;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * The return value will always meet this requirement.  A request to read a<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * number of bytes representing a non-integral number of sample frames cannot<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * be fulfilled and may result in an IllegalArgumentException.<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     *<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * @param b a byte array that will contain the requested input data when<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * this method returns<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * @param off the offset from the beginning of the array, in bytes<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * @param len the requested number of bytes to read<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * @return the number of bytes actually read<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @throws IllegalArgumentException if the requested number of bytes does<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * not represent an integral number of sample frames.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * or if &lt;code&gt;len&lt;/code&gt; is negative.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @throws ArrayIndexOutOfBoundsException if &lt;code&gt;off&lt;/code&gt; is negative,<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * or &lt;code&gt;off+len&lt;/code&gt; is greater than the length of the array<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * &lt;code&gt;b&lt;/code&gt;.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @see SourceDataLine#write<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @see DataLine#available<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     */<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    public int read(byte[] b, int off, int len);<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>    /**<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * Obtains the number of sample frames of audio data that can be read from<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * the target data line without blocking.  Note that the return value<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * measures sample frames, not bytes.<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * @return the number of sample frames currently available for reading<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * @see SourceDataLine#availableWrite<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    //public int availableRead();<a name="line.191"></a>
+<span class="sourceLineNo">192</span>}<a name="line.192"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

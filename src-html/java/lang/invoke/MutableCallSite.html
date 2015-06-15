@@ -1,0 +1,355 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang.invoke;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.concurrent.atomic.AtomicInteger;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * A {@code MutableCallSite} is a {@link CallSite} whose target variable<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * behaves like an ordinary field.<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * An {@code invokedynamic} instruction linked to a {@code MutableCallSite} delegates<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * all calls to the site's current target.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * The {@linkplain CallSite#dynamicInvoker dynamic invoker} of a mutable call site<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * also delegates each call to the site's current target.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * Here is an example of a mutable call site which introduces a<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * state variable into a method handle chain.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * &lt;!-- JavaDocExamplesTest.testMutableCallSite --&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>MutableCallSite name = new MutableCallSite(MethodType.methodType(String.class));<a name="line.42"></a>
+<span class="sourceLineNo">043</span>MethodHandle MH_name = name.dynamicInvoker();<a name="line.43"></a>
+<span class="sourceLineNo">044</span>MethodType MT_str1 = MethodType.methodType(String.class);<a name="line.44"></a>
+<span class="sourceLineNo">045</span>MethodHandle MH_upcase = MethodHandles.lookup()<a name="line.45"></a>
+<span class="sourceLineNo">046</span>    .findVirtual(String.class, "toUpperCase", MT_str1);<a name="line.46"></a>
+<span class="sourceLineNo">047</span>MethodHandle worker1 = MethodHandles.filterReturnValue(MH_name, MH_upcase);<a name="line.47"></a>
+<span class="sourceLineNo">048</span>name.setTarget(MethodHandles.constant(String.class, "Rocky"));<a name="line.48"></a>
+<span class="sourceLineNo">049</span>assertEquals("ROCKY", (String) worker1.invokeExact());<a name="line.49"></a>
+<span class="sourceLineNo">050</span>name.setTarget(MethodHandles.constant(String.class, "Fred"));<a name="line.50"></a>
+<span class="sourceLineNo">051</span>assertEquals("FRED", (String) worker1.invokeExact());<a name="line.51"></a>
+<span class="sourceLineNo">052</span>// (mutation can be continued indefinitely)<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * The same call site may be used in several places at once.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span>MethodType MT_str2 = MethodType.methodType(String.class, String.class);<a name="line.57"></a>
+<span class="sourceLineNo">058</span>MethodHandle MH_cat = lookup().findVirtual(String.class,<a name="line.58"></a>
+<span class="sourceLineNo">059</span>  "concat", methodType(String.class, String.class));<a name="line.59"></a>
+<span class="sourceLineNo">060</span>MethodHandle MH_dear = MethodHandles.insertArguments(MH_cat, 1, ", dear?");<a name="line.60"></a>
+<span class="sourceLineNo">061</span>MethodHandle worker2 = MethodHandles.filterReturnValue(MH_name, MH_dear);<a name="line.61"></a>
+<span class="sourceLineNo">062</span>assertEquals("Fred, dear?", (String) worker2.invokeExact());<a name="line.62"></a>
+<span class="sourceLineNo">063</span>name.setTarget(MethodHandles.constant(String.class, "Wilma"));<a name="line.63"></a>
+<span class="sourceLineNo">064</span>assertEquals("WILMA", (String) worker1.invokeExact());<a name="line.64"></a>
+<span class="sourceLineNo">065</span>assertEquals("Wilma, dear?", (String) worker2.invokeExact());<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;p&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;em&gt;Non-synchronization of target values:&lt;/em&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * A write to a mutable call site's target does not force other threads<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * to become aware of the updated value.  Threads which do not perform<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * suitable synchronization actions relative to the updated call site<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * may cache the old target value and delay their use of the new target<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * value indefinitely.<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * (This is a normal consequence of the Java Memory Model as applied<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * to object fields.)<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * &lt;p&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * The {@link #syncAll syncAll} operation provides a way to force threads<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * to accept a new target value, even if there is no other synchronization.<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * &lt;p&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * For target values which will be frequently updated, consider using<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * a {@linkplain VolatileCallSite volatile call site} instead.<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * @author John Rose, JSR 292 EG<a name="line.82"></a>
+<span class="sourceLineNo">083</span> */<a name="line.83"></a>
+<span class="sourceLineNo">084</span>public class MutableCallSite extends CallSite {<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    /**<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * Creates a blank call site object with the given method type.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * The initial target is set to a method handle of the given type<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * which will throw an {@link IllegalStateException} if called.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * &lt;p&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * The type of the call site is permanently set to the given type.<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * &lt;p&gt;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * Before this {@code CallSite} object is returned from a bootstrap method,<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * or invoked in some other manner,<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * it is usually provided with a more useful target method,<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * via a call to {@link CallSite#setTarget(MethodHandle) setTarget}.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @param type the method type that this call site will have<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @throws NullPointerException if the proposed type is null<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     */<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    public MutableCallSite(MethodType type) {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        super(type);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>    }<a name="line.101"></a>
+<span class="sourceLineNo">102</span><a name="line.102"></a>
+<span class="sourceLineNo">103</span>    /**<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * Creates a call site object with an initial target method handle.<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * The type of the call site is permanently set to the initial target's type.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * @param target the method handle that will be the initial target of the call site<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * @throws NullPointerException if the proposed target is null<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     */<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    public MutableCallSite(MethodHandle target) {<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        super(target);<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    }<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    /**<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * Returns the target method of the call site, which behaves<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * like a normal field of the {@code MutableCallSite}.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * &lt;p&gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * The interactions of {@code getTarget} with memory are the same<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * as of a read from an ordinary variable, such as an array element or a<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * non-volatile, non-final field.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * &lt;p&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * In particular, the current thread may choose to reuse the result<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * of a previous read of the target from memory, and may fail to see<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * a recent update to the target by another thread.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     *<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @return the linkage state of this call site, a method handle which can change over time<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * @see #setTarget<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     */<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    @Override public final MethodHandle getTarget() {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        return target;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    }<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /**<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * Updates the target method of this call site, as a normal variable.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * The type of the new target must agree with the type of the old target.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * &lt;p&gt;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * The interactions with memory are the same<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * as of a write to an ordinary variable, such as an array element or a<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * non-volatile, non-final field.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * &lt;p&gt;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * In particular, unrelated threads may fail to see the updated target<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * until they perform a read from memory.<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * Stronger guarantees can be created by putting appropriate operations<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * into the bootstrap method and/or the target methods used<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * at any given call site.<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @param newTarget the new target<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @throws NullPointerException if the proposed new target is null<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * @throws WrongMethodTypeException if the proposed new target<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *         has a method type that differs from the previous target<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * @see #getTarget<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     */<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    @Override public void setTarget(MethodHandle newTarget) {<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        checkTargetChange(this.target, newTarget);<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        setTargetNormal(newTarget);<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    }<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>    /**<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * {@inheritDoc}<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     */<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    @Override<a name="line.160"></a>
+<span class="sourceLineNo">161</span>    public final MethodHandle dynamicInvoker() {<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        return makeDynamicInvoker();<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    }<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>    /**<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * Performs a synchronization operation on each call site in the given array,<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * forcing all other threads to throw away any cached values previously<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * loaded from the target of any of the call sites.<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * &lt;p&gt;<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * This operation does not reverse any calls that have already started<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * on an old target value.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * (Java supports {@linkplain java.lang.Object#wait() forward time travel} only.)<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * &lt;p&gt;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * The overall effect is to force all future readers of each call site's target<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * to accept the most recently stored value.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * ("Most recently" is reckoned relative to the {@code syncAll} itself.)<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * Conversely, the {@code syncAll} call may block until all readers have<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * (somehow) decached all previous versions of each call site's target.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * &lt;p&gt;<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * To avoid race conditions, calls to {@code setTarget} and {@code syncAll}<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * should generally be performed under some sort of mutual exclusion.<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * Note that reader threads may observe an updated target as early<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * as the {@code setTarget} call that install the value<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * (and before the {@code syncAll} that confirms the value).<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * On the other hand, reader threads may observe previous versions of<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * the target until the {@code syncAll} call returns<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * (and after the {@code setTarget} that attempts to convey the updated version).<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * &lt;p&gt;<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * This operation is likely to be expensive and should be used sparingly.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * If possible, it should be buffered for batch processing on sets of call sites.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * &lt;p&gt;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * If {@code sites} contains a null element,<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * a {@code NullPointerException} will be raised.<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * In this case, some non-null elements in the array may be<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * processed before the method returns abnormally.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * Which elements these are (if any) is implementation-dependent.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * &lt;h3&gt;Java Memory Model details&lt;/h3&gt;<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * In terms of the Java Memory Model, this operation performs a synchronization<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * action which is comparable in effect to the writing of a volatile variable<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * by the current thread, and an eventual volatile read by every other thread<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * that may access one of the affected call sites.<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * &lt;p&gt;<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * The following effects are apparent, for each individual call site {@code S}:<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * &lt;ul&gt;<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * &lt;li&gt;A new volatile variable {@code V} is created, and written by the current thread.<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     *     As defined by the JMM, this write is a global synchronization event.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * &lt;li&gt;As is normal with thread-local ordering of write events,<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     *     every action already performed by the current thread is<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *     taken to happen before the volatile write to {@code V}.<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     *     (In some implementations, this means that the current thread<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     *     performs a global release operation.)<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * &lt;li&gt;Specifically, the write to the current target of {@code S} is<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     *     taken to happen before the volatile write to {@code V}.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * &lt;li&gt;The volatile write to {@code V} is placed<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *     (in an implementation specific manner)<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     *     in the global synchronization order.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * &lt;li&gt;Consider an arbitrary thread {@code T} (other than the current thread).<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     *     If {@code T} executes a synchronization action {@code A}<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     *     after the volatile write to {@code V} (in the global synchronization order),<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     *     it is therefore required to see either the current target<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     *     of {@code S}, or a later write to that target,<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     *     if it executes a read on the target of {@code S}.<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     *     (This constraint is called "synchronization-order consistency".)<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * &lt;li&gt;The JMM specifically allows optimizing compilers to elide<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     *     reads or writes of variables that are known to be useless.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     *     Such elided reads and writes have no effect on the happens-before<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     *     relation.  Regardless of this fact, the volatile {@code V}<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     *     will not be elided, even though its written value is<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     *     indeterminate and its read value is not used.<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * &lt;/ul&gt;<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * Because of the last point, the implementation behaves as if a<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * volatile read of {@code V} were performed by {@code T}<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * immediately after its action {@code A}.  In the local ordering<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * of actions in {@code T}, this read happens before any future<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * read of the target of {@code S}.  It is as if the<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * implementation arbitrarily picked a read of {@code S}'s target<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * by {@code T}, and forced a read of {@code V} to precede it,<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * thereby ensuring communication of the new target value.<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * &lt;p&gt;<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * As long as the constraints of the Java Memory Model are obeyed,<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * implementations may delay the completion of a {@code syncAll}<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * operation while other threads ({@code T} above) continue to<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * use previous values of {@code S}'s target.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * However, implementations are (as always) encouraged to avoid<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * livelock, and to eventually require all threads to take account<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * of the updated target.<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     *<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * &lt;p style="font-size:smaller;"&gt;<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * &lt;em&gt;Discussion:&lt;/em&gt;<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * For performance reasons, {@code syncAll} is not a virtual method<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * on a single call site, but rather applies to a set of call sites.<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * Some implementations may incur a large fixed overhead cost<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * for processing one or more synchronization operations,<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * but a small incremental cost for each additional call site.<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * In any case, this operation is likely to be costly, since<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * other threads may have to be somehow interrupted<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * in order to make them notice the updated target value.<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * However, it may be observed that a single call to synchronize<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * several sites has the same formal effect as many calls,<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * each on just one of the sites.<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     *<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * &lt;p style="font-size:smaller;"&gt;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * &lt;em&gt;Implementation Note:&lt;/em&gt;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * Simple implementations of {@code MutableCallSite} may use<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * a volatile variable for the target of a mutable call site.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * In such an implementation, the {@code syncAll} method can be a no-op,<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * and yet it will conform to the JMM behavior documented above.<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     *<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * @param sites an array of call sites to be synchronized<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * @throws NullPointerException if the {@code sites} array reference is null<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     *                              or the array contains a null<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     */<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    public static void syncAll(MutableCallSite[] sites) {<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        if (sites.length == 0)  return;<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        STORE_BARRIER.lazySet(0);<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        for (int i = 0; i &lt; sites.length; i++) {<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            sites[i].getClass();  // trigger NPE on first null<a name="line.278"></a>
+<span class="sourceLineNo">279</span>        }<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        // FIXME: NYI<a name="line.280"></a>
+<span class="sourceLineNo">281</span>    }<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    private static final AtomicInteger STORE_BARRIER = new AtomicInteger();<a name="line.282"></a>
+<span class="sourceLineNo">283</span>}<a name="line.283"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

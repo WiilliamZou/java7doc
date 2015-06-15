@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2001, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.imageio.plugins.jpeg;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.imageio.ImageReadParam;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * This class adds the ability to set JPEG quantization and Huffman<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * tables when using the built-in JPEG reader plug-in.  An instance of<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * this class will be returned from the<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * &lt;code&gt;getDefaultImageReadParam&lt;/code&gt; methods of the built-in JPEG<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;code&gt;ImageReader&lt;/code&gt;.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt; The sole purpose of these additions is to allow the<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * specification of tables for use in decoding abbreviated streams.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * The built-in JPEG reader will also accept an ordinary<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * &lt;code&gt;ImageReadParam&lt;/code&gt;, which is sufficient for decoding<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * non-abbreviated streams.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;p&gt; While tables for abbreviated streams are often obtained by<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * first reading another abbreviated stream containing only the<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * tables, in some applications the tables are fixed ahead of time.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * This class allows the tables to be specified directly from client<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * code.  If no tables are specified either in the stream or in a<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;code&gt;JPEGImageReadParam&lt;/code&gt;, then the stream is presumed to use<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * the "standard" visually lossless tables.  See {@link JPEGQTable<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;code&gt;JPEGQTable&lt;/code&gt;} and {@link JPEGHuffmanTable<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;code&gt;JPEGHuffmanTable&lt;/code&gt;} for more information on the default<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * tables.<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt; The default &lt;code&gt;JPEGImageReadParam&lt;/code&gt; returned by the<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;code&gt;getDefaultReadParam&lt;/code&gt; method of the builtin JPEG reader<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * contains no tables.  Default tables may be obtained from the table<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * classes {@link JPEGQTable &lt;code&gt;JPEGQTable&lt;/code&gt;} and {@link<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * JPEGHuffmanTable &lt;code&gt;JPEGHuffmanTable&lt;/code&gt;}.<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;p&gt; If a stream does contain tables, the tables given in a<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;code&gt;JPEGImageReadParam&lt;/code&gt; are ignored.  Furthermore, if the<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * first image in a stream does contain tables and subsequent ones do<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * not, then the tables given in the first image are used for all the<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * abbreviated images.  Once tables have been read from a stream, they<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * can be overridden only by tables subsequently read from the same<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * stream.  In order to specify new tables, the {@link<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * javax.imageio.ImageReader#setInput &lt;code&gt;setInput&lt;/code&gt;} method of<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * the reader must be called to change the stream.<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * &lt;p&gt; Note that this class does not provide a means for obtaining the<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * tables found in a stream.  These may be extracted from a stream by<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * consulting the &lt;code&gt;IIOMetadata&lt;/code&gt; object returned by the<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * reader.<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;p&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * For more information about the operation of the built-in JPEG plug-ins,<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * see the &lt;A HREF="../../metadata/doc-files/jpeg_metadata.html"&gt;JPEG<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * metadata format specification and usage notes&lt;/A&gt;.<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *<a name="line.79"></a>
+<span class="sourceLineNo">080</span> */<a name="line.80"></a>
+<span class="sourceLineNo">081</span>public class JPEGImageReadParam extends ImageReadParam {<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    private JPEGQTable[] qTables = null;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    private JPEGHuffmanTable[] DCHuffmanTables = null;<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    private JPEGHuffmanTable[] ACHuffmanTables = null;<a name="line.85"></a>
+<span class="sourceLineNo">086</span><a name="line.86"></a>
+<span class="sourceLineNo">087</span>    /**<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * Constructs a &lt;code&gt;JPEGImageReadParam&lt;/code&gt;.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     */<a name="line.89"></a>
+<span class="sourceLineNo">090</span>    public JPEGImageReadParam() {<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        super();<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    }<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>    /**<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * Returns &lt;code&gt;true&lt;/code&gt; if tables are currently set.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @return &lt;code&gt;true&lt;/code&gt; if tables are present.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     */<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    public boolean areTablesSet() {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        return (qTables != null);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>    }<a name="line.101"></a>
+<span class="sourceLineNo">102</span><a name="line.102"></a>
+<span class="sourceLineNo">103</span>    /**<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * Sets the quantization and Huffman tables to use in decoding<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * abbreviated streams.  There may be a maximum of 4 tables of<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * each type.  These tables are ignored once tables are<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * encountered in the stream.  All arguments must be<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * non-&lt;code&gt;null&lt;/code&gt;.  The two arrays of Huffman tables must<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * have the same number of elements.  The table specifiers in the<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * frame and scan headers in the stream are assumed to be<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * equivalent to indices into these arrays.  The argument arrays<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * are copied by this method.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @param qTables an array of quantization table objects.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @param DCHuffmanTables an array of Huffman table objects.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * @param ACHuffmanTables an array of Huffman table objects.<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     *<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * @exception IllegalArgumentException if any of the arguments<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * is &lt;code&gt;null&lt;/code&gt;, has more than 4 elements, or if the<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * numbers of DC and AC tables differ.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @see #unsetDecodeTables<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    public void setDecodeTables(JPEGQTable[] qTables,<a name="line.124"></a>
+<span class="sourceLineNo">125</span>                                JPEGHuffmanTable[] DCHuffmanTables,<a name="line.125"></a>
+<span class="sourceLineNo">126</span>                                JPEGHuffmanTable[] ACHuffmanTables) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        if ((qTables == null) ||<a name="line.127"></a>
+<span class="sourceLineNo">128</span>            (DCHuffmanTables == null) ||<a name="line.128"></a>
+<span class="sourceLineNo">129</span>            (ACHuffmanTables == null) ||<a name="line.129"></a>
+<span class="sourceLineNo">130</span>            (qTables.length &gt; 4) ||<a name="line.130"></a>
+<span class="sourceLineNo">131</span>            (DCHuffmanTables.length &gt; 4) ||<a name="line.131"></a>
+<span class="sourceLineNo">132</span>            (ACHuffmanTables.length &gt; 4) ||<a name="line.132"></a>
+<span class="sourceLineNo">133</span>            (DCHuffmanTables.length != ACHuffmanTables.length)) {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>                throw new IllegalArgumentException<a name="line.134"></a>
+<span class="sourceLineNo">135</span>                    ("Invalid JPEG table arrays");<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        }<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        this.qTables = (JPEGQTable[])qTables.clone();<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        this.DCHuffmanTables = (JPEGHuffmanTable[])DCHuffmanTables.clone();<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        this.ACHuffmanTables = (JPEGHuffmanTable[])ACHuffmanTables.clone();<a name="line.139"></a>
+<span class="sourceLineNo">140</span>    }<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>    /**<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * Removes any quantization and Huffman tables that are currently<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * set.<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @see #setDecodeTables<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     */<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    public void unsetDecodeTables() {<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        this.qTables = null;<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        this.DCHuffmanTables = null;<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        this.ACHuffmanTables = null;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    }<a name="line.152"></a>
+<span class="sourceLineNo">153</span><a name="line.153"></a>
+<span class="sourceLineNo">154</span>    /**<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * Returns a copy of the array of quantization tables set on the<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * most recent call to &lt;code&gt;setDecodeTables&lt;/code&gt;, or<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * &lt;code&gt;null&lt;/code&gt; if tables are not currently set.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * @return an array of &lt;code&gt;JPEGQTable&lt;/code&gt; objects, or<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * &lt;code&gt;null&lt;/code&gt;.<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @see #setDecodeTables<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     */<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    public JPEGQTable[] getQTables() {<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        return (qTables != null) ? (JPEGQTable[])qTables.clone() : null;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    }<a name="line.166"></a>
+<span class="sourceLineNo">167</span><a name="line.167"></a>
+<span class="sourceLineNo">168</span>    /**<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * Returns a copy of the array of DC Huffman tables set on the<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * most recent call to &lt;code&gt;setDecodeTables&lt;/code&gt;, or<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * &lt;code&gt;null&lt;/code&gt; if tables are not currently set.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     *<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * @return an array of &lt;code&gt;JPEGHuffmanTable&lt;/code&gt; objects, or<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * &lt;code&gt;null&lt;/code&gt;.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @see #setDecodeTables<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     */<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    public JPEGHuffmanTable[] getDCHuffmanTables() {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        return (DCHuffmanTables != null)<a name="line.179"></a>
+<span class="sourceLineNo">180</span>            ? (JPEGHuffmanTable[])DCHuffmanTables.clone()<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            : null;<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    }<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>    /**<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * Returns a copy of the array of AC Huffman tables set on the<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * most recent call to &lt;code&gt;setDecodeTables&lt;/code&gt;, or<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;code&gt;null&lt;/code&gt; if tables are not currently set.<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     *<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * @return an array of &lt;code&gt;JPEGHuffmanTable&lt;/code&gt; objects, or<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * &lt;code&gt;null&lt;/code&gt;.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     *<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * @see #setDecodeTables<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     */<a name="line.193"></a>
+<span class="sourceLineNo">194</span>    public JPEGHuffmanTable[] getACHuffmanTables() {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        return (ACHuffmanTables != null)<a name="line.195"></a>
+<span class="sourceLineNo">196</span>            ? (JPEGHuffmanTable[])ACHuffmanTables.clone()<a name="line.196"></a>
+<span class="sourceLineNo">197</span>            : null;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    }<a name="line.198"></a>
+<span class="sourceLineNo">199</span>}<a name="line.199"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

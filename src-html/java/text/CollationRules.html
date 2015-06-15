@@ -1,0 +1,346 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1996, 2001, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>/*<a name="line.26"></a>
+<span class="sourceLineNo">027</span> * (C) Copyright Taligent, Inc. 1996,1997 - All Rights Reserved<a name="line.27"></a>
+<span class="sourceLineNo">028</span> * (C) Copyright IBM Corp. 1996, 1997 - All Rights Reserved<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *   The original version of this source code and documentation is copyrighted<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * and owned by Taligent, Inc., a wholly-owned subsidiary of IBM. These<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * materials are provided under terms of a License Agreement between Taligent<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * and Sun. This technology is protected by multiple US and International<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * patents. This notice and attribution to Taligent may not be removed.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *   Taligent is a registered trademark of Taligent, Inc.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> */<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>package java.text;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>/**<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * CollationRules contains the default en_US collation rules as a base<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * for building other collation tables.<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;p&gt;Note that decompositions are done before these rules are used,<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * so they do not have to contain accented characters, such as A-grave.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * @see                RuleBasedCollator<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * @see                LocaleElements<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * @author             Helena Shih, Mark Davis<a name="line.47"></a>
+<span class="sourceLineNo">048</span> */<a name="line.48"></a>
+<span class="sourceLineNo">049</span>final class CollationRules {<a name="line.49"></a>
+<span class="sourceLineNo">050</span>    final static String DEFAULTRULES = new String(<a name="line.50"></a>
+<span class="sourceLineNo">051</span>        "" // no FRENCH accent order by default, add in French Delta<a name="line.51"></a>
+<span class="sourceLineNo">052</span>        // IGNORABLES (up to first &lt; character)<a name="line.52"></a>
+<span class="sourceLineNo">053</span>        // COMPLETELY IGNORE format characters<a name="line.53"></a>
+<span class="sourceLineNo">054</span>        + "='\u200B'=\u200C=\u200D=\u200E=\u200F"<a name="line.54"></a>
+<span class="sourceLineNo">055</span>        // Control Characters<a name="line.55"></a>
+<span class="sourceLineNo">056</span>        + "=\u0000 =\u0001 =\u0002 =\u0003 =\u0004" //null, .. eot<a name="line.56"></a>
+<span class="sourceLineNo">057</span>        + "=\u0005 =\u0006 =\u0007 =\u0008 ='\u0009'" //enq, ...<a name="line.57"></a>
+<span class="sourceLineNo">058</span>        + "='\u000b' =\u000e" //vt,, so<a name="line.58"></a>
+<span class="sourceLineNo">059</span>        + "=\u000f ='\u0010' =\u0011 =\u0012 =\u0013" //si, dle, dc1, dc2, dc3<a name="line.59"></a>
+<span class="sourceLineNo">060</span>        + "=\u0014 =\u0015 =\u0016 =\u0017 =\u0018" //dc4, nak, syn, etb, can<a name="line.60"></a>
+<span class="sourceLineNo">061</span>        + "=\u0019 =\u001a =\u001b =\u001c =\u001d" //em, sub, esc, fs, gs<a name="line.61"></a>
+<span class="sourceLineNo">062</span>        + "=\u001e =\u001f =\u007f"                   //rs, us, del<a name="line.62"></a>
+<span class="sourceLineNo">063</span>        //....then the C1 Latin 1 reserved control codes<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        + "=\u0080 =\u0081 =\u0082 =\u0083 =\u0084 =\u0085"<a name="line.64"></a>
+<span class="sourceLineNo">065</span>        + "=\u0086 =\u0087 =\u0088 =\u0089 =\u008a =\u008b"<a name="line.65"></a>
+<span class="sourceLineNo">066</span>        + "=\u008c =\u008d =\u008e =\u008f =\u0090 =\u0091"<a name="line.66"></a>
+<span class="sourceLineNo">067</span>        + "=\u0092 =\u0093 =\u0094 =\u0095 =\u0096 =\u0097"<a name="line.67"></a>
+<span class="sourceLineNo">068</span>        + "=\u0098 =\u0099 =\u009a =\u009b =\u009c =\u009d"<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        + "=\u009e =\u009f"<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        // IGNORE except for secondary, tertiary difference<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        // Spaces<a name="line.71"></a>
+<span class="sourceLineNo">072</span>        + ";'\u0020';'\u00A0'"                  // spaces<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        + ";'\u2000';'\u2001';'\u2002';'\u2003';'\u2004'"  // spaces<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        + ";'\u2005';'\u2006';'\u2007';'\u2008';'\u2009'"  // spaces<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        + ";'\u200A';'\u3000';'\uFEFF'"                // spaces<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        + ";'\r' ;'\t' ;'\n';'\f';'\u000b'"  // whitespace<a name="line.76"></a>
+<span class="sourceLineNo">077</span><a name="line.77"></a>
+<span class="sourceLineNo">078</span>        // Non-spacing accents<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>        + ";\u0301"          // non-spacing acute accent<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        + ";\u0300"          // non-spacing grave accent<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        + ";\u0306"          // non-spacing breve accent<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        + ";\u0302"          // non-spacing circumflex accent<a name="line.83"></a>
+<span class="sourceLineNo">084</span>        + ";\u030c"          // non-spacing caron/hacek accent<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        + ";\u030a"          // non-spacing ring above accent<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        + ";\u030d"          // non-spacing vertical line above<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        + ";\u0308"          // non-spacing diaeresis accent<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        + ";\u030b"          // non-spacing double acute accent<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        + ";\u0303"          // non-spacing tilde accent<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        + ";\u0307"          // non-spacing dot above/overdot accent<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        + ";\u0304"          // non-spacing macron accent<a name="line.91"></a>
+<span class="sourceLineNo">092</span>        + ";\u0337"          // non-spacing short slash overlay (overstruck diacritic)<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        + ";\u0327"          // non-spacing cedilla accent<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        + ";\u0328"          // non-spacing ogonek accent<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        + ";\u0323"          // non-spacing dot-below/underdot accent<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        + ";\u0332"          // non-spacing underscore/underline accent<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        // with the rest of the general diacritical marks in binary order<a name="line.97"></a>
+<span class="sourceLineNo">098</span>        + ";\u0305"          // non-spacing overscore/overline<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        + ";\u0309"          // non-spacing hook above<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        + ";\u030e"          // non-spacing double vertical line above<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        + ";\u030f"          // non-spacing double grave<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        + ";\u0310"          // non-spacing chandrabindu<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        + ";\u0311"          // non-spacing inverted breve<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        + ";\u0312"          // non-spacing turned comma above/cedilla above<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        + ";\u0313"          // non-spacing comma above<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        + ";\u0314"          // non-spacing reversed comma above<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        + ";\u0315"          // non-spacing comma above right<a name="line.107"></a>
+<span class="sourceLineNo">108</span>        + ";\u0316"          // non-spacing grave below<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        + ";\u0317"          // non-spacing acute below<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        + ";\u0318"          // non-spacing left tack below<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        + ";\u0319"          // non-spacing tack below<a name="line.111"></a>
+<span class="sourceLineNo">112</span>        + ";\u031a"          // non-spacing left angle above<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        + ";\u031b"          // non-spacing horn<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        + ";\u031c"          // non-spacing left half ring below<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        + ";\u031d"          // non-spacing up tack below<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        + ";\u031e"          // non-spacing down tack below<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        + ";\u031f"          // non-spacing plus sign below<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        + ";\u0320"          // non-spacing minus sign below<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        + ";\u0321"          // non-spacing palatalized hook below<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        + ";\u0322"          // non-spacing retroflex hook below<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        + ";\u0324"          // non-spacing double dot below<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        + ";\u0325"          // non-spacing ring below<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        + ";\u0326"          // non-spacing comma below<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        + ";\u0329"          // non-spacing vertical line below<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        + ";\u032a"          // non-spacing bridge below<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        + ";\u032b"          // non-spacing inverted double arch below<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        + ";\u032c"          // non-spacing hacek below<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        + ";\u032d"          // non-spacing circumflex below<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        + ";\u032e"          // non-spacing breve below<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        + ";\u032f"          // non-spacing inverted breve below<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        + ";\u0330"          // non-spacing tilde below<a name="line.131"></a>
+<span class="sourceLineNo">132</span>        + ";\u0331"          // non-spacing macron below<a name="line.132"></a>
+<span class="sourceLineNo">133</span>        + ";\u0333"          // non-spacing double underscore<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        + ";\u0334"          // non-spacing tilde overlay<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        + ";\u0335"          // non-spacing short bar overlay<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        + ";\u0336"          // non-spacing long bar overlay<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        + ";\u0338"          // non-spacing long slash overlay<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        + ";\u0339"          // non-spacing right half ring below<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        + ";\u033a"          // non-spacing inverted bridge below<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        + ";\u033b"          // non-spacing square below<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        + ";\u033c"          // non-spacing seagull below<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        + ";\u033d"          // non-spacing x above<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        + ";\u033e"          // non-spacing vertical tilde<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        + ";\u033f"          // non-spacing double overscore<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        //+ ";\u0340"          // non-spacing grave tone mark == \u0300<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        //+ ";\u0341"          // non-spacing acute tone mark == \u0301<a name="line.146"></a>
+<span class="sourceLineNo">147</span>        + ";\u0342;"<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        //+ "\u0343;" // == \u0313<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        + "\u0344;\u0345;\u0360;\u0361"    // newer<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        + ";\u0483;\u0484;\u0485;\u0486"    // Cyrillic accents<a name="line.150"></a>
+<span class="sourceLineNo">151</span><a name="line.151"></a>
+<span class="sourceLineNo">152</span>        + ";\u20D0;\u20D1;\u20D2"           // symbol accents<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        + ";\u20D3;\u20D4;\u20D5"           // symbol accents<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        + ";\u20D6;\u20D7;\u20D8"           // symbol accents<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        + ";\u20D9;\u20DA;\u20DB"           // symbol accents<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        + ";\u20DC;\u20DD;\u20DE"           // symbol accents<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        + ";\u20DF;\u20E0;\u20E1"           // symbol accents<a name="line.157"></a>
+<span class="sourceLineNo">158</span><a name="line.158"></a>
+<span class="sourceLineNo">159</span>        + ",'\u002D';\u00AD"                // dashes<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        + ";\u2010;\u2011;\u2012"           // dashes<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        + ";\u2013;\u2014;\u2015"           // dashes<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        + ";\u2212"                         // dashes<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>        // other punctuation<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>        + "&lt;'\u005f'"        // underline/underscore (spacing)<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        + "&lt;\u00af"          // overline or macron (spacing)<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        + "&lt;'\u002c'"        // comma (spacing)<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        + "&lt;'\u003b'"        // semicolon<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        + "&lt;'\u003a'"        // colon<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        + "&lt;'\u0021'"        // exclamation point<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        + "&lt;\u00a1"          // inverted exclamation point<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        + "&lt;'\u003f'"        // question mark<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        + "&lt;\u00bf"          // inverted question mark<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        + "&lt;'\u002f'"        // slash<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        + "&lt;'\u002e'"        // period/full stop<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        + "&lt;\u00b4"          // acute accent (spacing)<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        + "&lt;'\u0060'"        // grave accent (spacing)<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        + "&lt;'\u005e'"        // circumflex accent (spacing)<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        + "&lt;\u00a8"          // diaresis/umlaut accent (spacing)<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        + "&lt;'\u007e'"        // tilde accent (spacing)<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        + "&lt;\u00b7"          // middle dot (spacing)<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        + "&lt;\u00b8"          // cedilla accent (spacing)<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        + "&lt;'\u0027'"        // apostrophe<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        + "&lt;'\"'"            // quotation marks<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        + "&lt;\u00ab"          // left angle quotes<a name="line.186"></a>
+<span class="sourceLineNo">187</span>        + "&lt;\u00bb"          // right angle quotes<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        + "&lt;'\u0028'"        // left parenthesis<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        + "&lt;'\u0029'"        // right parenthesis<a name="line.189"></a>
+<span class="sourceLineNo">190</span>        + "&lt;'\u005b'"        // left bracket<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        + "&lt;'\u005d'"        // right bracket<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        + "&lt;'\u007b'"        // left brace<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        + "&lt;'\u007d'"        // right brace<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        + "&lt;\u00a7"          // section symbol<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        + "&lt;\u00b6"          // paragraph symbol<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        + "&lt;\u00a9"          // copyright symbol<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        + "&lt;\u00ae"          // registered trademark symbol<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        + "&lt;'\u0040'"          // at sign<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        + "&lt;\u00a4"          // international currency symbol<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        + "&lt;\u0e3f"          // baht sign<a name="line.200"></a>
+<span class="sourceLineNo">201</span>        + "&lt;\u00a2"          // cent sign<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        + "&lt;\u20a1"          // colon sign<a name="line.202"></a>
+<span class="sourceLineNo">203</span>        + "&lt;\u20a2"          // cruzeiro sign<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        + "&lt;'\u0024'"        // dollar sign<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        + "&lt;\u20ab"          // dong sign<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        + "&lt;\u20ac"          // euro sign<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        + "&lt;\u20a3"          // franc sign<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        + "&lt;\u20a4"          // lira sign<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        + "&lt;\u20a5"          // mill sign<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        + "&lt;\u20a6"          // naira sign<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        + "&lt;\u20a7"          // peseta sign<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        + "&lt;\u00a3"          // pound-sterling sign<a name="line.212"></a>
+<span class="sourceLineNo">213</span>        + "&lt;\u20a8"          // rupee sign<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        + "&lt;\u20aa"          // new shekel sign<a name="line.214"></a>
+<span class="sourceLineNo">215</span>        + "&lt;\u20a9"          // won sign<a name="line.215"></a>
+<span class="sourceLineNo">216</span>        + "&lt;\u00a5"          // yen sign<a name="line.216"></a>
+<span class="sourceLineNo">217</span>        + "&lt;'\u002a'"        // asterisk<a name="line.217"></a>
+<span class="sourceLineNo">218</span>        + "&lt;'\\'"            // backslash<a name="line.218"></a>
+<span class="sourceLineNo">219</span>        + "&lt;'\u0026'"        // ampersand<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        + "&lt;'\u0023'"        // number sign<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        + "&lt;'\u0025'"        // percent sign<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        + "&lt;'\u002b'"        // plus sign<a name="line.222"></a>
+<span class="sourceLineNo">223</span>        + "&lt;\u00b1"          // plus-or-minus sign<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        + "&lt;\u00f7"          // divide sign<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        + "&lt;\u00d7"          // multiply sign<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        + "&lt;'\u003c'"        // less-than sign<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        + "&lt;'\u003d'"        // equal sign<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        + "&lt;'\u003e'"        // greater-than sign<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        + "&lt;\u00ac"          // end of line symbol/logical NOT symbol<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        + "&lt;'\u007c'"          // vertical line/logical OR symbol<a name="line.230"></a>
+<span class="sourceLineNo">231</span>        + "&lt;\u00a6"          // broken vertical line<a name="line.231"></a>
+<span class="sourceLineNo">232</span>        + "&lt;\u00b0"          // degree symbol<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        + "&lt;\u00b5"          // micro symbol<a name="line.233"></a>
+<span class="sourceLineNo">234</span><a name="line.234"></a>
+<span class="sourceLineNo">235</span>        // NUMERICS<a name="line.235"></a>
+<span class="sourceLineNo">236</span><a name="line.236"></a>
+<span class="sourceLineNo">237</span>        + "&lt;0&lt;1&lt;2&lt;3&lt;4&lt;5&lt;6&lt;7&lt;8&lt;9"<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        + "&lt;\u00bc&lt;\u00bd&lt;\u00be"   // 1/4,1/2,3/4 fractions<a name="line.238"></a>
+<span class="sourceLineNo">239</span><a name="line.239"></a>
+<span class="sourceLineNo">240</span>        // NON-IGNORABLES<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        + "&lt;a,A"<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        + "&lt;b,B"<a name="line.242"></a>
+<span class="sourceLineNo">243</span>        + "&lt;c,C"<a name="line.243"></a>
+<span class="sourceLineNo">244</span>        + "&lt;d,D"<a name="line.244"></a>
+<span class="sourceLineNo">245</span>        + "&lt;\u00F0,\u00D0"                  // eth<a name="line.245"></a>
+<span class="sourceLineNo">246</span>        + "&lt;e,E"<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        + "&lt;f,F"<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        + "&lt;g,G"<a name="line.248"></a>
+<span class="sourceLineNo">249</span>        + "&lt;h,H"<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        + "&lt;i,I"<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        + "&lt;j,J"<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        + "&lt;k,K"<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        + "&lt;l,L"<a name="line.253"></a>
+<span class="sourceLineNo">254</span>        + "&lt;m,M"<a name="line.254"></a>
+<span class="sourceLineNo">255</span>        + "&lt;n,N"<a name="line.255"></a>
+<span class="sourceLineNo">256</span>        + "&lt;o,O"<a name="line.256"></a>
+<span class="sourceLineNo">257</span>        + "&lt;p,P"<a name="line.257"></a>
+<span class="sourceLineNo">258</span>        + "&lt;q,Q"<a name="line.258"></a>
+<span class="sourceLineNo">259</span>        + "&lt;r,R"<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        + "&lt;s, S &amp; SS,\u00DF"             // s-zet<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        + "&lt;t,T"<a name="line.261"></a>
+<span class="sourceLineNo">262</span>        + "&amp; TH, \u00DE &amp;TH, \u00FE "     // thorn<a name="line.262"></a>
+<span class="sourceLineNo">263</span>        + "&lt;u,U"<a name="line.263"></a>
+<span class="sourceLineNo">264</span>        + "&lt;v,V"<a name="line.264"></a>
+<span class="sourceLineNo">265</span>        + "&lt;w,W"<a name="line.265"></a>
+<span class="sourceLineNo">266</span>        + "&lt;x,X"<a name="line.266"></a>
+<span class="sourceLineNo">267</span>        + "&lt;y,Y"<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        + "&lt;z,Z"<a name="line.268"></a>
+<span class="sourceLineNo">269</span>        + "&amp;AE,\u00C6"                    // ae &amp; AE ligature<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        + "&amp;AE,\u00E6"<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        + "&amp;OE,\u0152"                    // oe &amp; OE ligature<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        + "&amp;OE,\u0153"<a name="line.272"></a>
+<span class="sourceLineNo">273</span>    );<a name="line.273"></a>
+<span class="sourceLineNo">274</span>}<a name="line.274"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

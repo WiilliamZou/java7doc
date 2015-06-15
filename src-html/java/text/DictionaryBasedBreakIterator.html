@@ -1,0 +1,586 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>/*<a name="line.26"></a>
+<span class="sourceLineNo">027</span> *<a name="line.27"></a>
+<span class="sourceLineNo">028</span> * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * (C) Copyright IBM Corp. 1996 - 2002 - All Rights Reserved<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * The original version of this source code and documentation<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * is copyrighted and owned by Taligent, Inc., a wholly-owned<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * subsidiary of IBM. These materials are provided under terms<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * of a License Agreement between Taligent and Sun. This technology<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * is protected by multiple US and International patents.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * This notice and attribution to Taligent may not be removed.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * Taligent is a registered trademark of Taligent, Inc.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> */<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>package java.text;<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>import java.util.Vector;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import java.util.Stack;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import java.util.Hashtable;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import java.text.CharacterIterator;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import java.io.InputStream;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import java.io.IOException;<a name="line.48"></a>
+<span class="sourceLineNo">049</span><a name="line.49"></a>
+<span class="sourceLineNo">050</span>/**<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * A subclass of RuleBasedBreakIterator that adds the ability to use a dictionary<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * to further subdivide ranges of text beyond what is possible using just the<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * state-table-based algorithm.  This is necessary, for example, to handle<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * word and line breaking in Thai, which doesn't use spaces between words.  The<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * state-table-based algorithm used by RuleBasedBreakIterator is used to divide<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * up text as far as possible, and then contiguous ranges of letters are<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * repeatedly compared against a list of known words (i.e., the dictionary)<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * to divide them up into words.<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * DictionaryBasedBreakIterator uses the same rule language as RuleBasedBreakIterator,<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * but adds one more special substitution name: &amp;lt;dictionary&amp;gt;.  This substitution<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * name is used to identify characters in words in the dictionary.  The idea is that<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * if the iterator passes over a chunk of text that includes two or more characters<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * in a row that are included in &amp;lt;dictionary&amp;gt;, it goes back through that range and<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * derives additional break positions (if possible) using the dictionary.<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * DictionaryBasedBreakIterator is also constructed with the filename of a dictionary<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * file.  It follows a prescribed search path to locate the dictionary (right now,<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * it looks for it in /com/ibm/text/resources in each directory in the classpath,<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * and won't find it in JAR files, but this location is likely to change).  The<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * dictionary file is in a serialized binary format.  We have a very primitive (and<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * slow) BuildDictionaryFile utility for creating dictionary files, but aren't<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * currently making it public.  Contact us for help.<a name="line.73"></a>
+<span class="sourceLineNo">074</span> */<a name="line.74"></a>
+<span class="sourceLineNo">075</span>class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {<a name="line.75"></a>
+<span class="sourceLineNo">076</span><a name="line.76"></a>
+<span class="sourceLineNo">077</span>    /**<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * a list of known words that is used to divide up contiguous ranges of letters,<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * stored in a compressed, indexed, format that offers fast access<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     */<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    private BreakDictionary dictionary;<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    /**<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * a list of flags indicating which character categories are contained in<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * the dictionary file (this is used to determine which ranges of characters<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * to apply the dictionary to)<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     */<a name="line.87"></a>
+<span class="sourceLineNo">088</span>    private boolean[] categoryFlags;<a name="line.88"></a>
+<span class="sourceLineNo">089</span><a name="line.89"></a>
+<span class="sourceLineNo">090</span>    /**<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * a temporary hiding place for the number of dictionary characters in the<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * last range passed over by next()<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     */<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    private int dictionaryCharCount;<a name="line.94"></a>
+<span class="sourceLineNo">095</span><a name="line.95"></a>
+<span class="sourceLineNo">096</span>    /**<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * when a range of characters is divided up using the dictionary, the break<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * positions that are discovered are stored here, preventing us from having<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * to use either the dictionary or the state table again until the iterator<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * leaves this range of text<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     */<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    private int[] cachedBreakPositions;<a name="line.102"></a>
+<span class="sourceLineNo">103</span><a name="line.103"></a>
+<span class="sourceLineNo">104</span>    /**<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * if cachedBreakPositions is not null, this indicates which item in the<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * cache the current iteration position refers to<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     */<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    private int positionInCache;<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span>    /**<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * Constructs a DictionaryBasedBreakIterator.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @param description Same as the description parameter on RuleBasedBreakIterator,<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * except for the special meaning of "&lt;dictionary&gt;".  This parameter is just<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * passed through to RuleBasedBreakIterator's constructor.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @param dictionaryFilename The filename of the dictionary file to use<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    public DictionaryBasedBreakIterator(String dataFile, String dictionaryFile)<a name="line.117"></a>
+<span class="sourceLineNo">118</span>                                        throws IOException {<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        super(dataFile);<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        byte[] tmp = super.getAdditionalData();<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        if (tmp != null) {<a name="line.121"></a>
+<span class="sourceLineNo">122</span>            prepareCategoryFlags(tmp);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>            super.setAdditionalData(null);<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        }<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        dictionary = new BreakDictionary(dictionaryFile);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    }<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span>    private void prepareCategoryFlags(byte[] data) {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        categoryFlags = new boolean[data.length];<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        for (int i = 0; i &lt; data.length; i++) {<a name="line.130"></a>
+<span class="sourceLineNo">131</span>            categoryFlags[i] = (data[i] == (byte)1) ? true : false;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>        }<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    }<a name="line.133"></a>
+<span class="sourceLineNo">134</span><a name="line.134"></a>
+<span class="sourceLineNo">135</span>    public void setText(CharacterIterator newText) {<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        super.setText(newText);<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        cachedBreakPositions = null;<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        dictionaryCharCount = 0;<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        positionInCache = 0;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>    }<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>    /**<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * Sets the current iteration position to the beginning of the text.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * (i.e., the CharacterIterator's starting offset).<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * @return The offset of the beginning of the text.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     */<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    public int first() {<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        cachedBreakPositions = null;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        dictionaryCharCount = 0;<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        positionInCache = 0;<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        return super.first();<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    }<a name="line.152"></a>
+<span class="sourceLineNo">153</span><a name="line.153"></a>
+<span class="sourceLineNo">154</span>    /**<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * Sets the current iteration position to the end of the text.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * (i.e., the CharacterIterator's ending offset).<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * @return The text's past-the-end offset.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     */<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    public int last() {<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        cachedBreakPositions = null;<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        dictionaryCharCount = 0;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        positionInCache = 0;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        return super.last();<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    }<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>    /**<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * Advances the iterator one step backwards.<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * @return The position of the last boundary position before the<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * current iteration position<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     */<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    public int previous() {<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        CharacterIterator text = getText();<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>        // if we have cached break positions and we're still in the range<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        // covered by them, just move one step backward in the cache<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        if (cachedBreakPositions != null &amp;&amp; positionInCache &gt; 0) {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>            --positionInCache;<a name="line.177"></a>
+<span class="sourceLineNo">178</span>            text.setIndex(cachedBreakPositions[positionInCache]);<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            return cachedBreakPositions[positionInCache];<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        }<a name="line.180"></a>
+<span class="sourceLineNo">181</span><a name="line.181"></a>
+<span class="sourceLineNo">182</span>        // otherwise, dump the cache and use the inherited previous() method to move<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        // backward.  This may fill up the cache with new break positions, in which<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        // case we have to mark our position in the cache<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        else {<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            cachedBreakPositions = null;<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            int result = super.previous();<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            if (cachedBreakPositions != null) {<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                positionInCache = cachedBreakPositions.length - 2;<a name="line.189"></a>
+<span class="sourceLineNo">190</span>            }<a name="line.190"></a>
+<span class="sourceLineNo">191</span>            return result;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        }<a name="line.192"></a>
+<span class="sourceLineNo">193</span>    }<a name="line.193"></a>
+<span class="sourceLineNo">194</span><a name="line.194"></a>
+<span class="sourceLineNo">195</span>    /**<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * Sets the current iteration position to the last boundary position<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * before the specified position.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @param offset The position to begin searching from<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * @return The position of the last boundary before "offset"<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     */<a name="line.200"></a>
+<span class="sourceLineNo">201</span>    public int preceding(int offset) {<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        CharacterIterator text = getText();<a name="line.202"></a>
+<span class="sourceLineNo">203</span>        checkOffset(offset, text);<a name="line.203"></a>
+<span class="sourceLineNo">204</span><a name="line.204"></a>
+<span class="sourceLineNo">205</span>        // if we have no cached break positions, or "offset" is outside the<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        // range covered by the cache, we can just call the inherited routine<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        // (which will eventually call other routines in this class that may<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        // refresh the cache)<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        if (cachedBreakPositions == null || offset &lt;= cachedBreakPositions[0] ||<a name="line.209"></a>
+<span class="sourceLineNo">210</span>                offset &gt; cachedBreakPositions[cachedBreakPositions.length - 1]) {<a name="line.210"></a>
+<span class="sourceLineNo">211</span>            cachedBreakPositions = null;<a name="line.211"></a>
+<span class="sourceLineNo">212</span>            return super.preceding(offset);<a name="line.212"></a>
+<span class="sourceLineNo">213</span>        }<a name="line.213"></a>
+<span class="sourceLineNo">214</span><a name="line.214"></a>
+<span class="sourceLineNo">215</span>        // on the other hand, if "offset" is within the range covered by the cache,<a name="line.215"></a>
+<span class="sourceLineNo">216</span>        // then all we have to do is search the cache for the last break position<a name="line.216"></a>
+<span class="sourceLineNo">217</span>        // before "offset"<a name="line.217"></a>
+<span class="sourceLineNo">218</span>        else {<a name="line.218"></a>
+<span class="sourceLineNo">219</span>            positionInCache = 0;<a name="line.219"></a>
+<span class="sourceLineNo">220</span>            while (positionInCache &lt; cachedBreakPositions.length<a name="line.220"></a>
+<span class="sourceLineNo">221</span>                   &amp;&amp; offset &gt; cachedBreakPositions[positionInCache]) {<a name="line.221"></a>
+<span class="sourceLineNo">222</span>                ++positionInCache;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            }<a name="line.223"></a>
+<span class="sourceLineNo">224</span>            --positionInCache;<a name="line.224"></a>
+<span class="sourceLineNo">225</span>            text.setIndex(cachedBreakPositions[positionInCache]);<a name="line.225"></a>
+<span class="sourceLineNo">226</span>            return text.getIndex();<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        }<a name="line.227"></a>
+<span class="sourceLineNo">228</span>    }<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span>    /**<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * Sets the current iteration position to the first boundary position after<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * the specified position.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @param offset The position to begin searching forward from<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * @return The position of the first boundary after "offset"<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     */<a name="line.235"></a>
+<span class="sourceLineNo">236</span>    public int following(int offset) {<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        CharacterIterator text = getText();<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        checkOffset(offset, text);<a name="line.238"></a>
+<span class="sourceLineNo">239</span><a name="line.239"></a>
+<span class="sourceLineNo">240</span>        // if we have no cached break positions, or if "offset" is outside the<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        // range covered by the cache, then dump the cache and call our<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        // inherited following() method.  This will call other methods in this<a name="line.242"></a>
+<span class="sourceLineNo">243</span>        // class that may refresh the cache.<a name="line.243"></a>
+<span class="sourceLineNo">244</span>        if (cachedBreakPositions == null || offset &lt; cachedBreakPositions[0] ||<a name="line.244"></a>
+<span class="sourceLineNo">245</span>                offset &gt;= cachedBreakPositions[cachedBreakPositions.length - 1]) {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            cachedBreakPositions = null;<a name="line.246"></a>
+<span class="sourceLineNo">247</span>            return super.following(offset);<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        }<a name="line.248"></a>
+<span class="sourceLineNo">249</span><a name="line.249"></a>
+<span class="sourceLineNo">250</span>        // on the other hand, if "offset" is within the range covered by the<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        // cache, then just search the cache for the first break position<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        // after "offset"<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        else {<a name="line.253"></a>
+<span class="sourceLineNo">254</span>            positionInCache = 0;<a name="line.254"></a>
+<span class="sourceLineNo">255</span>            while (positionInCache &lt; cachedBreakPositions.length<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                   &amp;&amp; offset &gt;= cachedBreakPositions[positionInCache]) {<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                ++positionInCache;<a name="line.257"></a>
+<span class="sourceLineNo">258</span>            }<a name="line.258"></a>
+<span class="sourceLineNo">259</span>            text.setIndex(cachedBreakPositions[positionInCache]);<a name="line.259"></a>
+<span class="sourceLineNo">260</span>            return text.getIndex();<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        }<a name="line.261"></a>
+<span class="sourceLineNo">262</span>    }<a name="line.262"></a>
+<span class="sourceLineNo">263</span><a name="line.263"></a>
+<span class="sourceLineNo">264</span>    /**<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * This is the implementation function for next().<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     */<a name="line.266"></a>
+<span class="sourceLineNo">267</span>    protected int handleNext() {<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        CharacterIterator text = getText();<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span>        // if there are no cached break positions, or if we've just moved<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        // off the end of the range covered by the cache, we have to dump<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        // and possibly regenerate the cache<a name="line.272"></a>
+<span class="sourceLineNo">273</span>        if (cachedBreakPositions == null ||<a name="line.273"></a>
+<span class="sourceLineNo">274</span>            positionInCache == cachedBreakPositions.length - 1) {<a name="line.274"></a>
+<span class="sourceLineNo">275</span><a name="line.275"></a>
+<span class="sourceLineNo">276</span>            // start by using the inherited handleNext() to find a tentative return<a name="line.276"></a>
+<span class="sourceLineNo">277</span>            // value.   dictionaryCharCount tells us how many dictionary characters<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            // we passed over on our way to the tentative return value<a name="line.278"></a>
+<span class="sourceLineNo">279</span>            int startPos = text.getIndex();<a name="line.279"></a>
+<span class="sourceLineNo">280</span>            dictionaryCharCount = 0;<a name="line.280"></a>
+<span class="sourceLineNo">281</span>            int result = super.handleNext();<a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>            // if we passed over more than one dictionary character, then we use<a name="line.283"></a>
+<span class="sourceLineNo">284</span>            // divideUpDictionaryRange() to regenerate the cached break positions<a name="line.284"></a>
+<span class="sourceLineNo">285</span>            // for the new range<a name="line.285"></a>
+<span class="sourceLineNo">286</span>            if (dictionaryCharCount &gt; 1 &amp;&amp; result - startPos &gt; 1) {<a name="line.286"></a>
+<span class="sourceLineNo">287</span>                divideUpDictionaryRange(startPos, result);<a name="line.287"></a>
+<span class="sourceLineNo">288</span>            }<a name="line.288"></a>
+<span class="sourceLineNo">289</span><a name="line.289"></a>
+<span class="sourceLineNo">290</span>            // otherwise, the value we got back from the inherited fuction<a name="line.290"></a>
+<span class="sourceLineNo">291</span>            // is our return value, and we can dump the cache<a name="line.291"></a>
+<span class="sourceLineNo">292</span>            else {<a name="line.292"></a>
+<span class="sourceLineNo">293</span>                cachedBreakPositions = null;<a name="line.293"></a>
+<span class="sourceLineNo">294</span>                return result;<a name="line.294"></a>
+<span class="sourceLineNo">295</span>            }<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        }<a name="line.296"></a>
+<span class="sourceLineNo">297</span><a name="line.297"></a>
+<span class="sourceLineNo">298</span>        // if the cache of break positions has been regenerated (or existed all<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        // along), then just advance to the next break position in the cache<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        // and return it<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        if (cachedBreakPositions != null) {<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            ++positionInCache;<a name="line.302"></a>
+<span class="sourceLineNo">303</span>            text.setIndex(cachedBreakPositions[positionInCache]);<a name="line.303"></a>
+<span class="sourceLineNo">304</span>            return cachedBreakPositions[positionInCache];<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        }<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        return -9999;   // SHOULD NEVER GET HERE!<a name="line.306"></a>
+<span class="sourceLineNo">307</span>    }<a name="line.307"></a>
+<span class="sourceLineNo">308</span><a name="line.308"></a>
+<span class="sourceLineNo">309</span>    /**<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * Looks up a character category for a character.<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     */<a name="line.311"></a>
+<span class="sourceLineNo">312</span>    protected int lookupCategory(int c) {<a name="line.312"></a>
+<span class="sourceLineNo">313</span>        // this override of lookupCategory() exists only to keep track of whether we've<a name="line.313"></a>
+<span class="sourceLineNo">314</span>        // passed over any dictionary characters.  It calls the inherited lookupCategory()<a name="line.314"></a>
+<span class="sourceLineNo">315</span>        // to do the real work, and then checks whether its return value is one of the<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        // categories represented in the dictionary.  If it is, bump the dictionary-<a name="line.316"></a>
+<span class="sourceLineNo">317</span>        // character count.<a name="line.317"></a>
+<span class="sourceLineNo">318</span>        int result = super.lookupCategory(c);<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        if (result != RuleBasedBreakIterator.IGNORE &amp;&amp; categoryFlags[result]) {<a name="line.319"></a>
+<span class="sourceLineNo">320</span>            ++dictionaryCharCount;<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        }<a name="line.321"></a>
+<span class="sourceLineNo">322</span>        return result;<a name="line.322"></a>
+<span class="sourceLineNo">323</span>    }<a name="line.323"></a>
+<span class="sourceLineNo">324</span><a name="line.324"></a>
+<span class="sourceLineNo">325</span>    /**<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * This is the function that actually implements the dictionary-based<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * algorithm.  Given the endpoints of a range of text, it uses the<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * dictionary to determine the positions of any boundaries in this<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * range.  It stores all the boundary positions it discovers in<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * cachedBreakPositions so that we only have to do this work once<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * for each time we enter the range.<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     */<a name="line.332"></a>
+<span class="sourceLineNo">333</span>    private void divideUpDictionaryRange(int startPos, int endPos) {<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        CharacterIterator text = getText();<a name="line.334"></a>
+<span class="sourceLineNo">335</span><a name="line.335"></a>
+<span class="sourceLineNo">336</span>        // the range we're dividing may begin or end with non-dictionary characters<a name="line.336"></a>
+<span class="sourceLineNo">337</span>        // (i.e., for line breaking, we may have leading or trailing punctuation<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        // that needs to be kept with the word).  Seek from the beginning of the<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        // range to the first dictionary character<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        text.setIndex(startPos);<a name="line.340"></a>
+<span class="sourceLineNo">341</span>        int c = getCurrent();<a name="line.341"></a>
+<span class="sourceLineNo">342</span>        int category = lookupCategory(c);<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        while (category == IGNORE || !categoryFlags[category]) {<a name="line.343"></a>
+<span class="sourceLineNo">344</span>            c = getNext();<a name="line.344"></a>
+<span class="sourceLineNo">345</span>            category = lookupCategory(c);<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        }<a name="line.346"></a>
+<span class="sourceLineNo">347</span><a name="line.347"></a>
+<span class="sourceLineNo">348</span>        // initialize.  We maintain two stacks: currentBreakPositions contains<a name="line.348"></a>
+<span class="sourceLineNo">349</span>        // the list of break positions that will be returned if we successfully<a name="line.349"></a>
+<span class="sourceLineNo">350</span>        // finish traversing the whole range now.  possibleBreakPositions lists<a name="line.350"></a>
+<span class="sourceLineNo">351</span>        // all other possible word ends we've passed along the way.  (Whenever<a name="line.351"></a>
+<span class="sourceLineNo">352</span>        // we reach an error [a sequence of characters that can't begin any word<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        // in the dictionary], we back up, possibly delete some breaks from<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        // currentBreakPositions, move a break from possibleBreakPositions<a name="line.354"></a>
+<span class="sourceLineNo">355</span>        // to currentBreakPositions, and start over from there.  This process<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        // continues in this way until we either successfully make it all the way<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        // across the range, or exhaust all of our combinations of break<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        // positions.)<a name="line.358"></a>
+<span class="sourceLineNo">359</span>        Stack currentBreakPositions = new Stack();<a name="line.359"></a>
+<span class="sourceLineNo">360</span>        Stack possibleBreakPositions = new Stack();<a name="line.360"></a>
+<span class="sourceLineNo">361</span>        Vector wrongBreakPositions = new Vector();<a name="line.361"></a>
+<span class="sourceLineNo">362</span><a name="line.362"></a>
+<span class="sourceLineNo">363</span>        // the dictionary is implemented as a trie, which is treated as a state<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        // machine.  -1 represents the end of a legal word.  Every word in the<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        // dictionary is represented by a path from the root node to -1.  A path<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        // that ends in state 0 is an illegal combination of characters.<a name="line.366"></a>
+<span class="sourceLineNo">367</span>        int state = 0;<a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>        // these two variables are used for error handling.  We keep track of the<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        // farthest we've gotten through the range being divided, and the combination<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        // of breaks that got us that far.  If we use up all possible break<a name="line.371"></a>
+<span class="sourceLineNo">372</span>        // combinations, the text contains an error or a word that's not in the<a name="line.372"></a>
+<span class="sourceLineNo">373</span>        // dictionary.  In this case, we "bless" the break positions that got us the<a name="line.373"></a>
+<span class="sourceLineNo">374</span>        // farthest as real break positions, and then start over from scratch with<a name="line.374"></a>
+<span class="sourceLineNo">375</span>        // the character where the error occurred.<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        int farthestEndPoint = text.getIndex();<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        Stack bestBreakPositions = null;<a name="line.377"></a>
+<span class="sourceLineNo">378</span><a name="line.378"></a>
+<span class="sourceLineNo">379</span>        // initialize (we always exit the loop with a break statement)<a name="line.379"></a>
+<span class="sourceLineNo">380</span>        c = getCurrent();<a name="line.380"></a>
+<span class="sourceLineNo">381</span>        while (true) {<a name="line.381"></a>
+<span class="sourceLineNo">382</span><a name="line.382"></a>
+<span class="sourceLineNo">383</span>            // if we can transition to state "-1" from our current state, we're<a name="line.383"></a>
+<span class="sourceLineNo">384</span>            // on the last character of a legal word.  Push that position onto<a name="line.384"></a>
+<span class="sourceLineNo">385</span>            // the possible-break-positions stack<a name="line.385"></a>
+<span class="sourceLineNo">386</span>            if (dictionary.getNextState(state, 0) == -1) {<a name="line.386"></a>
+<span class="sourceLineNo">387</span>                possibleBreakPositions.push(Integer.valueOf(text.getIndex()));<a name="line.387"></a>
+<span class="sourceLineNo">388</span>            }<a name="line.388"></a>
+<span class="sourceLineNo">389</span><a name="line.389"></a>
+<span class="sourceLineNo">390</span>            // look up the new state to transition to in the dictionary<a name="line.390"></a>
+<span class="sourceLineNo">391</span>            state = dictionary.getNextStateFromCharacter(state, c);<a name="line.391"></a>
+<span class="sourceLineNo">392</span><a name="line.392"></a>
+<span class="sourceLineNo">393</span>            // if the character we're sitting on causes us to transition to<a name="line.393"></a>
+<span class="sourceLineNo">394</span>            // the "end of word" state, then it was a non-dictionary character<a name="line.394"></a>
+<span class="sourceLineNo">395</span>            // and we've successfully traversed the whole range.  Drop out<a name="line.395"></a>
+<span class="sourceLineNo">396</span>            // of the loop.<a name="line.396"></a>
+<span class="sourceLineNo">397</span>            if (state == -1) {<a name="line.397"></a>
+<span class="sourceLineNo">398</span>                currentBreakPositions.push(Integer.valueOf(text.getIndex()));<a name="line.398"></a>
+<span class="sourceLineNo">399</span>                break;<a name="line.399"></a>
+<span class="sourceLineNo">400</span>            }<a name="line.400"></a>
+<span class="sourceLineNo">401</span><a name="line.401"></a>
+<span class="sourceLineNo">402</span>            // if the character we're sitting on causes us to transition to<a name="line.402"></a>
+<span class="sourceLineNo">403</span>            // the error state, or if we've gone off the end of the range<a name="line.403"></a>
+<span class="sourceLineNo">404</span>            // without transitioning to the "end of word" state, we've hit<a name="line.404"></a>
+<span class="sourceLineNo">405</span>            // an error...<a name="line.405"></a>
+<span class="sourceLineNo">406</span>            else if (state == 0 || text.getIndex() &gt;= endPos) {<a name="line.406"></a>
+<span class="sourceLineNo">407</span><a name="line.407"></a>
+<span class="sourceLineNo">408</span>                // if this is the farthest we've gotten, take note of it in<a name="line.408"></a>
+<span class="sourceLineNo">409</span>                // case there's an error in the text<a name="line.409"></a>
+<span class="sourceLineNo">410</span>                if (text.getIndex() &gt; farthestEndPoint) {<a name="line.410"></a>
+<span class="sourceLineNo">411</span>                    farthestEndPoint = text.getIndex();<a name="line.411"></a>
+<span class="sourceLineNo">412</span>                    bestBreakPositions = (Stack)(currentBreakPositions.clone());<a name="line.412"></a>
+<span class="sourceLineNo">413</span>                }<a name="line.413"></a>
+<span class="sourceLineNo">414</span><a name="line.414"></a>
+<span class="sourceLineNo">415</span>                // wrongBreakPositions is a list of all break positions<a name="line.415"></a>
+<span class="sourceLineNo">416</span>                // we've tried starting that didn't allow us to traverse<a name="line.416"></a>
+<span class="sourceLineNo">417</span>                // all the way through the text.  Every time we pop a<a name="line.417"></a>
+<span class="sourceLineNo">418</span>                //break position off of currentBreakPositions, we put it<a name="line.418"></a>
+<span class="sourceLineNo">419</span>                // into wrongBreakPositions to avoid trying it again later.<a name="line.419"></a>
+<span class="sourceLineNo">420</span>                // If we make it to this spot, we're either going to back<a name="line.420"></a>
+<span class="sourceLineNo">421</span>                // up to a break in possibleBreakPositions and try starting<a name="line.421"></a>
+<span class="sourceLineNo">422</span>                // over from there, or we've exhausted all possible break<a name="line.422"></a>
+<span class="sourceLineNo">423</span>                // positions and are going to do the fallback procedure.<a name="line.423"></a>
+<span class="sourceLineNo">424</span>                // This loop prevents us from messing with anything in<a name="line.424"></a>
+<span class="sourceLineNo">425</span>                // possibleBreakPositions that didn't work as a starting<a name="line.425"></a>
+<span class="sourceLineNo">426</span>                // point the last time we tried it (this is to prevent a bunch of<a name="line.426"></a>
+<span class="sourceLineNo">427</span>                // repetitive checks from slowing down some extreme cases)<a name="line.427"></a>
+<span class="sourceLineNo">428</span>                Integer newStartingSpot = null;<a name="line.428"></a>
+<span class="sourceLineNo">429</span>                while (!possibleBreakPositions.isEmpty() &amp;&amp; wrongBreakPositions.contains(<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                            possibleBreakPositions.peek())) {<a name="line.430"></a>
+<span class="sourceLineNo">431</span>                    possibleBreakPositions.pop();<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                }<a name="line.432"></a>
+<span class="sourceLineNo">433</span><a name="line.433"></a>
+<span class="sourceLineNo">434</span>                // if we've used up all possible break-position combinations, there's<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                // an error or an unknown word in the text.  In this case, we start<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                // over, treating the farthest character we've reached as the beginning<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                // of the range, and "blessing" the break positions that got us that<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                // far as real break positions<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                if (possibleBreakPositions.isEmpty()) {<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                    if (bestBreakPositions != null) {<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                        currentBreakPositions = bestBreakPositions;<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                        if (farthestEndPoint &lt; endPos) {<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                            text.setIndex(farthestEndPoint + 1);<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                        }<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                        else {<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                            break;<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                        }<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                    }<a name="line.448"></a>
+<span class="sourceLineNo">449</span>                    else {<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                        if ((currentBreakPositions.size() == 0 ||<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                             ((Integer)(currentBreakPositions.peek())).intValue() != text.getIndex())<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                            &amp;&amp; text.getIndex() != startPos) {<a name="line.452"></a>
+<span class="sourceLineNo">453</span>                            currentBreakPositions.push(new Integer(text.getIndex()));<a name="line.453"></a>
+<span class="sourceLineNo">454</span>                        }<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                        getNext();<a name="line.455"></a>
+<span class="sourceLineNo">456</span>                        currentBreakPositions.push(new Integer(text.getIndex()));<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                    }<a name="line.457"></a>
+<span class="sourceLineNo">458</span>                }<a name="line.458"></a>
+<span class="sourceLineNo">459</span><a name="line.459"></a>
+<span class="sourceLineNo">460</span>                // if we still have more break positions we can try, then promote the<a name="line.460"></a>
+<span class="sourceLineNo">461</span>                // last break in possibleBreakPositions into currentBreakPositions,<a name="line.461"></a>
+<span class="sourceLineNo">462</span>                // and get rid of all entries in currentBreakPositions that come after<a name="line.462"></a>
+<span class="sourceLineNo">463</span>                // it.  Then back up to that position and start over from there (i.e.,<a name="line.463"></a>
+<span class="sourceLineNo">464</span>                // treat that position as the beginning of a new word)<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                else {<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                    Integer temp = (Integer)possibleBreakPositions.pop();<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                    Object temp2 = null;<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                    while (!currentBreakPositions.isEmpty() &amp;&amp; temp.intValue() &lt;<a name="line.468"></a>
+<span class="sourceLineNo">469</span>                           ((Integer)currentBreakPositions.peek()).intValue()) {<a name="line.469"></a>
+<span class="sourceLineNo">470</span>                        temp2 = currentBreakPositions.pop();<a name="line.470"></a>
+<span class="sourceLineNo">471</span>                        wrongBreakPositions.addElement(temp2);<a name="line.471"></a>
+<span class="sourceLineNo">472</span>                    }<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                    currentBreakPositions.push(temp);<a name="line.473"></a>
+<span class="sourceLineNo">474</span>                    text.setIndex(((Integer)currentBreakPositions.peek()).intValue());<a name="line.474"></a>
+<span class="sourceLineNo">475</span>                }<a name="line.475"></a>
+<span class="sourceLineNo">476</span><a name="line.476"></a>
+<span class="sourceLineNo">477</span>                // re-sync "c" for the next go-round, and drop out of the loop if<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                // we've made it off the end of the range<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                c = getCurrent();<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                if (text.getIndex() &gt;= endPos) {<a name="line.480"></a>
+<span class="sourceLineNo">481</span>                    break;<a name="line.481"></a>
+<span class="sourceLineNo">482</span>                }<a name="line.482"></a>
+<span class="sourceLineNo">483</span>            }<a name="line.483"></a>
+<span class="sourceLineNo">484</span><a name="line.484"></a>
+<span class="sourceLineNo">485</span>            // if we didn't hit any exceptional conditions on this last iteration,<a name="line.485"></a>
+<span class="sourceLineNo">486</span>            // just advance to the next character and loop<a name="line.486"></a>
+<span class="sourceLineNo">487</span>            else {<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                c = getNext();<a name="line.488"></a>
+<span class="sourceLineNo">489</span>            }<a name="line.489"></a>
+<span class="sourceLineNo">490</span>        }<a name="line.490"></a>
+<span class="sourceLineNo">491</span><a name="line.491"></a>
+<span class="sourceLineNo">492</span>        // dump the last break position in the list, and replace it with the actual<a name="line.492"></a>
+<span class="sourceLineNo">493</span>        // end of the range (which may be the same character, or may be further on<a name="line.493"></a>
+<span class="sourceLineNo">494</span>        // because the range actually ended with non-dictionary characters we want to<a name="line.494"></a>
+<span class="sourceLineNo">495</span>        // keep with the word)<a name="line.495"></a>
+<span class="sourceLineNo">496</span>        if (!currentBreakPositions.isEmpty()) {<a name="line.496"></a>
+<span class="sourceLineNo">497</span>            currentBreakPositions.pop();<a name="line.497"></a>
+<span class="sourceLineNo">498</span>        }<a name="line.498"></a>
+<span class="sourceLineNo">499</span>        currentBreakPositions.push(Integer.valueOf(endPos));<a name="line.499"></a>
+<span class="sourceLineNo">500</span><a name="line.500"></a>
+<span class="sourceLineNo">501</span>        // create a regular array to hold the break positions and copy<a name="line.501"></a>
+<span class="sourceLineNo">502</span>        // the break positions from the stack to the array (in addition,<a name="line.502"></a>
+<span class="sourceLineNo">503</span>        // our starting position goes into this array as a break position).<a name="line.503"></a>
+<span class="sourceLineNo">504</span>        // This array becomes the cache of break positions used by next()<a name="line.504"></a>
+<span class="sourceLineNo">505</span>        // and previous(), so this is where we actually refresh the cache.<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        cachedBreakPositions = new int[currentBreakPositions.size() + 1];<a name="line.506"></a>
+<span class="sourceLineNo">507</span>        cachedBreakPositions[0] = startPos;<a name="line.507"></a>
+<span class="sourceLineNo">508</span><a name="line.508"></a>
+<span class="sourceLineNo">509</span>        for (int i = 0; i &lt; currentBreakPositions.size(); i++) {<a name="line.509"></a>
+<span class="sourceLineNo">510</span>            cachedBreakPositions[i + 1] = ((Integer)currentBreakPositions.elementAt(i)).intValue();<a name="line.510"></a>
+<span class="sourceLineNo">511</span>        }<a name="line.511"></a>
+<span class="sourceLineNo">512</span>        positionInCache = 0;<a name="line.512"></a>
+<span class="sourceLineNo">513</span>    }<a name="line.513"></a>
+<span class="sourceLineNo">514</span>}<a name="line.514"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

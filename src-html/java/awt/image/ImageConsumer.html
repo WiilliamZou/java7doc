@@ -1,0 +1,298 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1995, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt.image;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.Hashtable;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * The interface for objects expressing interest in image data through<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * the ImageProducer interfaces.  When a consumer is added to an image<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * producer, the producer delivers all of the data about the image<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * using the method calls defined in this interface.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * @see ImageProducer<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * @author      Jim Graham<a name="line.38"></a>
+<span class="sourceLineNo">039</span> */<a name="line.39"></a>
+<span class="sourceLineNo">040</span>public interface ImageConsumer {<a name="line.40"></a>
+<span class="sourceLineNo">041</span>    /**<a name="line.41"></a>
+<span class="sourceLineNo">042</span>     * The dimensions of the source image are reported using the<a name="line.42"></a>
+<span class="sourceLineNo">043</span>     * setDimensions method call.<a name="line.43"></a>
+<span class="sourceLineNo">044</span>     * @param width the width of the source image<a name="line.44"></a>
+<span class="sourceLineNo">045</span>     * @param height the height of the source image<a name="line.45"></a>
+<span class="sourceLineNo">046</span>     */<a name="line.46"></a>
+<span class="sourceLineNo">047</span>    void setDimensions(int width, int height);<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>    /**<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * Sets the extensible list of properties associated with this image.<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     * @param props the list of properties to be associated with this<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     *        image<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     */<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    void setProperties(Hashtable&lt;?,?&gt; props);<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>    /**<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * Sets the ColorModel object used for the majority of<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * the pixels reported using the setPixels method<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * calls.  Note that each set of pixels delivered using setPixels<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * contains its own ColorModel object, so no assumption should<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * be made that this model will be the only one used in delivering<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * pixel values.  A notable case where multiple ColorModel objects<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * may be seen is a filtered image when for each set of pixels<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * that it filters, the filter<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * determines  whether the<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * pixels can be sent on untouched, using the original ColorModel,<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * or whether the pixels should be modified (filtered) and passed<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * on using a ColorModel more convenient for the filtering process.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @param model the specified &lt;code&gt;ColorModel&lt;/code&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * @see ColorModel<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     */<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    void setColorModel(ColorModel model);<a name="line.72"></a>
+<span class="sourceLineNo">073</span><a name="line.73"></a>
+<span class="sourceLineNo">074</span>    /**<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * Sets the hints that the ImageConsumer uses to process the<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * pixels delivered by the ImageProducer.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * The ImageProducer can deliver the pixels in any order, but<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * the ImageConsumer may be able to scale or convert the pixels<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * to the destination ColorModel more efficiently or with higher<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * quality if it knows some information about how the pixels will<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * be delivered up front.  The setHints method should be called<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * before any calls to any of the setPixels methods with a bit mask<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * of hints about the manner in which the pixels will be delivered.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * If the ImageProducer does not follow the guidelines for the<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * indicated hint, the results are undefined.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * @param hintflags a set of hints that the ImageConsumer uses to<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     *        process the pixels<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     */<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    void setHints(int hintflags);<a name="line.89"></a>
+<span class="sourceLineNo">090</span><a name="line.90"></a>
+<span class="sourceLineNo">091</span>    /**<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * The pixels will be delivered in a random order.  This tells the<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * ImageConsumer not to use any optimizations that depend on the<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * order of pixel delivery, which should be the default assumption<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * in the absence of any call to the setHints method.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @see #setHints<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     */<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    int RANDOMPIXELORDER = 1;<a name="line.98"></a>
+<span class="sourceLineNo">099</span><a name="line.99"></a>
+<span class="sourceLineNo">100</span>    /**<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * The pixels will be delivered in top-down, left-to-right order.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @see #setHints<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    int TOPDOWNLEFTRIGHT = 2;<a name="line.104"></a>
+<span class="sourceLineNo">105</span><a name="line.105"></a>
+<span class="sourceLineNo">106</span>    /**<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * The pixels will be delivered in (multiples of) complete scanlines<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * at a time.<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * @see #setHints<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     */<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    int COMPLETESCANLINES = 4;<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    /**<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * The pixels will be delivered in a single pass.  Each pixel will<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * appear in only one call to any of the setPixels methods.  An<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * example of an image format which does not meet this criterion<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * is a progressive JPEG image which defines pixels in multiple<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * passes, each more refined than the previous.<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * @see #setHints<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     */<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    int SINGLEPASS = 8;<a name="line.121"></a>
+<span class="sourceLineNo">122</span><a name="line.122"></a>
+<span class="sourceLineNo">123</span>    /**<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * The image contain a single static image.  The pixels will be defined<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * in calls to the setPixels methods and then the imageComplete method<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * will be called with the STATICIMAGEDONE flag after which no more<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * image data will be delivered.  An example of an image type which<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * would not meet these criteria would be the output of a video feed,<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * or the representation of a 3D rendering being manipulated<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * by the user.  The end of each frame in those types of images will<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * be indicated by calling imageComplete with the SINGLEFRAMEDONE flag.<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @see #setHints<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * @see #imageComplete<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     */<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    int SINGLEFRAME = 16;<a name="line.135"></a>
+<span class="sourceLineNo">136</span><a name="line.136"></a>
+<span class="sourceLineNo">137</span>    /**<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * Delivers the pixels of the image with one or more calls<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * to this method.  Each call specifies the location and<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * size of the rectangle of source pixels that are contained in<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * the array of pixels.  The specified ColorModel object should<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * be used to convert the pixels into their corresponding color<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * and alpha components.  Pixel (m,n) is stored in the pixels array<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * at index (n * scansize + m + off).  The pixels delivered using<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * this method are all stored as bytes.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @param x the X coordinate of the upper-left corner of the<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *        area of pixels to be set<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * @param y the Y coordinate of the upper-left corner of the<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *        area of pixels to be set<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * @param w the width of the area of pixels<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @param h the height of the area of pixels<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * @param model the specified &lt;code&gt;ColorModel&lt;/code&gt;<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @param pixels the array of pixels<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * @param off the offset into the &lt;code&gt;pixels&lt;/code&gt; array<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @param scansize the distance from one row of pixels to the next in<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * the &lt;code&gt;pixels&lt;/code&gt; array<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * @see ColorModel<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     */<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    void setPixels(int x, int y, int w, int h,<a name="line.159"></a>
+<span class="sourceLineNo">160</span>                   ColorModel model, byte pixels[], int off, int scansize);<a name="line.160"></a>
+<span class="sourceLineNo">161</span><a name="line.161"></a>
+<span class="sourceLineNo">162</span>    /**<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * The pixels of the image are delivered using one or more calls<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * to the setPixels method.  Each call specifies the location and<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * size of the rectangle of source pixels that are contained in<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * the array of pixels.  The specified ColorModel object should<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * be used to convert the pixels into their corresponding color<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * and alpha components.  Pixel (m,n) is stored in the pixels array<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * at index (n * scansize + m + off).  The pixels delivered using<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * this method are all stored as ints.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * this method are all stored as ints.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @param x the X coordinate of the upper-left corner of the<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     *        area of pixels to be set<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * @param y the Y coordinate of the upper-left corner of the<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *        area of pixels to be set<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @param w the width of the area of pixels<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @param h the height of the area of pixels<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * @param model the specified &lt;code&gt;ColorModel&lt;/code&gt;<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @param pixels the array of pixels<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @param off the offset into the &lt;code&gt;pixels&lt;/code&gt; array<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * @param scansize the distance from one row of pixels to the next in<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * the &lt;code&gt;pixels&lt;/code&gt; array<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * @see ColorModel<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     */<a name="line.184"></a>
+<span class="sourceLineNo">185</span>    void setPixels(int x, int y, int w, int h,<a name="line.185"></a>
+<span class="sourceLineNo">186</span>                   ColorModel model, int pixels[], int off, int scansize);<a name="line.186"></a>
+<span class="sourceLineNo">187</span><a name="line.187"></a>
+<span class="sourceLineNo">188</span>    /**<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * The imageComplete method is called when the ImageProducer is<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * finished delivering all of the pixels that the source image<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * contains, or when a single frame of a multi-frame animation has<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * been completed, or when an error in loading or producing the<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * image has occured.  The ImageConsumer should remove itself from the<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * list of consumers registered with the ImageProducer at this time,<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * unless it is interested in successive frames.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @param status the status of image loading<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @see ImageProducer#removeConsumer<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     */<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    void imageComplete(int status);<a name="line.199"></a>
+<span class="sourceLineNo">200</span><a name="line.200"></a>
+<span class="sourceLineNo">201</span>    /**<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * An error was encountered while producing the image.<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * @see #imageComplete<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     */<a name="line.204"></a>
+<span class="sourceLineNo">205</span>    int IMAGEERROR = 1;<a name="line.205"></a>
+<span class="sourceLineNo">206</span><a name="line.206"></a>
+<span class="sourceLineNo">207</span>    /**<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * One frame of the image is complete but there are more frames<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * to be delivered.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * @see #imageComplete<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     */<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    int SINGLEFRAMEDONE = 2;<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>    /**<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * The image is complete and there are no more pixels or frames<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * to be delivered.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @see #imageComplete<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     */<a name="line.218"></a>
+<span class="sourceLineNo">219</span>    int STATICIMAGEDONE = 3;<a name="line.219"></a>
+<span class="sourceLineNo">220</span><a name="line.220"></a>
+<span class="sourceLineNo">221</span>    /**<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * The image creation process was deliberately aborted.<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * @see #imageComplete<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     */<a name="line.224"></a>
+<span class="sourceLineNo">225</span>    int IMAGEABORTED = 4;<a name="line.225"></a>
+<span class="sourceLineNo">226</span>}<a name="line.226"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

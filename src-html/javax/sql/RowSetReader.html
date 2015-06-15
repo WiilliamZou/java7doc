@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2001, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.sql;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.sql.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * The facility that a disconnected &lt;code&gt;RowSet&lt;/code&gt; object calls on<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * to populate itself with rows of data. A reader (an object implementing the<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * &lt;code&gt;RowSetReader&lt;/code&gt; interface) may be registered with<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * a &lt;code&gt;RowSet&lt;/code&gt; object that supports the reader/writer paradigm.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * When the &lt;code&gt;RowSet&lt;/code&gt; object's &lt;code&gt;execute&lt;/code&gt; method is<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * called, it in turn calls the reader's &lt;code&gt;readData&lt;/code&gt; method.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * @since 1.4<a name="line.38"></a>
+<span class="sourceLineNo">039</span> */<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>public interface RowSetReader {<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>  /**<a name="line.43"></a>
+<span class="sourceLineNo">044</span>   * Reads the new contents of the calling &lt;code&gt;RowSet&lt;/code&gt; object.<a name="line.44"></a>
+<span class="sourceLineNo">045</span>   * In order to call this method, a &lt;code&gt;RowSet&lt;/code&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>   * object must have implemented the &lt;code&gt;RowSetInternal&lt;/code&gt; interface<a name="line.46"></a>
+<span class="sourceLineNo">047</span>   * and registered this &lt;code&gt;RowSetReader&lt;/code&gt; object as its reader.<a name="line.47"></a>
+<span class="sourceLineNo">048</span>   * The &lt;code&gt;readData&lt;/code&gt;  method is invoked internally<a name="line.48"></a>
+<span class="sourceLineNo">049</span>   * by the &lt;code&gt;RowSet.execute&lt;/code&gt; method for rowsets that support the<a name="line.49"></a>
+<span class="sourceLineNo">050</span>   * reader/writer paradigm.<a name="line.50"></a>
+<span class="sourceLineNo">051</span>   *<a name="line.51"></a>
+<span class="sourceLineNo">052</span>   * &lt;P&gt;The &lt;code&gt;readData&lt;/code&gt; method adds rows to the caller.<a name="line.52"></a>
+<span class="sourceLineNo">053</span>   * It can be implemented in a wide variety of ways and can even<a name="line.53"></a>
+<span class="sourceLineNo">054</span>   * populate the caller with rows from a nonrelational data source.<a name="line.54"></a>
+<span class="sourceLineNo">055</span>   * In general, a reader may invoke any of the rowset's methods,<a name="line.55"></a>
+<span class="sourceLineNo">056</span>   * with one exception. Calling the method &lt;code&gt;execute&lt;/code&gt; will<a name="line.56"></a>
+<span class="sourceLineNo">057</span>   * cause an &lt;code&gt;SQLException&lt;/code&gt; to be thrown<a name="line.57"></a>
+<span class="sourceLineNo">058</span>   * because &lt;code&gt;execute&lt;/code&gt; may not be called recursively.  Also,<a name="line.58"></a>
+<span class="sourceLineNo">059</span>   * when a reader invokes &lt;code&gt;RowSet&lt;/code&gt; methods, no listeners<a name="line.59"></a>
+<span class="sourceLineNo">060</span>   * are notified; that is, no &lt;code&gt;RowSetEvent&lt;/code&gt; objects are<a name="line.60"></a>
+<span class="sourceLineNo">061</span>   * generated and no &lt;code&gt;RowSetListener&lt;/code&gt; methods are invoked.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>   * This is true because listeners are already being notified by the method<a name="line.62"></a>
+<span class="sourceLineNo">063</span>   * &lt;code&gt;execute&lt;/code&gt;.<a name="line.63"></a>
+<span class="sourceLineNo">064</span>   *<a name="line.64"></a>
+<span class="sourceLineNo">065</span>   * @param caller the &lt;code&gt;RowSet&lt;/code&gt; object (1) that has implemented the<a name="line.65"></a>
+<span class="sourceLineNo">066</span>   *         &lt;code&gt;RowSetInternal&lt;/code&gt; interface, (2) with which this reader is<a name="line.66"></a>
+<span class="sourceLineNo">067</span>   *        registered, and (3) whose &lt;code&gt;execute&lt;/code&gt; method called this reader<a name="line.67"></a>
+<span class="sourceLineNo">068</span>   * @exception SQLException if a database access error occurs or this method<a name="line.68"></a>
+<span class="sourceLineNo">069</span>   *            invokes the &lt;code&gt;RowSet.execute&lt;/code&gt; method<a name="line.69"></a>
+<span class="sourceLineNo">070</span>   */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>  void readData(RowSetInternal caller) throws SQLException;<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>}<a name="line.73"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

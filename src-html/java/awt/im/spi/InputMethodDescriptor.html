@@ -1,0 +1,196 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 1999, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>package java.awt.im.spi;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.AWTException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.Image;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Locale;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>/**<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * Defines methods that provide sufficient information about an input method<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * to enable selection and loading of that input method.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * The input method itself is only loaded when it is actually used.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * @since 1.3<a name="line.38"></a>
+<span class="sourceLineNo">039</span> */<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>public interface InputMethodDescriptor {<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>    /**<a name="line.43"></a>
+<span class="sourceLineNo">044</span>     * Returns the locales supported by the corresponding input method.<a name="line.44"></a>
+<span class="sourceLineNo">045</span>     * The locale may describe just the language, or may also include<a name="line.45"></a>
+<span class="sourceLineNo">046</span>     * country and variant information if needed.<a name="line.46"></a>
+<span class="sourceLineNo">047</span>     * The information is used to select input methods by locale<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * ({@link java.awt.im.InputContext#selectInputMethod(Locale)}). It may also<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * be used to sort input methods by locale in a user-visible<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * list of input methods.<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     * &lt;p&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     * Only the input method's primary locales should be returned.<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     * For example, if a Japanese input method also has a pass-through<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * mode for Roman characters, typically still only Japanese would<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * be returned. Thus, the list of locales returned is typically<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * a subset of the locales for which the corresponding input method's<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * implementation of {@link java.awt.im.spi.InputMethod#setLocale} returns true.<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * &lt;p&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * If {@link #hasDynamicLocaleList} returns true, this method is<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * called each time the information is needed. This<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * gives input methods that depend on network resources the chance<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * to add or remove locales as resources become available or<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * unavailable.<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     *<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * @return the locales supported by the input method<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * @exception AWTException if it can be determined that the input method<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * is inoperable, for example, because of incomplete installation.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     */<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    Locale[] getAvailableLocales() throws AWTException;<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    /**<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * Returns whether the list of available locales can change<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * at runtime. This may be the case, for example, for adapters<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * that access real input methods over the network.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     */<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    boolean hasDynamicLocaleList();<a name="line.76"></a>
+<span class="sourceLineNo">077</span><a name="line.77"></a>
+<span class="sourceLineNo">078</span>    /**<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * Returns the user-visible name of the corresponding<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * input method for the given input locale in the language in which<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * the name will be displayed.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * &lt;p&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * The inputLocale parameter specifies the locale for which text<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * is input.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * This parameter can only take values obtained from this descriptor's<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * {@link #getAvailableLocales} method or null. If it is null, an<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * input locale independent name for the input method should be<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * returned.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * &lt;p&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * If a name for the desired display language is not available, the<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * method may fall back to some other language.<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @param inputLocale the locale for which text input is supported, or null<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @param displayLanguage the language in which the name will be displayed<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     */<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    String getInputMethodDisplayName(Locale inputLocale, Locale displayLanguage);<a name="line.96"></a>
+<span class="sourceLineNo">097</span><a name="line.97"></a>
+<span class="sourceLineNo">098</span>    /**<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * Returns an icon for the corresponding input method.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * The icon may be used by a user interface for selecting input methods.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * &lt;p&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * The inputLocale parameter specifies the locale for which text<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * is input.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * This parameter can only take values obtained from this descriptor's<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * {@link #getAvailableLocales} method or null. If it is null, an<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * input locale independent icon for the input method should be<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * returned.<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * &lt;p&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * The icon's size should be 16&amp;times;16 pixels.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     *<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * @param inputLocale the locale for which text input is supported, or null<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @return an icon for the corresponding input method, or null<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     */<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    Image getInputMethodIcon(Locale inputLocale);<a name="line.114"></a>
+<span class="sourceLineNo">115</span><a name="line.115"></a>
+<span class="sourceLineNo">116</span>    /**<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * Creates a new instance of the corresponding input method.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * @return a new instance of the corresponding input method<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * @exception Exception any exception that may occur while creating the<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * input method instance<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     */<a name="line.122"></a>
+<span class="sourceLineNo">123</span>    InputMethod createInputMethod() throws Exception;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>}<a name="line.124"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

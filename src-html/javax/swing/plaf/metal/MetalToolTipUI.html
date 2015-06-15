@@ -1,0 +1,269 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.swing.plaf.metal;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import sun.swing.SwingUtilities2;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.event.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.swing.*;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import javax.swing.BorderFactory;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import javax.swing.border.Border;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import javax.swing.plaf.*;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.swing.plaf.basic.BasicToolTipUI;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import javax.swing.plaf.basic.BasicHTML;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import javax.swing.text.View;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>/**<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * A Metal L&amp;F extension of BasicToolTipUI.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;strong&gt;Warning:&lt;/strong&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * Serialized objects of this class will not be compatible with<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * future Swing releases. The current serialization support is<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * appropriate for short term storage or RMI between applications running<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * the same version of Swing.  As of 1.4, support for long term storage<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * of all JavaBeans&lt;sup&gt;&lt;font size="-2"&gt;TM&lt;/font&gt;&lt;/sup&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * has been added to the &lt;code&gt;java.beans&lt;/code&gt; package.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * Please see {@link java.beans.XMLEncoder}.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * @author Steve Wilson<a name="line.52"></a>
+<span class="sourceLineNo">053</span> */<a name="line.53"></a>
+<span class="sourceLineNo">054</span>public class MetalToolTipUI extends BasicToolTipUI {<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>    static MetalToolTipUI sharedInstance = new MetalToolTipUI();<a name="line.56"></a>
+<span class="sourceLineNo">057</span>    private Font smallFont;<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    // Refer to note in getAcceleratorString about this field.<a name="line.58"></a>
+<span class="sourceLineNo">059</span>    private JToolTip tip;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    public static final int padSpaceBetweenStrings = 12;<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    private String acceleratorDelimiter;<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    public MetalToolTipUI() {<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        super();<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    }<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>    public static ComponentUI createUI(JComponent c) {<a name="line.67"></a>
+<span class="sourceLineNo">068</span>        return sharedInstance;<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    }<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    public void installUI(JComponent c) {<a name="line.71"></a>
+<span class="sourceLineNo">072</span>        super.installUI(c);<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        tip = (JToolTip)c;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        Font f = c.getFont();<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        smallFont = new Font( f.getName(), f.getStyle(), f.getSize() - 2 );<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        acceleratorDelimiter = UIManager.getString( "MenuItem.acceleratorDelimiter" );<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        if ( acceleratorDelimiter == null ) { acceleratorDelimiter = "-"; }<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    }<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>    public void uninstallUI(JComponent c) {<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        super.uninstallUI(c);<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        tip = null;<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    }<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>    public void paint(Graphics g, JComponent c) {<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        JToolTip tip = (JToolTip)c;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        Font font = c.getFont();<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g, font);<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        Dimension size = c.getSize();<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        int accelBL;<a name="line.90"></a>
+<span class="sourceLineNo">091</span><a name="line.91"></a>
+<span class="sourceLineNo">092</span>        g.setColor(c.getForeground());<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        // fix for bug 4153892<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        String tipText = tip.getTipText();<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        if (tipText == null) {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>            tipText = "";<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        }<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>        String accelString = getAcceleratorString(tip);<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        FontMetrics accelMetrics = SwingUtilities2.getFontMetrics(c, g, smallFont);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        int accelSpacing = calcAccelSpacing(c, accelMetrics, accelString);<a name="line.101"></a>
+<span class="sourceLineNo">102</span><a name="line.102"></a>
+<span class="sourceLineNo">103</span>        Insets insets = tip.getInsets();<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        Rectangle paintTextR = new Rectangle(<a name="line.104"></a>
+<span class="sourceLineNo">105</span>            insets.left + 3,<a name="line.105"></a>
+<span class="sourceLineNo">106</span>            insets.top,<a name="line.106"></a>
+<span class="sourceLineNo">107</span>            size.width - (insets.left + insets.right) - 6 - accelSpacing,<a name="line.107"></a>
+<span class="sourceLineNo">108</span>            size.height - (insets.top + insets.bottom));<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        View v = (View) c.getClientProperty(BasicHTML.propertyKey);<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        if (v != null) {<a name="line.110"></a>
+<span class="sourceLineNo">111</span>            v.paint(g, paintTextR);<a name="line.111"></a>
+<span class="sourceLineNo">112</span>            accelBL = BasicHTML.getHTMLBaseline(v, paintTextR.width,<a name="line.112"></a>
+<span class="sourceLineNo">113</span>                                                  paintTextR.height);<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        } else {<a name="line.114"></a>
+<span class="sourceLineNo">115</span>            g.setFont(font);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>            SwingUtilities2.drawString(tip, g, tipText, paintTextR.x,<a name="line.116"></a>
+<span class="sourceLineNo">117</span>                                  paintTextR.y + metrics.getAscent());<a name="line.117"></a>
+<span class="sourceLineNo">118</span>            accelBL = metrics.getAscent();<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        }<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>        if (!accelString.equals("")) {<a name="line.121"></a>
+<span class="sourceLineNo">122</span>            g.setFont(smallFont);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>            g.setColor( MetalLookAndFeel.getPrimaryControlDarkShadow() );<a name="line.123"></a>
+<span class="sourceLineNo">124</span>            SwingUtilities2.drawString(tip, g, accelString,<a name="line.124"></a>
+<span class="sourceLineNo">125</span>                                       tip.getWidth() - 1 - insets.right<a name="line.125"></a>
+<span class="sourceLineNo">126</span>                                           - accelSpacing<a name="line.126"></a>
+<span class="sourceLineNo">127</span>                                           + padSpaceBetweenStrings<a name="line.127"></a>
+<span class="sourceLineNo">128</span>                                           - 3,<a name="line.128"></a>
+<span class="sourceLineNo">129</span>                                       paintTextR.y + accelBL);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        }<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>    private int calcAccelSpacing(JComponent c, FontMetrics fm, String accel) {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        return accel.equals("")<a name="line.134"></a>
+<span class="sourceLineNo">135</span>               ? 0<a name="line.135"></a>
+<span class="sourceLineNo">136</span>               : padSpaceBetweenStrings +<a name="line.136"></a>
+<span class="sourceLineNo">137</span>                 SwingUtilities2.stringWidth(c, fm, accel);<a name="line.137"></a>
+<span class="sourceLineNo">138</span>    }<a name="line.138"></a>
+<span class="sourceLineNo">139</span><a name="line.139"></a>
+<span class="sourceLineNo">140</span>    public Dimension getPreferredSize(JComponent c) {<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        Dimension d = super.getPreferredSize(c);<a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span>        String key = getAcceleratorString((JToolTip)c);<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        if (!(key.equals(""))) {<a name="line.144"></a>
+<span class="sourceLineNo">145</span>            d.width += calcAccelSpacing(c, c.getFontMetrics(smallFont), key);<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        }<a name="line.146"></a>
+<span class="sourceLineNo">147</span>        return d;<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    }<a name="line.148"></a>
+<span class="sourceLineNo">149</span><a name="line.149"></a>
+<span class="sourceLineNo">150</span>    protected boolean isAcceleratorHidden() {<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        Boolean b = (Boolean)UIManager.get("ToolTip.hideAccelerator");<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        return b != null &amp;&amp; b.booleanValue();<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    }<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    private String getAcceleratorString(JToolTip tip) {<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        this.tip = tip;<a name="line.156"></a>
+<span class="sourceLineNo">157</span><a name="line.157"></a>
+<span class="sourceLineNo">158</span>        String retValue = getAcceleratorString();<a name="line.158"></a>
+<span class="sourceLineNo">159</span><a name="line.159"></a>
+<span class="sourceLineNo">160</span>        this.tip = null;<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        return retValue;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    }<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>    // NOTE: This requires the tip field to be set before this is invoked.<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    // As MetalToolTipUI is shared between all JToolTips the tip field is<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    // set appropriately before this is invoked. Unfortunately this means<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    // that subclasses that randomly invoke this method will see varying<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    // results. If this becomes an issue, MetalToolTipUI should no longer be<a name="line.168"></a>
+<span class="sourceLineNo">169</span>    // shared.<a name="line.169"></a>
+<span class="sourceLineNo">170</span>    public String getAcceleratorString() {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        if (tip == null || isAcceleratorHidden()) {<a name="line.171"></a>
+<span class="sourceLineNo">172</span>            return "";<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        }<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        JComponent comp = tip.getComponent();<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        if (!(comp instanceof AbstractButton)) {<a name="line.175"></a>
+<span class="sourceLineNo">176</span>            return "";<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        }<a name="line.177"></a>
+<span class="sourceLineNo">178</span><a name="line.178"></a>
+<span class="sourceLineNo">179</span>        KeyStroke[] keys = comp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).keys();<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        if (keys == null) {<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            return "";<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        }<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>        String controlKeyStr = "";<a name="line.184"></a>
+<span class="sourceLineNo">185</span><a name="line.185"></a>
+<span class="sourceLineNo">186</span>        for (int i = 0; i &lt; keys.length; i++) {<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            int mod = keys[i].getModifiers();<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            controlKeyStr = KeyEvent.getKeyModifiersText(mod) +<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                            acceleratorDelimiter +<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                            KeyEvent.getKeyText(keys[i].getKeyCode());<a name="line.190"></a>
+<span class="sourceLineNo">191</span>            break;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        }<a name="line.192"></a>
+<span class="sourceLineNo">193</span><a name="line.193"></a>
+<span class="sourceLineNo">194</span>        return controlKeyStr;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    }<a name="line.195"></a>
+<span class="sourceLineNo">196</span><a name="line.196"></a>
+<span class="sourceLineNo">197</span>}<a name="line.197"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

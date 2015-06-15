@@ -1,0 +1,524 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>package javax.security.cert;<a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.InputStream;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.lang.Class;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.lang.reflect.Constructor;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.lang.reflect.InvocationTargetException;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.security.Security;<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.math.BigInteger;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.security.AccessController;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.security.Principal;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.security.PrivilegedAction;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import java.security.PublicKey;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import java.util.BitSet;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import java.util.Date;<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>/**<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * Abstract class for X.509 v1 certificates. This provides a standard<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * way to access all the version 1 attributes of an X.509 certificate.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * Attributes that are specific to X.509 v2 or v3 are not available<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * through this interface. Future API evolution will provide full access to<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * complete X.509 v3 attributes.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;p&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * The basic X.509 format was defined by<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * ISO/IEC and ANSI X9 and is described below in ASN.1:<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;pre&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * Certificate  ::=  SEQUENCE  {<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *     tbsCertificate       TBSCertificate,<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *     signatureAlgorithm   AlgorithmIdentifier,<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *     signature            BIT STRING  }<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;/pre&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;p&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * These certificates are widely used to support authentication and<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * other functionality in Internet security systems. Common applications<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * include Privacy Enhanced Mail (PEM), Transport Layer Security (SSL),<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * code signing for trusted software distribution, and Secure Electronic<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * Transactions (SET).<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;p&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * These certificates are managed and vouched for by &lt;em&gt;Certificate<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * Authorities&lt;/em&gt; (CAs). CAs are services which create certificates by<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * placing data in the X.509 standard format and then digitally signing<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * that data. CAs act as trusted third parties, making introductions<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * between principals who have no direct knowledge of each other.<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * CA certificates are either signed by themselves, or by some other<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * CA such as a "root" CA.<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;p&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * The ASN.1 definition of &lt;code&gt;tbsCertificate&lt;/code&gt; is:<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;pre&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * TBSCertificate  ::=  SEQUENCE  {<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *     version         [0]  EXPLICIT Version DEFAULT v1,<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *     serialNumber         CertificateSerialNumber,<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *     signature            AlgorithmIdentifier,<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *     issuer               Name,<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *     validity             Validity,<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *     subject              Name,<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *     subjectPublicKeyInfo SubjectPublicKeyInfo,<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *     }<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * &lt;/pre&gt;<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;p&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * Here is sample code to instantiate an X.509 certificate:<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * &lt;pre&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * InputStream inStream = new FileInputStream("fileName-of-cert");<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * X509Certificate cert = X509Certificate.getInstance(inStream);<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * inStream.close();<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;/pre&gt;<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * OR<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;pre&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * byte[] certData = &amp;lt;certificate read from a file, say&amp;gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * X509Certificate cert = X509Certificate.getInstance(certData);<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;/pre&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * &lt;p&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * In either case, the code that instantiates an X.509 certificate<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * consults the Java security properties file to locate the actual<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * implementation or instantiates a default implementation.<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * &lt;p&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * The Java security properties file is located in the file named<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * &amp;lt;JAVA_HOME&amp;gt;/lib/security/java.security.<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * &amp;lt;JAVA_HOME&amp;gt; refers to the value of the java.home system property,<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * and specifies the directory where the JRE is installed.<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * In the Security properties file, a default implementation<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * for X.509 v1 may be given such as:<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * &lt;pre&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * cert.provider.x509v1=com.sun.security.cert.internal.x509.X509V1CertImpl<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * &lt;/pre&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * &lt;p&gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * The value of this &lt;code&gt;cert.provider.x509v1&lt;/code&gt; property has to be<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * changed to instatiate another implementation. If this security<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * property is not set, a default implementation will be used.<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * Currently, due to possible security restrictions on access to<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * Security properties, this value is looked up and cached at class<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * initialization time and will fallback on a default implementation if<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * the Security property is not accessible.<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * &lt;p&gt;&lt;em&gt;Note: The classes in the package &lt;code&gt;javax.security.cert&lt;/code&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * exist for compatibility with earlier versions of the<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * Java Secure Sockets Extension (JSSE). New applications should instead<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * use the standard Java SE certificate classes located in<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * &lt;code&gt;java.security.cert&lt;/code&gt;.&lt;/em&gt;&lt;/p&gt;<a name="line.124"></a>
+<span class="sourceLineNo">125</span> *<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * @author Hemma Prafullchandra<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * @since 1.4<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * @see Certificate<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * @see java.security.cert.X509Extension<a name="line.129"></a>
+<span class="sourceLineNo">130</span> */<a name="line.130"></a>
+<span class="sourceLineNo">131</span>public abstract class X509Certificate extends Certificate {<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>    /*<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * Constant to lookup in the Security properties file.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * In the Security properties file the default implementation<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * for X.509 v3 is given as:<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * &lt;pre&gt;<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * cert.provider.x509v1=com.sun.security.cert.internal.x509.X509V1CertImpl<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * &lt;/pre&gt;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     */<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    private static final String X509_PROVIDER = "cert.provider.x509v1";<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    private static String X509Provider;<a name="line.142"></a>
+<span class="sourceLineNo">143</span><a name="line.143"></a>
+<span class="sourceLineNo">144</span>    static {<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        X509Provider = AccessController.doPrivileged(<a name="line.145"></a>
+<span class="sourceLineNo">146</span>            new PrivilegedAction&lt;String&gt;() {<a name="line.146"></a>
+<span class="sourceLineNo">147</span>                public String run() {<a name="line.147"></a>
+<span class="sourceLineNo">148</span>                    return Security.getProperty(X509_PROVIDER);<a name="line.148"></a>
+<span class="sourceLineNo">149</span>                }<a name="line.149"></a>
+<span class="sourceLineNo">150</span>            }<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        );<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    }<a name="line.152"></a>
+<span class="sourceLineNo">153</span><a name="line.153"></a>
+<span class="sourceLineNo">154</span>    /**<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * Instantiates an X509Certificate object, and initializes it with<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * the data read from the input stream &lt;code&gt;inStream&lt;/code&gt;.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * The implementation (X509Certificate is an abstract class) is<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * provided by the class specified as the value of the<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * &lt;code&gt;cert.provider.x509v1&lt;/code&gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * property in the security properties file.<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * &lt;p&gt;Note: Only one DER-encoded<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * certificate is expected to be in the input stream.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * Also, all X509Certificate<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * subclasses must provide a constructor of the form:<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * &lt;code&gt;&lt;pre&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * public &amp;lt;subClass&amp;gt;(InputStream inStream) ...<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * &lt;/pre&gt;&lt;/code&gt;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * @param inStream an input stream with the data to be read to<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *        initialize the certificate.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * @return an X509Certificate object initialized with the data<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     *         from the input stream.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * @exception CertificateException if a class initialization<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *            or certificate parsing error occurs.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     */<a name="line.176"></a>
+<span class="sourceLineNo">177</span>    public static final X509Certificate getInstance(InputStream inStream)<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    throws CertificateException {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        return getInst((Object)inStream);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    }<a name="line.180"></a>
+<span class="sourceLineNo">181</span><a name="line.181"></a>
+<span class="sourceLineNo">182</span>    /**<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * Instantiates an X509Certificate object, and initializes it with<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * the specified byte array.<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * The implementation (X509Certificate is an abstract class) is<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * provided by the class specified as the value of the<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;code&gt;cert.provider.x509v1&lt;/code&gt;<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * property in the security properties file.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * &lt;p&gt;Note: All X509Certificate<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * subclasses must provide a constructor of the form:<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * &lt;code&gt;&lt;pre&gt;<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * public &amp;lt;subClass&amp;gt;(InputStream inStream) ...<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * &lt;/pre&gt;&lt;/code&gt;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     *<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @param certData a byte array containing the DER-encoded<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *        certificate.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @return an X509Certificate object initialized with the data<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     *         from &lt;code&gt;certData&lt;/code&gt;.<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * @exception CertificateException if a class initialization<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     *            or certificate parsing error occurs.<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     */<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    public static final X509Certificate getInstance(byte[] certData)<a name="line.203"></a>
+<span class="sourceLineNo">204</span>    throws CertificateException {<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        return getInst((Object)certData);<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    }<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>    private static final X509Certificate getInst(Object value)<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    throws CertificateException {<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        /*<a name="line.210"></a>
+<span class="sourceLineNo">211</span>         * This turns out not to work for now. To run under JDK1.2 we would<a name="line.211"></a>
+<span class="sourceLineNo">212</span>         * need to call beginPrivileged() but we can't do that and run<a name="line.212"></a>
+<span class="sourceLineNo">213</span>         * under JDK1.1.<a name="line.213"></a>
+<span class="sourceLineNo">214</span>         */<a name="line.214"></a>
+<span class="sourceLineNo">215</span>        String className = X509Provider;<a name="line.215"></a>
+<span class="sourceLineNo">216</span>        if (className == null || className.length() == 0) {<a name="line.216"></a>
+<span class="sourceLineNo">217</span>            // shouldn't happen, but assume corrupted properties file<a name="line.217"></a>
+<span class="sourceLineNo">218</span>            // provide access to sun implementation<a name="line.218"></a>
+<span class="sourceLineNo">219</span>            className = "com.sun.security.cert.internal.x509.X509V1CertImpl";<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        }<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        try {<a name="line.221"></a>
+<span class="sourceLineNo">222</span>            Class[] params = null;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            if (value instanceof InputStream) {<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                params = new Class[] { InputStream.class };<a name="line.224"></a>
+<span class="sourceLineNo">225</span>            } else if (value instanceof byte[]) {<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                params = new Class[] { value.getClass() };<a name="line.226"></a>
+<span class="sourceLineNo">227</span>            } else<a name="line.227"></a>
+<span class="sourceLineNo">228</span>                throw new CertificateException("Unsupported argument type");<a name="line.228"></a>
+<span class="sourceLineNo">229</span>            Class&lt;?&gt; certClass = Class.forName(className);<a name="line.229"></a>
+<span class="sourceLineNo">230</span><a name="line.230"></a>
+<span class="sourceLineNo">231</span>            // get the appropriate constructor and instantiate it<a name="line.231"></a>
+<span class="sourceLineNo">232</span>            Constructor&lt;?&gt; cons = certClass.getConstructor(params);<a name="line.232"></a>
+<span class="sourceLineNo">233</span><a name="line.233"></a>
+<span class="sourceLineNo">234</span>            // get a new instance<a name="line.234"></a>
+<span class="sourceLineNo">235</span>            Object obj = cons.newInstance(new Object[] {value});<a name="line.235"></a>
+<span class="sourceLineNo">236</span>            return (X509Certificate)obj;<a name="line.236"></a>
+<span class="sourceLineNo">237</span><a name="line.237"></a>
+<span class="sourceLineNo">238</span>        } catch (ClassNotFoundException e) {<a name="line.238"></a>
+<span class="sourceLineNo">239</span>          throw new CertificateException("Could not find class: " + e);<a name="line.239"></a>
+<span class="sourceLineNo">240</span>        } catch (IllegalAccessException e) {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>          throw new CertificateException("Could not access class: " + e);<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        } catch (InstantiationException e) {<a name="line.242"></a>
+<span class="sourceLineNo">243</span>          throw new CertificateException("Problems instantiating: " + e);<a name="line.243"></a>
+<span class="sourceLineNo">244</span>        } catch (InvocationTargetException e) {<a name="line.244"></a>
+<span class="sourceLineNo">245</span>          throw new CertificateException("InvocationTargetException: "<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                                         + e.getTargetException());<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        } catch (NoSuchMethodException e) {<a name="line.247"></a>
+<span class="sourceLineNo">248</span>          throw new CertificateException("Could not find class method: "<a name="line.248"></a>
+<span class="sourceLineNo">249</span>                                          + e.getMessage());<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        }<a name="line.250"></a>
+<span class="sourceLineNo">251</span>    }<a name="line.251"></a>
+<span class="sourceLineNo">252</span><a name="line.252"></a>
+<span class="sourceLineNo">253</span>    /**<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * Checks that the certificate is currently valid. It is if<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * the current date and time are within the validity period given in the<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * certificate.<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * &lt;p&gt;<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * The validity period consists of two date/time values:<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * the first and last dates (and times) on which the certificate<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * is valid. It is defined in<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * ASN.1 as:<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * &lt;pre&gt;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * validity             Validity&lt;p&gt;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * Validity ::= SEQUENCE {<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     *     notBefore      CertificateValidityDate,<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     *     notAfter       CertificateValidityDate }&lt;p&gt;<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * CertificateValidityDate ::= CHOICE {<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     *     utcTime        UTCTime,<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     *     generalTime    GeneralizedTime }<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * &lt;/pre&gt;<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     *<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @exception CertificateExpiredException if the certificate has expired.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * @exception CertificateNotYetValidException if the certificate is not<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     *            yet valid.<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     */<a name="line.275"></a>
+<span class="sourceLineNo">276</span>    public abstract void checkValidity()<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        throws CertificateExpiredException, CertificateNotYetValidException;<a name="line.277"></a>
+<span class="sourceLineNo">278</span><a name="line.278"></a>
+<span class="sourceLineNo">279</span>    /**<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * Checks that the specified date is within the certificate's<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * validity period. In other words, this determines whether the<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * certificate would be valid at the specified date/time.<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     *<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * @param date the Date to check against to see if this certificate<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     *        is valid at that date/time.<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * @exception CertificateExpiredException if the certificate has expired<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     *            with respect to the &lt;code&gt;date&lt;/code&gt; supplied.<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * @exception CertificateNotYetValidException if the certificate is not<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     *            yet valid with respect to the &lt;code&gt;date&lt;/code&gt; supplied.<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * @see #checkValidity()<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     */<a name="line.291"></a>
+<span class="sourceLineNo">292</span>    public abstract void checkValidity(Date date)<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        throws CertificateExpiredException, CertificateNotYetValidException;<a name="line.293"></a>
+<span class="sourceLineNo">294</span><a name="line.294"></a>
+<span class="sourceLineNo">295</span>    /**<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * Gets the &lt;code&gt;version&lt;/code&gt; (version number) value from the<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * certificate. The ASN.1 definition for this is:<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * &lt;pre&gt;<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * version         [0]  EXPLICIT Version DEFAULT v1&lt;p&gt;<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * Version  ::=  INTEGER  {  v1(0), v2(1), v3(2)  }<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * &lt;/pre&gt;<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     *<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * @return the version number from the ASN.1 encoding, i.e. 0, 1 or 2.<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     */<a name="line.304"></a>
+<span class="sourceLineNo">305</span>    public abstract int getVersion();<a name="line.305"></a>
+<span class="sourceLineNo">306</span><a name="line.306"></a>
+<span class="sourceLineNo">307</span>    /**<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * Gets the &lt;code&gt;serialNumber&lt;/code&gt; value from the certificate.<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * The serial number is an integer assigned by the certification<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * authority to each certificate. It must be unique for each<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * certificate issued by a given CA (i.e., the issuer name and<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * serial number identify a unique certificate).<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * The ASN.1 definition for this is:<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * &lt;pre&gt;<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * serialNumber     CertificateSerialNumber&lt;p&gt;<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     *<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * CertificateSerialNumber  ::=  INTEGER<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * &lt;/pre&gt;<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     *<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * @return the serial number.<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     */<a name="line.321"></a>
+<span class="sourceLineNo">322</span>    public abstract BigInteger getSerialNumber();<a name="line.322"></a>
+<span class="sourceLineNo">323</span><a name="line.323"></a>
+<span class="sourceLineNo">324</span>    /**<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * Gets the &lt;code&gt;issuer&lt;/code&gt; (issuer distinguished name) value from<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * the certificate. The issuer name identifies the entity that signed (and<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * issued) the certificate.<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     *<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * &lt;p&gt;The issuer name field contains an<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * X.500 distinguished name (DN).<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * The ASN.1 definition for this is:<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * &lt;pre&gt;<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * issuer    Name&lt;p&gt;<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     *<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * Name ::= CHOICE { RDNSequence }<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * RDNSequence ::= SEQUENCE OF RelativeDistinguishedName<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * RelativeDistinguishedName ::=<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     *     SET OF AttributeValueAssertion<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     *<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * AttributeValueAssertion ::= SEQUENCE {<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     *                               AttributeType,<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     *                               AttributeValue }<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * AttributeType ::= OBJECT IDENTIFIER<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * AttributeValue ::= ANY<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * &lt;/pre&gt;<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * The &lt;code&gt;Name&lt;/code&gt; describes a hierarchical name composed of<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * attributes, such as country name, and corresponding values, such as US.<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * The type of the &lt;code&gt;AttributeValue&lt;/code&gt; component is determined by<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     * the &lt;code&gt;AttributeType&lt;/code&gt;; in general it will be a<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     * &lt;code&gt;directoryString&lt;/code&gt;. A &lt;code&gt;directoryString&lt;/code&gt; is usually<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * one of &lt;code&gt;PrintableString&lt;/code&gt;,<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     * &lt;code&gt;TeletexString&lt;/code&gt; or &lt;code&gt;UniversalString&lt;/code&gt;.<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     *<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * @return a Principal whose name is the issuer distinguished name.<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     */<a name="line.355"></a>
+<span class="sourceLineNo">356</span>    public abstract Principal getIssuerDN();<a name="line.356"></a>
+<span class="sourceLineNo">357</span><a name="line.357"></a>
+<span class="sourceLineNo">358</span>    /**<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * Gets the &lt;code&gt;subject&lt;/code&gt; (subject distinguished name) value<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * from the certificate.<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * The ASN.1 definition for this is:<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * &lt;pre&gt;<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * subject    Name<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * &lt;/pre&gt;<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     *<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * &lt;p&gt;See {@link #getIssuerDN() getIssuerDN} for &lt;code&gt;Name&lt;/code&gt;<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     * and other relevant definitions.<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     *<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * @return a Principal whose name is the subject name.<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * @see #getIssuerDN()<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     */<a name="line.371"></a>
+<span class="sourceLineNo">372</span>    public abstract Principal getSubjectDN();<a name="line.372"></a>
+<span class="sourceLineNo">373</span><a name="line.373"></a>
+<span class="sourceLineNo">374</span>    /**<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * Gets the &lt;code&gt;notBefore&lt;/code&gt; date from the validity period of<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * the certificate.<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * The relevant ASN.1 definitions are:<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     * &lt;pre&gt;<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * validity             Validity&lt;p&gt;<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     *<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * Validity ::= SEQUENCE {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     *     notBefore      CertificateValidityDate,<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     *     notAfter       CertificateValidityDate }&lt;p&gt;<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     * CertificateValidityDate ::= CHOICE {<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     *     utcTime        UTCTime,<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     *     generalTime    GeneralizedTime }<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * &lt;/pre&gt;<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     *<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * @return the start date of the validity period.<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * @see #checkValidity()<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     */<a name="line.391"></a>
+<span class="sourceLineNo">392</span>    public abstract Date getNotBefore();<a name="line.392"></a>
+<span class="sourceLineNo">393</span><a name="line.393"></a>
+<span class="sourceLineNo">394</span>    /**<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * Gets the &lt;code&gt;notAfter&lt;/code&gt; date from the validity period of<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * the certificate. See {@link #getNotBefore() getNotBefore}<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * for relevant ASN.1 definitions.<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     *<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * @return the end date of the validity period.<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * @see #checkValidity()<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     */<a name="line.401"></a>
+<span class="sourceLineNo">402</span>    public abstract Date getNotAfter();<a name="line.402"></a>
+<span class="sourceLineNo">403</span><a name="line.403"></a>
+<span class="sourceLineNo">404</span>    /**<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * Gets the signature algorithm name for the certificate<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * signature algorithm. An example is the string "SHA-1/DSA".<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * The ASN.1 definition for this is:<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * &lt;pre&gt;<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * signatureAlgorithm   AlgorithmIdentifier&lt;p&gt;<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * AlgorithmIdentifier  ::=  SEQUENCE  {<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     *     algorithm               OBJECT IDENTIFIER,<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     *     parameters              ANY DEFINED BY algorithm OPTIONAL  }<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     *                             -- contains a value of the type<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     *                             -- registered for use with the<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     *                             -- algorithm object identifier value<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     * &lt;/pre&gt;<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     *<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * &lt;p&gt;The algorithm name is determined from the &lt;code&gt;algorithm&lt;/code&gt;<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * OID string.<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     *<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * @return the signature algorithm name.<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     */<a name="line.422"></a>
+<span class="sourceLineNo">423</span>    public abstract String getSigAlgName();<a name="line.423"></a>
+<span class="sourceLineNo">424</span><a name="line.424"></a>
+<span class="sourceLineNo">425</span>    /**<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     * Gets the signature algorithm OID string from the certificate.<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * An OID is represented by a set of positive whole numbers separated<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     * by periods.<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * For example, the string "1.2.840.10040.4.3" identifies the SHA-1<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * with DSA signature algorithm, as per the PKIX part I.<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     *<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     * &lt;p&gt;See {@link #getSigAlgName() getSigAlgName} for<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     * relevant ASN.1 definitions.<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     *<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     * @return the signature algorithm OID string.<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     */<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    public abstract String getSigAlgOID();<a name="line.437"></a>
+<span class="sourceLineNo">438</span><a name="line.438"></a>
+<span class="sourceLineNo">439</span>    /**<a name="line.439"></a>
+<span class="sourceLineNo">440</span>     * Gets the DER-encoded signature algorithm parameters from this<a name="line.440"></a>
+<span class="sourceLineNo">441</span>     * certificate's signature algorithm. In most cases, the signature<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     * algorithm parameters are null; the parameters are usually<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * supplied with the certificate's public key.<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     *<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     * &lt;p&gt;See {@link #getSigAlgName() getSigAlgName} for<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     * relevant ASN.1 definitions.<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     *<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * @return the DER-encoded signature algorithm parameters, or<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     *         null if no parameters are present.<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     */<a name="line.450"></a>
+<span class="sourceLineNo">451</span>    public abstract byte[] getSigAlgParams();<a name="line.451"></a>
+<span class="sourceLineNo">452</span>}<a name="line.452"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

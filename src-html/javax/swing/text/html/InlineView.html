@@ -1,0 +1,297 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package javax.swing.text.html;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.awt.*;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.text.BreakIterator;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.swing.event.DocumentEvent;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.swing.text.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * Displays the &lt;dfn&gt;inline element&lt;/dfn&gt; styles<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * based upon css attributes.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * @author  Timothy Prinzing<a name="line.36"></a>
+<span class="sourceLineNo">037</span> */<a name="line.37"></a>
+<span class="sourceLineNo">038</span>public class InlineView extends LabelView {<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>    /**<a name="line.40"></a>
+<span class="sourceLineNo">041</span>     * Constructs a new view wrapped on an element.<a name="line.41"></a>
+<span class="sourceLineNo">042</span>     *<a name="line.42"></a>
+<span class="sourceLineNo">043</span>     * @param elem the element<a name="line.43"></a>
+<span class="sourceLineNo">044</span>     */<a name="line.44"></a>
+<span class="sourceLineNo">045</span>    public InlineView(Element elem) {<a name="line.45"></a>
+<span class="sourceLineNo">046</span>        super(elem);<a name="line.46"></a>
+<span class="sourceLineNo">047</span>        StyleSheet sheet = getStyleSheet();<a name="line.47"></a>
+<span class="sourceLineNo">048</span>        attr = sheet.getViewAttributes(this);<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    }<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span>    /**<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     * Gives notification that something was inserted into<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     * the document in a location that this view is responsible for.<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * If either parameter is &lt;code&gt;null&lt;/code&gt;, behavior of this method is<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * implementation dependent.<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     *<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * @param e the change information from the associated document<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * @param a the current allocation of the view<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * @param f the factory to use to rebuild if the view has children<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * @since 1.5<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * @see View#insertUpdate<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     */<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    public void insertUpdate(DocumentEvent e, Shape a, ViewFactory f) {<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        super.insertUpdate(e, a, f);<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    }<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>    /**<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * Gives notification that something was removed from the document<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * in a location that this view is responsible for.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * If either parameter is &lt;code&gt;null&lt;/code&gt;, behavior of this method is<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * implementation dependent.<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     *<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * @param e the change information from the associated document<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * @param a the current allocation of the view<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * @param f the factory to use to rebuild if the view has children<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * @since 1.5<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * @see View#removeUpdate<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     */<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    public void removeUpdate(DocumentEvent e, Shape a, ViewFactory f) {<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        super.removeUpdate(e, a, f);<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    }<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    /**<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * Gives notification from the document that attributes were changed<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * in a location that this view is responsible for.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     *<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @param e the change information from the associated document<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * @param a the current allocation of the view<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @param f the factory to use to rebuild if the view has children<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @see View#changedUpdate<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     */<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    public void changedUpdate(DocumentEvent e, Shape a, ViewFactory f) {<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        super.changedUpdate(e, a, f);<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        StyleSheet sheet = getStyleSheet();<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        attr = sheet.getViewAttributes(this);<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        preferenceChanged(null, true, true);<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    }<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * Fetches the attributes to use when rendering.  This is<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * implemented to multiplex the attributes specified in the<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * model with a StyleSheet.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    public AttributeSet getAttributes() {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        return attr;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    }<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    /**<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * Determines how attractive a break opportunity in<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * this view is.  This can be used for determining which<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * view is the most attractive to call &lt;code&gt;breakView&lt;/code&gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * on in the process of formatting.  A view that represents<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * text that has whitespace in it might be more attractive<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * than a view that has no whitespace, for example.  The<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * higher the weight, the more attractive the break.  A<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * value equal to or lower than &lt;code&gt;BadBreakWeight&lt;/code&gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * should not be considered for a break.  A value greater<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * than or equal to &lt;code&gt;ForcedBreakWeight&lt;/code&gt; should<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * be broken.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * &lt;p&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * This is implemented to provide the default behavior<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * of returning &lt;code&gt;BadBreakWeight&lt;/code&gt; unless the length<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * is greater than the length of the view in which case the<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * entire view represents the fragment.  Unless a view has<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * been written to support breaking behavior, it is not<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * attractive to try and break the view.  An example of<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * a view that does support breaking is &lt;code&gt;LabelView&lt;/code&gt;.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * An example of a view that uses break weight is<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * &lt;code&gt;ParagraphView&lt;/code&gt;.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @param axis may be either View.X_AXIS or View.Y_AXIS<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @param pos the potential location of the start of the<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *   broken view &gt;= 0.  This may be useful for calculating tab<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *   positions.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * @param len specifies the relative length from &lt;em&gt;pos&lt;/em&gt;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     *   where a potential break is desired &gt;= 0.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * @return the weight, which should be a value between<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     *   ForcedBreakWeight and BadBreakWeight.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @see LabelView<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * @see ParagraphView<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @see javax.swing.text.View#BadBreakWeight<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * @see javax.swing.text.View#GoodBreakWeight<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @see javax.swing.text.View#ExcellentBreakWeight<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @see javax.swing.text.View#ForcedBreakWeight<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     */<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    public int getBreakWeight(int axis, float pos, float len) {<a name="line.146"></a>
+<span class="sourceLineNo">147</span>        if (nowrap) {<a name="line.147"></a>
+<span class="sourceLineNo">148</span>            return BadBreakWeight;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        }<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        return super.getBreakWeight(axis, pos, len);<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    }<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    /**<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * Tries to break this view on the given axis. Refer to<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * {@link javax.swing.text.View#breakView} for a complete<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * description of this method.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * &lt;p&gt;Behavior of this method is unspecified in case &lt;code&gt;axis&lt;/code&gt;<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * is neither &lt;code&gt;View.X_AXIS&lt;/code&gt; nor &lt;code&gt;View.Y_AXIS&lt;/code&gt;, and<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * in case &lt;code&gt;offset&lt;/code&gt;, &lt;code&gt;pos&lt;/code&gt;, or &lt;code&gt;len&lt;/code&gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * is null.<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @param axis may be either &lt;code&gt;View.X_AXIS&lt;/code&gt; or<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     *          &lt;code&gt;View.Y_AXIS&lt;/code&gt;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @param offset the location in the document model<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     *   that a broken fragment would occupy &gt;= 0.  This<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     *   would be the starting offset of the fragment<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *   returned<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * @param pos the position along the axis that the<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *  broken view would occupy &gt;= 0.  This may be useful for<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *  things like tab calculations<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * @param len specifies the distance along the axis<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     *  where a potential break is desired &gt;= 0<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * @return the fragment of the view that represents the<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *  given span.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @since 1.5<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @see javax.swing.text.View#breakView<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     */<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    public View breakView(int axis, int offset, float pos, float len) {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        return super.breakView(axis, offset, pos, len);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    }<a name="line.180"></a>
+<span class="sourceLineNo">181</span><a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Set the cached properties from the attributes.<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     */<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    protected void setPropertiesFromAttributes() {<a name="line.186"></a>
+<span class="sourceLineNo">187</span>        super.setPropertiesFromAttributes();<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        AttributeSet a = getAttributes();<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        Object decor = a.getAttribute(CSS.Attribute.TEXT_DECORATION);<a name="line.189"></a>
+<span class="sourceLineNo">190</span>        boolean u = (decor != null) ?<a name="line.190"></a>
+<span class="sourceLineNo">191</span>          (decor.toString().indexOf("underline") &gt;= 0) : false;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        setUnderline(u);<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        boolean s = (decor != null) ?<a name="line.193"></a>
+<span class="sourceLineNo">194</span>          (decor.toString().indexOf("line-through") &gt;= 0) : false;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        setStrikeThrough(s);<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        Object vAlign = a.getAttribute(CSS.Attribute.VERTICAL_ALIGN);<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        s = (vAlign != null) ? (vAlign.toString().indexOf("sup") &gt;= 0) : false;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        setSuperscript(s);<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        s = (vAlign != null) ? (vAlign.toString().indexOf("sub") &gt;= 0) : false;<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        setSubscript(s);<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>        Object whitespace = a.getAttribute(CSS.Attribute.WHITE_SPACE);<a name="line.202"></a>
+<span class="sourceLineNo">203</span>        if ((whitespace != null) &amp;&amp; whitespace.equals("nowrap")) {<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            nowrap = true;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        } else {<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            nowrap = false;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        }<a name="line.207"></a>
+<span class="sourceLineNo">208</span><a name="line.208"></a>
+<span class="sourceLineNo">209</span>        HTMLDocument doc = (HTMLDocument)getDocument();<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        // fetches background color from stylesheet if specified<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        Color bg = doc.getBackground(a);<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        if (bg != null) {<a name="line.212"></a>
+<span class="sourceLineNo">213</span>            setBackground(bg);<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        }<a name="line.214"></a>
+<span class="sourceLineNo">215</span>    }<a name="line.215"></a>
+<span class="sourceLineNo">216</span><a name="line.216"></a>
+<span class="sourceLineNo">217</span><a name="line.217"></a>
+<span class="sourceLineNo">218</span>    protected StyleSheet getStyleSheet() {<a name="line.218"></a>
+<span class="sourceLineNo">219</span>        HTMLDocument doc = (HTMLDocument) getDocument();<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        return doc.getStyleSheet();<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    }<a name="line.221"></a>
+<span class="sourceLineNo">222</span><a name="line.222"></a>
+<span class="sourceLineNo">223</span>    private boolean nowrap;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    private AttributeSet attr;<a name="line.224"></a>
+<span class="sourceLineNo">225</span>}<a name="line.225"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

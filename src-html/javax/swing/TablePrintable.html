@@ -1,0 +1,593 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.swing;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.swing.table.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.print.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.geom.*;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.text.MessageFormat;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * An implementation of &lt;code&gt;Printable&lt;/code&gt; for printing<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;code&gt;JTable&lt;/code&gt;s.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * This implementation spreads table rows naturally in sequence<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * across multiple pages, fitting as many rows as possible per page.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * The distribution of columns, on the other hand, is controlled by a<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * printing mode parameter passed to the constructor. When<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;code&gt;JTable.PrintMode.NORMAL&lt;/code&gt; is used, the implementation<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * handles columns in a similar manner to how it handles rows, spreading them<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * across multiple pages (in an order consistent with the table's<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;code&gt;ComponentOrientation&lt;/code&gt;).<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * When &lt;code&gt;JTable.PrintMode.FIT_WIDTH&lt;/code&gt; is given, the implementation<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * scales the output smaller if necessary, to ensure that all columns fit on<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * the page. (Note that width and height are scaled equally, ensuring that the<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * aspect ratio remains the same).<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;p&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * The portion of table printed on each page is headed by the<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * appropriate section of the table's &lt;code&gt;JTableHeader&lt;/code&gt;.<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;p&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * Header and footer text can be added to the output by providing<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;code&gt;MessageFormat&lt;/code&gt; instances to the constructor. The<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * printing code requests Strings from the formats by calling<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * their &lt;code&gt;format&lt;/code&gt; method with a single parameter:<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * an &lt;code&gt;Object&lt;/code&gt; array containing a single element of type<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * &lt;code&gt;Integer&lt;/code&gt;, representing the current page number.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;p&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * There are certain circumstances where this &lt;code&gt;Printable&lt;/code&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * cannot fit items appropriately, resulting in clipped output.<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * These are:<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;ul&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *   &lt;li&gt;In any mode, when the header or footer text is too wide to<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *       fit completely in the printable area. The implementation<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *       prints as much of the text as possible starting from the beginning,<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *       as determined by the table's &lt;code&gt;ComponentOrientation&lt;/code&gt;.<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *   &lt;li&gt;In any mode, when a row is too tall to fit in the<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *       printable area. The upper most portion of the row<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *       is printed and no lower border is shown.<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *   &lt;li&gt;In &lt;code&gt;JTable.PrintMode.NORMAL&lt;/code&gt; when a column<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *       is too wide to fit in the printable area. The center of the<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *       column is printed and no left and right borders are shown.<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;/ul&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * &lt;p&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * It is entirely valid for a developer to wrap this &lt;code&gt;Printable&lt;/code&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * inside another in order to create complex reports and documents. They may<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * even request that different pages be rendered into different sized<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * printable areas. The implementation was designed to handle this by<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * performing most of its calculations on the fly. However, providing different<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * sizes works best when &lt;code&gt;JTable.PrintMode.FIT_WIDTH&lt;/code&gt; is used, or<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * when only the printable width is changed between pages. This is because when<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * it is printing a set of rows in &lt;code&gt;JTable.PrintMode.NORMAL&lt;/code&gt; and the<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * implementation determines a need to distribute columns across pages,<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * it assumes that all of those rows will fit on each subsequent page needed<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * to fit the columns.<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * &lt;p&gt;<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * It is the responsibility of the developer to ensure that the table is not<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * modified in any way after this &lt;code&gt;Printable&lt;/code&gt; is created (invalid<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * modifications include changes in: size, renderers, or underlying data).<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * The behavior of this &lt;code&gt;Printable&lt;/code&gt; is undefined if the table is<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * changed at any time after creation.<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * @author  Shannon Hickey<a name="line.95"></a>
+<span class="sourceLineNo">096</span> */<a name="line.96"></a>
+<span class="sourceLineNo">097</span>class TablePrintable implements Printable {<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /** The table to print. */<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    private JTable table;<a name="line.100"></a>
+<span class="sourceLineNo">101</span><a name="line.101"></a>
+<span class="sourceLineNo">102</span>    /** For quick reference to the table's header. */<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    private JTableHeader header;<a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span>    /** For quick reference to the table's column model. */<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    private TableColumnModel colModel;<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    /** To save multiple calculations of total column width. */<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    private int totalColWidth;<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>    /** The printing mode of this printable. */<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    private JTable.PrintMode printMode;<a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>    /** Provides the header text for the table. */<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    private MessageFormat headerFormat;<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>    /** Provides the footer text for the table. */<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    private MessageFormat footerFormat;<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    /** The most recent page index asked to print. */<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    private int last = -1;<a name="line.121"></a>
+<span class="sourceLineNo">122</span><a name="line.122"></a>
+<span class="sourceLineNo">123</span>    /** The next row to print. */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    private int row = 0;<a name="line.124"></a>
+<span class="sourceLineNo">125</span><a name="line.125"></a>
+<span class="sourceLineNo">126</span>    /** The next column to print. */<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    private int col = 0;<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>    /** Used to store an area of the table to be printed. */<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    private final Rectangle clip = new Rectangle(0, 0, 0, 0);<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /** Used to store an area of the table's header to be printed. */<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    private final Rectangle hclip = new Rectangle(0, 0, 0, 0);<a name="line.133"></a>
+<span class="sourceLineNo">134</span><a name="line.134"></a>
+<span class="sourceLineNo">135</span>    /** Saves the creation of multiple rectangles. */<a name="line.135"></a>
+<span class="sourceLineNo">136</span>    private final Rectangle tempRect = new Rectangle(0, 0, 0, 0);<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>    /** Vertical space to leave between table and header/footer text. */<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    private static final int H_F_SPACE = 8;<a name="line.139"></a>
+<span class="sourceLineNo">140</span><a name="line.140"></a>
+<span class="sourceLineNo">141</span>    /** Font size for the header text. */<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    private static final float HEADER_FONT_SIZE = 18.0f;<a name="line.142"></a>
+<span class="sourceLineNo">143</span><a name="line.143"></a>
+<span class="sourceLineNo">144</span>    /** Font size for the footer text. */<a name="line.144"></a>
+<span class="sourceLineNo">145</span>    private static final float FOOTER_FONT_SIZE = 12.0f;<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>    /** The font to use in rendering header text. */<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    private Font headerFont;<a name="line.148"></a>
+<span class="sourceLineNo">149</span><a name="line.149"></a>
+<span class="sourceLineNo">150</span>    /** The font to use in rendering footer text. */<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    private Font footerFont;<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    /**<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * Create a new &lt;code&gt;TablePrintable&lt;/code&gt; for the given<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * &lt;code&gt;JTable&lt;/code&gt;. Header and footer text can be specified using the<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * two &lt;code&gt;MessageFormat&lt;/code&gt; parameters. When called upon to provide<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * a String, each format is given the current page number.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * @param  table         the table to print<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @param  printMode     the printing mode for this printable<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @param  headerFormat  a &lt;code&gt;MessageFormat&lt;/code&gt; specifying the text to<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *                       be used in printing a header, or null for none<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @param  footerFormat  a &lt;code&gt;MessageFormat&lt;/code&gt; specifying the text to<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     *                       be used in printing a footer, or null for none<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * @throws IllegalArgumentException if passed an invalid print mode<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     */<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    public TablePrintable(JTable table,<a name="line.167"></a>
+<span class="sourceLineNo">168</span>                          JTable.PrintMode printMode,<a name="line.168"></a>
+<span class="sourceLineNo">169</span>                          MessageFormat headerFormat,<a name="line.169"></a>
+<span class="sourceLineNo">170</span>                          MessageFormat footerFormat) {<a name="line.170"></a>
+<span class="sourceLineNo">171</span><a name="line.171"></a>
+<span class="sourceLineNo">172</span>        this.table = table;<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>        header = table.getTableHeader();<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        colModel = table.getColumnModel();<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        totalColWidth = colModel.getTotalColumnWidth();<a name="line.176"></a>
+<span class="sourceLineNo">177</span><a name="line.177"></a>
+<span class="sourceLineNo">178</span>        if (header != null) {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            // the header clip height can be set once since it's unchanging<a name="line.179"></a>
+<span class="sourceLineNo">180</span>            hclip.height = header.getHeight();<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        }<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>        this.printMode = printMode;<a name="line.183"></a>
+<span class="sourceLineNo">184</span><a name="line.184"></a>
+<span class="sourceLineNo">185</span>        this.headerFormat = headerFormat;<a name="line.185"></a>
+<span class="sourceLineNo">186</span>        this.footerFormat = footerFormat;<a name="line.186"></a>
+<span class="sourceLineNo">187</span><a name="line.187"></a>
+<span class="sourceLineNo">188</span>        // derive the header and footer font from the table's font<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        headerFont = table.getFont().deriveFont(Font.BOLD,<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                                                HEADER_FONT_SIZE);<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        footerFont = table.getFont().deriveFont(Font.PLAIN,<a name="line.191"></a>
+<span class="sourceLineNo">192</span>                                                FOOTER_FONT_SIZE);<a name="line.192"></a>
+<span class="sourceLineNo">193</span>    }<a name="line.193"></a>
+<span class="sourceLineNo">194</span><a name="line.194"></a>
+<span class="sourceLineNo">195</span>    /**<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * Prints the specified page of the table into the given {@link Graphics}<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * context, in the specified format.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     *<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * @param   graphics    the context into which the page is drawn<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * @param   pageFormat  the size and orientation of the page being drawn<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * @param   pageIndex   the zero based index of the page to be drawn<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * @return  PAGE_EXISTS if the page is rendered successfully, or<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     *          NO_SUCH_PAGE if a non-existent page index is specified<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * @throws  PrinterException if an error causes printing to be aborted<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     */<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    public int print(Graphics graphics, PageFormat pageFormat, int pageIndex)<a name="line.206"></a>
+<span class="sourceLineNo">207</span>                                                       throws PrinterException {<a name="line.207"></a>
+<span class="sourceLineNo">208</span><a name="line.208"></a>
+<span class="sourceLineNo">209</span>        // for easy access to these values<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        final int imgWidth = (int)pageFormat.getImageableWidth();<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        final int imgHeight = (int)pageFormat.getImageableHeight();<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>        if (imgWidth &lt;= 0) {<a name="line.213"></a>
+<span class="sourceLineNo">214</span>            throw new PrinterException("Width of printable area is too small.");<a name="line.214"></a>
+<span class="sourceLineNo">215</span>        }<a name="line.215"></a>
+<span class="sourceLineNo">216</span><a name="line.216"></a>
+<span class="sourceLineNo">217</span>        // to pass the page number when formatting the header and footer text<a name="line.217"></a>
+<span class="sourceLineNo">218</span>        Object[] pageNumber = new Object[]{Integer.valueOf(pageIndex + 1)};<a name="line.218"></a>
+<span class="sourceLineNo">219</span><a name="line.219"></a>
+<span class="sourceLineNo">220</span>        // fetch the formatted header text, if any<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        String headerText = null;<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        if (headerFormat != null) {<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            headerText = headerFormat.format(pageNumber);<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        }<a name="line.224"></a>
+<span class="sourceLineNo">225</span><a name="line.225"></a>
+<span class="sourceLineNo">226</span>        // fetch the formatted footer text, if any<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        String footerText = null;<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        if (footerFormat != null) {<a name="line.228"></a>
+<span class="sourceLineNo">229</span>            footerText = footerFormat.format(pageNumber);<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        }<a name="line.230"></a>
+<span class="sourceLineNo">231</span><a name="line.231"></a>
+<span class="sourceLineNo">232</span>        // to store the bounds of the header and footer text<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        Rectangle2D hRect = null;<a name="line.233"></a>
+<span class="sourceLineNo">234</span>        Rectangle2D fRect = null;<a name="line.234"></a>
+<span class="sourceLineNo">235</span><a name="line.235"></a>
+<span class="sourceLineNo">236</span>        // the amount of vertical space needed for the header and footer text<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        int headerTextSpace = 0;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        int footerTextSpace = 0;<a name="line.238"></a>
+<span class="sourceLineNo">239</span><a name="line.239"></a>
+<span class="sourceLineNo">240</span>        // the amount of vertical space available for printing the table<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        int availableSpace = imgHeight;<a name="line.241"></a>
+<span class="sourceLineNo">242</span><a name="line.242"></a>
+<span class="sourceLineNo">243</span>        // if there's header text, find out how much space is needed for it<a name="line.243"></a>
+<span class="sourceLineNo">244</span>        // and subtract that from the available space<a name="line.244"></a>
+<span class="sourceLineNo">245</span>        if (headerText != null) {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            graphics.setFont(headerFont);<a name="line.246"></a>
+<span class="sourceLineNo">247</span>            hRect = graphics.getFontMetrics().getStringBounds(headerText,<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                                                              graphics);<a name="line.248"></a>
+<span class="sourceLineNo">249</span><a name="line.249"></a>
+<span class="sourceLineNo">250</span>            headerTextSpace = (int)Math.ceil(hRect.getHeight());<a name="line.250"></a>
+<span class="sourceLineNo">251</span>            availableSpace -= headerTextSpace + H_F_SPACE;<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        }<a name="line.252"></a>
+<span class="sourceLineNo">253</span><a name="line.253"></a>
+<span class="sourceLineNo">254</span>        // if there's footer text, find out how much space is needed for it<a name="line.254"></a>
+<span class="sourceLineNo">255</span>        // and subtract that from the available space<a name="line.255"></a>
+<span class="sourceLineNo">256</span>        if (footerText != null) {<a name="line.256"></a>
+<span class="sourceLineNo">257</span>            graphics.setFont(footerFont);<a name="line.257"></a>
+<span class="sourceLineNo">258</span>            fRect = graphics.getFontMetrics().getStringBounds(footerText,<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                                                              graphics);<a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>            footerTextSpace = (int)Math.ceil(fRect.getHeight());<a name="line.261"></a>
+<span class="sourceLineNo">262</span>            availableSpace -= footerTextSpace + H_F_SPACE;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>        }<a name="line.263"></a>
+<span class="sourceLineNo">264</span><a name="line.264"></a>
+<span class="sourceLineNo">265</span>        if (availableSpace &lt;= 0) {<a name="line.265"></a>
+<span class="sourceLineNo">266</span>            throw new PrinterException("Height of printable area is too small.");<a name="line.266"></a>
+<span class="sourceLineNo">267</span>        }<a name="line.267"></a>
+<span class="sourceLineNo">268</span><a name="line.268"></a>
+<span class="sourceLineNo">269</span>        // depending on the print mode, we may need a scale factor to<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        // fit the table's entire width on the page<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        double sf = 1.0D;<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        if (printMode == JTable.PrintMode.FIT_WIDTH &amp;&amp;<a name="line.272"></a>
+<span class="sourceLineNo">273</span>                totalColWidth &gt; imgWidth) {<a name="line.273"></a>
+<span class="sourceLineNo">274</span><a name="line.274"></a>
+<span class="sourceLineNo">275</span>            // if not, we would have thrown an acception previously<a name="line.275"></a>
+<span class="sourceLineNo">276</span>            assert imgWidth &gt; 0;<a name="line.276"></a>
+<span class="sourceLineNo">277</span><a name="line.277"></a>
+<span class="sourceLineNo">278</span>            // it must be, according to the if-condition, since imgWidth &gt; 0<a name="line.278"></a>
+<span class="sourceLineNo">279</span>            assert totalColWidth &gt; 1;<a name="line.279"></a>
+<span class="sourceLineNo">280</span><a name="line.280"></a>
+<span class="sourceLineNo">281</span>            sf = (double)imgWidth / (double)totalColWidth;<a name="line.281"></a>
+<span class="sourceLineNo">282</span>        }<a name="line.282"></a>
+<span class="sourceLineNo">283</span><a name="line.283"></a>
+<span class="sourceLineNo">284</span>        // dictated by the previous two assertions<a name="line.284"></a>
+<span class="sourceLineNo">285</span>        assert sf &gt; 0;<a name="line.285"></a>
+<span class="sourceLineNo">286</span><a name="line.286"></a>
+<span class="sourceLineNo">287</span>        // This is in a loop for two reasons:<a name="line.287"></a>
+<span class="sourceLineNo">288</span>        // First, it allows us to catch up in case we're called starting<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        // with a non-zero pageIndex. Second, we know that we can be called<a name="line.289"></a>
+<span class="sourceLineNo">290</span>        // for the same page multiple times. The condition of this while<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        // loop acts as a check, ensuring that we don't attempt to do the<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        // calculations again when we are called subsequent times for the<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        // same page.<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        while (last &lt; pageIndex) {<a name="line.294"></a>
+<span class="sourceLineNo">295</span>            // if we are finished all columns in all rows<a name="line.295"></a>
+<span class="sourceLineNo">296</span>            if (row &gt;= table.getRowCount() &amp;&amp; col == 0) {<a name="line.296"></a>
+<span class="sourceLineNo">297</span>                return NO_SUCH_PAGE;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>            }<a name="line.298"></a>
+<span class="sourceLineNo">299</span><a name="line.299"></a>
+<span class="sourceLineNo">300</span>            // rather than multiplying every row and column by the scale factor<a name="line.300"></a>
+<span class="sourceLineNo">301</span>            // in findNextClip, just pass a width and height that have already<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            // been divided by it<a name="line.302"></a>
+<span class="sourceLineNo">303</span>            int scaledWidth = (int)(imgWidth / sf);<a name="line.303"></a>
+<span class="sourceLineNo">304</span>            int scaledHeight = (int)((availableSpace - hclip.height) / sf);<a name="line.304"></a>
+<span class="sourceLineNo">305</span><a name="line.305"></a>
+<span class="sourceLineNo">306</span>            // calculate the area of the table to be printed for this page<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            findNextClip(scaledWidth, scaledHeight);<a name="line.307"></a>
+<span class="sourceLineNo">308</span><a name="line.308"></a>
+<span class="sourceLineNo">309</span>            last++;<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        }<a name="line.310"></a>
+<span class="sourceLineNo">311</span><a name="line.311"></a>
+<span class="sourceLineNo">312</span>        // create a copy of the graphics so we don't affect the one given to us<a name="line.312"></a>
+<span class="sourceLineNo">313</span>        Graphics2D g2d = (Graphics2D)graphics.create();<a name="line.313"></a>
+<span class="sourceLineNo">314</span><a name="line.314"></a>
+<span class="sourceLineNo">315</span>        // translate into the co-ordinate system of the pageFormat<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());<a name="line.316"></a>
+<span class="sourceLineNo">317</span><a name="line.317"></a>
+<span class="sourceLineNo">318</span>        // to save and store the transform<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        AffineTransform oldTrans;<a name="line.319"></a>
+<span class="sourceLineNo">320</span><a name="line.320"></a>
+<span class="sourceLineNo">321</span>        // if there's footer text, print it at the bottom of the imageable area<a name="line.321"></a>
+<span class="sourceLineNo">322</span>        if (footerText != null) {<a name="line.322"></a>
+<span class="sourceLineNo">323</span>            oldTrans = g2d.getTransform();<a name="line.323"></a>
+<span class="sourceLineNo">324</span><a name="line.324"></a>
+<span class="sourceLineNo">325</span>            g2d.translate(0, imgHeight - footerTextSpace);<a name="line.325"></a>
+<span class="sourceLineNo">326</span><a name="line.326"></a>
+<span class="sourceLineNo">327</span>            printText(g2d, footerText, fRect, footerFont, imgWidth);<a name="line.327"></a>
+<span class="sourceLineNo">328</span><a name="line.328"></a>
+<span class="sourceLineNo">329</span>            g2d.setTransform(oldTrans);<a name="line.329"></a>
+<span class="sourceLineNo">330</span>        }<a name="line.330"></a>
+<span class="sourceLineNo">331</span><a name="line.331"></a>
+<span class="sourceLineNo">332</span>        // if there's header text, print it at the top of the imageable area<a name="line.332"></a>
+<span class="sourceLineNo">333</span>        // and then translate downwards<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        if (headerText != null) {<a name="line.334"></a>
+<span class="sourceLineNo">335</span>            printText(g2d, headerText, hRect, headerFont, imgWidth);<a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span>            g2d.translate(0, headerTextSpace + H_F_SPACE);<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        }<a name="line.338"></a>
+<span class="sourceLineNo">339</span><a name="line.339"></a>
+<span class="sourceLineNo">340</span>        // constrain the table output to the available space<a name="line.340"></a>
+<span class="sourceLineNo">341</span>        tempRect.x = 0;<a name="line.341"></a>
+<span class="sourceLineNo">342</span>        tempRect.y = 0;<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        tempRect.width = imgWidth;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        tempRect.height = availableSpace;<a name="line.344"></a>
+<span class="sourceLineNo">345</span>        g2d.clip(tempRect);<a name="line.345"></a>
+<span class="sourceLineNo">346</span><a name="line.346"></a>
+<span class="sourceLineNo">347</span>        // if we have a scale factor, scale the graphics object to fit<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        // the entire width<a name="line.348"></a>
+<span class="sourceLineNo">349</span>        if (sf != 1.0D) {<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            g2d.scale(sf, sf);<a name="line.350"></a>
+<span class="sourceLineNo">351</span><a name="line.351"></a>
+<span class="sourceLineNo">352</span>        // otherwise, ensure that the current portion of the table is<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        // centered horizontally<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        } else {<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            int diff = (imgWidth - clip.width) / 2;<a name="line.355"></a>
+<span class="sourceLineNo">356</span>            g2d.translate(diff, 0);<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        }<a name="line.357"></a>
+<span class="sourceLineNo">358</span><a name="line.358"></a>
+<span class="sourceLineNo">359</span>        // store the old transform and clip for later restoration<a name="line.359"></a>
+<span class="sourceLineNo">360</span>        oldTrans = g2d.getTransform();<a name="line.360"></a>
+<span class="sourceLineNo">361</span>        Shape oldClip = g2d.getClip();<a name="line.361"></a>
+<span class="sourceLineNo">362</span><a name="line.362"></a>
+<span class="sourceLineNo">363</span>        // if there's a table header, print the current section and<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        // then translate downwards<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        if (header != null) {<a name="line.365"></a>
+<span class="sourceLineNo">366</span>            hclip.x = clip.x;<a name="line.366"></a>
+<span class="sourceLineNo">367</span>            hclip.width = clip.width;<a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>            g2d.translate(-hclip.x, 0);<a name="line.369"></a>
+<span class="sourceLineNo">370</span>            g2d.clip(hclip);<a name="line.370"></a>
+<span class="sourceLineNo">371</span>            header.print(g2d);<a name="line.371"></a>
+<span class="sourceLineNo">372</span><a name="line.372"></a>
+<span class="sourceLineNo">373</span>            // restore the original transform and clip<a name="line.373"></a>
+<span class="sourceLineNo">374</span>            g2d.setTransform(oldTrans);<a name="line.374"></a>
+<span class="sourceLineNo">375</span>            g2d.setClip(oldClip);<a name="line.375"></a>
+<span class="sourceLineNo">376</span><a name="line.376"></a>
+<span class="sourceLineNo">377</span>            // translate downwards<a name="line.377"></a>
+<span class="sourceLineNo">378</span>            g2d.translate(0, hclip.height);<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        }<a name="line.379"></a>
+<span class="sourceLineNo">380</span><a name="line.380"></a>
+<span class="sourceLineNo">381</span>        // print the current section of the table<a name="line.381"></a>
+<span class="sourceLineNo">382</span>        g2d.translate(-clip.x, -clip.y);<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        g2d.clip(clip);<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        table.print(g2d);<a name="line.384"></a>
+<span class="sourceLineNo">385</span><a name="line.385"></a>
+<span class="sourceLineNo">386</span>        // restore the original transform and clip<a name="line.386"></a>
+<span class="sourceLineNo">387</span>        g2d.setTransform(oldTrans);<a name="line.387"></a>
+<span class="sourceLineNo">388</span>        g2d.setClip(oldClip);<a name="line.388"></a>
+<span class="sourceLineNo">389</span><a name="line.389"></a>
+<span class="sourceLineNo">390</span>        // draw a box around the table<a name="line.390"></a>
+<span class="sourceLineNo">391</span>        g2d.setColor(Color.BLACK);<a name="line.391"></a>
+<span class="sourceLineNo">392</span>        g2d.drawRect(0, 0, clip.width, hclip.height + clip.height);<a name="line.392"></a>
+<span class="sourceLineNo">393</span><a name="line.393"></a>
+<span class="sourceLineNo">394</span>        // dispose the graphics copy<a name="line.394"></a>
+<span class="sourceLineNo">395</span>        g2d.dispose();<a name="line.395"></a>
+<span class="sourceLineNo">396</span><a name="line.396"></a>
+<span class="sourceLineNo">397</span>        return PAGE_EXISTS;<a name="line.397"></a>
+<span class="sourceLineNo">398</span>    }<a name="line.398"></a>
+<span class="sourceLineNo">399</span><a name="line.399"></a>
+<span class="sourceLineNo">400</span>    /**<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     * A helper method that encapsulates common code for rendering the<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * header and footer text.<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     *<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * @param  g2d       the graphics to draw into<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * @param  text      the text to draw, non null<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * @param  rect      the bounding rectangle for this text,<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     *                   as calculated at the given font, non null<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * @param  font      the font to draw the text in, non null<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * @param  imgWidth  the width of the area to draw into<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     */<a name="line.410"></a>
+<span class="sourceLineNo">411</span>    private void printText(Graphics2D g2d,<a name="line.411"></a>
+<span class="sourceLineNo">412</span>                           String text,<a name="line.412"></a>
+<span class="sourceLineNo">413</span>                           Rectangle2D rect,<a name="line.413"></a>
+<span class="sourceLineNo">414</span>                           Font font,<a name="line.414"></a>
+<span class="sourceLineNo">415</span>                           int imgWidth) {<a name="line.415"></a>
+<span class="sourceLineNo">416</span><a name="line.416"></a>
+<span class="sourceLineNo">417</span>            int tx;<a name="line.417"></a>
+<span class="sourceLineNo">418</span><a name="line.418"></a>
+<span class="sourceLineNo">419</span>            // if the text is small enough to fit, center it<a name="line.419"></a>
+<span class="sourceLineNo">420</span>            if (rect.getWidth() &lt; imgWidth) {<a name="line.420"></a>
+<span class="sourceLineNo">421</span>                tx = (int)((imgWidth - rect.getWidth()) / 2);<a name="line.421"></a>
+<span class="sourceLineNo">422</span><a name="line.422"></a>
+<span class="sourceLineNo">423</span>            // otherwise, if the table is LTR, ensure the left side of<a name="line.423"></a>
+<span class="sourceLineNo">424</span>            // the text shows; the right can be clipped<a name="line.424"></a>
+<span class="sourceLineNo">425</span>            } else if (table.getComponentOrientation().isLeftToRight()) {<a name="line.425"></a>
+<span class="sourceLineNo">426</span>                tx = 0;<a name="line.426"></a>
+<span class="sourceLineNo">427</span><a name="line.427"></a>
+<span class="sourceLineNo">428</span>            // otherwise, ensure the right side of the text shows<a name="line.428"></a>
+<span class="sourceLineNo">429</span>            } else {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                tx = -(int)(Math.ceil(rect.getWidth()) - imgWidth);<a name="line.430"></a>
+<span class="sourceLineNo">431</span>            }<a name="line.431"></a>
+<span class="sourceLineNo">432</span><a name="line.432"></a>
+<span class="sourceLineNo">433</span>            int ty = (int)Math.ceil(Math.abs(rect.getY()));<a name="line.433"></a>
+<span class="sourceLineNo">434</span>            g2d.setColor(Color.BLACK);<a name="line.434"></a>
+<span class="sourceLineNo">435</span>            g2d.setFont(font);<a name="line.435"></a>
+<span class="sourceLineNo">436</span>            g2d.drawString(text, tx, ty);<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    }<a name="line.437"></a>
+<span class="sourceLineNo">438</span><a name="line.438"></a>
+<span class="sourceLineNo">439</span>    /**<a name="line.439"></a>
+<span class="sourceLineNo">440</span>     * Calculate the area of the table to be printed for<a name="line.440"></a>
+<span class="sourceLineNo">441</span>     * the next page. This should only be called if there<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     * are rows and columns left to print.<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     *<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     * To avoid an infinite loop in printing, this will<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     * always put at least one cell on each page.<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     *<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     * @param  pw  the width of the area to print in<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * @param  ph  the height of the area to print in<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     */<a name="line.449"></a>
+<span class="sourceLineNo">450</span>    private void findNextClip(int pw, int ph) {<a name="line.450"></a>
+<span class="sourceLineNo">451</span>        final boolean ltr = table.getComponentOrientation().isLeftToRight();<a name="line.451"></a>
+<span class="sourceLineNo">452</span><a name="line.452"></a>
+<span class="sourceLineNo">453</span>        // if we're ready to start a new set of rows<a name="line.453"></a>
+<span class="sourceLineNo">454</span>        if (col == 0) {<a name="line.454"></a>
+<span class="sourceLineNo">455</span>            if (ltr) {<a name="line.455"></a>
+<span class="sourceLineNo">456</span>                // adjust clip to the left of the first column<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                clip.x = 0;<a name="line.457"></a>
+<span class="sourceLineNo">458</span>            } else {<a name="line.458"></a>
+<span class="sourceLineNo">459</span>                // adjust clip to the right of the first column<a name="line.459"></a>
+<span class="sourceLineNo">460</span>                clip.x = totalColWidth;<a name="line.460"></a>
+<span class="sourceLineNo">461</span>            }<a name="line.461"></a>
+<span class="sourceLineNo">462</span><a name="line.462"></a>
+<span class="sourceLineNo">463</span>            // adjust clip to the top of the next set of rows<a name="line.463"></a>
+<span class="sourceLineNo">464</span>            clip.y += clip.height;<a name="line.464"></a>
+<span class="sourceLineNo">465</span><a name="line.465"></a>
+<span class="sourceLineNo">466</span>            // adjust clip width and height to be zero<a name="line.466"></a>
+<span class="sourceLineNo">467</span>            clip.width = 0;<a name="line.467"></a>
+<span class="sourceLineNo">468</span>            clip.height = 0;<a name="line.468"></a>
+<span class="sourceLineNo">469</span><a name="line.469"></a>
+<span class="sourceLineNo">470</span>            // fit as many rows as possible, and at least one<a name="line.470"></a>
+<span class="sourceLineNo">471</span>            int rowCount = table.getRowCount();<a name="line.471"></a>
+<span class="sourceLineNo">472</span>            int rowHeight = table.getRowHeight(row);<a name="line.472"></a>
+<span class="sourceLineNo">473</span>            do {<a name="line.473"></a>
+<span class="sourceLineNo">474</span>                clip.height += rowHeight;<a name="line.474"></a>
+<span class="sourceLineNo">475</span><a name="line.475"></a>
+<span class="sourceLineNo">476</span>                if (++row &gt;= rowCount) {<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                    break;<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                }<a name="line.478"></a>
+<span class="sourceLineNo">479</span><a name="line.479"></a>
+<span class="sourceLineNo">480</span>                rowHeight = table.getRowHeight(row);<a name="line.480"></a>
+<span class="sourceLineNo">481</span>            } while (clip.height + rowHeight &lt;= ph);<a name="line.481"></a>
+<span class="sourceLineNo">482</span>        }<a name="line.482"></a>
+<span class="sourceLineNo">483</span><a name="line.483"></a>
+<span class="sourceLineNo">484</span>        // we can short-circuit for JTable.PrintMode.FIT_WIDTH since<a name="line.484"></a>
+<span class="sourceLineNo">485</span>        // we'll always fit all columns on the page<a name="line.485"></a>
+<span class="sourceLineNo">486</span>        if (printMode == JTable.PrintMode.FIT_WIDTH) {<a name="line.486"></a>
+<span class="sourceLineNo">487</span>            clip.x = 0;<a name="line.487"></a>
+<span class="sourceLineNo">488</span>            clip.width = totalColWidth;<a name="line.488"></a>
+<span class="sourceLineNo">489</span>            return;<a name="line.489"></a>
+<span class="sourceLineNo">490</span>        }<a name="line.490"></a>
+<span class="sourceLineNo">491</span><a name="line.491"></a>
+<span class="sourceLineNo">492</span>        if (ltr) {<a name="line.492"></a>
+<span class="sourceLineNo">493</span>            // adjust clip to the left of the next set of columns<a name="line.493"></a>
+<span class="sourceLineNo">494</span>            clip.x += clip.width;<a name="line.494"></a>
+<span class="sourceLineNo">495</span>        }<a name="line.495"></a>
+<span class="sourceLineNo">496</span><a name="line.496"></a>
+<span class="sourceLineNo">497</span>        // adjust clip width to be zero<a name="line.497"></a>
+<span class="sourceLineNo">498</span>        clip.width = 0;<a name="line.498"></a>
+<span class="sourceLineNo">499</span><a name="line.499"></a>
+<span class="sourceLineNo">500</span>        // fit as many columns as possible, and at least one<a name="line.500"></a>
+<span class="sourceLineNo">501</span>        int colCount = table.getColumnCount();<a name="line.501"></a>
+<span class="sourceLineNo">502</span>        int colWidth = colModel.getColumn(col).getWidth();<a name="line.502"></a>
+<span class="sourceLineNo">503</span>        do {<a name="line.503"></a>
+<span class="sourceLineNo">504</span>            clip.width += colWidth;<a name="line.504"></a>
+<span class="sourceLineNo">505</span>            if (!ltr) {<a name="line.505"></a>
+<span class="sourceLineNo">506</span>                clip.x -= colWidth;<a name="line.506"></a>
+<span class="sourceLineNo">507</span>            }<a name="line.507"></a>
+<span class="sourceLineNo">508</span><a name="line.508"></a>
+<span class="sourceLineNo">509</span>            if (++col &gt;= colCount) {<a name="line.509"></a>
+<span class="sourceLineNo">510</span>                // reset col to 0 to indicate we're finished all columns<a name="line.510"></a>
+<span class="sourceLineNo">511</span>                col = 0;<a name="line.511"></a>
+<span class="sourceLineNo">512</span><a name="line.512"></a>
+<span class="sourceLineNo">513</span>                break;<a name="line.513"></a>
+<span class="sourceLineNo">514</span>            }<a name="line.514"></a>
+<span class="sourceLineNo">515</span><a name="line.515"></a>
+<span class="sourceLineNo">516</span>            colWidth = colModel.getColumn(col).getWidth();<a name="line.516"></a>
+<span class="sourceLineNo">517</span>        } while (clip.width + colWidth &lt;= pw);<a name="line.517"></a>
+<span class="sourceLineNo">518</span><a name="line.518"></a>
+<span class="sourceLineNo">519</span>    }<a name="line.519"></a>
+<span class="sourceLineNo">520</span><a name="line.520"></a>
+<span class="sourceLineNo">521</span>}<a name="line.521"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

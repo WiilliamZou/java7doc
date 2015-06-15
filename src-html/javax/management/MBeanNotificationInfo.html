@@ -1,0 +1,288 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.management;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.IOException;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.InvalidObjectException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.ObjectInputStream;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Arrays;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.Objects;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;p&gt;The &lt;CODE&gt;MBeanNotificationInfo&lt;/CODE&gt; class is used to describe the<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * characteristics of the different notification instances<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * emitted by an MBean, for a given Java class of notification.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * If an MBean emits notifications that can be instances of different Java classes,<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * then the metadata for that MBean should provide an &lt;CODE&gt;MBeanNotificationInfo&lt;/CODE&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * object for each of these notification Java classes.&lt;/p&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;Instances of this class are immutable.  Subclasses may be<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * mutable but this is not recommended.&lt;/p&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;p&gt;This class extends &lt;CODE&gt;javax.management.MBeanFeatureInfo&lt;/CODE&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * and thus provides &lt;CODE&gt;name&lt;/CODE&gt; and &lt;CODE&gt;description&lt;/CODE&gt; fields.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * The &lt;CODE&gt;name&lt;/CODE&gt; field should be the fully qualified Java class name of<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * the notification objects described by this class.&lt;/p&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;p&gt;The &lt;CODE&gt;getNotifTypes&lt;/CODE&gt; method returns an array of<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * strings containing the notification types that the MBean may<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * emit. The notification type is a dot-notation string which<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * describes what the emitted notification is about, not the Java<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * class of the notification.  A single generic notification class can<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * be used to send notifications of several types.  All of these types<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * are returned in the string array result of the<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;CODE&gt;getNotifTypes&lt;/CODE&gt; method.<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * @since 1.5<a name="line.59"></a>
+<span class="sourceLineNo">060</span> */<a name="line.60"></a>
+<span class="sourceLineNo">061</span>public class MBeanNotificationInfo extends MBeanFeatureInfo implements Cloneable {<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    /* Serial version */<a name="line.63"></a>
+<span class="sourceLineNo">064</span>    static final long serialVersionUID = -3888371564530107064L;<a name="line.64"></a>
+<span class="sourceLineNo">065</span><a name="line.65"></a>
+<span class="sourceLineNo">066</span>    private static final String[] NO_TYPES = new String[0];<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>    static final MBeanNotificationInfo[] NO_NOTIFICATIONS =<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        new MBeanNotificationInfo[0];<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    /**<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * @serial The different types of the notification.<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     */<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    private String[] types;<a name="line.74"></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a>
+<span class="sourceLineNo">076</span>    /** @see MBeanInfo#arrayGettersSafe */<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    private final transient boolean arrayGettersSafe;<a name="line.77"></a>
+<span class="sourceLineNo">078</span><a name="line.78"></a>
+<span class="sourceLineNo">079</span>    /**<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * Constructs an &lt;CODE&gt;MBeanNotificationInfo&lt;/CODE&gt; object.<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     *<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * @param notifTypes The array of strings (in dot notation)<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * containing the notification types that the MBean may emit.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * This may be null with the same effect as a zero-length array.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * @param name The fully qualified Java class name of the<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * described notifications.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @param description A human readable description of the data.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     */<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    public MBeanNotificationInfo(String[] notifTypes,<a name="line.89"></a>
+<span class="sourceLineNo">090</span>                                 String name,<a name="line.90"></a>
+<span class="sourceLineNo">091</span>                                 String description) {<a name="line.91"></a>
+<span class="sourceLineNo">092</span>        this(notifTypes, name, description, null);<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    }<a name="line.93"></a>
+<span class="sourceLineNo">094</span><a name="line.94"></a>
+<span class="sourceLineNo">095</span>    /**<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * Constructs an &lt;CODE&gt;MBeanNotificationInfo&lt;/CODE&gt; object.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     *<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * @param notifTypes The array of strings (in dot notation)<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * containing the notification types that the MBean may emit.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * This may be null with the same effect as a zero-length array.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * @param name The fully qualified Java class name of the<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * described notifications.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * @param description A human readable description of the data.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @param descriptor The descriptor for the notifications.  This may be null<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * which is equivalent to an empty descriptor.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     *<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * @since 1.6<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     */<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    public MBeanNotificationInfo(String[] notifTypes,<a name="line.109"></a>
+<span class="sourceLineNo">110</span>                                 String name,<a name="line.110"></a>
+<span class="sourceLineNo">111</span>                                 String description,<a name="line.111"></a>
+<span class="sourceLineNo">112</span>                                 Descriptor descriptor) {<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        super(name, description, descriptor);<a name="line.113"></a>
+<span class="sourceLineNo">114</span><a name="line.114"></a>
+<span class="sourceLineNo">115</span>        /* We do not validate the notifTypes, since the spec just says<a name="line.115"></a>
+<span class="sourceLineNo">116</span>           they are dot-separated, not that they must look like Java<a name="line.116"></a>
+<span class="sourceLineNo">117</span>           classes.  E.g. the spec doesn't forbid "sun.prob.25" as a<a name="line.117"></a>
+<span class="sourceLineNo">118</span>           notifType, though it doesn't explicitly allow it<a name="line.118"></a>
+<span class="sourceLineNo">119</span>           either.  */<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>        this.types = (notifTypes != null &amp;&amp; notifTypes.length &gt; 0) ?<a name="line.121"></a>
+<span class="sourceLineNo">122</span>                        notifTypes.clone() : NO_TYPES;<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        this.arrayGettersSafe =<a name="line.123"></a>
+<span class="sourceLineNo">124</span>            MBeanInfo.arrayGettersSafe(this.getClass(),<a name="line.124"></a>
+<span class="sourceLineNo">125</span>                                       MBeanNotificationInfo.class);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    }<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>    /**<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * Returns a shallow clone of this instance.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * The clone is obtained by simply calling &lt;tt&gt;super.clone()&lt;/tt&gt;,<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * thus calling the default native shallow cloning mechanism<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * implemented by &lt;tt&gt;Object.clone()&lt;/tt&gt;.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * No deeper cloning of any internal field is made.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     */<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     public Object clone () {<a name="line.136"></a>
+<span class="sourceLineNo">137</span>         try {<a name="line.137"></a>
+<span class="sourceLineNo">138</span>             return super.clone() ;<a name="line.138"></a>
+<span class="sourceLineNo">139</span>         } catch (CloneNotSupportedException e) {<a name="line.139"></a>
+<span class="sourceLineNo">140</span>             // should not happen as this class is cloneable<a name="line.140"></a>
+<span class="sourceLineNo">141</span>             return null;<a name="line.141"></a>
+<span class="sourceLineNo">142</span>         }<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     }<a name="line.143"></a>
+<span class="sourceLineNo">144</span><a name="line.144"></a>
+<span class="sourceLineNo">145</span><a name="line.145"></a>
+<span class="sourceLineNo">146</span>    /**<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * Returns the array of strings (in dot notation) containing the<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * notification types that the MBean may emit.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * @return the array of strings.  Changing the returned array has no<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * effect on this MBeanNotificationInfo.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    public String[] getNotifTypes() {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        if (types.length == 0)<a name="line.154"></a>
+<span class="sourceLineNo">155</span>            return NO_TYPES;<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        else<a name="line.156"></a>
+<span class="sourceLineNo">157</span>            return types.clone();<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    }<a name="line.158"></a>
+<span class="sourceLineNo">159</span><a name="line.159"></a>
+<span class="sourceLineNo">160</span>    private String[] fastGetNotifTypes() {<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        if (arrayGettersSafe)<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            return types;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        else<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            return getNotifTypes();<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    }<a name="line.165"></a>
+<span class="sourceLineNo">166</span><a name="line.166"></a>
+<span class="sourceLineNo">167</span>    public String toString() {<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        return<a name="line.168"></a>
+<span class="sourceLineNo">169</span>            getClass().getName() + "[" +<a name="line.169"></a>
+<span class="sourceLineNo">170</span>            "description=" + getDescription() + ", " +<a name="line.170"></a>
+<span class="sourceLineNo">171</span>            "name=" + getName() + ", " +<a name="line.171"></a>
+<span class="sourceLineNo">172</span>            "notifTypes=" + Arrays.asList(fastGetNotifTypes()) + ", " +<a name="line.172"></a>
+<span class="sourceLineNo">173</span>            "descriptor=" + getDescriptor() +<a name="line.173"></a>
+<span class="sourceLineNo">174</span>            "]";<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    }<a name="line.175"></a>
+<span class="sourceLineNo">176</span><a name="line.176"></a>
+<span class="sourceLineNo">177</span>    /**<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * Compare this MBeanNotificationInfo to another.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @param o the object to compare to.<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     *<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * @return true if and only if &lt;code&gt;o&lt;/code&gt; is an MBeanNotificationInfo<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * such that its {@link #getName()}, {@link #getDescription()},<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * {@link #getDescriptor()},<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * and {@link #getNotifTypes()} values are equal (not necessarily<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * identical) to those of this MBeanNotificationInfo.  Two<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * notification type arrays are equal if their corresponding<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * elements are equal.  They are not equal if they have the same<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * elements but in a different order.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    public boolean equals(Object o) {<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        if (o == this)<a name="line.192"></a>
+<span class="sourceLineNo">193</span>            return true;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        if (!(o instanceof MBeanNotificationInfo))<a name="line.194"></a>
+<span class="sourceLineNo">195</span>            return false;<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        MBeanNotificationInfo p = (MBeanNotificationInfo) o;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        return (Objects.equals(p.getName(), getName()) &amp;&amp;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>                Objects.equals(p.getDescription(), getDescription()) &amp;&amp;<a name="line.198"></a>
+<span class="sourceLineNo">199</span>                Objects.equals(p.getDescriptor(), getDescriptor()) &amp;&amp;<a name="line.199"></a>
+<span class="sourceLineNo">200</span>                Arrays.equals(p.fastGetNotifTypes(), fastGetNotifTypes()));<a name="line.200"></a>
+<span class="sourceLineNo">201</span>    }<a name="line.201"></a>
+<span class="sourceLineNo">202</span><a name="line.202"></a>
+<span class="sourceLineNo">203</span>    public int hashCode() {<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        int hash = getName().hashCode();<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        for (int i = 0; i &lt; types.length; i++)<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            hash ^= types[i].hashCode();<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        return hash;<a name="line.207"></a>
+<span class="sourceLineNo">208</span>    }<a name="line.208"></a>
+<span class="sourceLineNo">209</span><a name="line.209"></a>
+<span class="sourceLineNo">210</span>    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        ObjectInputStream.GetField gf = ois.readFields();<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        String[] t = (String[])gf.get("types", null);<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>        types = (t != null &amp;&amp; t.length != 0) ? t.clone() : NO_TYPES;<a name="line.214"></a>
+<span class="sourceLineNo">215</span>    }<a name="line.215"></a>
+<span class="sourceLineNo">216</span>}<a name="line.216"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

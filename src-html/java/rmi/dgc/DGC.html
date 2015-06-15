@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1996, 1999, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package java.rmi.dgc;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.rmi.*;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.rmi.server.ObjID;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * The DGC abstraction is used for the server side of the distributed<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * garbage collection algorithm. This interface contains the two<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * methods: dirty and clean. A dirty call is made when a remote<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * reference is unmarshaled in a client (the client is indicated by<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * its VMID). A corresponding clean call is made when no more<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * references to the remote reference exist in the client. A failed<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * dirty call must schedule a strong clean call so that the call's<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * sequence number can be retained in order to detect future calls<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * received out of order by the distributed garbage collector.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * A reference to a remote object is leased for a period of time by<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * the client holding the reference. The lease period starts when the<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * dirty call is received. It is the client's responsibility to renew<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * the leases, by making additional dirty calls, on the remote<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * references it holds before such leases expire. If the client does<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * not renew the lease before it expires, the distributed garbage<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * collector assumes that the remote object is no longer referenced by<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * that client.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * @author Ann Wollrath<a name="line.50"></a>
+<span class="sourceLineNo">051</span> */<a name="line.51"></a>
+<span class="sourceLineNo">052</span>public interface DGC extends Remote {<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>    /**<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * The dirty call requests leases for the remote object references<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * associated with the object identifiers contained in the array<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * 'ids'. The 'lease' contains a client's unique VM identifier (VMID)<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * and a requested lease period. For each remote object exported<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * in the local VM, the garbage collector maintains a reference<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * list-a list of clients that hold references to it. If the lease<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * is granted, the garbage collector adds the client's VMID to the<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * reference list for each remote object indicated in 'ids'. The<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * 'sequenceNum' parameter is a sequence number that is used to<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * detect and discard late calls to the garbage collector. The<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * sequence number should always increase for each subsequent call<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * to the garbage collector.<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     *<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * Some clients are unable to generate a VMID, since a VMID is a<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * universally unique identifier that contains a host address<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * which some clients are unable to obtain due to security<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * restrictions. In this case, a client can use a VMID of null,<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * and the distributed garbage collector will assign a VMID for<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * the client.<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     *<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * The dirty call returns a Lease object that contains the VMID<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * used and the lease period granted for the remote references (a<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * server may decide to grant a smaller lease period than the<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * client requests). A client must use the VMID the garbage<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * collector uses in order to make corresponding clean calls when<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * the client drops remote object references.<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     *<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * A client VM need only make one initial dirty call for each<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * remote reference referenced in the VM (even if it has multiple<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * references to the same remote object). The client must also<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * make a dirty call to renew leases on remote references before<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * such leases expire. When the client no longer has any<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * references to a specific remote object, it must schedule a<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * clean call for the object ID associated with the reference.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     *<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @param ids IDs of objects to mark as referenced by calling client<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @param sequenceNum sequence number<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @param lease requested lease<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @return granted lease<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @throws RemoteException if dirty call fails<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     */<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    Lease dirty(ObjID[] ids, long sequenceNum, Lease lease)<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        throws RemoteException;<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * The clean call removes the 'vmid' from the reference list of<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * each remote object indicated in 'id's.  The sequence number is<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * used to detect late clean calls.  If the argument 'strong' is<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * true, then the clean call is a result of a failed dirty call,<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * thus the sequence number for the client 'vmid' needs to be<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * remembered.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     *<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * @param ids IDs of objects to mark as unreferenced by calling client<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * @param sequenceNum sequence number<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * @param vmid client VMID<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * @param strong make 'strong' clean call<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * @throws RemoteException if clean call fails<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     */<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    void clean(ObjID[] ids, long sequenceNum, VMID vmid, boolean strong)<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        throws RemoteException;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>}<a name="line.115"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

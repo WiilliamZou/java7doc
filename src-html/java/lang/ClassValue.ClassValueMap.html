@@ -1,0 +1,832 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.lang.ClassValue.ClassValueMap;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.WeakHashMap;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.lang.ref.WeakReference;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.concurrent.atomic.AtomicInteger;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>import static java.lang.ClassValue.ClassValueMap.probeHomeLocation;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import static java.lang.ClassValue.ClassValueMap.probeBackupLocations;<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>/**<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * Lazily associate a computed value with (potentially) every type.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * For example, if a dynamic language needs to construct a message dispatch<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * table for each class encountered at a message send call site,<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * it can use a {@code ClassValue} to cache information needed to<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * perform the message send quickly, for each class encountered.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * @author John Rose, JSR 292 EG<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * @since 1.7<a name="line.43"></a>
+<span class="sourceLineNo">044</span> */<a name="line.44"></a>
+<span class="sourceLineNo">045</span>public abstract class ClassValue&lt;T&gt; {<a name="line.45"></a>
+<span class="sourceLineNo">046</span>    /**<a name="line.46"></a>
+<span class="sourceLineNo">047</span>     * Sole constructor.  (For invocation by subclass constructors, typically<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * implicit.)<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     */<a name="line.49"></a>
+<span class="sourceLineNo">050</span>    protected ClassValue() {<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    }<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /**<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * Computes the given class's derived value for this {@code ClassValue}.<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * &lt;p&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * This method will be invoked within the first thread that accesses<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * the value with the {@link #get get} method.<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * &lt;p&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * Normally, this method is invoked at most once per class,<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * but it may be invoked again if there has been a call to<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * {@link #remove remove}.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * &lt;p&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * If this method throws an exception, the corresponding call to {@code get}<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * will terminate abnormally with that exception, and no class value will be recorded.<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     *<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * @param type the type whose class value must be computed<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * @return the newly computed value associated with this {@code ClassValue}, for the given class or interface<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * @see #get<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @see #remove<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    protected abstract T computeValue(Class&lt;?&gt; type);<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * Returns the value for the given class.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * If no value has yet been computed, it is obtained by<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * an invocation of the {@link #computeValue computeValue} method.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * &lt;p&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * The actual installation of the value on the class<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * is performed atomically.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * At that point, if several racing threads have<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * computed values, one is chosen, and returned to<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * all the racing threads.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * &lt;p&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * The {@code type} parameter is typically a class, but it may be any type,<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * such as an interface, a primitive type (like {@code int.class}), or {@code void.class}.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * &lt;p&gt;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * In the absence of {@code remove} calls, a class value has a simple<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * state diagram:  uninitialized and initialized.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * When {@code remove} calls are made,<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * the rules for value observation are more complex.<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * See the documentation for {@link #remove remove} for more information.<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @param type the type whose class value must be computed or retrieved<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @return the current value associated with this {@code ClassValue}, for the given class or interface<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * @throws NullPointerException if the argument is null<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @see #remove<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @see #computeValue<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     */<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    public T get(Class&lt;?&gt; type) {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        // non-racing this.hashCodeForCache : final int<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        Entry&lt;?&gt;[] cache;<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        Entry&lt;T&gt; e = probeHomeLocation(cache = getCacheCarefully(type), this);<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        // racing e : current value &lt;=&gt; stale value from current cache or from stale cache<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        // invariant:  e is null or an Entry with readable Entry.version and Entry.value<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        if (match(e))<a name="line.105"></a>
+<span class="sourceLineNo">106</span>            // invariant:  No false positive matches.  False negatives are OK if rare.<a name="line.106"></a>
+<span class="sourceLineNo">107</span>            // The key fact that makes this work: if this.version == e.version,<a name="line.107"></a>
+<span class="sourceLineNo">108</span>            // then this thread has a right to observe (final) e.value.<a name="line.108"></a>
+<span class="sourceLineNo">109</span>            return e.value();<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        // The fast path can fail for any of these reasons:<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        // 1. no entry has been computed yet<a name="line.111"></a>
+<span class="sourceLineNo">112</span>        // 2. hash code collision (before or after reduction mod cache.length)<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        // 3. an entry has been removed (either on this type or another)<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        // 4. the GC has somehow managed to delete e.version and clear the reference<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        return getFromBackup(cache, type);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    }<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>    /**<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * Removes the associated value for the given class.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * If this value is subsequently {@linkplain #get read} for the same class,<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * its value will be reinitialized by invoking its {@link #computeValue computeValue} method.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * This may result in an additional invocation of the<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * {@code computeValue} method for the given class.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * &lt;p&gt;<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * In order to explain the interaction between {@code get} and {@code remove} calls,<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * we must model the state transitions of a class value to take into account<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * the alternation between uninitialized and initialized states.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * To do this, number these states sequentially from zero, and note that<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * uninitialized (or removed) states are numbered with even numbers,<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * while initialized (or re-initialized) states have odd numbers.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * &lt;p&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * When a thread {@code T} removes a class value in state {@code 2N},<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * nothing happens, since the class value is already uninitialized.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * Otherwise, the state is advanced atomically to {@code 2N+1}.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * &lt;p&gt;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * When a thread {@code T} queries a class value in state {@code 2N},<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * the thread first attempts to initialize the class value to state {@code 2N+1}<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * by invoking {@code computeValue} and installing the resulting value.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * &lt;p&gt;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * When {@code T} attempts to install the newly computed value,<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * if the state is still at {@code 2N}, the class value will be initialized<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * with the computed value, advancing it to state {@code 2N+1}.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * &lt;p&gt;<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * Otherwise, whether the new state is even or odd,<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * {@code T} will discard the newly computed value<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * and retry the {@code get} operation.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * &lt;p&gt;<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * Discarding and retrying is an important proviso,<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * since otherwise {@code T} could potentially install<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * a disastrously stale value.  For example:<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * &lt;ul&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * &lt;li&gt;{@code T} calls {@code CV.get(C)} and sees state {@code 2N}<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * &lt;li&gt;{@code T} quickly computes a time-dependent value {@code V0} and gets ready to install it<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * &lt;li&gt;{@code T} is hit by an unlucky paging or scheduling event, and goes to sleep for a long time<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * &lt;li&gt;...meanwhile, {@code T2} also calls {@code CV.get(C)} and sees state {@code 2N}<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * &lt;li&gt;{@code T2} quickly computes a similar time-dependent value {@code V1} and installs it on {@code CV.get(C)}<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * &lt;li&gt;{@code T2} (or a third thread) then calls {@code CV.remove(C)}, undoing {@code T2}'s work<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * &lt;li&gt; the previous actions of {@code T2} are repeated several times<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * &lt;li&gt; also, the relevant computed values change over time: {@code V1}, {@code V2}, ...<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * &lt;li&gt;...meanwhile, {@code T} wakes up and attempts to install {@code V0}; &lt;em&gt;this must fail&lt;/em&gt;<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * &lt;/ul&gt;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * We can assume in the above scenario that {@code CV.computeValue} uses locks to properly<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * observe the time-dependent states as it computes {@code V1}, etc.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * This does not remove the threat of a stale value, since there is a window of time<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * between the return of {@code computeValue} in {@code T} and the installation<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * of the the new value.  No user synchronization is possible during this time.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * @param type the type whose class value must be removed<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * @throws NullPointerException if the argument is null<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     */<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    public void remove(Class&lt;?&gt; type) {<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        ClassValueMap map = getMap(type);<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        map.removeEntry(this);<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    }<a name="line.174"></a>
+<span class="sourceLineNo">175</span><a name="line.175"></a>
+<span class="sourceLineNo">176</span>    // Possible functionality for JSR 292 MR 1<a name="line.176"></a>
+<span class="sourceLineNo">177</span>    /*public*/ void put(Class&lt;?&gt; type, T value) {<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        ClassValueMap map = getMap(type);<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        map.changeEntry(this, value);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    }<a name="line.180"></a>
+<span class="sourceLineNo">181</span><a name="line.181"></a>
+<span class="sourceLineNo">182</span>    /// --------<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /// Implementation...<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    /// --------<a name="line.184"></a>
+<span class="sourceLineNo">185</span><a name="line.185"></a>
+<span class="sourceLineNo">186</span>    /** Return the cache, if it exists, else a dummy empty cache. */<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    private static Entry&lt;?&gt;[] getCacheCarefully(Class&lt;?&gt; type) {<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        // racing type.classValueMap{.cacheArray} : null =&gt; new Entry[X] &lt;=&gt; new Entry[Y]<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        ClassValueMap map = type.classValueMap;<a name="line.189"></a>
+<span class="sourceLineNo">190</span>        if (map == null)  return EMPTY_CACHE;<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        Entry&lt;?&gt;[] cache = map.getCache();<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        return cache;<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        // invariant:  returned value is safe to dereference and check for an Entry<a name="line.193"></a>
+<span class="sourceLineNo">194</span>    }<a name="line.194"></a>
+<span class="sourceLineNo">195</span><a name="line.195"></a>
+<span class="sourceLineNo">196</span>    /** Initial, one-element, empty cache used by all Class instances.  Must never be filled. */<a name="line.196"></a>
+<span class="sourceLineNo">197</span>    private static final Entry&lt;?&gt;[] EMPTY_CACHE = { null };<a name="line.197"></a>
+<span class="sourceLineNo">198</span><a name="line.198"></a>
+<span class="sourceLineNo">199</span>    /**<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * Slow tail of ClassValue.get to retry at nearby locations in the cache,<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * or take a slow lock and check the hash table.<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * Called only if the first probe was empty or a collision.<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * This is a separate method, so compilers can process it independently.<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     */<a name="line.204"></a>
+<span class="sourceLineNo">205</span>    private T getFromBackup(Entry&lt;?&gt;[] cache, Class&lt;?&gt; type) {<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        Entry&lt;T&gt; e = probeBackupLocations(cache, this);<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        if (e != null)<a name="line.207"></a>
+<span class="sourceLineNo">208</span>            return e.value();<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        return getFromHashMap(type);<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    }<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>    // Hack to suppress warnings on the (T) cast, which is a no-op.<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    @SuppressWarnings("unchecked")<a name="line.213"></a>
+<span class="sourceLineNo">214</span>    Entry&lt;T&gt; castEntry(Entry&lt;?&gt; e) { return (Entry&lt;T&gt;) e; }<a name="line.214"></a>
+<span class="sourceLineNo">215</span><a name="line.215"></a>
+<span class="sourceLineNo">216</span>    /** Called when the fast path of get fails, and cache reprobe also fails.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     */<a name="line.217"></a>
+<span class="sourceLineNo">218</span>    private T getFromHashMap(Class&lt;?&gt; type) {<a name="line.218"></a>
+<span class="sourceLineNo">219</span>        // The fail-safe recovery is to fall back to the underlying classValueMap.<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        ClassValueMap map = getMap(type);<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        for (;;) {<a name="line.221"></a>
+<span class="sourceLineNo">222</span>            Entry&lt;T&gt; e = map.startEntry(this);<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            if (!e.isPromise())<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                return e.value();<a name="line.224"></a>
+<span class="sourceLineNo">225</span>            try {<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                // Try to make a real entry for the promised version.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>                e = makeEntry(e.version(), computeValue(type));<a name="line.227"></a>
+<span class="sourceLineNo">228</span>            } finally {<a name="line.228"></a>
+<span class="sourceLineNo">229</span>                // Whether computeValue throws or returns normally,<a name="line.229"></a>
+<span class="sourceLineNo">230</span>                // be sure to remove the empty entry.<a name="line.230"></a>
+<span class="sourceLineNo">231</span>                e = map.finishEntry(this, e);<a name="line.231"></a>
+<span class="sourceLineNo">232</span>            }<a name="line.232"></a>
+<span class="sourceLineNo">233</span>            if (e != null)<a name="line.233"></a>
+<span class="sourceLineNo">234</span>                return e.value();<a name="line.234"></a>
+<span class="sourceLineNo">235</span>            // else try again, in case a racing thread called remove (so e == null)<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        }<a name="line.236"></a>
+<span class="sourceLineNo">237</span>    }<a name="line.237"></a>
+<span class="sourceLineNo">238</span><a name="line.238"></a>
+<span class="sourceLineNo">239</span>    /** Check that e is non-null, matches this ClassValue, and is live. */<a name="line.239"></a>
+<span class="sourceLineNo">240</span>    boolean match(Entry&lt;?&gt; e) {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        // racing e.version : null (blank) =&gt; unique Version token =&gt; null (GC-ed version)<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        // non-racing this.version : v1 =&gt; v2 =&gt; ... (updates are read faithfully from volatile)<a name="line.242"></a>
+<span class="sourceLineNo">243</span>        return (e != null &amp;&amp; e.get() == this.version);<a name="line.243"></a>
+<span class="sourceLineNo">244</span>        // invariant:  No false positives on version match.  Null is OK for false negative.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>        // invariant:  If version matches, then e.value is readable (final set in Entry.&lt;init&gt;)<a name="line.245"></a>
+<span class="sourceLineNo">246</span>    }<a name="line.246"></a>
+<span class="sourceLineNo">247</span><a name="line.247"></a>
+<span class="sourceLineNo">248</span>    /** Internal hash code for accessing Class.classValueMap.cacheArray. */<a name="line.248"></a>
+<span class="sourceLineNo">249</span>    final int hashCodeForCache = nextHashCode.getAndAdd(HASH_INCREMENT) &amp; HASH_MASK;<a name="line.249"></a>
+<span class="sourceLineNo">250</span><a name="line.250"></a>
+<span class="sourceLineNo">251</span>    /** Value stream for hashCodeForCache.  See similar structure in ThreadLocal. */<a name="line.251"></a>
+<span class="sourceLineNo">252</span>    private static final AtomicInteger nextHashCode = new AtomicInteger();<a name="line.252"></a>
+<span class="sourceLineNo">253</span><a name="line.253"></a>
+<span class="sourceLineNo">254</span>    /** Good for power-of-two tables.  See similar structure in ThreadLocal. */<a name="line.254"></a>
+<span class="sourceLineNo">255</span>    private static final int HASH_INCREMENT = 0x61c88647;<a name="line.255"></a>
+<span class="sourceLineNo">256</span><a name="line.256"></a>
+<span class="sourceLineNo">257</span>    /** Mask a hash code to be positive but not too large, to prevent wraparound. */<a name="line.257"></a>
+<span class="sourceLineNo">258</span>    static final int HASH_MASK = (-1 &gt;&gt;&gt; 2);<a name="line.258"></a>
+<span class="sourceLineNo">259</span><a name="line.259"></a>
+<span class="sourceLineNo">260</span>    /**<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * Private key for retrieval of this object from ClassValueMap.<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     */<a name="line.262"></a>
+<span class="sourceLineNo">263</span>    static class Identity {<a name="line.263"></a>
+<span class="sourceLineNo">264</span>    }<a name="line.264"></a>
+<span class="sourceLineNo">265</span>    /**<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * This ClassValue's identity, expressed as an opaque object.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * The main object {@code ClassValue.this} is incorrect since<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * subclasses may override {@code ClassValue.equals}, which<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * could confuse keys in the ClassValueMap.<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     */<a name="line.270"></a>
+<span class="sourceLineNo">271</span>    final Identity identity = new Identity();<a name="line.271"></a>
+<span class="sourceLineNo">272</span><a name="line.272"></a>
+<span class="sourceLineNo">273</span>    /**<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * Current version for retrieving this class value from the cache.<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * Any number of computeValue calls can be cached in association with one version.<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * But the version changes when a remove (on any type) is executed.<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * A version change invalidates all cache entries for the affected ClassValue,<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * by marking them as stale.  Stale cache entries do not force another call<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * to computeValue, but they do require a synchronized visit to a backing map.<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * &lt;p&gt;<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * All user-visible state changes on the ClassValue take place under<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * a lock inside the synchronized methods of ClassValueMap.<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * Readers (of ClassValue.get) are notified of such state changes<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * when this.version is bumped to a new token.<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * This variable must be volatile so that an unsynchronized reader<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * will receive the notification without delay.<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * &lt;p&gt;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * If version were not volatile, one thread T1 could persistently hold onto<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * a stale value this.value == V1, while while another thread T2 advances<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * (under a lock) to this.value == V2.  This will typically be harmless,<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * but if T1 and T2 interact causally via some other channel, such that<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * T1's further actions are constrained (in the JMM) to happen after<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * the V2 event, then T1's observation of V1 will be an error.<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * &lt;p&gt;<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * The practical effect of making this.version be volatile is that it cannot<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * be hoisted out of a loop (by an optimizing JIT) or otherwise cached.<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * Some machines may also require a barrier instruction to execute<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * before this.version.<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     */<a name="line.299"></a>
+<span class="sourceLineNo">300</span>    private volatile Version&lt;T&gt; version = new Version&lt;&gt;(this);<a name="line.300"></a>
+<span class="sourceLineNo">301</span>    Version&lt;T&gt; version() { return version; }<a name="line.301"></a>
+<span class="sourceLineNo">302</span>    void bumpVersion() { version = new Version&lt;&gt;(this); }<a name="line.302"></a>
+<span class="sourceLineNo">303</span>    static class Version&lt;T&gt; {<a name="line.303"></a>
+<span class="sourceLineNo">304</span>        private final ClassValue&lt;T&gt; classValue;<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        private final Entry&lt;T&gt; promise = new Entry&lt;&gt;(this);<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        Version(ClassValue&lt;T&gt; classValue) { this.classValue = classValue; }<a name="line.306"></a>
+<span class="sourceLineNo">307</span>        ClassValue&lt;T&gt; classValue() { return classValue; }<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        Entry&lt;T&gt; promise() { return promise; }<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        boolean isLive() { return classValue.version() == this; }<a name="line.309"></a>
+<span class="sourceLineNo">310</span>    }<a name="line.310"></a>
+<span class="sourceLineNo">311</span><a name="line.311"></a>
+<span class="sourceLineNo">312</span>    /** One binding of a value to a class via a ClassValue.<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     *  States are:&lt;ul&gt;<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     *  &lt;li&gt; promise if value == Entry.this<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     *  &lt;li&gt; else dead if version == null<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     *  &lt;li&gt; else stale if version != classValue.version<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     *  &lt;li&gt; else live &lt;/ul&gt;<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     *  Promises are never put into the cache; they only live in the<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     *  backing map while a computeValue call is in flight.<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     *  Once an entry goes stale, it can be reset at any time<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     *  into the dead state.<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     */<a name="line.322"></a>
+<span class="sourceLineNo">323</span>    static class Entry&lt;T&gt; extends WeakReference&lt;Version&lt;T&gt;&gt; {<a name="line.323"></a>
+<span class="sourceLineNo">324</span>        final Object value;  // usually of type T, but sometimes (Entry)this<a name="line.324"></a>
+<span class="sourceLineNo">325</span>        Entry(Version&lt;T&gt; version, T value) {<a name="line.325"></a>
+<span class="sourceLineNo">326</span>            super(version);<a name="line.326"></a>
+<span class="sourceLineNo">327</span>            this.value = value;  // for a regular entry, value is of type T<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        }<a name="line.328"></a>
+<span class="sourceLineNo">329</span>        private void assertNotPromise() { assert(!isPromise()); }<a name="line.329"></a>
+<span class="sourceLineNo">330</span>        /** For creating a promise. */<a name="line.330"></a>
+<span class="sourceLineNo">331</span>        Entry(Version&lt;T&gt; version) {<a name="line.331"></a>
+<span class="sourceLineNo">332</span>            super(version);<a name="line.332"></a>
+<span class="sourceLineNo">333</span>            this.value = this;  // for a promise, value is not of type T, but Entry!<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        }<a name="line.334"></a>
+<span class="sourceLineNo">335</span>        /** Fetch the value.  This entry must not be a promise. */<a name="line.335"></a>
+<span class="sourceLineNo">336</span>        @SuppressWarnings("unchecked")  // if !isPromise, type is T<a name="line.336"></a>
+<span class="sourceLineNo">337</span>        T value() { assertNotPromise(); return (T) value; }<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        boolean isPromise() { return value == this; }<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        Version&lt;T&gt; version() { return get(); }<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        ClassValue&lt;T&gt; classValueOrNull() {<a name="line.340"></a>
+<span class="sourceLineNo">341</span>            Version&lt;T&gt; v = version();<a name="line.341"></a>
+<span class="sourceLineNo">342</span>            return (v == null) ? null : v.classValue();<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        }<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        boolean isLive() {<a name="line.344"></a>
+<span class="sourceLineNo">345</span>            Version&lt;T&gt; v = version();<a name="line.345"></a>
+<span class="sourceLineNo">346</span>            if (v == null)  return false;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>            if (v.isLive())  return true;<a name="line.347"></a>
+<span class="sourceLineNo">348</span>            clear();<a name="line.348"></a>
+<span class="sourceLineNo">349</span>            return false;<a name="line.349"></a>
+<span class="sourceLineNo">350</span>        }<a name="line.350"></a>
+<span class="sourceLineNo">351</span>        Entry&lt;T&gt; refreshVersion(Version&lt;T&gt; v2) {<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            assertNotPromise();<a name="line.352"></a>
+<span class="sourceLineNo">353</span>            @SuppressWarnings("unchecked")  // if !isPromise, type is T<a name="line.353"></a>
+<span class="sourceLineNo">354</span>            Entry&lt;T&gt; e2 = new Entry&lt;&gt;(v2, (T) value);<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            clear();<a name="line.355"></a>
+<span class="sourceLineNo">356</span>            // value = null -- caller must drop<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            return e2;<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        }<a name="line.358"></a>
+<span class="sourceLineNo">359</span>        static final Entry&lt;?&gt; DEAD_ENTRY = new Entry&lt;&gt;(null, null);<a name="line.359"></a>
+<span class="sourceLineNo">360</span>    }<a name="line.360"></a>
+<span class="sourceLineNo">361</span><a name="line.361"></a>
+<span class="sourceLineNo">362</span>    /** Return the backing map associated with this type. */<a name="line.362"></a>
+<span class="sourceLineNo">363</span>    private static ClassValueMap getMap(Class&lt;?&gt; type) {<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        // racing type.classValueMap : null (blank) =&gt; unique ClassValueMap<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        // if a null is observed, a map is created (lazily, synchronously, uniquely)<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        // all further access to that map is synchronized<a name="line.366"></a>
+<span class="sourceLineNo">367</span>        ClassValueMap map = type.classValueMap;<a name="line.367"></a>
+<span class="sourceLineNo">368</span>        if (map != null)  return map;<a name="line.368"></a>
+<span class="sourceLineNo">369</span>        return initializeMap(type);<a name="line.369"></a>
+<span class="sourceLineNo">370</span>    }<a name="line.370"></a>
+<span class="sourceLineNo">371</span><a name="line.371"></a>
+<span class="sourceLineNo">372</span>    private static final Object CRITICAL_SECTION = new Object();<a name="line.372"></a>
+<span class="sourceLineNo">373</span>    private static ClassValueMap initializeMap(Class&lt;?&gt; type) {<a name="line.373"></a>
+<span class="sourceLineNo">374</span>        ClassValueMap map;<a name="line.374"></a>
+<span class="sourceLineNo">375</span>        synchronized (CRITICAL_SECTION) {  // private object to avoid deadlocks<a name="line.375"></a>
+<span class="sourceLineNo">376</span>            // happens about once per type<a name="line.376"></a>
+<span class="sourceLineNo">377</span>            if ((map = type.classValueMap) == null)<a name="line.377"></a>
+<span class="sourceLineNo">378</span>                type.classValueMap = map = new ClassValueMap(type);<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        }<a name="line.379"></a>
+<span class="sourceLineNo">380</span>            return map;<a name="line.380"></a>
+<span class="sourceLineNo">381</span>        }<a name="line.381"></a>
+<span class="sourceLineNo">382</span><a name="line.382"></a>
+<span class="sourceLineNo">383</span>    static &lt;T&gt; Entry&lt;T&gt; makeEntry(Version&lt;T&gt; explicitVersion, T value) {<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        // Note that explicitVersion might be different from this.version.<a name="line.384"></a>
+<span class="sourceLineNo">385</span>        return new Entry&lt;&gt;(explicitVersion, value);<a name="line.385"></a>
+<span class="sourceLineNo">386</span><a name="line.386"></a>
+<span class="sourceLineNo">387</span>        // As soon as the Entry is put into the cache, the value will be<a name="line.387"></a>
+<span class="sourceLineNo">388</span>        // reachable via a data race (as defined by the Java Memory Model).<a name="line.388"></a>
+<span class="sourceLineNo">389</span>        // This race is benign, assuming the value object itself can be<a name="line.389"></a>
+<span class="sourceLineNo">390</span>        // read safely by multiple threads.  This is up to the user.<a name="line.390"></a>
+<span class="sourceLineNo">391</span>        //<a name="line.391"></a>
+<span class="sourceLineNo">392</span>        // The entry and version fields themselves can be safely read via<a name="line.392"></a>
+<span class="sourceLineNo">393</span>        // a race because they are either final or have controlled states.<a name="line.393"></a>
+<span class="sourceLineNo">394</span>        // If the pointer from the entry to the version is still null,<a name="line.394"></a>
+<span class="sourceLineNo">395</span>        // or if the version goes immediately dead and is nulled out,<a name="line.395"></a>
+<span class="sourceLineNo">396</span>        // the reader will take the slow path and retry under a lock.<a name="line.396"></a>
+<span class="sourceLineNo">397</span>    }<a name="line.397"></a>
+<span class="sourceLineNo">398</span><a name="line.398"></a>
+<span class="sourceLineNo">399</span>    // The following class could also be top level and non-public:<a name="line.399"></a>
+<span class="sourceLineNo">400</span><a name="line.400"></a>
+<span class="sourceLineNo">401</span>    /** A backing map for all ClassValues, relative a single given type.<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     *  Gives a fully serialized "true state" for each pair (ClassValue cv, Class type).<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     *  Also manages an unserialized fast-path cache.<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     */<a name="line.404"></a>
+<span class="sourceLineNo">405</span>    static class ClassValueMap extends WeakHashMap&lt;ClassValue.Identity, Entry&lt;?&gt;&gt; {<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        private final Class&lt;?&gt; type;<a name="line.406"></a>
+<span class="sourceLineNo">407</span>        private Entry&lt;?&gt;[] cacheArray;<a name="line.407"></a>
+<span class="sourceLineNo">408</span>        private int cacheLoad, cacheLoadLimit;<a name="line.408"></a>
+<span class="sourceLineNo">409</span><a name="line.409"></a>
+<span class="sourceLineNo">410</span>        /** Number of entries initially allocated to each type when first used with any ClassValue.<a name="line.410"></a>
+<span class="sourceLineNo">411</span>         *  It would be pointless to make this much smaller than the Class and ClassValueMap objects themselves.<a name="line.411"></a>
+<span class="sourceLineNo">412</span>         *  Must be a power of 2.<a name="line.412"></a>
+<span class="sourceLineNo">413</span>         */<a name="line.413"></a>
+<span class="sourceLineNo">414</span>        private static final int INITIAL_ENTRIES = 32;<a name="line.414"></a>
+<span class="sourceLineNo">415</span><a name="line.415"></a>
+<span class="sourceLineNo">416</span>        /** Build a backing map for ClassValues, relative the given type.<a name="line.416"></a>
+<span class="sourceLineNo">417</span>         *  Also, create an empty cache array and install it on the class.<a name="line.417"></a>
+<span class="sourceLineNo">418</span>         */<a name="line.418"></a>
+<span class="sourceLineNo">419</span>        ClassValueMap(Class&lt;?&gt; type) {<a name="line.419"></a>
+<span class="sourceLineNo">420</span>            this.type = type;<a name="line.420"></a>
+<span class="sourceLineNo">421</span>            sizeCache(INITIAL_ENTRIES);<a name="line.421"></a>
+<span class="sourceLineNo">422</span>        }<a name="line.422"></a>
+<span class="sourceLineNo">423</span><a name="line.423"></a>
+<span class="sourceLineNo">424</span>        Entry&lt;?&gt;[] getCache() { return cacheArray; }<a name="line.424"></a>
+<span class="sourceLineNo">425</span><a name="line.425"></a>
+<span class="sourceLineNo">426</span>        /** Initiate a query.  Store a promise (placeholder) if there is no value yet. */<a name="line.426"></a>
+<span class="sourceLineNo">427</span>        synchronized<a name="line.427"></a>
+<span class="sourceLineNo">428</span>        &lt;T&gt; Entry&lt;T&gt; startEntry(ClassValue&lt;T&gt; classValue) {<a name="line.428"></a>
+<span class="sourceLineNo">429</span>            @SuppressWarnings("unchecked")  // one map has entries for all value types &lt;T&gt;<a name="line.429"></a>
+<span class="sourceLineNo">430</span>            Entry&lt;T&gt; e = (Entry&lt;T&gt;) get(classValue.identity);<a name="line.430"></a>
+<span class="sourceLineNo">431</span>            Version&lt;T&gt; v = classValue.version();<a name="line.431"></a>
+<span class="sourceLineNo">432</span>            if (e == null) {<a name="line.432"></a>
+<span class="sourceLineNo">433</span>                e = v.promise();<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                // The presence of a promise means that a value is pending for v.<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                // Eventually, finishEntry will overwrite the promise.<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                put(classValue.identity, e);<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                // Note that the promise is never entered into the cache!<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                return e;<a name="line.438"></a>
+<span class="sourceLineNo">439</span>            } else if (e.isPromise()) {<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                // Somebody else has asked the same question.<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                // Let the races begin!<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                if (e.version() != v) {<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                    e = v.promise();<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                    put(classValue.identity, e);<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                }<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                return e;<a name="line.446"></a>
+<span class="sourceLineNo">447</span>            } else {<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                // there is already a completed entry here; report it<a name="line.448"></a>
+<span class="sourceLineNo">449</span>                if (e.version() != v) {<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                    // There is a stale but valid entry here; make it fresh again.<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                    // Once an entry is in the hash table, we don't care what its version is.<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                    e = e.refreshVersion(v);<a name="line.452"></a>
+<span class="sourceLineNo">453</span>                    put(classValue.identity, e);<a name="line.453"></a>
+<span class="sourceLineNo">454</span>                }<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                // Add to the cache, to enable the fast path, next time.<a name="line.455"></a>
+<span class="sourceLineNo">456</span>                checkCacheLoad();<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                addToCache(classValue, e);<a name="line.457"></a>
+<span class="sourceLineNo">458</span>                return e;<a name="line.458"></a>
+<span class="sourceLineNo">459</span>            }<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        }<a name="line.460"></a>
+<span class="sourceLineNo">461</span><a name="line.461"></a>
+<span class="sourceLineNo">462</span>        /** Finish a query.  Overwrite a matching placeholder.  Drop stale incoming values. */<a name="line.462"></a>
+<span class="sourceLineNo">463</span>        synchronized<a name="line.463"></a>
+<span class="sourceLineNo">464</span>        &lt;T&gt; Entry&lt;T&gt; finishEntry(ClassValue&lt;T&gt; classValue, Entry&lt;T&gt; e) {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>            @SuppressWarnings("unchecked")  // one map has entries for all value types &lt;T&gt;<a name="line.465"></a>
+<span class="sourceLineNo">466</span>            Entry&lt;T&gt; e0 = (Entry&lt;T&gt;) get(classValue.identity);<a name="line.466"></a>
+<span class="sourceLineNo">467</span>            if (e == e0) {<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                // We can get here during exception processing, unwinding from computeValue.<a name="line.468"></a>
+<span class="sourceLineNo">469</span>                assert(e.isPromise());<a name="line.469"></a>
+<span class="sourceLineNo">470</span>                remove(classValue.identity);<a name="line.470"></a>
+<span class="sourceLineNo">471</span>                return null;<a name="line.471"></a>
+<span class="sourceLineNo">472</span>            } else if (e0 != null &amp;&amp; e0.isPromise() &amp;&amp; e0.version() == e.version()) {<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                // If e0 matches the intended entry, there has not been a remove call<a name="line.473"></a>
+<span class="sourceLineNo">474</span>                // between the previous startEntry and now.  So now overwrite e0.<a name="line.474"></a>
+<span class="sourceLineNo">475</span>                Version&lt;T&gt; v = classValue.version();<a name="line.475"></a>
+<span class="sourceLineNo">476</span>                if (e.version() != v)<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                    e = e.refreshVersion(v);<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                put(classValue.identity, e);<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                // Add to the cache, to enable the fast path, next time.<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                checkCacheLoad();<a name="line.480"></a>
+<span class="sourceLineNo">481</span>                addToCache(classValue, e);<a name="line.481"></a>
+<span class="sourceLineNo">482</span>                return e;<a name="line.482"></a>
+<span class="sourceLineNo">483</span>            } else {<a name="line.483"></a>
+<span class="sourceLineNo">484</span>                // Some sort of mismatch; caller must try again.<a name="line.484"></a>
+<span class="sourceLineNo">485</span>                return null;<a name="line.485"></a>
+<span class="sourceLineNo">486</span>            }<a name="line.486"></a>
+<span class="sourceLineNo">487</span>        }<a name="line.487"></a>
+<span class="sourceLineNo">488</span><a name="line.488"></a>
+<span class="sourceLineNo">489</span>        /** Remove an entry. */<a name="line.489"></a>
+<span class="sourceLineNo">490</span>        synchronized<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        void removeEntry(ClassValue&lt;?&gt; classValue) {<a name="line.491"></a>
+<span class="sourceLineNo">492</span>            Entry&lt;?&gt; e = remove(classValue.identity);<a name="line.492"></a>
+<span class="sourceLineNo">493</span>            if (e == null) {<a name="line.493"></a>
+<span class="sourceLineNo">494</span>                // Uninitialized, and no pending calls to computeValue.  No change.<a name="line.494"></a>
+<span class="sourceLineNo">495</span>            } else if (e.isPromise()) {<a name="line.495"></a>
+<span class="sourceLineNo">496</span>                // State is uninitialized, with a pending call to finishEntry.<a name="line.496"></a>
+<span class="sourceLineNo">497</span>                // Since remove is a no-op in such a state, keep the promise<a name="line.497"></a>
+<span class="sourceLineNo">498</span>                // by putting it back into the map.<a name="line.498"></a>
+<span class="sourceLineNo">499</span>                put(classValue.identity, e);<a name="line.499"></a>
+<span class="sourceLineNo">500</span>            } else {<a name="line.500"></a>
+<span class="sourceLineNo">501</span>                // In an initialized state.  Bump forward, and de-initialize.<a name="line.501"></a>
+<span class="sourceLineNo">502</span>                classValue.bumpVersion();<a name="line.502"></a>
+<span class="sourceLineNo">503</span>                // Make all cache elements for this guy go stale.<a name="line.503"></a>
+<span class="sourceLineNo">504</span>                removeStaleEntries(classValue);<a name="line.504"></a>
+<span class="sourceLineNo">505</span>            }<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        }<a name="line.506"></a>
+<span class="sourceLineNo">507</span><a name="line.507"></a>
+<span class="sourceLineNo">508</span>        /** Change the value for an entry. */<a name="line.508"></a>
+<span class="sourceLineNo">509</span>        synchronized<a name="line.509"></a>
+<span class="sourceLineNo">510</span>        &lt;T&gt; void changeEntry(ClassValue&lt;T&gt; classValue, T value) {<a name="line.510"></a>
+<span class="sourceLineNo">511</span>            @SuppressWarnings("unchecked")  // one map has entries for all value types &lt;T&gt;<a name="line.511"></a>
+<span class="sourceLineNo">512</span>            Entry&lt;T&gt; e0 = (Entry&lt;T&gt;) get(classValue.identity);<a name="line.512"></a>
+<span class="sourceLineNo">513</span>            Version&lt;T&gt; version = classValue.version();<a name="line.513"></a>
+<span class="sourceLineNo">514</span>            if (e0 != null) {<a name="line.514"></a>
+<span class="sourceLineNo">515</span>                if (e0.version() == version &amp;&amp; e0.value() == value)<a name="line.515"></a>
+<span class="sourceLineNo">516</span>                    // no value change =&gt; no version change needed<a name="line.516"></a>
+<span class="sourceLineNo">517</span>                    return;<a name="line.517"></a>
+<span class="sourceLineNo">518</span>                classValue.bumpVersion();<a name="line.518"></a>
+<span class="sourceLineNo">519</span>                removeStaleEntries(classValue);<a name="line.519"></a>
+<span class="sourceLineNo">520</span>            }<a name="line.520"></a>
+<span class="sourceLineNo">521</span>            Entry&lt;T&gt; e = makeEntry(version, value);<a name="line.521"></a>
+<span class="sourceLineNo">522</span>            put(classValue.identity, e);<a name="line.522"></a>
+<span class="sourceLineNo">523</span>            // Add to the cache, to enable the fast path, next time.<a name="line.523"></a>
+<span class="sourceLineNo">524</span>            checkCacheLoad();<a name="line.524"></a>
+<span class="sourceLineNo">525</span>            addToCache(classValue, e);<a name="line.525"></a>
+<span class="sourceLineNo">526</span>        }<a name="line.526"></a>
+<span class="sourceLineNo">527</span><a name="line.527"></a>
+<span class="sourceLineNo">528</span>        /// --------<a name="line.528"></a>
+<span class="sourceLineNo">529</span>        /// Cache management.<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        /// --------<a name="line.530"></a>
+<span class="sourceLineNo">531</span><a name="line.531"></a>
+<span class="sourceLineNo">532</span>        // Statics do not need synchronization.<a name="line.532"></a>
+<span class="sourceLineNo">533</span><a name="line.533"></a>
+<span class="sourceLineNo">534</span>        /** Load the cache entry at the given (hashed) location. */<a name="line.534"></a>
+<span class="sourceLineNo">535</span>        static Entry&lt;?&gt; loadFromCache(Entry&lt;?&gt;[] cache, int i) {<a name="line.535"></a>
+<span class="sourceLineNo">536</span>            // non-racing cache.length : constant<a name="line.536"></a>
+<span class="sourceLineNo">537</span>            // racing cache[i &amp; (mask)] : null &lt;=&gt; Entry<a name="line.537"></a>
+<span class="sourceLineNo">538</span>            return cache[i &amp; (cache.length-1)];<a name="line.538"></a>
+<span class="sourceLineNo">539</span>            // invariant:  returned value is null or well-constructed (ready to match)<a name="line.539"></a>
+<span class="sourceLineNo">540</span>        }<a name="line.540"></a>
+<span class="sourceLineNo">541</span><a name="line.541"></a>
+<span class="sourceLineNo">542</span>        /** Look in the cache, at the home location for the given ClassValue. */<a name="line.542"></a>
+<span class="sourceLineNo">543</span>        static &lt;T&gt; Entry&lt;T&gt; probeHomeLocation(Entry&lt;?&gt;[] cache, ClassValue&lt;T&gt; classValue) {<a name="line.543"></a>
+<span class="sourceLineNo">544</span>            return classValue.castEntry(loadFromCache(cache, classValue.hashCodeForCache));<a name="line.544"></a>
+<span class="sourceLineNo">545</span>        }<a name="line.545"></a>
+<span class="sourceLineNo">546</span><a name="line.546"></a>
+<span class="sourceLineNo">547</span>        /** Given that first probe was a collision, retry at nearby locations. */<a name="line.547"></a>
+<span class="sourceLineNo">548</span>        static &lt;T&gt; Entry&lt;T&gt; probeBackupLocations(Entry&lt;?&gt;[] cache, ClassValue&lt;T&gt; classValue) {<a name="line.548"></a>
+<span class="sourceLineNo">549</span>            if (PROBE_LIMIT &lt;= 0)  return null;<a name="line.549"></a>
+<span class="sourceLineNo">550</span>            // Probe the cache carefully, in a range of slots.<a name="line.550"></a>
+<span class="sourceLineNo">551</span>            int mask = (cache.length-1);<a name="line.551"></a>
+<span class="sourceLineNo">552</span>            int home = (classValue.hashCodeForCache &amp; mask);<a name="line.552"></a>
+<span class="sourceLineNo">553</span>            Entry&lt;?&gt; e2 = cache[home];  // victim, if we find the real guy<a name="line.553"></a>
+<span class="sourceLineNo">554</span>            if (e2 == null) {<a name="line.554"></a>
+<span class="sourceLineNo">555</span>                return null;   // if nobody is at home, no need to search nearby<a name="line.555"></a>
+<span class="sourceLineNo">556</span>            }<a name="line.556"></a>
+<span class="sourceLineNo">557</span>            // assume !classValue.match(e2), but do not assert, because of races<a name="line.557"></a>
+<span class="sourceLineNo">558</span>            int pos2 = -1;<a name="line.558"></a>
+<span class="sourceLineNo">559</span>            for (int i = home + 1; i &lt; home + PROBE_LIMIT; i++) {<a name="line.559"></a>
+<span class="sourceLineNo">560</span>                Entry&lt;?&gt; e = cache[i &amp; mask];<a name="line.560"></a>
+<span class="sourceLineNo">561</span>                if (e == null) {<a name="line.561"></a>
+<span class="sourceLineNo">562</span>                    break;   // only search within non-null runs<a name="line.562"></a>
+<span class="sourceLineNo">563</span>                }<a name="line.563"></a>
+<span class="sourceLineNo">564</span>                if (classValue.match(e)) {<a name="line.564"></a>
+<span class="sourceLineNo">565</span>                    // relocate colliding entry e2 (from cache[home]) to first empty slot<a name="line.565"></a>
+<span class="sourceLineNo">566</span>                    cache[home] = e;<a name="line.566"></a>
+<span class="sourceLineNo">567</span>                    if (pos2 &gt;= 0) {<a name="line.567"></a>
+<span class="sourceLineNo">568</span>                        cache[i &amp; mask] = Entry.DEAD_ENTRY;<a name="line.568"></a>
+<span class="sourceLineNo">569</span>                    } else {<a name="line.569"></a>
+<span class="sourceLineNo">570</span>                        pos2 = i;<a name="line.570"></a>
+<span class="sourceLineNo">571</span>                    }<a name="line.571"></a>
+<span class="sourceLineNo">572</span>                    cache[pos2 &amp; mask] = ((entryDislocation(cache, pos2, e2) &lt; PROBE_LIMIT)<a name="line.572"></a>
+<span class="sourceLineNo">573</span>                                          ? e2                  // put e2 here if it fits<a name="line.573"></a>
+<span class="sourceLineNo">574</span>                                          : Entry.DEAD_ENTRY);<a name="line.574"></a>
+<span class="sourceLineNo">575</span>                    return classValue.castEntry(e);<a name="line.575"></a>
+<span class="sourceLineNo">576</span>                }<a name="line.576"></a>
+<span class="sourceLineNo">577</span>                // Remember first empty slot, if any:<a name="line.577"></a>
+<span class="sourceLineNo">578</span>                if (!e.isLive() &amp;&amp; pos2 &lt; 0)  pos2 = i;<a name="line.578"></a>
+<span class="sourceLineNo">579</span>            }<a name="line.579"></a>
+<span class="sourceLineNo">580</span>            return null;<a name="line.580"></a>
+<span class="sourceLineNo">581</span>        }<a name="line.581"></a>
+<span class="sourceLineNo">582</span><a name="line.582"></a>
+<span class="sourceLineNo">583</span>        /** How far out of place is e? */<a name="line.583"></a>
+<span class="sourceLineNo">584</span>        private static int entryDislocation(Entry&lt;?&gt;[] cache, int pos, Entry&lt;?&gt; e) {<a name="line.584"></a>
+<span class="sourceLineNo">585</span>            ClassValue&lt;?&gt; cv = e.classValueOrNull();<a name="line.585"></a>
+<span class="sourceLineNo">586</span>            if (cv == null)  return 0;  // entry is not live!<a name="line.586"></a>
+<span class="sourceLineNo">587</span>            int mask = (cache.length-1);<a name="line.587"></a>
+<span class="sourceLineNo">588</span>            return (pos - cv.hashCodeForCache) &amp; mask;<a name="line.588"></a>
+<span class="sourceLineNo">589</span>        }<a name="line.589"></a>
+<span class="sourceLineNo">590</span><a name="line.590"></a>
+<span class="sourceLineNo">591</span>        /// --------<a name="line.591"></a>
+<span class="sourceLineNo">592</span>        /// Below this line all functions are private, and assume synchronized access.<a name="line.592"></a>
+<span class="sourceLineNo">593</span>        /// --------<a name="line.593"></a>
+<span class="sourceLineNo">594</span><a name="line.594"></a>
+<span class="sourceLineNo">595</span>        private void sizeCache(int length) {<a name="line.595"></a>
+<span class="sourceLineNo">596</span>            assert((length &amp; (length-1)) == 0);  // must be power of 2<a name="line.596"></a>
+<span class="sourceLineNo">597</span>            cacheLoad = 0;<a name="line.597"></a>
+<span class="sourceLineNo">598</span>            cacheLoadLimit = (int) ((double) length * CACHE_LOAD_LIMIT / 100);<a name="line.598"></a>
+<span class="sourceLineNo">599</span>            cacheArray = new Entry&lt;?&gt;[length];<a name="line.599"></a>
+<span class="sourceLineNo">600</span>        }<a name="line.600"></a>
+<span class="sourceLineNo">601</span><a name="line.601"></a>
+<span class="sourceLineNo">602</span>        /** Make sure the cache load stays below its limit, if possible. */<a name="line.602"></a>
+<span class="sourceLineNo">603</span>        private void checkCacheLoad() {<a name="line.603"></a>
+<span class="sourceLineNo">604</span>            if (cacheLoad &gt;= cacheLoadLimit) {<a name="line.604"></a>
+<span class="sourceLineNo">605</span>                reduceCacheLoad();<a name="line.605"></a>
+<span class="sourceLineNo">606</span>            }<a name="line.606"></a>
+<span class="sourceLineNo">607</span>        }<a name="line.607"></a>
+<span class="sourceLineNo">608</span>        private void reduceCacheLoad() {<a name="line.608"></a>
+<span class="sourceLineNo">609</span>            removeStaleEntries();<a name="line.609"></a>
+<span class="sourceLineNo">610</span>            if (cacheLoad &lt; cacheLoadLimit)<a name="line.610"></a>
+<span class="sourceLineNo">611</span>                return;  // win<a name="line.611"></a>
+<span class="sourceLineNo">612</span>            Entry&lt;?&gt;[] oldCache = getCache();<a name="line.612"></a>
+<span class="sourceLineNo">613</span>            if (oldCache.length &gt; HASH_MASK)<a name="line.613"></a>
+<span class="sourceLineNo">614</span>                return;  // lose<a name="line.614"></a>
+<span class="sourceLineNo">615</span>            sizeCache(oldCache.length * 2);<a name="line.615"></a>
+<span class="sourceLineNo">616</span>            for (Entry&lt;?&gt; e : oldCache) {<a name="line.616"></a>
+<span class="sourceLineNo">617</span>                if (e != null &amp;&amp; e.isLive()) {<a name="line.617"></a>
+<span class="sourceLineNo">618</span>                    addToCache(e);<a name="line.618"></a>
+<span class="sourceLineNo">619</span>                }<a name="line.619"></a>
+<span class="sourceLineNo">620</span>            }<a name="line.620"></a>
+<span class="sourceLineNo">621</span>        }<a name="line.621"></a>
+<span class="sourceLineNo">622</span><a name="line.622"></a>
+<span class="sourceLineNo">623</span>        /** Remove stale entries in the given range.<a name="line.623"></a>
+<span class="sourceLineNo">624</span>         *  Should be executed under a Map lock.<a name="line.624"></a>
+<span class="sourceLineNo">625</span>         */<a name="line.625"></a>
+<span class="sourceLineNo">626</span>        private void removeStaleEntries(Entry&lt;?&gt;[] cache, int begin, int count) {<a name="line.626"></a>
+<span class="sourceLineNo">627</span>            if (PROBE_LIMIT &lt;= 0)  return;<a name="line.627"></a>
+<span class="sourceLineNo">628</span>            int mask = (cache.length-1);<a name="line.628"></a>
+<span class="sourceLineNo">629</span>            int removed = 0;<a name="line.629"></a>
+<span class="sourceLineNo">630</span>            for (int i = begin; i &lt; begin + count; i++) {<a name="line.630"></a>
+<span class="sourceLineNo">631</span>                Entry&lt;?&gt; e = cache[i &amp; mask];<a name="line.631"></a>
+<span class="sourceLineNo">632</span>                if (e == null || e.isLive())<a name="line.632"></a>
+<span class="sourceLineNo">633</span>                    continue;  // skip null and live entries<a name="line.633"></a>
+<span class="sourceLineNo">634</span>                Entry&lt;?&gt; replacement = null;<a name="line.634"></a>
+<span class="sourceLineNo">635</span>                if (PROBE_LIMIT &gt; 1) {<a name="line.635"></a>
+<span class="sourceLineNo">636</span>                    // avoid breaking up a non-null run<a name="line.636"></a>
+<span class="sourceLineNo">637</span>                    replacement = findReplacement(cache, i);<a name="line.637"></a>
+<span class="sourceLineNo">638</span>                }<a name="line.638"></a>
+<span class="sourceLineNo">639</span>                cache[i &amp; mask] = replacement;<a name="line.639"></a>
+<span class="sourceLineNo">640</span>                if (replacement == null)  removed += 1;<a name="line.640"></a>
+<span class="sourceLineNo">641</span>            }<a name="line.641"></a>
+<span class="sourceLineNo">642</span>            cacheLoad = Math.max(0, cacheLoad - removed);<a name="line.642"></a>
+<span class="sourceLineNo">643</span>        }<a name="line.643"></a>
+<span class="sourceLineNo">644</span><a name="line.644"></a>
+<span class="sourceLineNo">645</span>        /** Clearing a cache slot risks disconnecting following entries<a name="line.645"></a>
+<span class="sourceLineNo">646</span>         *  from the head of a non-null run, which would allow them<a name="line.646"></a>
+<span class="sourceLineNo">647</span>         *  to be found via reprobes.  Find an entry after cache[begin]<a name="line.647"></a>
+<span class="sourceLineNo">648</span>         *  to plug into the hole, or return null if none is needed.<a name="line.648"></a>
+<span class="sourceLineNo">649</span>         */<a name="line.649"></a>
+<span class="sourceLineNo">650</span>        private Entry&lt;?&gt; findReplacement(Entry&lt;?&gt;[] cache, int home1) {<a name="line.650"></a>
+<span class="sourceLineNo">651</span>            Entry&lt;?&gt; replacement = null;<a name="line.651"></a>
+<span class="sourceLineNo">652</span>            int haveReplacement = -1, replacementPos = 0;<a name="line.652"></a>
+<span class="sourceLineNo">653</span>            int mask = (cache.length-1);<a name="line.653"></a>
+<span class="sourceLineNo">654</span>            for (int i2 = home1 + 1; i2 &lt; home1 + PROBE_LIMIT; i2++) {<a name="line.654"></a>
+<span class="sourceLineNo">655</span>                Entry&lt;?&gt; e2 = cache[i2 &amp; mask];<a name="line.655"></a>
+<span class="sourceLineNo">656</span>                if (e2 == null)  break;  // End of non-null run.<a name="line.656"></a>
+<span class="sourceLineNo">657</span>                if (!e2.isLive())  continue;  // Doomed anyway.<a name="line.657"></a>
+<span class="sourceLineNo">658</span>                int dis2 = entryDislocation(cache, i2, e2);<a name="line.658"></a>
+<span class="sourceLineNo">659</span>                if (dis2 == 0)  continue;  // e2 already optimally placed<a name="line.659"></a>
+<span class="sourceLineNo">660</span>                int home2 = i2 - dis2;<a name="line.660"></a>
+<span class="sourceLineNo">661</span>                if (home2 &lt;= home1) {<a name="line.661"></a>
+<span class="sourceLineNo">662</span>                    // e2 can replace entry at cache[home1]<a name="line.662"></a>
+<span class="sourceLineNo">663</span>                    if (home2 == home1) {<a name="line.663"></a>
+<span class="sourceLineNo">664</span>                        // Put e2 exactly where he belongs.<a name="line.664"></a>
+<span class="sourceLineNo">665</span>                        haveReplacement = 1;<a name="line.665"></a>
+<span class="sourceLineNo">666</span>                        replacementPos = i2;<a name="line.666"></a>
+<span class="sourceLineNo">667</span>                        replacement = e2;<a name="line.667"></a>
+<span class="sourceLineNo">668</span>                    } else if (haveReplacement &lt;= 0) {<a name="line.668"></a>
+<span class="sourceLineNo">669</span>                        haveReplacement = 0;<a name="line.669"></a>
+<span class="sourceLineNo">670</span>                        replacementPos = i2;<a name="line.670"></a>
+<span class="sourceLineNo">671</span>                        replacement = e2;<a name="line.671"></a>
+<span class="sourceLineNo">672</span>                    }<a name="line.672"></a>
+<span class="sourceLineNo">673</span>                    // And keep going, so we can favor larger dislocations.<a name="line.673"></a>
+<span class="sourceLineNo">674</span>                }<a name="line.674"></a>
+<span class="sourceLineNo">675</span>            }<a name="line.675"></a>
+<span class="sourceLineNo">676</span>            if (haveReplacement &gt;= 0) {<a name="line.676"></a>
+<span class="sourceLineNo">677</span>                if (cache[(replacementPos+1) &amp; mask] != null) {<a name="line.677"></a>
+<span class="sourceLineNo">678</span>                    // Be conservative, to avoid breaking up a non-null run.<a name="line.678"></a>
+<span class="sourceLineNo">679</span>                    cache[replacementPos &amp; mask] = (Entry&lt;?&gt;) Entry.DEAD_ENTRY;<a name="line.679"></a>
+<span class="sourceLineNo">680</span>                } else {<a name="line.680"></a>
+<span class="sourceLineNo">681</span>                    cache[replacementPos &amp; mask] = null;<a name="line.681"></a>
+<span class="sourceLineNo">682</span>                    cacheLoad -= 1;<a name="line.682"></a>
+<span class="sourceLineNo">683</span>                }<a name="line.683"></a>
+<span class="sourceLineNo">684</span>            }<a name="line.684"></a>
+<span class="sourceLineNo">685</span>            return replacement;<a name="line.685"></a>
+<span class="sourceLineNo">686</span>        }<a name="line.686"></a>
+<span class="sourceLineNo">687</span><a name="line.687"></a>
+<span class="sourceLineNo">688</span>        /** Remove stale entries in the range near classValue. */<a name="line.688"></a>
+<span class="sourceLineNo">689</span>        private void removeStaleEntries(ClassValue&lt;?&gt; classValue) {<a name="line.689"></a>
+<span class="sourceLineNo">690</span>            removeStaleEntries(getCache(), classValue.hashCodeForCache, PROBE_LIMIT);<a name="line.690"></a>
+<span class="sourceLineNo">691</span>        }<a name="line.691"></a>
+<span class="sourceLineNo">692</span><a name="line.692"></a>
+<span class="sourceLineNo">693</span>        /** Remove all stale entries, everywhere. */<a name="line.693"></a>
+<span class="sourceLineNo">694</span>        private void removeStaleEntries() {<a name="line.694"></a>
+<span class="sourceLineNo">695</span>            Entry[] cache = getCache();<a name="line.695"></a>
+<span class="sourceLineNo">696</span>            removeStaleEntries(cache, 0, cache.length + PROBE_LIMIT - 1);<a name="line.696"></a>
+<span class="sourceLineNo">697</span>        }<a name="line.697"></a>
+<span class="sourceLineNo">698</span><a name="line.698"></a>
+<span class="sourceLineNo">699</span>        /** Add the given entry to the cache, in its home location, unless it is out of date. */<a name="line.699"></a>
+<span class="sourceLineNo">700</span>        private &lt;T&gt; void addToCache(Entry&lt;T&gt; e) {<a name="line.700"></a>
+<span class="sourceLineNo">701</span>            ClassValue&lt;T&gt; classValue = e.classValueOrNull();<a name="line.701"></a>
+<span class="sourceLineNo">702</span>            if (classValue != null)<a name="line.702"></a>
+<span class="sourceLineNo">703</span>                addToCache(classValue, e);<a name="line.703"></a>
+<span class="sourceLineNo">704</span>        }<a name="line.704"></a>
+<span class="sourceLineNo">705</span><a name="line.705"></a>
+<span class="sourceLineNo">706</span>        /** Add the given entry to the cache, in its home location. */<a name="line.706"></a>
+<span class="sourceLineNo">707</span>        private &lt;T&gt; void addToCache(ClassValue&lt;T&gt; classValue, Entry&lt;T&gt; e) {<a name="line.707"></a>
+<span class="sourceLineNo">708</span>            if (PROBE_LIMIT &lt;= 0)  return;  // do not fill cache<a name="line.708"></a>
+<span class="sourceLineNo">709</span>            // Add e to the cache.<a name="line.709"></a>
+<span class="sourceLineNo">710</span>            Entry&lt;?&gt;[] cache = getCache();<a name="line.710"></a>
+<span class="sourceLineNo">711</span>            int mask = (cache.length-1);<a name="line.711"></a>
+<span class="sourceLineNo">712</span>            int home = classValue.hashCodeForCache &amp; mask;<a name="line.712"></a>
+<span class="sourceLineNo">713</span>            Entry&lt;?&gt; e2 = placeInCache(cache, home, e, false);<a name="line.713"></a>
+<span class="sourceLineNo">714</span>            if (e2 == null)  return;  // done<a name="line.714"></a>
+<span class="sourceLineNo">715</span>            if (PROBE_LIMIT &gt; 1) {<a name="line.715"></a>
+<span class="sourceLineNo">716</span>                // try to move e2 somewhere else in his probe range<a name="line.716"></a>
+<span class="sourceLineNo">717</span>                int dis2 = entryDislocation(cache, home, e2);<a name="line.717"></a>
+<span class="sourceLineNo">718</span>                int home2 = home - dis2;<a name="line.718"></a>
+<span class="sourceLineNo">719</span>                for (int i2 = home2; i2 &lt; home2 + PROBE_LIMIT; i2++) {<a name="line.719"></a>
+<span class="sourceLineNo">720</span>                    if (placeInCache(cache, i2 &amp; mask, e2, true) == null) {<a name="line.720"></a>
+<span class="sourceLineNo">721</span>                        return;<a name="line.721"></a>
+<span class="sourceLineNo">722</span>                    }<a name="line.722"></a>
+<span class="sourceLineNo">723</span>                }<a name="line.723"></a>
+<span class="sourceLineNo">724</span>            }<a name="line.724"></a>
+<span class="sourceLineNo">725</span>            // Note:  At this point, e2 is just dropped from the cache.<a name="line.725"></a>
+<span class="sourceLineNo">726</span>        }<a name="line.726"></a>
+<span class="sourceLineNo">727</span><a name="line.727"></a>
+<span class="sourceLineNo">728</span>        /** Store the given entry.  Update cacheLoad, and return any live victim.<a name="line.728"></a>
+<span class="sourceLineNo">729</span>         *  'Gently' means return self rather than dislocating a live victim.<a name="line.729"></a>
+<span class="sourceLineNo">730</span>         */<a name="line.730"></a>
+<span class="sourceLineNo">731</span>        private Entry&lt;?&gt; placeInCache(Entry&lt;?&gt;[] cache, int pos, Entry&lt;?&gt; e, boolean gently) {<a name="line.731"></a>
+<span class="sourceLineNo">732</span>            Entry&lt;?&gt; e2 = overwrittenEntry(cache[pos]);<a name="line.732"></a>
+<span class="sourceLineNo">733</span>            if (gently &amp;&amp; e2 != null) {<a name="line.733"></a>
+<span class="sourceLineNo">734</span>                // do not overwrite a live entry<a name="line.734"></a>
+<span class="sourceLineNo">735</span>                return e;<a name="line.735"></a>
+<span class="sourceLineNo">736</span>            } else {<a name="line.736"></a>
+<span class="sourceLineNo">737</span>                cache[pos] = e;<a name="line.737"></a>
+<span class="sourceLineNo">738</span>                return e2;<a name="line.738"></a>
+<span class="sourceLineNo">739</span>            }<a name="line.739"></a>
+<span class="sourceLineNo">740</span>        }<a name="line.740"></a>
+<span class="sourceLineNo">741</span><a name="line.741"></a>
+<span class="sourceLineNo">742</span>        /** Note an entry that is about to be overwritten.<a name="line.742"></a>
+<span class="sourceLineNo">743</span>         *  If it is not live, quietly replace it by null.<a name="line.743"></a>
+<span class="sourceLineNo">744</span>         *  If it is an actual null, increment cacheLoad,<a name="line.744"></a>
+<span class="sourceLineNo">745</span>         *  because the caller is going to store something<a name="line.745"></a>
+<span class="sourceLineNo">746</span>         *  in its place.<a name="line.746"></a>
+<span class="sourceLineNo">747</span>         */<a name="line.747"></a>
+<span class="sourceLineNo">748</span>        private &lt;T&gt; Entry&lt;T&gt; overwrittenEntry(Entry&lt;T&gt; e2) {<a name="line.748"></a>
+<span class="sourceLineNo">749</span>            if (e2 == null)  cacheLoad += 1;<a name="line.749"></a>
+<span class="sourceLineNo">750</span>            else if (e2.isLive())  return e2;<a name="line.750"></a>
+<span class="sourceLineNo">751</span>            return null;<a name="line.751"></a>
+<span class="sourceLineNo">752</span>        }<a name="line.752"></a>
+<span class="sourceLineNo">753</span><a name="line.753"></a>
+<span class="sourceLineNo">754</span>        /** Percent loading of cache before resize. */<a name="line.754"></a>
+<span class="sourceLineNo">755</span>        private static final int CACHE_LOAD_LIMIT = 67;  // 0..100<a name="line.755"></a>
+<span class="sourceLineNo">756</span>        /** Maximum number of probes to attempt. */<a name="line.756"></a>
+<span class="sourceLineNo">757</span>        private static final int PROBE_LIMIT      =  6;       // 1..<a name="line.757"></a>
+<span class="sourceLineNo">758</span>        // N.B.  Set PROBE_LIMIT=0 to disable all fast paths.<a name="line.758"></a>
+<span class="sourceLineNo">759</span>    }<a name="line.759"></a>
+<span class="sourceLineNo">760</span>}<a name="line.760"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

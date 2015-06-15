@@ -1,0 +1,231 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.nio.file;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.Iterator;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.Closeable;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.IOException;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * An object to iterate over the entries in a directory. A directory stream<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * allows for the convenient use of the for-each construct to iterate over a<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * directory.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt; &lt;b&gt; While {@code DirectoryStream} extends {@code Iterable}, it is not a<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * general-purpose {@code Iterable} as it supports only a single {@code<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * Iterator}; invoking the {@link #iterator iterator} method to obtain a second<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * or subsequent iterator throws {@code IllegalStateException}. &lt;/b&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt; An important property of the directory stream's {@code Iterator} is that<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * its {@link Iterator#hasNext() hasNext} method is guaranteed to read-ahead by<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * at least one element. If {@code hasNext} method returns {@code true}, and is<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * followed by a call to the {@code next} method, it is guaranteed that the<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * {@code next} method will not throw an exception due to an I/O error, or<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * because the stream has been {@link #close closed}. The {@code Iterator} does<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * not support the {@link Iterator#remove remove} operation.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;p&gt; A {@code DirectoryStream} is opened upon creation and is closed by<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * invoking the {@code close} method. Closing a directory stream releases any<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * resources associated with the stream. Failure to close the stream may result<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * in a resource leak. The try-with-resources statement provides a useful<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * construct to ensure that the stream is closed:<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;pre&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *   Path dir = ...<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *   try (DirectoryStream&amp;lt;Path&amp;gt; stream = Files.newDirectoryStream(dir)) {<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *       for (Path entry: stream) {<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *           ...<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *       }<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *   }<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * &lt;/pre&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;p&gt; Once a directory stream is closed, then further access to the directory,<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * using the {@code Iterator}, behaves as if the end of stream has been reached.<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * Due to read-ahead, the {@code Iterator} may return one or more elements<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * after the directory stream has been closed. Once these buffered elements<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * have been read, then subsequent calls to the {@code hasNext} method returns<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * {@code false}, and subsequent calls to the {@code next} method will throw<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * {@code NoSuchElementException}.<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;p&gt; A directory stream is not required to be &lt;i&gt;asynchronously closeable&lt;/i&gt;.<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * If a thread is blocked on the directory stream's iterator reading from the<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * directory, and another thread invokes the {@code close} method, then the<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * second thread may block until the read operation is complete.<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &lt;p&gt; If an I/O error is encountered when accessing the directory then it<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * causes the {@code Iterator}'s {@code hasNext} or {@code next} methods to<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * throw {@link DirectoryIteratorException} with the {@link IOException} as the<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * cause. As stated above, the {@code hasNext} method is guaranteed to<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * read-ahead by at least one element. This means that if {@code hasNext} method<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * returns {@code true}, and is followed by a call to the {@code next} method,<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * then it is guaranteed that the {@code next} method will not fail with a<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * {@code DirectoryIteratorException}.<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;p&gt; The elements returned by the iterator are in no specific order. Some file<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * systems maintain special links to the directory itself and the directory's<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * parent directory. Entries representing these links are not returned by the<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * iterator.<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;p&gt; The iterator is &lt;i&gt;weakly consistent&lt;/i&gt;. It is thread safe but does not<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * freeze the directory while iterating, so it may (or may not) reflect updates<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * to the directory that occur after the {@code DirectoryStream} is created.<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * &lt;p&gt; &lt;b&gt;Usage Examples:&lt;/b&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * Suppose we want a list of the source files in a directory. This example uses<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * both the for-each and try-with-resources constructs.<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * &lt;pre&gt;<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *   List&amp;lt;Path&amp;gt; listSourceFiles(Path dir) throws IOException {<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *       List&amp;lt;Path&amp;gt; result = new ArrayList&amp;lt;&amp;gt;();<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *       try (DirectoryStream&amp;lt;Path&amp;gt; stream = Files.newDirectoryStream(dir, "*.{c,h,cpp,hpp,java}")) {<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *           for (Path entry: stream) {<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *               result.add(entry);<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *           }<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *       } catch (DirectoryIteratorException ex) {<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *           // I/O error encounted during the iteration, the cause is an IOException<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *           throw ex.getCause();<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *       }<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *       return result;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *   }<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * &lt;/pre&gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * @param   &lt;T&gt;     The type of element returned by the iterator<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * @since 1.7<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * @see Files#newDirectoryStream(Path)<a name="line.116"></a>
+<span class="sourceLineNo">117</span> */<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>public interface DirectoryStream&lt;T&gt;<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    extends Closeable, Iterable&lt;T&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span>{<a name="line.121"></a>
+<span class="sourceLineNo">122</span>    /**<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * An interface that is implemented by objects that decide if a directory<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * entry should be accepted or filtered. A {@code Filter} is passed as the<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * parameter to the {@link Files#newDirectoryStream(Path,DirectoryStream.Filter)}<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * method when opening a directory to iterate over the entries in the<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * directory.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     *<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * @param   &lt;T&gt;     the type of the directory entry<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @since 1.7<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     */<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    public static interface Filter&lt;T&gt; {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        /**<a name="line.134"></a>
+<span class="sourceLineNo">135</span>         * Decides if the given directory entry should be accepted or filtered.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>         *<a name="line.136"></a>
+<span class="sourceLineNo">137</span>         * @param   entry<a name="line.137"></a>
+<span class="sourceLineNo">138</span>         *          the directory entry to be tested<a name="line.138"></a>
+<span class="sourceLineNo">139</span>         *<a name="line.139"></a>
+<span class="sourceLineNo">140</span>         * @return  {@code true} if the directory entry should be accepted<a name="line.140"></a>
+<span class="sourceLineNo">141</span>         *<a name="line.141"></a>
+<span class="sourceLineNo">142</span>         * @throws  IOException<a name="line.142"></a>
+<span class="sourceLineNo">143</span>         *          If an I/O error occurs<a name="line.143"></a>
+<span class="sourceLineNo">144</span>         */<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        boolean accept(T entry) throws IOException;<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    }<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>    /**<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * Returns the iterator associated with this {@code DirectoryStream}.<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @return  the iterator associated with this {@code DirectoryStream}<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @throws  IllegalStateException<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *          if this directory stream is closed or the iterator has already<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     *          been returned<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     */<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    @Override<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    Iterator&lt;T&gt; iterator();<a name="line.158"></a>
+<span class="sourceLineNo">159</span>}<a name="line.159"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

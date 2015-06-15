@@ -1,0 +1,326 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.text;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.InvalidObjectException;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.Serializable;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.HashMap;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Map;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.Set;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * An {@code AttributedCharacterIterator} allows iteration through both text and<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * related attribute information.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;p&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * An attribute is a key/value pair, identified by the key.  No two<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * attributes on a given character can have the same key.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;The values for an attribute are immutable, or must not be mutated<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * by clients or storage.  They are always passed by reference, and not<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * cloned.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;p&gt;A &lt;em&gt;run with respect to an attribute&lt;/em&gt; is a maximum text range for<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * which:<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;ul&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;li&gt;the attribute is undefined or {@code null} for the entire range, or<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;li&gt;the attribute value is defined and has the same non-{@code null} value for the<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *     entire range.<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;/ul&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt;A &lt;em&gt;run with respect to a set of attributes&lt;/em&gt; is a maximum text range for<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * which this condition is met for each member attribute.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;p&gt;When getting a run with no explicit attributes specified (i.e.,<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * calling {@link #getRunStart()} and {@link #getRunLimit()}), any<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * contiguous text segments having the same attributes (the same set<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * of attribute/value pairs) are treated as separate runs if the<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * attributes have been given to those text segments separately.<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;p&gt;The returned indexes are limited to the range of the iterator.<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * &lt;p&gt;The returned attribute information is limited to runs that contain<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * the current character.<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;p&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * Attribute keys are instances of {@link AttributedCharacterIterator.Attribute} and its<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * subclasses, such as {@link java.awt.font.TextAttribute}.<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * @see AttributedCharacterIterator.Attribute<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * @see java.awt.font.TextAttribute<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * @see AttributedString<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * @see Annotation<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * @since 1.2<a name="line.76"></a>
+<span class="sourceLineNo">077</span> */<a name="line.77"></a>
+<span class="sourceLineNo">078</span><a name="line.78"></a>
+<span class="sourceLineNo">079</span>public interface AttributedCharacterIterator extends CharacterIterator {<a name="line.79"></a>
+<span class="sourceLineNo">080</span><a name="line.80"></a>
+<span class="sourceLineNo">081</span>    /**<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * Defines attribute keys that are used to identify text attributes. These<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * keys are used in {@code AttributedCharacterIterator} and {@code AttributedString}.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * @see AttributedCharacterIterator<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * @see AttributedString<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * @since 1.2<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     */<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    public static class Attribute implements Serializable {<a name="line.89"></a>
+<span class="sourceLineNo">090</span><a name="line.90"></a>
+<span class="sourceLineNo">091</span>        /**<a name="line.91"></a>
+<span class="sourceLineNo">092</span>         * The name of this {@code Attribute}. The name is used primarily by {@code readResolve}<a name="line.92"></a>
+<span class="sourceLineNo">093</span>         * to look up the corresponding predefined instance when deserializing<a name="line.93"></a>
+<span class="sourceLineNo">094</span>         * an instance.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>         * @serial<a name="line.95"></a>
+<span class="sourceLineNo">096</span>         */<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        private String name;<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>        // table of all instances in this class, used by readResolve<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        private static final Map instanceMap = new HashMap(7);<a name="line.100"></a>
+<span class="sourceLineNo">101</span><a name="line.101"></a>
+<span class="sourceLineNo">102</span>        /**<a name="line.102"></a>
+<span class="sourceLineNo">103</span>         * Constructs an {@code Attribute} with the given name.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>         */<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        protected Attribute(String name) {<a name="line.105"></a>
+<span class="sourceLineNo">106</span>            this.name = name;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>            if (this.getClass() == Attribute.class) {<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                instanceMap.put(name, this);<a name="line.108"></a>
+<span class="sourceLineNo">109</span>            }<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        }<a name="line.110"></a>
+<span class="sourceLineNo">111</span><a name="line.111"></a>
+<span class="sourceLineNo">112</span>        /**<a name="line.112"></a>
+<span class="sourceLineNo">113</span>         * Compares two objects for equality. This version only returns true<a name="line.113"></a>
+<span class="sourceLineNo">114</span>         * for &lt;code&gt;x.equals(y)&lt;/code&gt; if &lt;code&gt;x&lt;/code&gt; and &lt;code&gt;y&lt;/code&gt; refer<a name="line.114"></a>
+<span class="sourceLineNo">115</span>         * to the same object, and guarantees this for all subclasses.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>         */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        public final boolean equals(Object obj) {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>            return super.equals(obj);<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        }<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>        /**<a name="line.121"></a>
+<span class="sourceLineNo">122</span>         * Returns a hash code value for the object. This version is identical to<a name="line.122"></a>
+<span class="sourceLineNo">123</span>         * the one in {@code Object}, but is also final.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>         */<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        public final int hashCode() {<a name="line.125"></a>
+<span class="sourceLineNo">126</span>            return super.hashCode();<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        }<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>        /**<a name="line.129"></a>
+<span class="sourceLineNo">130</span>         * Returns a string representation of the object. This version returns the<a name="line.130"></a>
+<span class="sourceLineNo">131</span>         * concatenation of class name, {@code "("}, a name identifying the attribute<a name="line.131"></a>
+<span class="sourceLineNo">132</span>         * and {@code ")"}.<a name="line.132"></a>
+<span class="sourceLineNo">133</span>         */<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        public String toString() {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>            return getClass().getName() + "(" + name + ")";<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        }<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>        /**<a name="line.138"></a>
+<span class="sourceLineNo">139</span>         * Returns the name of the attribute.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>         */<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        protected String getName() {<a name="line.141"></a>
+<span class="sourceLineNo">142</span>            return name;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        }<a name="line.143"></a>
+<span class="sourceLineNo">144</span><a name="line.144"></a>
+<span class="sourceLineNo">145</span>        /**<a name="line.145"></a>
+<span class="sourceLineNo">146</span>         * Resolves instances being deserialized to the predefined constants.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>         */<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        protected Object readResolve() throws InvalidObjectException {<a name="line.148"></a>
+<span class="sourceLineNo">149</span>            if (this.getClass() != Attribute.class) {<a name="line.149"></a>
+<span class="sourceLineNo">150</span>                throw new InvalidObjectException("subclass didn't correctly implement readResolve");<a name="line.150"></a>
+<span class="sourceLineNo">151</span>            }<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>            Attribute instance = (Attribute) instanceMap.get(getName());<a name="line.153"></a>
+<span class="sourceLineNo">154</span>            if (instance != null) {<a name="line.154"></a>
+<span class="sourceLineNo">155</span>                return instance;<a name="line.155"></a>
+<span class="sourceLineNo">156</span>            } else {<a name="line.156"></a>
+<span class="sourceLineNo">157</span>                throw new InvalidObjectException("unknown attribute name");<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            }<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        }<a name="line.159"></a>
+<span class="sourceLineNo">160</span><a name="line.160"></a>
+<span class="sourceLineNo">161</span>        /**<a name="line.161"></a>
+<span class="sourceLineNo">162</span>         * Attribute key for the language of some text.<a name="line.162"></a>
+<span class="sourceLineNo">163</span>         * &lt;p&gt; Values are instances of {@link java.util.Locale Locale}.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>         * @see java.util.Locale<a name="line.164"></a>
+<span class="sourceLineNo">165</span>         */<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        public static final Attribute LANGUAGE = new Attribute("language");<a name="line.166"></a>
+<span class="sourceLineNo">167</span><a name="line.167"></a>
+<span class="sourceLineNo">168</span>        /**<a name="line.168"></a>
+<span class="sourceLineNo">169</span>         * Attribute key for the reading of some text. In languages where the written form<a name="line.169"></a>
+<span class="sourceLineNo">170</span>         * and the pronunciation of a word are only loosely related (such as Japanese),<a name="line.170"></a>
+<span class="sourceLineNo">171</span>         * it is often necessary to store the reading (pronunciation) along with the<a name="line.171"></a>
+<span class="sourceLineNo">172</span>         * written form.<a name="line.172"></a>
+<span class="sourceLineNo">173</span>         * &lt;p&gt;Values are instances of {@link Annotation} holding instances of {@link String}.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>         * @see Annotation<a name="line.174"></a>
+<span class="sourceLineNo">175</span>         * @see java.lang.String<a name="line.175"></a>
+<span class="sourceLineNo">176</span>         */<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        public static final Attribute READING = new Attribute("reading");<a name="line.177"></a>
+<span class="sourceLineNo">178</span><a name="line.178"></a>
+<span class="sourceLineNo">179</span>        /**<a name="line.179"></a>
+<span class="sourceLineNo">180</span>         * Attribute key for input method segments. Input methods often break<a name="line.180"></a>
+<span class="sourceLineNo">181</span>         * up text into segments, which usually correspond to words.<a name="line.181"></a>
+<span class="sourceLineNo">182</span>         * &lt;p&gt;Values are instances of {@link Annotation} holding a {@code null} reference.<a name="line.182"></a>
+<span class="sourceLineNo">183</span>         * @see Annotation<a name="line.183"></a>
+<span class="sourceLineNo">184</span>         */<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        public static final Attribute INPUT_METHOD_SEGMENT = new Attribute("input_method_segment");<a name="line.185"></a>
+<span class="sourceLineNo">186</span><a name="line.186"></a>
+<span class="sourceLineNo">187</span>        // make sure the serial version doesn't change between compiler versions<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        private static final long serialVersionUID = -9142742483513960612L;<a name="line.188"></a>
+<span class="sourceLineNo">189</span><a name="line.189"></a>
+<span class="sourceLineNo">190</span>    };<a name="line.190"></a>
+<span class="sourceLineNo">191</span><a name="line.191"></a>
+<span class="sourceLineNo">192</span>    /**<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * Returns the index of the first character of the run<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * with respect to all attributes containing the current character.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     *<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * &lt;p&gt;Any contiguous text segments having the same attributes (the<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * same set of attribute/value pairs) are treated as separate runs<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * if the attributes have been given to those text segments separately.<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     */<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    public int getRunStart();<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>    /**<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * Returns the index of the first character of the run<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * with respect to the given {@code attribute} containing the current character.<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     */<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    public int getRunStart(Attribute attribute);<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>    /**<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * Returns the index of the first character of the run<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * with respect to the given {@code attributes} containing the current character.<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     */<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    public int getRunStart(Set&lt;? extends Attribute&gt; attributes);<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>    /**<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * Returns the index of the first character following the run<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * with respect to all attributes containing the current character.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     *<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * &lt;p&gt;Any contiguous text segments having the same attributes (the<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * same set of attribute/value pairs) are treated as separate runs<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * if the attributes have been given to those text segments separately.<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     */<a name="line.221"></a>
+<span class="sourceLineNo">222</span>    public int getRunLimit();<a name="line.222"></a>
+<span class="sourceLineNo">223</span><a name="line.223"></a>
+<span class="sourceLineNo">224</span>    /**<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * Returns the index of the first character following the run<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * with respect to the given {@code attribute} containing the current character.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     */<a name="line.227"></a>
+<span class="sourceLineNo">228</span>    public int getRunLimit(Attribute attribute);<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span>    /**<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * Returns the index of the first character following the run<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * with respect to the given {@code attributes} containing the current character.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     */<a name="line.233"></a>
+<span class="sourceLineNo">234</span>    public int getRunLimit(Set&lt;? extends Attribute&gt; attributes);<a name="line.234"></a>
+<span class="sourceLineNo">235</span><a name="line.235"></a>
+<span class="sourceLineNo">236</span>    /**<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * Returns a map with the attributes defined on the current<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * character.<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     */<a name="line.239"></a>
+<span class="sourceLineNo">240</span>    public Map&lt;Attribute,Object&gt; getAttributes();<a name="line.240"></a>
+<span class="sourceLineNo">241</span><a name="line.241"></a>
+<span class="sourceLineNo">242</span>    /**<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * Returns the value of the named {@code attribute} for the current character.<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * Returns {@code null} if the {@code attribute} is not defined.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     */<a name="line.245"></a>
+<span class="sourceLineNo">246</span>    public Object getAttribute(Attribute attribute);<a name="line.246"></a>
+<span class="sourceLineNo">247</span><a name="line.247"></a>
+<span class="sourceLineNo">248</span>    /**<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * Returns the keys of all attributes defined on the<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * iterator's text range. The set is empty if no<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * attributes are defined.<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     */<a name="line.252"></a>
+<span class="sourceLineNo">253</span>    public Set&lt;Attribute&gt; getAllAttributeKeys();<a name="line.253"></a>
+<span class="sourceLineNo">254</span>};<a name="line.254"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

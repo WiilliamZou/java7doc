@@ -1,0 +1,302 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2007, 2009, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.nio.channels;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.net.InetAddress;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.net.NetworkInterface;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.IOException;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.net.ProtocolFamily;             // javadoc<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.net.StandardProtocolFamily;     // javadoc<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.net.StandardSocketOptions;      // javadoc<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>/**<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * A network channel that supports Internet Protocol (IP) multicasting.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;p&gt; IP multicasting is the transmission of IP datagrams to members of<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * a &lt;em&gt;group&lt;/em&gt; that is zero or more hosts identified by a single destination<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * address.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt; In the case of a channel to an {@link StandardProtocolFamily#INET IPv4} socket,<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * the underlying operating system supports &lt;a href="http://www.ietf.org/rfc/rfc2236.txt"&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;i&gt;RFC&amp;nbsp;2236: Internet Group Management Protocol, Version 2 (IGMPv2)&lt;/i&gt;&lt;/a&gt;.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * It may optionally support source filtering as specified by &lt;a<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * href="http://www.ietf.org/rfc/rfc3376.txt"&gt; &lt;i&gt;RFC&amp;nbsp;3376: Internet Group<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * Management Protocol, Version 3 (IGMPv3)&lt;/i&gt;&lt;/a&gt;.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * For channels to an {@link StandardProtocolFamily#INET6 IPv6} socket, the equivalent<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * standards are &lt;a href="http://www.ietf.org/rfc/rfc2710.txt"&gt; &lt;i&gt;RFC&amp;nbsp;2710:<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * Multicast Listener Discovery (MLD) for IPv6&lt;/i&gt;&lt;/a&gt; and &lt;a<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * href="http://www.ietf.org/rfc/rfc3810.txt"&gt; &lt;i&gt;RFC&amp;nbsp;3810: Multicast Listener<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * Discovery Version 2 (MLDv2) for IPv6&lt;/i&gt;&lt;/a&gt;.<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt; The {@link #join(InetAddress,NetworkInterface)} method is used to<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * join a group and receive all multicast datagrams sent to the group. A channel<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * may join several multicast groups and may join the same group on several<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * {@link NetworkInterface interfaces}. Membership is dropped by invoking the {@link<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * MembershipKey#drop drop} method on the returned {@link MembershipKey}. If the<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * underlying platform supports source filtering then the {@link MembershipKey#block<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * block} and {@link MembershipKey#unblock unblock} methods can be used to block or<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * unblock multicast datagrams from particular source addresses.<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;p&gt; The {@link #join(InetAddress,NetworkInterface,InetAddress)} method<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * is used to begin receiving datagrams sent to a group whose source address matches<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * a given source address. This method throws {@link UnsupportedOperationException}<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * if the underlying platform does not support source filtering.  Membership is<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;em&gt;cumulative&lt;/em&gt; and this method may be invoked again with the same group<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * and interface to allow receiving datagrams from other source addresses. The<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * method returns a {@link MembershipKey} that represents membership to receive<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * datagrams from the given source address. Invoking the key's {@link<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * MembershipKey#drop drop} method drops membership so that datagrams from the<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * source address can no longer be received.<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;h4&gt;Platform dependencies&lt;/h4&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * The multicast implementation is intended to map directly to the native<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * multicasting facility. Consequently, the following items should be considered<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * when developing an application that receives IP multicast datagrams:<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * &lt;ol&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;li&gt;&lt;p&gt; The creation of the channel should specify the {@link ProtocolFamily}<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * that corresponds to the address type of the multicast groups that the channel<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * will join. There is no guarantee that a channel to a socket in one protocol<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * family can join and receive multicast datagrams when the address of the<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * multicast group corresponds to another protocol family. For example, it is<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * implementation specific if a channel to an {@link StandardProtocolFamily#INET6 IPv6}<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * socket can join an {@link StandardProtocolFamily#INET IPv4} multicast group and receive<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * multicast datagrams sent to the group. &lt;/p&gt;&lt;/li&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;li&gt;&lt;p&gt; The channel's socket should be bound to the {@link<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * InetAddress#isAnyLocalAddress wildcard} address. If the socket is bound to<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * a specific address, rather than the wildcard address then it is implementation<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * specific if multicast datagrams are received by the socket. &lt;/p&gt;&lt;/li&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;li&gt;&lt;p&gt; The {@link StandardSocketOptions#SO_REUSEADDR SO_REUSEADDR} option should be<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * enabled prior to {@link NetworkChannel#bind binding} the socket. This is<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * required to allow multiple members of the group to bind to the same<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * address. &lt;/p&gt;&lt;/li&gt;<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * &lt;/ol&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * &lt;p&gt; &lt;b&gt;Usage Example:&lt;/b&gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * &lt;pre&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *     // join multicast group on this interface, and also use this<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *     // interface for outgoing multicast datagrams<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *     NetworkInterface ni = NetworkInterface.getByName("hme0");<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *     DatagramChannel dc = DatagramChannel.open(StandardProtocolFamily.INET)<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *         .setOption(StandardSocketOptions.SO_REUSEADDR, true)<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *         .bind(new InetSocketAddress(5000))<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *         .setOption(StandardSocketOptions.IP_MULTICAST_IF, ni);<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *<a name="line.113"></a>
+<span class="sourceLineNo">114</span> *     InetAddress group = InetAddress.getByName("225.4.5.6");<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *     MembershipKey key = dc.join(group, ni);<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * &lt;/pre&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span> *<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * @since 1.7<a name="line.119"></a>
+<span class="sourceLineNo">120</span> */<a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>public interface MulticastChannel<a name="line.122"></a>
+<span class="sourceLineNo">123</span>    extends NetworkChannel<a name="line.123"></a>
+<span class="sourceLineNo">124</span>{<a name="line.124"></a>
+<span class="sourceLineNo">125</span>    /**<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * Closes this channel.<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     *<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * &lt;p&gt; If the channel is a member of a multicast group then the membership<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * is {@link MembershipKey#drop dropped}. Upon return, the {@link<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * MembershipKey membership-key} will be {@link MembershipKey#isValid<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * invalid}.<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * &lt;p&gt; This method otherwise behaves exactly as specified by the {@link<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * Channel} interface.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @throws  IOException<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *          If an I/O error occurs<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     */<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    @Override void close() throws IOException;<a name="line.139"></a>
+<span class="sourceLineNo">140</span><a name="line.140"></a>
+<span class="sourceLineNo">141</span>    /**<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * Joins a multicast group to begin receiving all datagrams sent to the group,<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * returning a membership key.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * &lt;p&gt; If this channel is currently a member of the group on the given<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * interface to receive all datagrams then the membership key, representing<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * that membership, is returned. Otherwise this channel joins the group and<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * the resulting new membership key is returned. The resulting membership key<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * is not {@link MembershipKey#sourceAddress source-specific}.<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * &lt;p&gt; A multicast channel may join several multicast groups, including<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * the same group on more than one interface. An implementation may impose a<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * limit on the number of groups that may be joined at the same time.<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @param   group<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *          The multicast address to join<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * @param   interf<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *          The network interface on which to join the group<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @return  The membership key<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @throws  IllegalArgumentException<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     *          If the group parameter is not a {@link InetAddress#isMulticastAddress<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     *          multicast} address, or the group parameter is an address type<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     *          that is not supported by this channel<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @throws  IllegalStateException<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *          If the channel already has source-specific membership of the<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     *          group on the interface<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * @throws  UnsupportedOperationException<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *          If the channel's socket is not an Internet Protocol socket<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * @throws  ClosedChannelException<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     *          If this channel is closed<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * @throws  IOException<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *          If an I/O error occurs<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @throws  SecurityException<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *          If a security manager is set, and its<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *          {@link SecurityManager#checkMulticast(InetAddress) checkMulticast}<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *          method denies access to the multiast group<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     */<a name="line.179"></a>
+<span class="sourceLineNo">180</span>    MembershipKey join(InetAddress group, NetworkInterface interf)<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        throws IOException;<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Joins a multicast group to begin receiving datagrams sent to the group<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * from a given source address.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;p&gt; If this channel is currently a member of the group on the given<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * interface to receive datagrams from the given source address then the<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * membership key, representing that membership, is returned. Otherwise this<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * channel joins the group and the resulting new membership key is returned.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * The resulting membership key is {@link MembershipKey#sourceAddress<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * source-specific}.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     *<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * &lt;p&gt; Membership is &lt;em&gt;cumulative&lt;/em&gt; and this method may be invoked<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * again with the same group and interface to allow receiving datagrams sent<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * by other source addresses to the group.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @param   group<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     *          The multicast address to join<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * @param   interf<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     *          The network interface on which to join the group<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * @param   source<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     *          The source address<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     *<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * @return  The membership key<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     *<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * @throws  IllegalArgumentException<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     *          If the group parameter is not a {@link<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     *          InetAddress#isMulticastAddress multicast} address, the<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *          source parameter is not a unicast address, the group<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     *          parameter is an address type that is not supported by this channel,<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     *          or the source parameter is not the same address type as the group<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * @throws  IllegalStateException<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     *          If the channel is currently a member of the group on the given<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *          interface to receive all datagrams<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * @throws  UnsupportedOperationException<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     *          If the channel's socket is not an Internet Protocol socket or<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *          source filtering is not supported<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @throws  ClosedChannelException<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     *          If this channel is closed<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * @throws  IOException<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     *          If an I/O error occurs<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * @throws  SecurityException<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     *          If a security manager is set, and its<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     *          {@link SecurityManager#checkMulticast(InetAddress) checkMulticast}<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     *          method denies access to the multiast group<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     */<a name="line.227"></a>
+<span class="sourceLineNo">228</span>    MembershipKey join(InetAddress group, NetworkInterface interf, InetAddress source)<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        throws IOException;<a name="line.229"></a>
+<span class="sourceLineNo">230</span>}<a name="line.230"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

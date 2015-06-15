@@ -1,0 +1,861 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.xml.validation;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.File;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.net.URL;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.xml.transform.Source;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import javax.xml.transform.stream.StreamSource;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>import org.w3c.dom.ls.LSResourceResolver;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import org.xml.sax.ErrorHandler;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import org.xml.sax.SAXException;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import org.xml.sax.SAXNotRecognizedException;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import org.xml.sax.SAXNotSupportedException;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>/**<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * Factory that creates {@link Schema} objects&amp;#x2E; Entry-point to<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * the validation API.<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;p&gt;<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * {@link SchemaFactory} is a schema compiler. It reads external<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * representations of schemas and prepares them for validation.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;p&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * The {@link SchemaFactory} class is not thread-safe. In other words,<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * it is the application's responsibility to ensure that at most<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * one thread is using a {@link SchemaFactory} object at any<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * given moment. Implementations are encouraged to mark methods<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * as &lt;code&gt;synchronized&lt;/code&gt; to protect themselves from broken clients.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;p&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * {@link SchemaFactory} is not re-entrant. While one of the<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;code&gt;newSchema&lt;/code&gt; methods is being invoked, applications<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * may not attempt to recursively invoke the &lt;code&gt;newSchema&lt;/code&gt; method,<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * even from the same thread.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;h2&gt;&lt;a name="schemaLanguage"&gt;&lt;/a&gt;Schema Language&lt;/h2&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * &lt;p&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * This spec uses a namespace URI to designate a schema language.<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * The following table shows the values defined by this specification.<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * &lt;p&gt;<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * To be compliant with the spec, the implementation<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * is only required to support W3C XML Schema 1.0. However,<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * if it chooses to support other schema languages listed here,<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * it must conform to the relevant behaviors described in this spec.<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;p&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * Schema languages not listed here are expected to<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * introduce their own URIs to represent themselves.<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * The {@link SchemaFactory} class is capable of locating other<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * implementations for other schema languages at run-time.<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &lt;p&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * Note that because the XML DTD is strongly tied to the parsing process<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * and has a significant effect on the parsing process, it is impossible<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * to define the DTD validation as a process independent from parsing.<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * For this reason, this specification does not define the semantics for<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * the XML DTD. This doesn't prohibit implentors from implementing it<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * in a way they see fit, but &lt;em&gt;users are warned that any DTD<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * validation implemented on this interface necessarily deviate from<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * the XML DTD semantics as defined in the XML 1.0&lt;/em&gt;.<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * &lt;table border="1" cellpadding="2"&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *   &lt;thead&gt;<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *     &lt;tr&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *       &lt;th&gt;value&lt;/th&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *       &lt;th&gt;language&lt;/th&gt;<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *     &lt;/tr&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *   &lt;/thead&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *   &lt;tbody&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *     &lt;tr&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> *       &lt;td&gt;{@link javax.xml.XMLConstants#W3C_XML_SCHEMA_NS_URI} ("&lt;code&gt;http://www.w3.org/2001/XMLSchema&lt;/code&gt;")&lt;/td&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span> *       &lt;td&gt;&lt;a href="http://www.w3.org/TR/xmlschema-1"&gt;W3C XML Schema 1.0&lt;/a&gt;&lt;/td&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> *     &lt;/tr&gt;<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *     &lt;tr&gt;<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *       &lt;td&gt;{@link javax.xml.XMLConstants#RELAXNG_NS_URI} ("&lt;code&gt;http://relaxng.org/ns/structure/1.0&lt;/code&gt;")&lt;/td&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *       &lt;td&gt;&lt;a href="http://www.relaxng.org/"&gt;RELAX NG 1.0&lt;/a&gt;&lt;/td&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *     &lt;/tr&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *   &lt;/tbody&gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * &lt;/table&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * @author  &lt;a href="mailto:Kohsuke.Kawaguchi@Sun.com"&gt;Kohsuke Kawaguchi&lt;/a&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * @author  &lt;a href="mailto:Neeraj.Bajaj@sun.com"&gt;Neeraj Bajaj&lt;/a&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * @since 1.5<a name="line.109"></a>
+<span class="sourceLineNo">110</span> */<a name="line.110"></a>
+<span class="sourceLineNo">111</span>public abstract class SchemaFactory {<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>     private static SecuritySupport ss = new SecuritySupport();<a name="line.113"></a>
+<span class="sourceLineNo">114</span><a name="line.114"></a>
+<span class="sourceLineNo">115</span>    /**<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * &lt;p&gt;Constructor for derived classes.&lt;/p&gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     *<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * &lt;p&gt;The constructor does nothing.&lt;/p&gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     *<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * &lt;p&gt;Derived classes must create {@link SchemaFactory} objects that have<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * &lt;code&gt;null&lt;/code&gt; {@link ErrorHandler} and<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * &lt;code&gt;null&lt;/code&gt; {@link LSResourceResolver}.&lt;/p&gt;<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    protected SchemaFactory() {<a name="line.124"></a>
+<span class="sourceLineNo">125</span>    }<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>    /**<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * &lt;p&gt;Lookup an implementation of the &lt;code&gt;SchemaFactory&lt;/code&gt; that supports the specified<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * schema language and return it.&lt;/p&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * &lt;p&gt;To find a &lt;code&gt;SchemaFactory&lt;/code&gt; object for a given schema language,<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * this method looks the following places in the following order<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * where "the class loader" refers to the context class loader:&lt;/p&gt;<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * &lt;ol&gt;<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *  &lt;li&gt;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     *     If the system property<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *     &lt;code&gt;"javax.xml.validation.SchemaFactory:&lt;i&gt;schemaLanguage&lt;/i&gt;"&lt;/code&gt;<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     *     is present (where &lt;i&gt;schemaLanguage&lt;/i&gt; is the parameter<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *     to this method), then its value is read<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *     as a class name. The method will try to<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *     create a new instance of this class by using the class loader,<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *     and returns it if it is successfully created.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *   &lt;/li&gt;<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *   &lt;li&gt;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *     &lt;code&gt;$java.home/lib/jaxp.properties&lt;/code&gt; is read and<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     *     the value associated with the key being the system property above<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *     is looked for. If present, the value is processed just like above.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     *   &lt;/li&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *   &lt;li&gt;<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *     &lt;p&gt;The class loader is asked for service provider provider-configuration files matching<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     *     &lt;code&gt;javax.xml.validation.SchemaFactory&lt;/code&gt; in the resource directory META-INF/services.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *     See the JAR File Specification for file format and parsing rules.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     *     Each potential service provider is required to implement the method:&lt;/p&gt;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *     &lt;pre&gt;<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     *        {@link #isSchemaLanguageSupported(String schemaLanguage)}<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *     &lt;/pre&gt;<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *     The first service provider found in class loader order that supports the specified schema language is returned.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *   &lt;/li&gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *   &lt;li&gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *     Platform default &lt;code&gt;SchemaFactory&lt;/code&gt; is located<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *     in a implementation specific way. There must be a platform default<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *     &lt;code&gt;SchemaFactory&lt;/code&gt; for W3C XML Schema.<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     *   &lt;/li&gt;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * &lt;/ol&gt;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     *<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * &lt;p&gt;If everything fails, {@link IllegalArgumentException} will be thrown.&lt;/p&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * &lt;p&gt;&lt;strong&gt;Tip for Trouble-shooting:&lt;/strong&gt;&lt;/p&gt;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * &lt;p&gt;See {@link java.util.Properties#load(java.io.InputStream)} for<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * exactly how a property file is parsed. In particular, colons ':'<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * need to be escaped in a property file, so make sure schema language<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * URIs are properly escaped in it. For example:&lt;/p&gt;<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * &lt;pre&gt;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * http\://www.w3.org/2001/XMLSchema=org.acme.foo.XSSchemaFactory<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * &lt;/pre&gt;<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @param schemaLanguage<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *      Specifies the schema language which the returned<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *      SchemaFactory will understand. See<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     *      &lt;a href="#schemaLanguage"&gt;the list of available<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     *      schema languages&lt;/a&gt; for the possible values.<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     *<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * @return New instance of a &lt;code&gt;SchemaFactory&lt;/code&gt;<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     *<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * @throws IllegalArgumentException<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *      If no implementation of the schema language is available.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * @throws NullPointerException<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     *      If the &lt;code&gt;schemaLanguage&lt;/code&gt; parameter is null.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * @see #newInstance(String schemaLanguage, String factoryClassName, ClassLoader classLoader)<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     */<a name="line.191"></a>
+<span class="sourceLineNo">192</span>    public static final SchemaFactory newInstance(String schemaLanguage) {<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        ClassLoader cl;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        cl = ss.getContextClassLoader();<a name="line.194"></a>
+<span class="sourceLineNo">195</span><a name="line.195"></a>
+<span class="sourceLineNo">196</span>        if (cl == null) {<a name="line.196"></a>
+<span class="sourceLineNo">197</span>            //cl = ClassLoader.getSystemClassLoader();<a name="line.197"></a>
+<span class="sourceLineNo">198</span>            //use the current class loader<a name="line.198"></a>
+<span class="sourceLineNo">199</span>            cl = SchemaFactory.class.getClassLoader();<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        }<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>        SchemaFactory f = new SchemaFactoryFinder(cl).newFactory(schemaLanguage);<a name="line.202"></a>
+<span class="sourceLineNo">203</span>        if (f == null) {<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            throw new IllegalArgumentException(<a name="line.204"></a>
+<span class="sourceLineNo">205</span>                    "No SchemaFactory"<a name="line.205"></a>
+<span class="sourceLineNo">206</span>                    + " that implements the schema language specified by: " + schemaLanguage<a name="line.206"></a>
+<span class="sourceLineNo">207</span>                    + " could be loaded");<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        }<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        return f;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    }<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>    /**<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * &lt;p&gt;Obtain a new instance of a &lt;code&gt;SchemaFactory&lt;/code&gt; from class name. &lt;code&gt;SchemaFactory&lt;/code&gt;<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * is returned if specified factory class name supports the specified schema language.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * This function is useful when there are multiple providers in the classpath.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * It gives more control to the application as it can specify which provider<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * should be loaded.&lt;/p&gt;<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * &lt;h2&gt;Tip for Trouble-shooting&lt;/h2&gt;<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * &lt;p&gt;Setting the &lt;code&gt;jaxp.debug&lt;/code&gt; system property will cause<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * this method to print a lot of debug messages<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * to &lt;code&gt;System.err&lt;/code&gt; about what it is doing and where it is looking at.&lt;/p&gt;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     *<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * &lt;p&gt; If you have problems try:&lt;/p&gt;<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * &lt;pre&gt;<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * java -Djaxp.debug=1 YourProgram ....<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * &lt;/pre&gt;<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     *<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * @param schemaLanguage Specifies the schema language which the returned<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     *                          &lt;code&gt;SchemaFactory&lt;/code&gt; will understand. See<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     *                          &lt;a href="#schemaLanguage"&gt;the list of available<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     *                          schema languages&lt;/a&gt; for the possible values.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     *<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * @param factoryClassName fully qualified factory class name that provides implementation of &lt;code&gt;javax.xml.validation.SchemaFactory&lt;/code&gt;.<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     *<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * @param classLoader &lt;code&gt;ClassLoader&lt;/code&gt; used to load the factory class. If &lt;code&gt;null&lt;/code&gt;<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     *                     current &lt;code&gt;Thread&lt;/code&gt;'s context classLoader is used to load the factory class.<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     *<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * @return New instance of a &lt;code&gt;SchemaFactory&lt;/code&gt;<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     *<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * @throws IllegalArgumentException<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     *                   if &lt;code&gt;factoryClassName&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;, or<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     *                   the factory class cannot be loaded, instantiated or doesn't<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     *                   support the schema language specified in &lt;code&gt;schemLanguage&lt;/code&gt;<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     *                   parameter.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * @throws NullPointerException<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     *      If the &lt;code&gt;schemaLanguage&lt;/code&gt; parameter is null.<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     *<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * @see #newInstance(String schemaLanguage)<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     *<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * @since 1.6<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     */<a name="line.253"></a>
+<span class="sourceLineNo">254</span>    public static SchemaFactory newInstance(String schemaLanguage, String factoryClassName, ClassLoader classLoader){<a name="line.254"></a>
+<span class="sourceLineNo">255</span>        ClassLoader cl = classLoader;<a name="line.255"></a>
+<span class="sourceLineNo">256</span><a name="line.256"></a>
+<span class="sourceLineNo">257</span>        if (cl == null) {<a name="line.257"></a>
+<span class="sourceLineNo">258</span>            cl = ss.getContextClassLoader();<a name="line.258"></a>
+<span class="sourceLineNo">259</span>        }<a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>        SchemaFactory f = new SchemaFactoryFinder(cl).createInstance(factoryClassName);<a name="line.261"></a>
+<span class="sourceLineNo">262</span>        if (f == null) {<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            throw new IllegalArgumentException(<a name="line.263"></a>
+<span class="sourceLineNo">264</span>                    "Factory " + factoryClassName<a name="line.264"></a>
+<span class="sourceLineNo">265</span>                    + " could not be loaded to implement the schema language specified by: " + schemaLanguage);<a name="line.265"></a>
+<span class="sourceLineNo">266</span>        }<a name="line.266"></a>
+<span class="sourceLineNo">267</span>        //if this factory supports the given schemalanguage return this factory else thrown exception<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        if(f.isSchemaLanguageSupported(schemaLanguage)){<a name="line.268"></a>
+<span class="sourceLineNo">269</span>            return f;<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        }else{<a name="line.270"></a>
+<span class="sourceLineNo">271</span>            throw new IllegalArgumentException(<a name="line.271"></a>
+<span class="sourceLineNo">272</span>                    "Factory " + f.getClass().getName()<a name="line.272"></a>
+<span class="sourceLineNo">273</span>                    + " does not implement the schema language specified by: " + schemaLanguage);<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        }<a name="line.274"></a>
+<span class="sourceLineNo">275</span><a name="line.275"></a>
+<span class="sourceLineNo">276</span>    }<a name="line.276"></a>
+<span class="sourceLineNo">277</span><a name="line.277"></a>
+<span class="sourceLineNo">278</span>        /**<a name="line.278"></a>
+<span class="sourceLineNo">279</span>         * &lt;p&gt;Is specified schema supported by this &lt;code&gt;SchemaFactory&lt;/code&gt;?&lt;/p&gt;<a name="line.279"></a>
+<span class="sourceLineNo">280</span>         *<a name="line.280"></a>
+<span class="sourceLineNo">281</span>         * @param schemaLanguage Specifies the schema language which the returned &lt;code&gt;SchemaFactory&lt;/code&gt; will understand.<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     *    &lt;code&gt;schemaLanguage&lt;/code&gt; must specify a &lt;a href="#schemaLanguage"&gt;valid&lt;/a&gt; schema language.<a name="line.282"></a>
+<span class="sourceLineNo">283</span>         *<a name="line.283"></a>
+<span class="sourceLineNo">284</span>         * @return &lt;code&gt;true&lt;/code&gt; if &lt;code&gt;SchemaFactory&lt;/code&gt; supports &lt;code&gt;schemaLanguage&lt;/code&gt;, else &lt;code&gt;false&lt;/code&gt;.<a name="line.284"></a>
+<span class="sourceLineNo">285</span>         *<a name="line.285"></a>
+<span class="sourceLineNo">286</span>         * @throws NullPointerException If &lt;code&gt;schemaLanguage&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.<a name="line.286"></a>
+<span class="sourceLineNo">287</span>         * @throws IllegalArgumentException If &lt;code&gt;schemaLanguage.length() == 0&lt;/code&gt;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>         *   or &lt;code&gt;schemaLanguage&lt;/code&gt; does not specify a &lt;a href="#schemaLanguage"&gt;valid&lt;/a&gt; schema language.<a name="line.288"></a>
+<span class="sourceLineNo">289</span>         */<a name="line.289"></a>
+<span class="sourceLineNo">290</span>        public abstract boolean isSchemaLanguageSupported(String schemaLanguage);<a name="line.290"></a>
+<span class="sourceLineNo">291</span><a name="line.291"></a>
+<span class="sourceLineNo">292</span>    /**<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * Look up the value of a feature flag.<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     *<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * &lt;p&gt;The feature name is any fully-qualified URI.  It is<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * possible for a {@link SchemaFactory} to recognize a feature name but<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * temporarily be unable to return its value.<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     *<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * &lt;p&gt;Implementors are free (and encouraged) to invent their own features,<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * using names built on their own URIs.&lt;/p&gt;<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     *<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * @param name The feature name, which is a non-null fully-qualified URI.<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     *<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * @return The current value of the feature (true or false).<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     *<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * @throws SAXNotRecognizedException If the feature<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     *   value can't be assigned or retrieved.<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * @throws SAXNotSupportedException When the<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     *   {@link SchemaFactory} recognizes the feature name but<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     *   cannot determine its value at this time.<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @throws NullPointerException If &lt;code&gt;name&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     *<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * @see #setFeature(String, boolean)<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     */<a name="line.314"></a>
+<span class="sourceLineNo">315</span>    public boolean getFeature(String name)<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        throws SAXNotRecognizedException, SAXNotSupportedException {<a name="line.316"></a>
+<span class="sourceLineNo">317</span><a name="line.317"></a>
+<span class="sourceLineNo">318</span>        if (name == null) {<a name="line.318"></a>
+<span class="sourceLineNo">319</span>                throw new NullPointerException("the name parameter is null");<a name="line.319"></a>
+<span class="sourceLineNo">320</span>        }<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        throw new SAXNotRecognizedException(name);<a name="line.321"></a>
+<span class="sourceLineNo">322</span>    }<a name="line.322"></a>
+<span class="sourceLineNo">323</span><a name="line.323"></a>
+<span class="sourceLineNo">324</span>    /**<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * &lt;p&gt;Set a feature for this &lt;code&gt;SchemaFactory&lt;/code&gt;,<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * {@link Schema}s created by this factory, and by extension,<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * {@link Validator}s and {@link ValidatorHandler}s created by<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * those {@link Schema}s.<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * &lt;/p&gt;<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     *<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * &lt;p&gt;Implementors and developers should pay particular attention<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * to how the special {@link Schema} object returned by {@link<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * #newSchema()} is processed. In some cases, for example, when the<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * &lt;code&gt;SchemaFactory&lt;/code&gt; and the class actually loading the<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * schema come from different implementations, it may not be possible<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * for &lt;code&gt;SchemaFactory&lt;/code&gt; features to be inherited automatically.<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * Developers should<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * make sure that features, such as secure processing, are explicitly<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * set in both places.&lt;/p&gt;<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     *<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * &lt;p&gt;The feature name is any fully-qualified URI. It is<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * possible for a {@link SchemaFactory} to expose a feature value but<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * to be unable to change the current value.&lt;/p&gt;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     *<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * &lt;p&gt;All implementations are required to support the {@link javax.xml.XMLConstants#FEATURE_SECURE_PROCESSING} feature.<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * When the feature is:&lt;/p&gt;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * &lt;ul&gt;<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     *   &lt;li&gt;<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     *     &lt;code&gt;true&lt;/code&gt;: the implementation will limit XML processing to conform to implementation limits.<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     *     Examples include enity expansion limits and XML Schema constructs that would consume large amounts of resources.<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     *     If XML processing is limited for security reasons, it will be reported via a call to the registered<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     *    {@link ErrorHandler#fatalError(SAXParseException exception)}.<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     *     See {@link #setErrorHandler(ErrorHandler errorHandler)}.<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     *   &lt;/li&gt;<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     *   &lt;li&gt;<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     *     &lt;code&gt;false&lt;/code&gt;: the implementation will processing XML according to the XML specifications without<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     *     regard to possible implementation limits.<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     *   &lt;/li&gt;<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * &lt;/ul&gt;<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     *<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * @param name The feature name, which is a non-null fully-qualified URI.<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * @param value The requested value of the feature (true or false).<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     *<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * @throws SAXNotRecognizedException If the feature<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     *   value can't be assigned or retrieved.<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * @throws SAXNotSupportedException When the<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     *   {@link SchemaFactory} recognizes the feature name but<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     *   cannot set the requested value.<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * @throws NullPointerException If &lt;code&gt;name&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     *<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * @see #getFeature(String)<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     */<a name="line.372"></a>
+<span class="sourceLineNo">373</span>    public void setFeature(String name, boolean value)<a name="line.373"></a>
+<span class="sourceLineNo">374</span>        throws SAXNotRecognizedException, SAXNotSupportedException {<a name="line.374"></a>
+<span class="sourceLineNo">375</span><a name="line.375"></a>
+<span class="sourceLineNo">376</span>        if (name == null) {<a name="line.376"></a>
+<span class="sourceLineNo">377</span>                throw new NullPointerException("the name parameter is null");<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        }<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        throw new SAXNotRecognizedException(name);<a name="line.379"></a>
+<span class="sourceLineNo">380</span>    }<a name="line.380"></a>
+<span class="sourceLineNo">381</span><a name="line.381"></a>
+<span class="sourceLineNo">382</span>    /**<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * Set the value of a property.<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     *<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * &lt;p&gt;The property name is any fully-qualified URI.  It is<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * possible for a {@link SchemaFactory} to recognize a property name but<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * to be unable to change the current value.&lt;/p&gt;<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     *<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * &lt;p&gt;<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * All implementations that implement JAXP 1.5 or newer are required to<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * support the {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_DTD} and<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_SCHEMA} properties.<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * &lt;/p&gt;<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * &lt;ul&gt;<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     *   &lt;li&gt;<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     *      &lt;p&gt;Access to external DTDs in Schema files is restricted to the protocols<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     *      specified by the {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_DTD} property.<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     *      If access is denied during the creation of new Schema due to the restriction<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     *      of this property, {@link org.xml.sax.SAXException} will be thrown by the<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     *      {@link #newSchema(Source)} or {@link #newSchema(File)}<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     *      or {@link #newSchema(URL)} or  or {@link #newSchema(Source[])} method.&lt;/p&gt;<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     *<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     *      &lt;p&gt;Access to external DTDs in xml source files is restricted to the protocols<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     *      specified by the {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_DTD} property.<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     *      If access is denied during validation due to the restriction<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     *      of this property, {@link org.xml.sax.SAXException} will be thrown by the<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     *      {@link javax.xml.validation.Validator#validate(Source)} or<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     *      {@link javax.xml.validation.Validator#validate(Source, Result)} method.&lt;/p&gt;<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     *<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     *      &lt;p&gt;Access to external reference set by the schemaLocation attribute is<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     *      restricted to the protocols specified by the<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     *      {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_SCHEMA} property.<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     *      If access is denied during validation due to the restriction of this property,<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     *      {@link org.xml.sax.SAXException} will be thrown by the<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     *      {@link javax.xml.validation.Validator#validate(Source)} or<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     *      {@link javax.xml.validation.Validator#validate(Source, Result)} method.&lt;/p&gt;<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     *<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     *      &lt;p&gt;Access to external reference set by the Import<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     *      and Include element is restricted to the protocols specified by the<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     *      {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_SCHEMA} property.<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     *      If access is denied during the creation of new Schema due to the restriction<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     *      of this property, {@link org.xml.sax.SAXException} will be thrown by the<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     *      {@link #newSchema(Source)} or {@link #newSchema(File)}<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     *      or {@link #newSchema(URL)} or {@link #newSchema(Source[])} method.&lt;/p&gt;<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     *   &lt;/li&gt;<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     * &lt;/ul&gt;<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     *<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     * @param name The property name, which is a non-null fully-qualified URI.<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * @param object The requested value for the property.<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     *<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * @throws SAXNotRecognizedException If the property<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     *   value can't be assigned or retrieved.<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     * @throws SAXNotSupportedException When the<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     *   {@link SchemaFactory} recognizes the property name but<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     *   cannot set the requested value.<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     * @throws NullPointerException If &lt;code&gt;name&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.<a name="line.436"></a>
+<span class="sourceLineNo">437</span>     */<a name="line.437"></a>
+<span class="sourceLineNo">438</span>    public void setProperty(String name, Object object)<a name="line.438"></a>
+<span class="sourceLineNo">439</span>        throws SAXNotRecognizedException, SAXNotSupportedException {<a name="line.439"></a>
+<span class="sourceLineNo">440</span><a name="line.440"></a>
+<span class="sourceLineNo">441</span>        if (name == null) {<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                throw new NullPointerException("the name parameter is null");<a name="line.442"></a>
+<span class="sourceLineNo">443</span>        }<a name="line.443"></a>
+<span class="sourceLineNo">444</span>        throw new SAXNotRecognizedException(name);<a name="line.444"></a>
+<span class="sourceLineNo">445</span>    }<a name="line.445"></a>
+<span class="sourceLineNo">446</span><a name="line.446"></a>
+<span class="sourceLineNo">447</span>    /**<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * Look up the value of a property.<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     *<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * &lt;p&gt;The property name is any fully-qualified URI.  It is<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     * possible for a {@link SchemaFactory} to recognize a property name but<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     * temporarily be unable to return its value.&lt;/p&gt;<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     *<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     * &lt;p&gt;{@link SchemaFactory}s are not required to recognize any specific<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * property names.&lt;/p&gt;<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     *<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     * &lt;p&gt;Implementors are free (and encouraged) to invent their own properties,<a name="line.457"></a>
+<span class="sourceLineNo">458</span>     * using names built on their own URIs.&lt;/p&gt;<a name="line.458"></a>
+<span class="sourceLineNo">459</span>     *<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     * @param name The property name, which is a non-null fully-qualified URI.<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     *<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     * @return The current value of the property.<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     *<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     * @throws SAXNotRecognizedException If the property<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     *   value can't be assigned or retrieved.<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     * @throws SAXNotSupportedException When the<a name="line.466"></a>
+<span class="sourceLineNo">467</span>     *   XMLReader recognizes the property name but<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     *   cannot determine its value at this time.<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     * @throws NullPointerException If &lt;code&gt;name&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;.<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     *<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     * @see #setProperty(String, Object)<a name="line.471"></a>
+<span class="sourceLineNo">472</span>     */<a name="line.472"></a>
+<span class="sourceLineNo">473</span>    public Object getProperty(String name)<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        throws SAXNotRecognizedException, SAXNotSupportedException {<a name="line.474"></a>
+<span class="sourceLineNo">475</span><a name="line.475"></a>
+<span class="sourceLineNo">476</span>        if (name == null) {<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                throw new NullPointerException("the name parameter is null");<a name="line.477"></a>
+<span class="sourceLineNo">478</span>        }<a name="line.478"></a>
+<span class="sourceLineNo">479</span>        throw new SAXNotRecognizedException(name);<a name="line.479"></a>
+<span class="sourceLineNo">480</span>    }<a name="line.480"></a>
+<span class="sourceLineNo">481</span><a name="line.481"></a>
+<span class="sourceLineNo">482</span>    /**<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     * Sets the {@link ErrorHandler} to receive errors encountered<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * during the &lt;code&gt;newSchema&lt;/code&gt; method invocation.<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     *<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     * &lt;p&gt;<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     * Error handler can be used to customize the error handling process<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     * during schema parsing. When an {@link ErrorHandler} is set,<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     * errors found during the parsing of schemas will be first sent<a name="line.489"></a>
+<span class="sourceLineNo">490</span>     * to the {@link ErrorHandler}.<a name="line.490"></a>
+<span class="sourceLineNo">491</span>     *<a name="line.491"></a>
+<span class="sourceLineNo">492</span>     * &lt;p&gt;<a name="line.492"></a>
+<span class="sourceLineNo">493</span>     * The error handler can abort the parsing of a schema immediately<a name="line.493"></a>
+<span class="sourceLineNo">494</span>     * by throwing {@link SAXException} from the handler. Or for example<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     * it can print an error to the screen and try to continue the<a name="line.495"></a>
+<span class="sourceLineNo">496</span>     * processing by returning normally from the {@link ErrorHandler}<a name="line.496"></a>
+<span class="sourceLineNo">497</span>     *<a name="line.497"></a>
+<span class="sourceLineNo">498</span>     * &lt;p&gt;<a name="line.498"></a>
+<span class="sourceLineNo">499</span>     * If any {@link Throwable} (or instances of its derived classes)<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     * is thrown from an {@link ErrorHandler},<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * the caller of the &lt;code&gt;newSchema&lt;/code&gt; method will be thrown<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * the same {@link Throwable} object.<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     *<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * &lt;p&gt;<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     * {@link SchemaFactory} is not allowed to<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     * throw {@link SAXException} without first reporting it to<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     * {@link ErrorHandler}.<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     *<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     * &lt;p&gt;<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     * Applications can call this method even during a {@link Schema}<a name="line.510"></a>
+<span class="sourceLineNo">511</span>     * is being parsed.<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     *<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     * &lt;p&gt;<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     * When the {@link ErrorHandler} is null, the implementation will<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     * behave as if the following {@link ErrorHandler} is set:<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     * &lt;pre&gt;<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * class DraconianErrorHandler implements {@link ErrorHandler} {<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     *     public void fatalError( {@link org.xml.sax.SAXParseException} e ) throws {@link SAXException} {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     *         throw e;<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     *     }<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     *     public void error( {@link org.xml.sax.SAXParseException} e ) throws {@link SAXException} {<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     *         throw e;<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     *     }<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     *     public void warning( {@link org.xml.sax.SAXParseException} e ) throws {@link SAXException} {<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     *         // noop<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     *     }<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     * }<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     * &lt;/pre&gt;<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     *<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     * &lt;p&gt;<a name="line.530"></a>
+<span class="sourceLineNo">531</span>     * When a new {@link SchemaFactory} object is created, initially<a name="line.531"></a>
+<span class="sourceLineNo">532</span>     * this field is set to null. This field will &lt;em&gt;NOT&lt;/em&gt; be<a name="line.532"></a>
+<span class="sourceLineNo">533</span>     * inherited to {@link Schema}s, {@link Validator}s, or<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * {@link ValidatorHandler}s that are created from this {@link SchemaFactory}.<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     *<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * @param errorHandler A new error handler to be set.<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     *   This parameter can be &lt;code&gt;null&lt;/code&gt;.<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     */<a name="line.538"></a>
+<span class="sourceLineNo">539</span>    public abstract void setErrorHandler(ErrorHandler errorHandler);<a name="line.539"></a>
+<span class="sourceLineNo">540</span><a name="line.540"></a>
+<span class="sourceLineNo">541</span>    /**<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * Gets the current {@link ErrorHandler} set to this {@link SchemaFactory}.<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     *<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     * @return<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     *      This method returns the object that was last set through<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     *      the {@link #setErrorHandler(ErrorHandler)} method, or null<a name="line.546"></a>
+<span class="sourceLineNo">547</span>     *      if that method has never been called since this {@link SchemaFactory}<a name="line.547"></a>
+<span class="sourceLineNo">548</span>     *      has created.<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     *<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     * @see #setErrorHandler(ErrorHandler)<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     */<a name="line.551"></a>
+<span class="sourceLineNo">552</span>    public abstract ErrorHandler getErrorHandler();<a name="line.552"></a>
+<span class="sourceLineNo">553</span><a name="line.553"></a>
+<span class="sourceLineNo">554</span>    /**<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     * Sets the {@link LSResourceResolver} to customize<a name="line.555"></a>
+<span class="sourceLineNo">556</span>     * resource resolution when parsing schemas.<a name="line.556"></a>
+<span class="sourceLineNo">557</span>     *<a name="line.557"></a>
+<span class="sourceLineNo">558</span>     * &lt;p&gt;<a name="line.558"></a>
+<span class="sourceLineNo">559</span>     * {@link SchemaFactory} uses a {@link LSResourceResolver}<a name="line.559"></a>
+<span class="sourceLineNo">560</span>     * when it needs to locate external resources while parsing schemas,<a name="line.560"></a>
+<span class="sourceLineNo">561</span>     * although exactly what constitutes "locating external resources" is<a name="line.561"></a>
+<span class="sourceLineNo">562</span>     * up to each schema language. For example, for W3C XML Schema,<a name="line.562"></a>
+<span class="sourceLineNo">563</span>     * this includes files &lt;code&gt;&amp;lt;include&gt;&lt;/code&gt;d or &lt;code&gt;&amp;lt;import&gt;&lt;/code&gt;ed,<a name="line.563"></a>
+<span class="sourceLineNo">564</span>     * and DTD referenced from schema files, etc.<a name="line.564"></a>
+<span class="sourceLineNo">565</span>     *<a name="line.565"></a>
+<span class="sourceLineNo">566</span>     * &lt;p&gt;<a name="line.566"></a>
+<span class="sourceLineNo">567</span>     * Applications can call this method even during a {@link Schema}<a name="line.567"></a>
+<span class="sourceLineNo">568</span>     * is being parsed.<a name="line.568"></a>
+<span class="sourceLineNo">569</span>     *<a name="line.569"></a>
+<span class="sourceLineNo">570</span>     * &lt;p&gt;<a name="line.570"></a>
+<span class="sourceLineNo">571</span>     * When the {@link LSResourceResolver} is null, the implementation will<a name="line.571"></a>
+<span class="sourceLineNo">572</span>     * behave as if the following {@link LSResourceResolver} is set:<a name="line.572"></a>
+<span class="sourceLineNo">573</span>     * &lt;pre&gt;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>     * class DumbDOMResourceResolver implements {@link LSResourceResolver} {<a name="line.574"></a>
+<span class="sourceLineNo">575</span>     *     public {@link org.w3c.dom.ls.LSInput} resolveResource(<a name="line.575"></a>
+<span class="sourceLineNo">576</span>     *         String publicId, String systemId, String baseURI) {<a name="line.576"></a>
+<span class="sourceLineNo">577</span>     *<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     *         return null; // always return null<a name="line.578"></a>
+<span class="sourceLineNo">579</span>     *     }<a name="line.579"></a>
+<span class="sourceLineNo">580</span>     * }<a name="line.580"></a>
+<span class="sourceLineNo">581</span>     * &lt;/pre&gt;<a name="line.581"></a>
+<span class="sourceLineNo">582</span>     *<a name="line.582"></a>
+<span class="sourceLineNo">583</span>     * &lt;p&gt;<a name="line.583"></a>
+<span class="sourceLineNo">584</span>     * If a {@link LSResourceResolver} throws a {@link RuntimeException}<a name="line.584"></a>
+<span class="sourceLineNo">585</span>     *  (or instances of its derived classes),<a name="line.585"></a>
+<span class="sourceLineNo">586</span>     * then the {@link SchemaFactory} will abort the parsing and<a name="line.586"></a>
+<span class="sourceLineNo">587</span>     * the caller of the &lt;code&gt;newSchema&lt;/code&gt; method will receive<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * the same {@link RuntimeException}.<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     *<a name="line.589"></a>
+<span class="sourceLineNo">590</span>     * &lt;p&gt;<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * When a new {@link SchemaFactory} object is created, initially<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * this field is set to null.  This field will &lt;em&gt;NOT&lt;/em&gt; be<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     * inherited to {@link Schema}s, {@link Validator}s, or<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * {@link ValidatorHandler}s that are created from this {@link SchemaFactory}.<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     *<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     * @param   resourceResolver<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     *      A new resource resolver to be set. This parameter can be null.<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     */<a name="line.598"></a>
+<span class="sourceLineNo">599</span>    public abstract void setResourceResolver(LSResourceResolver resourceResolver);<a name="line.599"></a>
+<span class="sourceLineNo">600</span><a name="line.600"></a>
+<span class="sourceLineNo">601</span>    /**<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     * Gets the current {@link LSResourceResolver} set to this {@link SchemaFactory}.<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     *<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * @return<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     *      This method returns the object that was last set through<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     *      the {@link #setResourceResolver(LSResourceResolver)} method, or null<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     *      if that method has never been called since this {@link SchemaFactory}<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     *      has created.<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     *<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     * @see #setErrorHandler(ErrorHandler)<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     */<a name="line.611"></a>
+<span class="sourceLineNo">612</span>    public abstract LSResourceResolver getResourceResolver();<a name="line.612"></a>
+<span class="sourceLineNo">613</span><a name="line.613"></a>
+<span class="sourceLineNo">614</span>    /**<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     * &lt;p&gt;Parses the specified source as a schema and returns it as a schema.&lt;/p&gt;<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     *<a name="line.616"></a>
+<span class="sourceLineNo">617</span>     * &lt;p&gt;This is a convenience method for {@link #newSchema(Source[] schemas)}.&lt;/p&gt;<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     *<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     * @param schema Source that represents a schema.<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     *<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     * @return New &lt;code&gt;Schema&lt;/code&gt; from parsing &lt;code&gt;schema&lt;/code&gt;.<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     *<a name="line.622"></a>
+<span class="sourceLineNo">623</span>     * @throws SAXException If a SAX error occurs during parsing.<a name="line.623"></a>
+<span class="sourceLineNo">624</span>     * @throws NullPointerException if &lt;code&gt;schema&lt;/code&gt; is null.<a name="line.624"></a>
+<span class="sourceLineNo">625</span>     */<a name="line.625"></a>
+<span class="sourceLineNo">626</span>    public Schema newSchema(Source schema) throws SAXException {<a name="line.626"></a>
+<span class="sourceLineNo">627</span>        return newSchema(new Source[]{schema});<a name="line.627"></a>
+<span class="sourceLineNo">628</span>    }<a name="line.628"></a>
+<span class="sourceLineNo">629</span><a name="line.629"></a>
+<span class="sourceLineNo">630</span>    /**<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * &lt;p&gt;Parses the specified &lt;code&gt;File&lt;/code&gt; as a schema and returns it as a &lt;code&gt;Schema&lt;/code&gt;.&lt;/p&gt;<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     *<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     * &lt;p&gt;This is a convenience method for {@link #newSchema(Source schema)}.&lt;/p&gt;<a name="line.633"></a>
+<span class="sourceLineNo">634</span>     *<a name="line.634"></a>
+<span class="sourceLineNo">635</span>     * @param schema File that represents a schema.<a name="line.635"></a>
+<span class="sourceLineNo">636</span>     *<a name="line.636"></a>
+<span class="sourceLineNo">637</span>     * @return New &lt;code&gt;Schema&lt;/code&gt; from parsing &lt;code&gt;schema&lt;/code&gt;.<a name="line.637"></a>
+<span class="sourceLineNo">638</span>     *<a name="line.638"></a>
+<span class="sourceLineNo">639</span>     * @throws SAXException If a SAX error occurs during parsing.<a name="line.639"></a>
+<span class="sourceLineNo">640</span>     * @throws NullPointerException if &lt;code&gt;schema&lt;/code&gt; is null.<a name="line.640"></a>
+<span class="sourceLineNo">641</span>     */<a name="line.641"></a>
+<span class="sourceLineNo">642</span>    public Schema newSchema(File schema) throws SAXException {<a name="line.642"></a>
+<span class="sourceLineNo">643</span>        return newSchema(new StreamSource(schema));<a name="line.643"></a>
+<span class="sourceLineNo">644</span>    }<a name="line.644"></a>
+<span class="sourceLineNo">645</span><a name="line.645"></a>
+<span class="sourceLineNo">646</span>    /**<a name="line.646"></a>
+<span class="sourceLineNo">647</span>     * &lt;p&gt;Parses the specified &lt;code&gt;URL&lt;/code&gt; as a schema and returns it as a &lt;code&gt;Schema&lt;/code&gt;.&lt;/p&gt;<a name="line.647"></a>
+<span class="sourceLineNo">648</span>     *<a name="line.648"></a>
+<span class="sourceLineNo">649</span>     * &lt;p&gt;This is a convenience method for {@link #newSchema(Source schema)}.&lt;/p&gt;<a name="line.649"></a>
+<span class="sourceLineNo">650</span>     *<a name="line.650"></a>
+<span class="sourceLineNo">651</span>     * @param schema &lt;code&gt;URL&lt;/code&gt; that represents a schema.<a name="line.651"></a>
+<span class="sourceLineNo">652</span>     *<a name="line.652"></a>
+<span class="sourceLineNo">653</span>     * @return New &lt;code&gt;Schema&lt;/code&gt; from parsing &lt;code&gt;schema&lt;/code&gt;.<a name="line.653"></a>
+<span class="sourceLineNo">654</span>     *<a name="line.654"></a>
+<span class="sourceLineNo">655</span>     * @throws SAXException If a SAX error occurs during parsing.<a name="line.655"></a>
+<span class="sourceLineNo">656</span>     * @throws NullPointerException if &lt;code&gt;schema&lt;/code&gt; is null.<a name="line.656"></a>
+<span class="sourceLineNo">657</span>     */<a name="line.657"></a>
+<span class="sourceLineNo">658</span>    public Schema newSchema(URL schema) throws SAXException {<a name="line.658"></a>
+<span class="sourceLineNo">659</span>        return newSchema(new StreamSource(schema.toExternalForm()));<a name="line.659"></a>
+<span class="sourceLineNo">660</span>    }<a name="line.660"></a>
+<span class="sourceLineNo">661</span><a name="line.661"></a>
+<span class="sourceLineNo">662</span>    /**<a name="line.662"></a>
+<span class="sourceLineNo">663</span>     * Parses the specified source(s) as a schema and returns it as a schema.<a name="line.663"></a>
+<span class="sourceLineNo">664</span>     *<a name="line.664"></a>
+<span class="sourceLineNo">665</span>     * &lt;p&gt;<a name="line.665"></a>
+<span class="sourceLineNo">666</span>     * The callee will read all the {@link Source}s and combine them into a<a name="line.666"></a>
+<span class="sourceLineNo">667</span>     * single schema. The exact semantics of the combination depends on the schema<a name="line.667"></a>
+<span class="sourceLineNo">668</span>     * language that this {@link SchemaFactory} object is created for.<a name="line.668"></a>
+<span class="sourceLineNo">669</span>     *<a name="line.669"></a>
+<span class="sourceLineNo">670</span>     * &lt;p&gt;<a name="line.670"></a>
+<span class="sourceLineNo">671</span>     * When an {@link ErrorHandler} is set, the callee will report all the errors<a name="line.671"></a>
+<span class="sourceLineNo">672</span>     * found in sources to the handler. If the handler throws an exception, it will<a name="line.672"></a>
+<span class="sourceLineNo">673</span>     * abort the schema compilation and the same exception will be thrown from<a name="line.673"></a>
+<span class="sourceLineNo">674</span>     * this method. Also, after an error is reported to a handler, the callee is allowed<a name="line.674"></a>
+<span class="sourceLineNo">675</span>     * to abort the further processing by throwing it. If an error handler is not set,<a name="line.675"></a>
+<span class="sourceLineNo">676</span>     * the callee will throw the first error it finds in the sources.<a name="line.676"></a>
+<span class="sourceLineNo">677</span>     *<a name="line.677"></a>
+<span class="sourceLineNo">678</span>     * &lt;h2&gt;W3C XML Schema 1.0&lt;/h2&gt;<a name="line.678"></a>
+<span class="sourceLineNo">679</span>     * &lt;p&gt;<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     * The resulting schema contains components from the specified sources.<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     * The same result would be achieved if all these sources were<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     * imported, using appropriate values for schemaLocation and namespace,<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     * into a single schema document with a different targetNamespace<a name="line.683"></a>
+<span class="sourceLineNo">684</span>     * and no components of its own, if the import elements were given<a name="line.684"></a>
+<span class="sourceLineNo">685</span>     * in the same order as the sources.  Section 4.2.3 of the XML Schema<a name="line.685"></a>
+<span class="sourceLineNo">686</span>     * recommendation describes the options processors have in this<a name="line.686"></a>
+<span class="sourceLineNo">687</span>     * regard.  While a processor should be consistent in its treatment of<a name="line.687"></a>
+<span class="sourceLineNo">688</span>     * JAXP schema sources and XML Schema imports, the behaviour between<a name="line.688"></a>
+<span class="sourceLineNo">689</span>     * JAXP-compliant parsers may vary; in particular, parsers may choose<a name="line.689"></a>
+<span class="sourceLineNo">690</span>     * to ignore all but the first &amp;lt;import&gt; for a given namespace,<a name="line.690"></a>
+<span class="sourceLineNo">691</span>     * regardless of information provided in schemaLocation.<a name="line.691"></a>
+<span class="sourceLineNo">692</span>     *<a name="line.692"></a>
+<span class="sourceLineNo">693</span>     * &lt;p&gt;<a name="line.693"></a>
+<span class="sourceLineNo">694</span>     * If the parsed set of schemas includes error(s) as<a name="line.694"></a>
+<span class="sourceLineNo">695</span>     * specified in the section 5.1 of the XML Schema spec, then<a name="line.695"></a>
+<span class="sourceLineNo">696</span>     * the error must be reported to the {@link ErrorHandler}.<a name="line.696"></a>
+<span class="sourceLineNo">697</span>     *<a name="line.697"></a>
+<span class="sourceLineNo">698</span>     * &lt;h2&gt;RELAX NG&lt;/h2&gt;<a name="line.698"></a>
+<span class="sourceLineNo">699</span>     *<a name="line.699"></a>
+<span class="sourceLineNo">700</span>     * &lt;p&gt;For RELAX NG, this method must throw {@link UnsupportedOperationException}<a name="line.700"></a>
+<span class="sourceLineNo">701</span>     * if &lt;code&gt;schemas.length!=1&lt;/code&gt;.<a name="line.701"></a>
+<span class="sourceLineNo">702</span>     *<a name="line.702"></a>
+<span class="sourceLineNo">703</span>     *<a name="line.703"></a>
+<span class="sourceLineNo">704</span>     * @param schemas<a name="line.704"></a>
+<span class="sourceLineNo">705</span>     *      inputs to be parsed. {@link SchemaFactory} is required<a name="line.705"></a>
+<span class="sourceLineNo">706</span>     *      to recognize {@link javax.xml.transform.sax.SAXSource},<a name="line.706"></a>
+<span class="sourceLineNo">707</span>     *      {@link StreamSource},<a name="line.707"></a>
+<span class="sourceLineNo">708</span>     *      {@link javax.xml.transform.stax.StAXSource},<a name="line.708"></a>
+<span class="sourceLineNo">709</span>     *      and {@link javax.xml.transform.dom.DOMSource}.<a name="line.709"></a>
+<span class="sourceLineNo">710</span>     *      Input schemas must be XML documents or<a name="line.710"></a>
+<span class="sourceLineNo">711</span>     *      XML elements and must not be null. For backwards compatibility,<a name="line.711"></a>
+<span class="sourceLineNo">712</span>     *      the results of passing anything other than<a name="line.712"></a>
+<span class="sourceLineNo">713</span>     *      a document or element are implementation-dependent.<a name="line.713"></a>
+<span class="sourceLineNo">714</span>     *      Implementations must either recognize and process the input<a name="line.714"></a>
+<span class="sourceLineNo">715</span>     *      or thrown an IllegalArgumentException.<a name="line.715"></a>
+<span class="sourceLineNo">716</span>     *<a name="line.716"></a>
+<span class="sourceLineNo">717</span>     * @return<a name="line.717"></a>
+<span class="sourceLineNo">718</span>     *      Always return a non-null valid {@link Schema} object.<a name="line.718"></a>
+<span class="sourceLineNo">719</span>     *      Note that when an error has been reported, there is no<a name="line.719"></a>
+<span class="sourceLineNo">720</span>     *      guarantee that the returned {@link Schema} object is<a name="line.720"></a>
+<span class="sourceLineNo">721</span>     *      meaningful.<a name="line.721"></a>
+<span class="sourceLineNo">722</span>     *<a name="line.722"></a>
+<span class="sourceLineNo">723</span>     * @throws SAXException<a name="line.723"></a>
+<span class="sourceLineNo">724</span>     *      If an error is found during processing the specified inputs.<a name="line.724"></a>
+<span class="sourceLineNo">725</span>     *      When an {@link ErrorHandler} is set, errors are reported to<a name="line.725"></a>
+<span class="sourceLineNo">726</span>     *      there first. See {@link #setErrorHandler(ErrorHandler)}.<a name="line.726"></a>
+<span class="sourceLineNo">727</span>     * @throws NullPointerException<a name="line.727"></a>
+<span class="sourceLineNo">728</span>     *      If the &lt;code&gt;schemas&lt;/code&gt; parameter itself is null or<a name="line.728"></a>
+<span class="sourceLineNo">729</span>     *      any item in the array is null.<a name="line.729"></a>
+<span class="sourceLineNo">730</span>     * @throws IllegalArgumentException<a name="line.730"></a>
+<span class="sourceLineNo">731</span>     *      If any item in the array is not recognized by this method.<a name="line.731"></a>
+<span class="sourceLineNo">732</span>     * @throws UnsupportedOperationException<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     *      If the schema language doesn't support this operation.<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     */<a name="line.734"></a>
+<span class="sourceLineNo">735</span>    public abstract Schema newSchema(Source[] schemas) throws SAXException;<a name="line.735"></a>
+<span class="sourceLineNo">736</span><a name="line.736"></a>
+<span class="sourceLineNo">737</span>    /**<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * Creates a special {@link Schema} object.<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     *<a name="line.739"></a>
+<span class="sourceLineNo">740</span>     * &lt;p&gt;The exact semantics of the returned {@link Schema} object<a name="line.740"></a>
+<span class="sourceLineNo">741</span>     * depend on the schema language for which this {@link SchemaFactory}<a name="line.741"></a>
+<span class="sourceLineNo">742</span>     * is created.<a name="line.742"></a>
+<span class="sourceLineNo">743</span>     *<a name="line.743"></a>
+<span class="sourceLineNo">744</span>     * &lt;p&gt;Also, implementations are allowed to use implementation-specific<a name="line.744"></a>
+<span class="sourceLineNo">745</span>     * property/feature to alter the semantics of this method.&lt;/p&gt;<a name="line.745"></a>
+<span class="sourceLineNo">746</span>     *<a name="line.746"></a>
+<span class="sourceLineNo">747</span>     * &lt;p&gt;Implementors and developers should pay particular attention<a name="line.747"></a>
+<span class="sourceLineNo">748</span>     * to how the features set on this {@link SchemaFactory} are<a name="line.748"></a>
+<span class="sourceLineNo">749</span>     * processed by this special {@link Schema}.<a name="line.749"></a>
+<span class="sourceLineNo">750</span>     * In some cases, for example, when the<a name="line.750"></a>
+<span class="sourceLineNo">751</span>     * {@link SchemaFactory} and the class actually loading the<a name="line.751"></a>
+<span class="sourceLineNo">752</span>     * schema come from different implementations, it may not be possible<a name="line.752"></a>
+<span class="sourceLineNo">753</span>     * for {@link SchemaFactory} features to be inherited automatically.<a name="line.753"></a>
+<span class="sourceLineNo">754</span>     * Developers should<a name="line.754"></a>
+<span class="sourceLineNo">755</span>     * make sure that features, such as secure processing, are explicitly<a name="line.755"></a>
+<span class="sourceLineNo">756</span>     * set in both places.&lt;/p&gt;<a name="line.756"></a>
+<span class="sourceLineNo">757</span>     *<a name="line.757"></a>
+<span class="sourceLineNo">758</span>     * &lt;h2&gt;W3C XML Schema 1.0&lt;/h2&gt;<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     * &lt;p&gt;<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     * For XML Schema, this method creates a {@link Schema} object that<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     * performs validation by using location hints specified in documents.<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     *<a name="line.762"></a>
+<span class="sourceLineNo">763</span>     * &lt;p&gt;<a name="line.763"></a>
+<span class="sourceLineNo">764</span>     * The returned {@link Schema} object assumes that if documents<a name="line.764"></a>
+<span class="sourceLineNo">765</span>     * refer to the same URL in the schema location hints,<a name="line.765"></a>
+<span class="sourceLineNo">766</span>     * they will always resolve to the same schema document. This<a name="line.766"></a>
+<span class="sourceLineNo">767</span>     * asusmption allows implementations to reuse parsed results of<a name="line.767"></a>
+<span class="sourceLineNo">768</span>     * schema documents so that multiple validations against the same<a name="line.768"></a>
+<span class="sourceLineNo">769</span>     * schema will run faster.<a name="line.769"></a>
+<span class="sourceLineNo">770</span>     *<a name="line.770"></a>
+<span class="sourceLineNo">771</span>     * &lt;p&gt;<a name="line.771"></a>
+<span class="sourceLineNo">772</span>     * Note that the use of schema location hints introduces a<a name="line.772"></a>
+<span class="sourceLineNo">773</span>     * vulnerability to denial-of-service attacks.<a name="line.773"></a>
+<span class="sourceLineNo">774</span>     *<a name="line.774"></a>
+<span class="sourceLineNo">775</span>     *<a name="line.775"></a>
+<span class="sourceLineNo">776</span>     * &lt;h2&gt;RELAX NG&lt;/h2&gt;<a name="line.776"></a>
+<span class="sourceLineNo">777</span>     * &lt;p&gt;<a name="line.777"></a>
+<span class="sourceLineNo">778</span>     * RELAX NG does not support this operation.<a name="line.778"></a>
+<span class="sourceLineNo">779</span>     *<a name="line.779"></a>
+<span class="sourceLineNo">780</span>     * @return<a name="line.780"></a>
+<span class="sourceLineNo">781</span>     *      Always return non-null valid {@link Schema} object.<a name="line.781"></a>
+<span class="sourceLineNo">782</span>     *<a name="line.782"></a>
+<span class="sourceLineNo">783</span>     * @throws UnsupportedOperationException<a name="line.783"></a>
+<span class="sourceLineNo">784</span>     *      If this operation is not supported by the callee.<a name="line.784"></a>
+<span class="sourceLineNo">785</span>     * @throws SAXException<a name="line.785"></a>
+<span class="sourceLineNo">786</span>     *      If this operation is supported but failed for some reason.<a name="line.786"></a>
+<span class="sourceLineNo">787</span>     */<a name="line.787"></a>
+<span class="sourceLineNo">788</span>    public abstract Schema newSchema() throws SAXException;<a name="line.788"></a>
+<span class="sourceLineNo">789</span>}<a name="line.789"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

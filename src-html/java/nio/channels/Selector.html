@@ -1,0 +1,468 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2004, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.nio.channels;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.Closeable;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.IOException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.nio.channels.spi.SelectorProvider;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Set;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * A multiplexor of {@link SelectableChannel} objects.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt; A selector may be created by invoking the {@link #open open} method of<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * this class, which will use the system's default {@link<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * java.nio.channels.spi.SelectorProvider &lt;/code&gt;selector provider&lt;code&gt;} to<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * create a new selector.  A selector may also be created by invoking the<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * {@link java.nio.channels.spi.SelectorProvider#openSelector openSelector}<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * method of a custom selector provider.  A selector remains open until it is<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * closed via its {@link #close close} method.<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;a name="ks"&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;p&gt; A selectable channel's registration with a selector is represented by a<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * {@link SelectionKey} object.  A selector maintains three sets of selection<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * keys:<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;ul&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *   &lt;li&gt;&lt;p&gt; The &lt;i&gt;key set&lt;/i&gt; contains the keys representing the current<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *   channel registrations of this selector.  This set is returned by the<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *   {@link #keys() keys} method. &lt;/p&gt;&lt;/li&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *   &lt;li&gt;&lt;p&gt; The &lt;i&gt;selected-key set&lt;/i&gt; is the set of keys such that each<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *   key's channel was detected to be ready for at least one of the operations<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *   identified in the key's interest set during a prior selection operation.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *   This set is returned by the {@link #selectedKeys() selectedKeys} method.<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *   The selected-key set is always a subset of the key set. &lt;/p&gt;&lt;/li&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *   &lt;li&gt;&lt;p&gt; The &lt;i&gt;cancelled-key&lt;/i&gt; set is the set of keys that have been<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *   cancelled but whose channels have not yet been deregistered.  This set is<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *   not directly accessible.  The cancelled-key set is always a subset of the<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *   key set. &lt;/p&gt;&lt;/li&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;/ul&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * &lt;p&gt; All three sets are empty in a newly-created selector.<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;p&gt; A key is added to a selector's key set as a side effect of registering a<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * channel via the channel's {@link SelectableChannel#register(Selector,int)<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * register} method.  Cancelled keys are removed from the key set during<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * selection operations.  The key set itself is not directly modifiable.<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &lt;p&gt; A key is added to its selector's cancelled-key set when it is cancelled,<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * whether by closing its channel or by invoking its {@link SelectionKey#cancel<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * cancel} method.  Cancelling a key will cause its channel to be deregistered<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * during the next selection operation, at which time the key will removed from<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * all of the selector's key sets.<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * &lt;a name="sks"&gt;&lt;p&gt; Keys are added to the selected-key set by selection<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * operations.  A key may be removed directly from the selected-key set by<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * invoking the set's {@link java.util.Set#remove(java.lang.Object) remove}<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * method or by invoking the {@link java.util.Iterator#remove() remove} method<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * of an {@link java.util.Iterator &lt;/code&gt;iterator&lt;code&gt;} obtained from the<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * set.  Keys are never removed from the selected-key set in any other way;<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * they are not, in particular, removed as a side effect of selection<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * operations.  Keys may not be added directly to the selected-key set. &lt;/p&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;a name="selop"&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;h4&gt;Selection&lt;/h4&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;p&gt; During each selection operation, keys may be added to and removed from a<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * selector's selected-key set and may be removed from its key and<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * cancelled-key sets.  Selection is performed by the {@link #select()}, {@link<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * #select(long)}, and {@link #selectNow()} methods, and involves three steps:<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * &lt;/p&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * &lt;ol&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *   &lt;li&gt;&lt;p&gt; Each key in the cancelled-key set is removed from each key set of<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *   which it is a member, and its channel is deregistered.  This step leaves<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *   the cancelled-key set empty. &lt;/p&gt;&lt;/li&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *   &lt;li&gt;&lt;p&gt; The underlying operating system is queried for an update as to the<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *   readiness of each remaining channel to perform any of the operations<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *   identified by its key's interest set as of the moment that the selection<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *   operation began.  For a channel that is ready for at least one such<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *   operation, one of the following two actions is performed: &lt;/p&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *<a name="line.113"></a>
+<span class="sourceLineNo">114</span> *   &lt;ol type=a&gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *     &lt;li&gt;&lt;p&gt; If the channel's key is not already in the selected-key set then<a name="line.116"></a>
+<span class="sourceLineNo">117</span> *     it is added to that set and its ready-operation set is modified to<a name="line.117"></a>
+<span class="sourceLineNo">118</span> *     identify exactly those operations for which the channel is now reported<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *     to be ready.  Any readiness information previously recorded in the ready<a name="line.119"></a>
+<span class="sourceLineNo">120</span> *     set is discarded.  &lt;/p&gt;&lt;/li&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span> *<a name="line.121"></a>
+<span class="sourceLineNo">122</span> *     &lt;li&gt;&lt;p&gt; Otherwise the channel's key is already in the selected-key set,<a name="line.122"></a>
+<span class="sourceLineNo">123</span> *     so its ready-operation set is modified to identify any new operations<a name="line.123"></a>
+<span class="sourceLineNo">124</span> *     for which the channel is reported to be ready.  Any readiness<a name="line.124"></a>
+<span class="sourceLineNo">125</span> *     information previously recorded in the ready set is preserved; in other<a name="line.125"></a>
+<span class="sourceLineNo">126</span> *     words, the ready set returned by the underlying system is<a name="line.126"></a>
+<span class="sourceLineNo">127</span> *     bitwise-disjoined into the key's current ready set. &lt;/p&gt;&lt;/li&gt;<a name="line.127"></a>
+<span class="sourceLineNo">128</span> *<a name="line.128"></a>
+<span class="sourceLineNo">129</span> *   &lt;/ol&gt;&lt;/li&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span> *<a name="line.130"></a>
+<span class="sourceLineNo">131</span> *   If all of the keys in the key set at the start of this step have empty<a name="line.131"></a>
+<span class="sourceLineNo">132</span> *   interest sets then neither the selected-key set nor any of the keys'<a name="line.132"></a>
+<span class="sourceLineNo">133</span> *   ready-operation sets will be updated.<a name="line.133"></a>
+<span class="sourceLineNo">134</span> *<a name="line.134"></a>
+<span class="sourceLineNo">135</span> *   &lt;li&gt;&lt;p&gt; If any keys were added to the cancelled-key set while step (2) was<a name="line.135"></a>
+<span class="sourceLineNo">136</span> *   in progress then they are processed as in step (1). &lt;/p&gt;&lt;/li&gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span> *<a name="line.137"></a>
+<span class="sourceLineNo">138</span> * &lt;/ol&gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span> *<a name="line.139"></a>
+<span class="sourceLineNo">140</span> * &lt;p&gt; Whether or not a selection operation blocks to wait for one or more<a name="line.140"></a>
+<span class="sourceLineNo">141</span> * channels to become ready, and if so for how long, is the only essential<a name="line.141"></a>
+<span class="sourceLineNo">142</span> * difference between the three selection methods. &lt;/p&gt;<a name="line.142"></a>
+<span class="sourceLineNo">143</span> *<a name="line.143"></a>
+<span class="sourceLineNo">144</span> *<a name="line.144"></a>
+<span class="sourceLineNo">145</span> * &lt;h4&gt;Concurrency&lt;/h4&gt;<a name="line.145"></a>
+<span class="sourceLineNo">146</span> *<a name="line.146"></a>
+<span class="sourceLineNo">147</span> * &lt;p&gt; Selectors are themselves safe for use by multiple concurrent threads;<a name="line.147"></a>
+<span class="sourceLineNo">148</span> * their key sets, however, are not.<a name="line.148"></a>
+<span class="sourceLineNo">149</span> *<a name="line.149"></a>
+<span class="sourceLineNo">150</span> * &lt;p&gt; The selection operations synchronize on the selector itself, on the key<a name="line.150"></a>
+<span class="sourceLineNo">151</span> * set, and on the selected-key set, in that order.  They also synchronize on<a name="line.151"></a>
+<span class="sourceLineNo">152</span> * the cancelled-key set during steps (1) and (3) above.<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *<a name="line.153"></a>
+<span class="sourceLineNo">154</span> * &lt;p&gt; Changes made to the interest sets of a selector's keys while a<a name="line.154"></a>
+<span class="sourceLineNo">155</span> * selection operation is in progress have no effect upon that operation; they<a name="line.155"></a>
+<span class="sourceLineNo">156</span> * will be seen by the next selection operation.<a name="line.156"></a>
+<span class="sourceLineNo">157</span> *<a name="line.157"></a>
+<span class="sourceLineNo">158</span> * &lt;p&gt; Keys may be cancelled and channels may be closed at any time.  Hence the<a name="line.158"></a>
+<span class="sourceLineNo">159</span> * presence of a key in one or more of a selector's key sets does not imply<a name="line.159"></a>
+<span class="sourceLineNo">160</span> * that the key is valid or that its channel is open.  Application code should<a name="line.160"></a>
+<span class="sourceLineNo">161</span> * be careful to synchronize and check these conditions as necessary if there<a name="line.161"></a>
+<span class="sourceLineNo">162</span> * is any possibility that another thread will cancel a key or close a channel.<a name="line.162"></a>
+<span class="sourceLineNo">163</span> *<a name="line.163"></a>
+<span class="sourceLineNo">164</span> * &lt;p&gt; A thread blocked in one of the {@link #select()} or {@link<a name="line.164"></a>
+<span class="sourceLineNo">165</span> * #select(long)} methods may be interrupted by some other thread in one of<a name="line.165"></a>
+<span class="sourceLineNo">166</span> * three ways:<a name="line.166"></a>
+<span class="sourceLineNo">167</span> *<a name="line.167"></a>
+<span class="sourceLineNo">168</span> * &lt;ul&gt;<a name="line.168"></a>
+<span class="sourceLineNo">169</span> *<a name="line.169"></a>
+<span class="sourceLineNo">170</span> *   &lt;li&gt;&lt;p&gt; By invoking the selector's {@link #wakeup wakeup} method,<a name="line.170"></a>
+<span class="sourceLineNo">171</span> *   &lt;/p&gt;&lt;/li&gt;<a name="line.171"></a>
+<span class="sourceLineNo">172</span> *<a name="line.172"></a>
+<span class="sourceLineNo">173</span> *   &lt;li&gt;&lt;p&gt; By invoking the selector's {@link #close close} method, or<a name="line.173"></a>
+<span class="sourceLineNo">174</span> *   &lt;/p&gt;&lt;/li&gt;<a name="line.174"></a>
+<span class="sourceLineNo">175</span> *<a name="line.175"></a>
+<span class="sourceLineNo">176</span> *   &lt;li&gt;&lt;p&gt; By invoking the blocked thread's {@link<a name="line.176"></a>
+<span class="sourceLineNo">177</span> *   java.lang.Thread#interrupt() interrupt} method, in which case its<a name="line.177"></a>
+<span class="sourceLineNo">178</span> *   interrupt status will be set and the selector's {@link #wakeup wakeup}<a name="line.178"></a>
+<span class="sourceLineNo">179</span> *   method will be invoked. &lt;/p&gt;&lt;/li&gt;<a name="line.179"></a>
+<span class="sourceLineNo">180</span> *<a name="line.180"></a>
+<span class="sourceLineNo">181</span> * &lt;/ul&gt;<a name="line.181"></a>
+<span class="sourceLineNo">182</span> *<a name="line.182"></a>
+<span class="sourceLineNo">183</span> * &lt;p&gt; The {@link #close close} method synchronizes on the selector and all<a name="line.183"></a>
+<span class="sourceLineNo">184</span> * three key sets in the same order as in a selection operation.<a name="line.184"></a>
+<span class="sourceLineNo">185</span> *<a name="line.185"></a>
+<span class="sourceLineNo">186</span> * &lt;a name="ksc"&gt;<a name="line.186"></a>
+<span class="sourceLineNo">187</span> *<a name="line.187"></a>
+<span class="sourceLineNo">188</span> * &lt;p&gt; A selector's key and selected-key sets are not, in general, safe for use<a name="line.188"></a>
+<span class="sourceLineNo">189</span> * by multiple concurrent threads.  If such a thread might modify one of these<a name="line.189"></a>
+<span class="sourceLineNo">190</span> * sets directly then access should be controlled by synchronizing on the set<a name="line.190"></a>
+<span class="sourceLineNo">191</span> * itself.  The iterators returned by these sets' {@link<a name="line.191"></a>
+<span class="sourceLineNo">192</span> * java.util.Set#iterator() iterator} methods are &lt;i&gt;fail-fast:&lt;/i&gt; If the set<a name="line.192"></a>
+<span class="sourceLineNo">193</span> * is modified after the iterator is created, in any way except by invoking the<a name="line.193"></a>
+<span class="sourceLineNo">194</span> * iterator's own {@link java.util.Iterator#remove() remove} method, then a<a name="line.194"></a>
+<span class="sourceLineNo">195</span> * {@link java.util.ConcurrentModificationException} will be thrown. &lt;/p&gt;<a name="line.195"></a>
+<span class="sourceLineNo">196</span> *<a name="line.196"></a>
+<span class="sourceLineNo">197</span> *<a name="line.197"></a>
+<span class="sourceLineNo">198</span> * @author Mark Reinhold<a name="line.198"></a>
+<span class="sourceLineNo">199</span> * @author JSR-51 Expert Group<a name="line.199"></a>
+<span class="sourceLineNo">200</span> * @since 1.4<a name="line.200"></a>
+<span class="sourceLineNo">201</span> *<a name="line.201"></a>
+<span class="sourceLineNo">202</span> * @see SelectableChannel<a name="line.202"></a>
+<span class="sourceLineNo">203</span> * @see SelectionKey<a name="line.203"></a>
+<span class="sourceLineNo">204</span> */<a name="line.204"></a>
+<span class="sourceLineNo">205</span><a name="line.205"></a>
+<span class="sourceLineNo">206</span>public abstract class Selector implements Closeable {<a name="line.206"></a>
+<span class="sourceLineNo">207</span><a name="line.207"></a>
+<span class="sourceLineNo">208</span>    /**<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * Initializes a new instance of this class.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     */<a name="line.210"></a>
+<span class="sourceLineNo">211</span>    protected Selector() { }<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>    /**<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * Opens a selector.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * &lt;p&gt; The new selector is created by invoking the {@link<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * java.nio.channels.spi.SelectorProvider#openSelector openSelector} method<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * of the system-wide default {@link<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * java.nio.channels.spi.SelectorProvider} object.  &lt;/p&gt;<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     *<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * @return  A new selector<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     *<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * @throws  IOException<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     *          If an I/O error occurs<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     */<a name="line.225"></a>
+<span class="sourceLineNo">226</span>    public static Selector open() throws IOException {<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        return SelectorProvider.provider().openSelector();<a name="line.227"></a>
+<span class="sourceLineNo">228</span>    }<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span>    /**<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * Tells whether or not this selector is open.  &lt;/p&gt;<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     *<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if, and only if, this selector is open<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     */<a name="line.234"></a>
+<span class="sourceLineNo">235</span>    public abstract boolean isOpen();<a name="line.235"></a>
+<span class="sourceLineNo">236</span><a name="line.236"></a>
+<span class="sourceLineNo">237</span>    /**<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * Returns the provider that created this channel.  &lt;/p&gt;<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     *<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * @return  The provider that created this channel<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     */<a name="line.241"></a>
+<span class="sourceLineNo">242</span>    public abstract SelectorProvider provider();<a name="line.242"></a>
+<span class="sourceLineNo">243</span><a name="line.243"></a>
+<span class="sourceLineNo">244</span>    /**<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * Returns this selector's key set.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * &lt;p&gt; The key set is not directly modifiable.  A key is removed only after<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * it has been cancelled and its channel has been deregistered.  Any<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * attempt to modify the key set will cause an {@link<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * UnsupportedOperationException} to be thrown.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     *<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * &lt;p&gt; The key set is &lt;a href="#ksc"&gt;not thread-safe&lt;/a&gt;. &lt;/p&gt;<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     *<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * @return  This selector's key set<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     *<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @throws  ClosedSelectorException<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     *          If this selector is closed<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     */<a name="line.258"></a>
+<span class="sourceLineNo">259</span>    public abstract Set&lt;SelectionKey&gt; keys();<a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>    /**<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * Returns this selector's selected-key set.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     *<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * &lt;p&gt; Keys may be removed from, but not directly added to, the<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * selected-key set.  Any attempt to add an object to the key set will<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * cause an {@link UnsupportedOperationException} to be thrown.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     *<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * &lt;p&gt; The selected-key set is &lt;a href="#ksc"&gt;not thread-safe&lt;/a&gt;. &lt;/p&gt;<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     *<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * @return  This selector's selected-key set<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     *<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @throws  ClosedSelectorException<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     *          If this selector is closed<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     */<a name="line.274"></a>
+<span class="sourceLineNo">275</span>    public abstract Set&lt;SelectionKey&gt; selectedKeys();<a name="line.275"></a>
+<span class="sourceLineNo">276</span><a name="line.276"></a>
+<span class="sourceLineNo">277</span>    /**<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * Selects a set of keys whose corresponding channels are ready for I/O<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * operations.<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     *<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * &lt;p&gt; This method performs a non-blocking &lt;a href="#selop"&gt;selection<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * operation&lt;/a&gt;.  If no channels have become selectable since the previous<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * selection operation then this method immediately returns zero.<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     *<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * &lt;p&gt; Invoking this method clears the effect of any previous invocations<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * of the {@link #wakeup wakeup} method.  &lt;/p&gt;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     *<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * @return  The number of keys, possibly zero, whose ready-operation sets<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     *          were updated by the selection operation<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     *<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * @throws  IOException<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     *          If an I/O error occurs<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     *<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * @throws  ClosedSelectorException<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     *          If this selector is closed<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     */<a name="line.296"></a>
+<span class="sourceLineNo">297</span>    public abstract int selectNow() throws IOException;<a name="line.297"></a>
+<span class="sourceLineNo">298</span><a name="line.298"></a>
+<span class="sourceLineNo">299</span>    /**<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * Selects a set of keys whose corresponding channels are ready for I/O<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * operations.<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     *<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * &lt;p&gt; This method performs a blocking &lt;a href="#selop"&gt;selection<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * operation&lt;/a&gt;.  It returns only after at least one channel is selected,<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * this selector's {@link #wakeup wakeup} method is invoked, the current<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * thread is interrupted, or the given timeout period expires, whichever<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * comes first.<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     *<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * &lt;p&gt; This method does not offer real-time guarantees: It schedules the<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * timeout as if by invoking the {@link Object#wait(long)} method. &lt;/p&gt;<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     *<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * @param  timeout  If positive, block for up to &lt;tt&gt;timeout&lt;/tt&gt;<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     *                  milliseconds, more or less, while waiting for a<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     *                  channel to become ready; if zero, block indefinitely;<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     *                  must not be negative<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     *<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * @return  The number of keys, possibly zero,<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     *          whose ready-operation sets were updated<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     *<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * @throws  IOException<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     *          If an I/O error occurs<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     *<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * @throws  ClosedSelectorException<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     *          If this selector is closed<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     *<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * @throws  IllegalArgumentException<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     *          If the value of the timeout argument is negative<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     */<a name="line.328"></a>
+<span class="sourceLineNo">329</span>    public abstract int select(long timeout)<a name="line.329"></a>
+<span class="sourceLineNo">330</span>        throws IOException;<a name="line.330"></a>
+<span class="sourceLineNo">331</span><a name="line.331"></a>
+<span class="sourceLineNo">332</span>    /**<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * Selects a set of keys whose corresponding channels are ready for I/O<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * operations.<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     *<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * &lt;p&gt; This method performs a blocking &lt;a href="#selop"&gt;selection<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * operation&lt;/a&gt;.  It returns only after at least one channel is selected,<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * this selector's {@link #wakeup wakeup} method is invoked, or the current<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * thread is interrupted, whichever comes first.  &lt;/p&gt;<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     *<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * @return  The number of keys, possibly zero,<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     *          whose ready-operation sets were updated<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     *<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * @throws  IOException<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     *          If an I/O error occurs<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     *<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * @throws  ClosedSelectorException<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     *          If this selector is closed<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     */<a name="line.349"></a>
+<span class="sourceLineNo">350</span>    public abstract int select() throws IOException;<a name="line.350"></a>
+<span class="sourceLineNo">351</span><a name="line.351"></a>
+<span class="sourceLineNo">352</span>    /**<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * Causes the first selection operation that has not yet returned to return<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * immediately.<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     *<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * &lt;p&gt; If another thread is currently blocked in an invocation of the<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * {@link #select()} or {@link #select(long)} methods then that invocation<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * will return immediately.  If no selection operation is currently in<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * progress then the next invocation of one of these methods will return<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * immediately unless the {@link #selectNow()} method is invoked in the<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * meantime.  In any case the value returned by that invocation may be<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * non-zero.  Subsequent invocations of the {@link #select()} or {@link<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * #select(long)} methods will block as usual unless this method is invoked<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * again in the meantime.<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     *<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * &lt;p&gt; Invoking this method more than once between two successive selection<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     * operations has the same effect as invoking it just once.  &lt;/p&gt;<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     *<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * @return  This selector<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     */<a name="line.370"></a>
+<span class="sourceLineNo">371</span>    public abstract Selector wakeup();<a name="line.371"></a>
+<span class="sourceLineNo">372</span><a name="line.372"></a>
+<span class="sourceLineNo">373</span>    /**<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * Closes this selector.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     *<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * &lt;p&gt; If a thread is currently blocked in one of this selector's selection<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * methods then it is interrupted as if by invoking the selector's {@link<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     * #wakeup wakeup} method.<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     *<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * &lt;p&gt; Any uncancelled keys still associated with this selector are<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * invalidated, their channels are deregistered, and any other resources<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     * associated with this selector are released.<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     *<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     * &lt;p&gt; If this selector is already closed then invoking this method has no<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * effect.<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     *<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * &lt;p&gt; After a selector is closed, any further attempt to use it, except by<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * invoking this method or the {@link #wakeup wakeup} method, will cause a<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * {@link ClosedSelectorException} to be thrown. &lt;/p&gt;<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     *<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * @throws  IOException<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     *          If an I/O error occurs<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     */<a name="line.393"></a>
+<span class="sourceLineNo">394</span>    public abstract void close() throws IOException;<a name="line.394"></a>
+<span class="sourceLineNo">395</span><a name="line.395"></a>
+<span class="sourceLineNo">396</span>}<a name="line.396"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

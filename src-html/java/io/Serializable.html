@@ -1,0 +1,242 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1996, 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.io;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * Serializability of a class is enabled by the class implementing the<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * java.io.Serializable interface. Classes that do not implement this<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * interface will not have any of their state serialized or<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * deserialized.  All subtypes of a serializable class are themselves<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * serializable.  The serialization interface has no methods or fields<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * and serves only to identify the semantics of being serializable. &lt;p&gt;<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * To allow subtypes of non-serializable classes to be serialized, the<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * subtype may assume responsibility for saving and restoring the<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * state of the supertype's public, protected, and (if accessible)<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * package fields.  The subtype may assume this responsibility only if<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * the class it extends has an accessible no-arg constructor to<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * initialize the class's state.  It is an error to declare a class<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * Serializable if this is not the case.  The error will be detected at<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * runtime. &lt;p&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * During deserialization, the fields of non-serializable classes will<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * be initialized using the public or protected no-arg constructor of<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * the class.  A no-arg constructor must be accessible to the subclass<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * that is serializable.  The fields of serializable subclasses will<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * be restored from the stream. &lt;p&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * When traversing a graph, an object may be encountered that does not<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * support the Serializable interface. In this case the<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * NotSerializableException will be thrown and will identify the class<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * of the non-serializable object. &lt;p&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * Classes that require special handling during the serialization and<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * deserialization process must implement special methods with these exact<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * signatures: &lt;p&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;PRE&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * private void writeObject(java.io.ObjectOutputStream out)<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *     throws IOException<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * private void readObject(java.io.ObjectInputStream in)<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *     throws IOException, ClassNotFoundException;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * private void readObjectNoData()<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *     throws ObjectStreamException;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;/PRE&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * &lt;p&gt;The writeObject method is responsible for writing the state of the<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * object for its particular class so that the corresponding<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * readObject method can restore it.  The default mechanism for saving<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * the Object's fields can be invoked by calling<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * out.defaultWriteObject. The method does not need to concern<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * itself with the state belonging to its superclasses or subclasses.<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * State is saved by writing the individual fields to the<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * ObjectOutputStream using the writeObject method or by using the<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * methods for primitive data types supported by DataOutput.<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * &lt;p&gt;The readObject method is responsible for reading from the stream and<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * restoring the classes fields. It may call in.defaultReadObject to invoke<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * the default mechanism for restoring the object's non-static and<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * non-transient fields.  The defaultReadObject method uses information in<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * the stream to assign the fields of the object saved in the stream with the<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * correspondingly named fields in the current object.  This handles the case<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * when the class has evolved to add new fields. The method does not need to<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * concern itself with the state belonging to its superclasses or subclasses.<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * State is saved by writing the individual fields to the<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * ObjectOutputStream using the writeObject method or by using the<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * methods for primitive data types supported by DataOutput.<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;p&gt;The readObjectNoData method is responsible for initializing the state of<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * the object for its particular class in the event that the serialization<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * stream does not list the given class as a superclass of the object being<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * deserialized.  This may occur in cases where the receiving party uses a<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * different version of the deserialized instance's class than the sending<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * party, and the receiver's version extends classes that are not extended by<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * the sender's version.  This may also occur if the serialization stream has<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * been tampered; hence, readObjectNoData is useful for initializing<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * deserialized objects properly despite a "hostile" or incomplete source<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * stream.<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * &lt;p&gt;Serializable classes that need to designate an alternative object to be<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * used when writing an object to the stream should implement this<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * special method with the exact signature: &lt;p&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * &lt;PRE&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * ANY-ACCESS-MODIFIER Object writeReplace() throws ObjectStreamException;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * &lt;/PRE&gt;&lt;p&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * This writeReplace method is invoked by serialization if the method<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * exists and it would be accessible from a method defined within the<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * class of the object being serialized. Thus, the method can have private,<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * protected and package-private access. Subclass access to this method<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * follows java accessibility rules. &lt;p&gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * Classes that need to designate a replacement when an instance of it<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * is read from the stream should implement this special method with the<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * exact signature.&lt;p&gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * &lt;PRE&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * ANY-ACCESS-MODIFIER Object readResolve() throws ObjectStreamException;<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * &lt;/PRE&gt;&lt;p&gt;<a name="line.122"></a>
+<span class="sourceLineNo">123</span> *<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * This readResolve method follows the same invocation rules and<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * accessibility rules as writeReplace.&lt;p&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span> *<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * The serialization runtime associates with each serializable class a version<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * number, called a serialVersionUID, which is used during deserialization to<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * verify that the sender and receiver of a serialized object have loaded<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * classes for that object that are compatible with respect to serialization.<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * If the receiver has loaded a class for the object that has a different<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * serialVersionUID than that of the corresponding sender's class, then<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * deserialization will result in an {@link InvalidClassException}.  A<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * serializable class can declare its own serialVersionUID explicitly by<a name="line.134"></a>
+<span class="sourceLineNo">135</span> * declaring a field named &lt;code&gt;"serialVersionUID"&lt;/code&gt; that must be static,<a name="line.135"></a>
+<span class="sourceLineNo">136</span> * final, and of type &lt;code&gt;long&lt;/code&gt;:&lt;p&gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span> *<a name="line.137"></a>
+<span class="sourceLineNo">138</span> * &lt;PRE&gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span> * ANY-ACCESS-MODIFIER static final long serialVersionUID = 42L;<a name="line.139"></a>
+<span class="sourceLineNo">140</span> * &lt;/PRE&gt;<a name="line.140"></a>
+<span class="sourceLineNo">141</span> *<a name="line.141"></a>
+<span class="sourceLineNo">142</span> * If a serializable class does not explicitly declare a serialVersionUID, then<a name="line.142"></a>
+<span class="sourceLineNo">143</span> * the serialization runtime will calculate a default serialVersionUID value<a name="line.143"></a>
+<span class="sourceLineNo">144</span> * for that class based on various aspects of the class, as described in the<a name="line.144"></a>
+<span class="sourceLineNo">145</span> * Java(TM) Object Serialization Specification.  However, it is &lt;em&gt;strongly<a name="line.145"></a>
+<span class="sourceLineNo">146</span> * recommended&lt;/em&gt; that all serializable classes explicitly declare<a name="line.146"></a>
+<span class="sourceLineNo">147</span> * serialVersionUID values, since the default serialVersionUID computation is<a name="line.147"></a>
+<span class="sourceLineNo">148</span> * highly sensitive to class details that may vary depending on compiler<a name="line.148"></a>
+<span class="sourceLineNo">149</span> * implementations, and can thus result in unexpected<a name="line.149"></a>
+<span class="sourceLineNo">150</span> * &lt;code&gt;InvalidClassException&lt;/code&gt;s during deserialization.  Therefore, to<a name="line.150"></a>
+<span class="sourceLineNo">151</span> * guarantee a consistent serialVersionUID value across different java compiler<a name="line.151"></a>
+<span class="sourceLineNo">152</span> * implementations, a serializable class must declare an explicit<a name="line.152"></a>
+<span class="sourceLineNo">153</span> * serialVersionUID value.  It is also strongly advised that explicit<a name="line.153"></a>
+<span class="sourceLineNo">154</span> * serialVersionUID declarations use the &lt;code&gt;private&lt;/code&gt; modifier where<a name="line.154"></a>
+<span class="sourceLineNo">155</span> * possible, since such declarations apply only to the immediately declaring<a name="line.155"></a>
+<span class="sourceLineNo">156</span> * class--serialVersionUID fields are not useful as inherited members. Array<a name="line.156"></a>
+<span class="sourceLineNo">157</span> * classes cannot declare an explicit serialVersionUID, so they always have<a name="line.157"></a>
+<span class="sourceLineNo">158</span> * the default computed value, but the requirement for matching<a name="line.158"></a>
+<span class="sourceLineNo">159</span> * serialVersionUID values is waived for array classes.<a name="line.159"></a>
+<span class="sourceLineNo">160</span> *<a name="line.160"></a>
+<span class="sourceLineNo">161</span> * @author  unascribed<a name="line.161"></a>
+<span class="sourceLineNo">162</span> * @see java.io.ObjectOutputStream<a name="line.162"></a>
+<span class="sourceLineNo">163</span> * @see java.io.ObjectInputStream<a name="line.163"></a>
+<span class="sourceLineNo">164</span> * @see java.io.ObjectOutput<a name="line.164"></a>
+<span class="sourceLineNo">165</span> * @see java.io.ObjectInput<a name="line.165"></a>
+<span class="sourceLineNo">166</span> * @see java.io.Externalizable<a name="line.166"></a>
+<span class="sourceLineNo">167</span> * @since   JDK1.1<a name="line.167"></a>
+<span class="sourceLineNo">168</span> */<a name="line.168"></a>
+<span class="sourceLineNo">169</span>public interface Serializable {<a name="line.169"></a>
+<span class="sourceLineNo">170</span>}<a name="line.170"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

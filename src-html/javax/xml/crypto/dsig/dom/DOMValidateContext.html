@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, 2013 Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> * This code is free software; you can redistribute it and/or modify it<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * under the terms of the GNU General Public License version 2 only, as<a name="line.6"></a>
+<span class="sourceLineNo">007</span> * published by the Free Software Foundation.  Oracle designates this<a name="line.7"></a>
+<span class="sourceLineNo">008</span> * particular file as subject to the "Classpath" exception as provided<a name="line.8"></a>
+<span class="sourceLineNo">009</span> * by Oracle in the LICENSE file that accompanied this code.<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> * This code is distributed in the hope that it will be useful, but WITHOUT<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or<a name="line.12"></a>
+<span class="sourceLineNo">013</span> * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License<a name="line.13"></a>
+<span class="sourceLineNo">014</span> * version 2 for more details (a copy is included in the LICENSE file that<a name="line.14"></a>
+<span class="sourceLineNo">015</span> * accompanied this code).<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> * You should have received a copy of the GNU General Public License version<a name="line.17"></a>
+<span class="sourceLineNo">018</span> * 2 along with this work; if not, write to the Free Software Foundation,<a name="line.18"></a>
+<span class="sourceLineNo">019</span> * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA<a name="line.21"></a>
+<span class="sourceLineNo">022</span> * or visit www.oracle.com if you need additional information or have any<a name="line.22"></a>
+<span class="sourceLineNo">023</span> * questions.<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>/*<a name="line.25"></a>
+<span class="sourceLineNo">026</span> * $Id: DOMValidateContext.java,v 1.8 2005/05/10 16:31:14 mullan Exp $<a name="line.26"></a>
+<span class="sourceLineNo">027</span> */<a name="line.27"></a>
+<span class="sourceLineNo">028</span>package javax.xml.crypto.dsig.dom;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.xml.crypto.KeySelector;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.xml.crypto.dom.DOMCryptoContext;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import javax.xml.crypto.dsig.XMLSignature;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import javax.xml.crypto.dsig.XMLSignatureFactory;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import javax.xml.crypto.dsig.XMLValidateContext;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.security.Key;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import org.w3c.dom.Node;<a name="line.36"></a>
+<span class="sourceLineNo">037</span><a name="line.37"></a>
+<span class="sourceLineNo">038</span>/**<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * A DOM-specific {@link XMLValidateContext}. This class contains additional<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * methods to specify the location in a DOM tree where an {@link XMLSignature}<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * is to be unmarshalled and validated from.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;p&gt;Note that the behavior of an unmarshalled &lt;code&gt;XMLSignature&lt;/code&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * is undefined if the contents of the underlying DOM tree are modified by the<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * caller after the &lt;code&gt;XMLSignature&lt;/code&gt; is created.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;p&gt;Also, note that &lt;code&gt;DOMValidateContext&lt;/code&gt; instances can contain<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * information and state specific to the XML signature structure it is<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * used with. The results are unpredictable if a<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;code&gt;DOMValidateContext&lt;/code&gt; is used with different signature structures<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * (for example, you should not use the same &lt;code&gt;DOMValidateContext&lt;/code&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * instance to validate two different {@link XMLSignature} objects).<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * @author Sean Mullan<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * @author JSR 105 Expert Group<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * @since 1.6<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * @see XMLSignatureFactory#unmarshalXMLSignature(XMLValidateContext)<a name="line.57"></a>
+<span class="sourceLineNo">058</span> */<a name="line.58"></a>
+<span class="sourceLineNo">059</span>public class DOMValidateContext extends DOMCryptoContext<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    implements XMLValidateContext {<a name="line.60"></a>
+<span class="sourceLineNo">061</span><a name="line.61"></a>
+<span class="sourceLineNo">062</span>    private Node node;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>    /**<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * Creates a &lt;code&gt;DOMValidateContext&lt;/code&gt; containing the specified key<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * selector and node.<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     *<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * @param ks a key selector for finding a validation key<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @param node the node<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * @throws NullPointerException if &lt;code&gt;ks&lt;/code&gt; or &lt;code&gt;node&lt;/code&gt; is<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     *    &lt;code&gt;null&lt;/code&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     */<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    public DOMValidateContext(KeySelector ks, Node node) {<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        if (ks == null) {<a name="line.74"></a>
+<span class="sourceLineNo">075</span>            throw new NullPointerException("key selector is null");<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        }<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        init(node, ks);<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    }<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>    /**<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * Creates a &lt;code&gt;DOMValidateContext&lt;/code&gt; containing the specified key<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * and node. The validating key will be stored in a<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * {@link KeySelector#singletonKeySelector singleton KeySelector} that<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * is returned when the {@link #getKeySelector getKeySelector}<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * method is called.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     *<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @param validatingKey the validating key<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * @param node the node<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @throws NullPointerException if &lt;code&gt;validatingKey&lt;/code&gt; or<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *    &lt;code&gt;node&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     */<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    public DOMValidateContext(Key validatingKey, Node node) {<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        if (validatingKey == null) {<a name="line.93"></a>
+<span class="sourceLineNo">094</span>            throw new NullPointerException("validatingKey is null");<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        }<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        init(node, KeySelector.singletonKeySelector(validatingKey));<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    }<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    private void init(Node node, KeySelector ks) {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>        if (node == null) {<a name="line.100"></a>
+<span class="sourceLineNo">101</span>            throw new NullPointerException("node is null");<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        }<a name="line.102"></a>
+<span class="sourceLineNo">103</span><a name="line.103"></a>
+<span class="sourceLineNo">104</span>        this.node = node;<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        super.setKeySelector(ks);<a name="line.105"></a>
+<span class="sourceLineNo">106</span>        if (System.getSecurityManager() != null) {<a name="line.106"></a>
+<span class="sourceLineNo">107</span>            super.setProperty("org.jcp.xml.dsig.secureValidation",<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                              Boolean.TRUE);<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        }<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    }<a name="line.110"></a>
+<span class="sourceLineNo">111</span><a name="line.111"></a>
+<span class="sourceLineNo">112</span>    /**<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * Sets the node.<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @param node the node<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * @throws NullPointerException if &lt;code&gt;node&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @see #getNode<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     */<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    public void setNode(Node node) {<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        if (node == null) {<a name="line.120"></a>
+<span class="sourceLineNo">121</span>            throw new NullPointerException();<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        }<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        this.node = node;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    }<a name="line.124"></a>
+<span class="sourceLineNo">125</span><a name="line.125"></a>
+<span class="sourceLineNo">126</span>    /**<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * Returns the node.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     *<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * @return the node (never &lt;code&gt;null&lt;/code&gt;)<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * @see #setNode(Node)<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     */<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    public Node getNode() {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>        return node;<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    }<a name="line.134"></a>
+<span class="sourceLineNo">135</span>}<a name="line.135"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

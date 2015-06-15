@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt.peer;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span><a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.File;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.IOException;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.net.URI;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.Desktop.Action;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * The {@code DesktopPeer} interface provides methods for the operation<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * of open, edit, print, browse and mail with the given URL or file, by<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * launching the associated application.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;p&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * Each platform has an implementation class for this interface.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *<a name="line.40"></a>
+<span class="sourceLineNo">041</span> */<a name="line.41"></a>
+<span class="sourceLineNo">042</span>public interface DesktopPeer {<a name="line.42"></a>
+<span class="sourceLineNo">043</span><a name="line.43"></a>
+<span class="sourceLineNo">044</span>    /**<a name="line.44"></a>
+<span class="sourceLineNo">045</span>     * Returns whether the given action is supported on the current platform.<a name="line.45"></a>
+<span class="sourceLineNo">046</span>     * @param action the action type to be tested if it's supported on the<a name="line.46"></a>
+<span class="sourceLineNo">047</span>     *        current platform.<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * @return {@code true} if the given action is supported on<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     *         the current platform; {@code false} otherwise.<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     */<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    boolean isSupported(Action action);<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /**<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * Launches the associated application to open the given file. The<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * associated application is registered to be the default file viewer for<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * the file type of the given file.<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     *<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * @param file the given file.<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * @throws IOException If the given file has no associated application,<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     *         or the associated application fails to be launched.<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     */<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    void open(File file) throws IOException;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>    /**<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * Launches the associated editor and opens the given file for editing. The<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * associated editor is registered to be the default editor for the file<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * type of the given file.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     *<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @param file the given file.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * @throws IOException If the given file has no associated editor, or<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     *         the associated application fails to be launched.<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     */<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    void edit(File file) throws IOException;<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    /**<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * Prints the given file with the native desktop printing facility, using<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * the associated application's print command.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     *<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * @param file the given file.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * @throws IOException If the given file has no associated application<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     *         that can be used to print it.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     */<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    void print(File file) throws IOException;<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>    /**<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * Launches the mail composing window of the user default mail client,<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * filling the message fields including to, cc, etc, with the values<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * specified by the given mailto URL.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     *<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @param uri represents a mailto URL with specified values of the message.<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *        The syntax of mailto URL is defined by<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *        &lt;a href="http://www.ietf.org/rfc/rfc2368.txt"&gt;RFC2368: The mailto<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     *        URL scheme&lt;/a&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @throws IOException If the user default mail client is not found,<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *         or it fails to be launched.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     */<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    void mail(URI mailtoURL) throws IOException;<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * Launches the user default browser to display the given URI.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @param uri the given URI.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * @throws IOException If the user default browser is not found,<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     *         or it fails to be launched.<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     */<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    void browse(URI url) throws IOException;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>}<a name="line.107"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.util;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.IOException;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * The &lt;tt&gt;Formattable&lt;/tt&gt; interface must be implemented by any class that<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * needs to perform custom formatting using the &lt;tt&gt;'s'&lt;/tt&gt; conversion<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * specifier of {@link java.util.Formatter}.  This interface allows basic<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * control for formatting arbitrary objects.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * For example, the following class prints out different representations of a<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * stock's name depending on the flags and length constraints:<a name="line.37"></a>
+<span class="sourceLineNo">038</span> *<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *   import java.nio.CharBuffer;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *   import java.util.Formatter;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *   import java.util.Formattable;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *   import java.util.Locale;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *   import static java.util.FormattableFlags.*;<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *  ...<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *   public class StockName implements Formattable {<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *       private String symbol, companyName, frenchCompanyName;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *       public StockName(String symbol, String companyName,<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *                        String frenchCompanyName) {<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *           ...<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *       }<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *       ...<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *       public void formatTo(Formatter fmt, int f, int width, int precision) {<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *           StringBuilder sb = new StringBuilder();<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *           // decide form of name<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *           String name = companyName;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *           if (fmt.locale().equals(Locale.FRANCE))<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *               name = frenchCompanyName;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *           boolean alternate = (f &amp; ALTERNATE) == ALTERNATE;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *           boolean usesymbol = alternate || (precision != -1 &amp;&amp; precision &lt; 10);<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *           String out = (usesymbol ? symbol : name);<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *           // apply precision<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *           if (precision == -1 || out.length() &lt; precision) {<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *               // write it all<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *               sb.append(out);<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *           } else {<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *               sb.append(out.substring(0, precision - 1)).append('*');<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *           }<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *           // apply width and justification<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *           int len = sb.length();<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *           if (len &lt; width)<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *               for (int i = 0; i &lt; width - len; i++)<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *                   if ((f &amp; LEFT_JUSTIFY) == LEFT_JUSTIFY)<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *                       sb.append(' ');<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *                   else<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *                       sb.insert(0, ' ');<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *           fmt.format(sb.toString());<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *       }<a name="line.86"></a>
+<span class="sourceLineNo">087</span> *<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *       public String toString() {<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *           return String.format("%s - %s", symbol, companyName);<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *       }<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *   }<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;p&gt; When used in conjunction with the {@link java.util.Formatter}, the above<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * class produces the following output for various format strings.<a name="line.95"></a>
+<span class="sourceLineNo">096</span> *<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> *   Formatter fmt = new Formatter();<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *   StockName sn = new StockName("HUGE", "Huge Fruit, Inc.",<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *                                "Fruit Titanesque, Inc.");<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *   fmt.format("%s", sn);                   //   -&gt; "Huge Fruit, Inc."<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *   fmt.format("%s", sn.toString());        //   -&gt; "HUGE - Huge Fruit, Inc."<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *   fmt.format("%#s", sn);                  //   -&gt; "HUGE"<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *   fmt.format("%-10.8s", sn);              //   -&gt; "HUGE      "<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *   fmt.format("%.12s", sn);                //   -&gt; "Huge Fruit,*"<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *   fmt.format(Locale.FRANCE, "%25s", sn);  //   -&gt; "   Fruit Titanesque, Inc."<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * &lt;p&gt; Formattables are not necessarily safe for multithreaded access.  Thread<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * safety is optional and may be enforced by classes that extend and implement<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * this interface.<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * &lt;p&gt; Unless otherwise specified, passing a &lt;tt&gt;null&lt;/tt&gt; argument to<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * any method in this interface will cause a {@link<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * NullPointerException} to be thrown.<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * @since  1.5<a name="line.117"></a>
+<span class="sourceLineNo">118</span> */<a name="line.118"></a>
+<span class="sourceLineNo">119</span>public interface Formattable {<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>    /**<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * Formats the object using the provided {@link Formatter formatter}.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @param  formatter<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     *         The {@link Formatter formatter}.  Implementing classes may call<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     *         {@link Formatter#out() formatter.out()} or {@link<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     *         Formatter#locale() formatter.locale()} to obtain the {@link<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     *         Appendable} or {@link Locale} used by this<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     *         &lt;tt&gt;formatter&lt;/tt&gt; respectively.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @param  flags<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *         The flags modify the output format.  The value is interpreted as<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *         a bitmask.  Any combination of the following flags may be set:<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *         {@link FormattableFlags#LEFT_JUSTIFY}, {@link<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *         FormattableFlags#UPPERCASE}, and {@link<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     *         FormattableFlags#ALTERNATE}.  If no flags are set, the default<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *         formatting of the implementing class will apply.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     *<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @param  width<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *         The minimum number of characters to be written to the output.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *         If the length of the converted value is less than the<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *         &lt;tt&gt;width&lt;/tt&gt; then the output will be padded by<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *         &lt;tt&gt;'&amp;nbsp;&amp;nbsp;'&lt;/tt&gt; until the total number of characters<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *         equals width.  The padding is at the beginning by default.  If<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *         the {@link FormattableFlags#LEFT_JUSTIFY} flag is set then the<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     *         padding will be at the end.  If &lt;tt&gt;width&lt;/tt&gt; is &lt;tt&gt;-1&lt;/tt&gt;<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *         then there is no minimum.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     *<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * @param  precision<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *         The maximum number of characters to be written to the output.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     *         The precision is applied before the width, thus the output will<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *         be truncated to &lt;tt&gt;precision&lt;/tt&gt; characters even if the<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     *         &lt;tt&gt;width&lt;/tt&gt; is greater than the &lt;tt&gt;precision&lt;/tt&gt;.  If<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *         &lt;tt&gt;precision&lt;/tt&gt; is &lt;tt&gt;-1&lt;/tt&gt; then there is no explicit<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     *         limit on the number of characters.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * @throws  IllegalFormatException<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     *          If any of the parameters are invalid.  For specification of all<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *          possible formatting errors, see the &lt;a<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *          href="../util/Formatter.html#detail"&gt;Details&lt;/a&gt; section of the<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *          formatter class specification.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     */<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    void formatTo(Formatter formatter, int flags, int width, int precision);<a name="line.163"></a>
+<span class="sourceLineNo">164</span>}<a name="line.164"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

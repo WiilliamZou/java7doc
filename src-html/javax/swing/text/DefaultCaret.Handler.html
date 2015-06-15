@@ -1,0 +1,1995 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package javax.swing.text;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.awt.*;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.event.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.datatransfer.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.beans.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.event.ActionEvent;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.event.ActionListener;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.io.*;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import javax.swing.*;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.swing.event.*;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import javax.swing.plaf.*;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.util.EventListener;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import sun.swing.SwingUtilities2;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>/**<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * A default implementation of Caret.  The caret is rendered as<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * a vertical line in the color specified by the CaretColor property<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * of the associated JTextComponent.  It can blink at the rate specified<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * by the BlinkRate property.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;p&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * This implementation expects two sources of asynchronous notification.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * The timer thread fires asynchronously, and causes the caret to simply<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * repaint the most recent bounding box.  The caret also tracks change<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * as the document is modified.  Typically this will happen on the<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * event dispatch thread as a result of some mouse or keyboard event.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * The caret behavior on both synchronous and asynchronous documents updates<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * is controlled by &lt;code&gt;UpdatePolicy&lt;/code&gt; property. The repaint of the<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * new caret location will occur on the event thread in any case, as calls to<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;code&gt;modelToView&lt;/code&gt; are only safe on the event thread.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;p&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * The caret acts as a mouse and focus listener on the text component<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * it has been installed in, and defines the caret semantics based upon<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * those events.  The listener methods can be reimplemented to change the<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * semantics.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * By default, the first mouse button will be used to set focus and caret<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * position.  Dragging the mouse pointer with the first mouse button will<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * sweep out a selection that is contiguous in the model.  If the associated<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * text component is editable, the caret will become visible when focus<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * is gained, and invisible when focus is lost.<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * &lt;p&gt;<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * The Highlighter bound to the associated text component is used to<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * render the selection by default.<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * Selection appearance can be customized by supplying a<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * painter to use for the highlights.  By default a painter is used that<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * will render a solid color as specified in the associated text component<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * in the &lt;code&gt;SelectionColor&lt;/code&gt; property.  This can easily be changed<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * by reimplementing the<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * {@link #getSelectionPainter getSelectionPainter}<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * method.<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;p&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * A customized caret appearance can be achieved by reimplementing<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * the paint method.  If the paint method is changed, the damage method<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * should also be reimplemented to cause a repaint for the area needed<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * to render the caret.  The caret extends the Rectangle class which<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * is used to hold the bounding box for where the caret was last rendered.<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * This enables the caret to repaint in a thread-safe manner when the<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * caret moves without making a call to modelToView which is unstable<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * between model updates and view repair (i.e. the order of delivery<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * to DocumentListeners is not guaranteed).<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;p&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * The magic caret position is set to null when the caret position changes.<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * A timer is used to determine the new location (after the caret change).<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * When the timer fires, if the magic caret position is still null it is<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * reset to the current caret position. Any actions that change<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * the caret position and want the magic caret position to remain the<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * same, must remember the magic caret position, change the cursor, and<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * then set the magic caret position to its original value. This has the<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * benefit that only actions that want the magic caret position to persist<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * (such as open/down) need to know about it.<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * &lt;p&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;strong&gt;Warning:&lt;/strong&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * Serialized objects of this class will not be compatible with<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * future Swing releases. The current serialization support is<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * appropriate for short term storage or RMI between applications running<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * the same version of Swing.  As of 1.4, support for long term storage<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * of all JavaBeans&lt;sup&gt;&lt;font size="-2"&gt;TM&lt;/font&gt;&lt;/sup&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * has been added to the &lt;code&gt;java.beans&lt;/code&gt; package.<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * Please see {@link java.beans.XMLEncoder}.<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * @author  Timothy Prinzing<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * @see     Caret<a name="line.106"></a>
+<span class="sourceLineNo">107</span> */<a name="line.107"></a>
+<span class="sourceLineNo">108</span>public class DefaultCaret extends Rectangle implements Caret, FocusListener, MouseListener, MouseMotionListener {<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span>    /**<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * Indicates that the caret position is to be updated only when<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * document changes are performed on the Event Dispatching Thread.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * @see #setUpdatePolicy<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @see #getUpdatePolicy<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @since 1.5<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    public static final int UPDATE_WHEN_ON_EDT = 0;<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>    /**<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * Indicates that the caret should remain at the same<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * absolute position in the document regardless of any document<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * updates, except when the document length becomes less than<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * the current caret position due to removal. In that case the caret<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * position is adjusted to the end of the document.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     *<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * @see #setUpdatePolicy<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * @see #getUpdatePolicy<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @since 1.5<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     */<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    public static final int NEVER_UPDATE = 1;<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /**<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * Indicates that the caret position is to be &lt;b&gt;always&lt;/b&gt;<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * updated accordingly to the document changes regardless whether<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * the document updates are performed on the Event Dispatching Thread<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * or not.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @see #setUpdatePolicy<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @see #getUpdatePolicy<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * @since 1.5<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     */<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    public static final int ALWAYS_UPDATE = 2;<a name="line.142"></a>
+<span class="sourceLineNo">143</span><a name="line.143"></a>
+<span class="sourceLineNo">144</span>    /**<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * Constructs a default caret.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     */<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    public DefaultCaret() {<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    }<a name="line.148"></a>
+<span class="sourceLineNo">149</span><a name="line.149"></a>
+<span class="sourceLineNo">150</span>    /**<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * Sets the caret movement policy on the document updates. Normally<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * the caret updates its absolute position within the document on<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * insertions occurred before or at the caret position and<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * on removals before the caret position. 'Absolute position'<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * means here the position relative to the start of the document.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * For example if<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * a character is typed within editable text component it is inserted<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * at the caret position and the caret moves to the next absolute<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * position within the document due to insertion and if<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * &lt;code&gt;BACKSPACE&lt;/code&gt; is typed then caret decreases its absolute<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * position due to removal of a character before it. Sometimes<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * it may be useful to turn off the caret position updates so that<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * the caret stays at the same absolute position within the<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * document position regardless of any document updates.<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * &lt;p&gt;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * The following update policies are allowed:<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * &lt;ul&gt;<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     *   &lt;li&gt;&lt;code&gt;NEVER_UPDATE&lt;/code&gt;: the caret stays at the same<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *       absolute position in the document regardless of any document<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *       updates, except when document length becomes less than<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *       the current caret position due to removal. In that case caret<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     *       position is adjusted to the end of the document.<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     *       The caret doesn't try to keep itself visible by scrolling<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *       the associated view when using this policy. &lt;/li&gt;<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *   &lt;li&gt;&lt;code&gt;ALWAYS_UPDATE&lt;/code&gt;: the caret always tracks document<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *       changes. For regular changes it increases its position<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *       if an insertion occurs before or at its current position,<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *       and decreases position if a removal occurs before<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *       its current position. For undo/redo updates it is always<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     *       moved to the position where update occurred. The caret<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     *       also tries to keep itself visible by calling<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     *       &lt;code&gt;adjustVisibility&lt;/code&gt; method.&lt;/li&gt;<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     *   &lt;li&gt;&lt;code&gt;UPDATE_WHEN_ON_EDT&lt;/code&gt;: acts like &lt;code&gt;ALWAYS_UPDATE&lt;/code&gt;<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     *       if the document updates are performed on the Event Dispatching Thread<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     *       and like &lt;code&gt;NEVER_UPDATE&lt;/code&gt; if updates are performed on<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *       other thread. &lt;/li&gt;<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;/ul&gt; &lt;p&gt;<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * The default property value is &lt;code&gt;UPDATE_WHEN_ON_EDT&lt;/code&gt;.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * @param policy one of the following values : &lt;code&gt;UPDATE_WHEN_ON_EDT&lt;/code&gt;,<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * &lt;code&gt;NEVER_UPDATE&lt;/code&gt;, &lt;code&gt;ALWAYS_UPDATE&lt;/code&gt;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * @throws IllegalArgumentException if invalid value is passed<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     *<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * @see #getUpdatePolicy<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * @see #adjustVisibility<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @see #UPDATE_WHEN_ON_EDT<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @see #NEVER_UPDATE<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @see #ALWAYS_UPDATE<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     *<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * @since 1.5<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     */<a name="line.201"></a>
+<span class="sourceLineNo">202</span>    public void setUpdatePolicy(int policy) {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>        updatePolicy = policy;<a name="line.203"></a>
+<span class="sourceLineNo">204</span>    }<a name="line.204"></a>
+<span class="sourceLineNo">205</span><a name="line.205"></a>
+<span class="sourceLineNo">206</span>    /**<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * Gets the caret movement policy on document updates.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     *<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * @return one of the following values : &lt;code&gt;UPDATE_WHEN_ON_EDT&lt;/code&gt;,<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * &lt;code&gt;NEVER_UPDATE&lt;/code&gt;, &lt;code&gt;ALWAYS_UPDATE&lt;/code&gt;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     *<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * @see #setUpdatePolicy<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * @see #UPDATE_WHEN_ON_EDT<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * @see #NEVER_UPDATE<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * @see #ALWAYS_UPDATE<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @since 1.5<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     */<a name="line.218"></a>
+<span class="sourceLineNo">219</span>    public int getUpdatePolicy() {<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        return updatePolicy;<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    }<a name="line.221"></a>
+<span class="sourceLineNo">222</span><a name="line.222"></a>
+<span class="sourceLineNo">223</span>    /**<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * Gets the text editor component that this caret is<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * is bound to.<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     *<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * @return the component<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     */<a name="line.228"></a>
+<span class="sourceLineNo">229</span>    protected final JTextComponent getComponent() {<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        return component;<a name="line.230"></a>
+<span class="sourceLineNo">231</span>    }<a name="line.231"></a>
+<span class="sourceLineNo">232</span><a name="line.232"></a>
+<span class="sourceLineNo">233</span>    /**<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * Cause the caret to be painted.  The repaint<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * area is the bounding box of the caret (i.e.<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * the caret rectangle or &lt;em&gt;this&lt;/em&gt;).<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * &lt;p&gt;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * This method is thread safe, although most Swing methods<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * are not. Please see<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * &lt;A HREF="http://java.sun.com/docs/books/tutorial/uiswing/misc/threads.html"&gt;How<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * to Use Threads&lt;/A&gt; for more information.<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     */<a name="line.242"></a>
+<span class="sourceLineNo">243</span>    protected final synchronized void repaint() {<a name="line.243"></a>
+<span class="sourceLineNo">244</span>        if (component != null) {<a name="line.244"></a>
+<span class="sourceLineNo">245</span>            component.repaint(x, y, width, height);<a name="line.245"></a>
+<span class="sourceLineNo">246</span>        }<a name="line.246"></a>
+<span class="sourceLineNo">247</span>    }<a name="line.247"></a>
+<span class="sourceLineNo">248</span><a name="line.248"></a>
+<span class="sourceLineNo">249</span>    /**<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * Damages the area surrounding the caret to cause<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * it to be repainted in a new location.  If paint()<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * is reimplemented, this method should also be<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * reimplemented.  This method should update the<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * caret bounds (x, y, width, and height).<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     *<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @param r  the current location of the caret<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * @see #paint<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     */<a name="line.258"></a>
+<span class="sourceLineNo">259</span>    protected synchronized void damage(Rectangle r) {<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        if (r != null) {<a name="line.260"></a>
+<span class="sourceLineNo">261</span>            int damageWidth = getCaretWidth(r.height);<a name="line.261"></a>
+<span class="sourceLineNo">262</span>            x = r.x - 4 - (damageWidth &gt;&gt; 1);<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            y = r.y;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>            width = 9 + damageWidth;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>            height = r.height;<a name="line.265"></a>
+<span class="sourceLineNo">266</span>            repaint();<a name="line.266"></a>
+<span class="sourceLineNo">267</span>        }<a name="line.267"></a>
+<span class="sourceLineNo">268</span>    }<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span>    /**<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * Scrolls the associated view (if necessary) to make<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * the caret visible.  Since how this should be done<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * is somewhat of a policy, this method can be<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * reimplemented to change the behavior.  By default<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * the scrollRectToVisible method is called on the<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * associated component.<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     *<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * @param nloc the new position to scroll to<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     */<a name="line.279"></a>
+<span class="sourceLineNo">280</span>    protected void adjustVisibility(Rectangle nloc) {<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        if(component == null) {<a name="line.281"></a>
+<span class="sourceLineNo">282</span>            return;<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        }<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        if (SwingUtilities.isEventDispatchThread()) {<a name="line.284"></a>
+<span class="sourceLineNo">285</span>                component.scrollRectToVisible(nloc);<a name="line.285"></a>
+<span class="sourceLineNo">286</span>        } else {<a name="line.286"></a>
+<span class="sourceLineNo">287</span>            SwingUtilities.invokeLater(new SafeScroller(nloc));<a name="line.287"></a>
+<span class="sourceLineNo">288</span>        }<a name="line.288"></a>
+<span class="sourceLineNo">289</span>    }<a name="line.289"></a>
+<span class="sourceLineNo">290</span><a name="line.290"></a>
+<span class="sourceLineNo">291</span>    /**<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * Gets the painter for the Highlighter.<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     *<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * @return the painter<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     */<a name="line.295"></a>
+<span class="sourceLineNo">296</span>    protected Highlighter.HighlightPainter getSelectionPainter() {<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        return DefaultHighlighter.DefaultPainter;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>    }<a name="line.298"></a>
+<span class="sourceLineNo">299</span><a name="line.299"></a>
+<span class="sourceLineNo">300</span>    /**<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * Tries to set the position of the caret from<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * the coordinates of a mouse event, using viewToModel().<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     *<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * @param e the mouse event<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     */<a name="line.305"></a>
+<span class="sourceLineNo">306</span>    protected void positionCaret(MouseEvent e) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>        Point pt = new Point(e.getX(), e.getY());<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        Position.Bias[] biasRet = new Position.Bias[1];<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        int pos = component.getUI().viewToModel(component, pt, biasRet);<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        if(biasRet[0] == null)<a name="line.310"></a>
+<span class="sourceLineNo">311</span>            biasRet[0] = Position.Bias.Forward;<a name="line.311"></a>
+<span class="sourceLineNo">312</span>        if (pos &gt;= 0) {<a name="line.312"></a>
+<span class="sourceLineNo">313</span>            setDot(pos, biasRet[0]);<a name="line.313"></a>
+<span class="sourceLineNo">314</span>        }<a name="line.314"></a>
+<span class="sourceLineNo">315</span>    }<a name="line.315"></a>
+<span class="sourceLineNo">316</span><a name="line.316"></a>
+<span class="sourceLineNo">317</span>    /**<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * Tries to move the position of the caret from<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * the coordinates of a mouse event, using viewToModel().<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * This will cause a selection if the dot and mark<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * are different.<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     *<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * @param e the mouse event<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     */<a name="line.324"></a>
+<span class="sourceLineNo">325</span>    protected void moveCaret(MouseEvent e) {<a name="line.325"></a>
+<span class="sourceLineNo">326</span>        Point pt = new Point(e.getX(), e.getY());<a name="line.326"></a>
+<span class="sourceLineNo">327</span>        Position.Bias[] biasRet = new Position.Bias[1];<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        int pos = component.getUI().viewToModel(component, pt, biasRet);<a name="line.328"></a>
+<span class="sourceLineNo">329</span>        if(biasRet[0] == null)<a name="line.329"></a>
+<span class="sourceLineNo">330</span>            biasRet[0] = Position.Bias.Forward;<a name="line.330"></a>
+<span class="sourceLineNo">331</span>        if (pos &gt;= 0) {<a name="line.331"></a>
+<span class="sourceLineNo">332</span>            moveDot(pos, biasRet[0]);<a name="line.332"></a>
+<span class="sourceLineNo">333</span>        }<a name="line.333"></a>
+<span class="sourceLineNo">334</span>    }<a name="line.334"></a>
+<span class="sourceLineNo">335</span><a name="line.335"></a>
+<span class="sourceLineNo">336</span>    // --- FocusListener methods --------------------------<a name="line.336"></a>
+<span class="sourceLineNo">337</span><a name="line.337"></a>
+<span class="sourceLineNo">338</span>    /**<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * Called when the component containing the caret gains<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * focus.  This is implemented to set the caret to visible<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * if the component is editable.<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     *<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * @param e the focus event<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * @see FocusListener#focusGained<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     */<a name="line.345"></a>
+<span class="sourceLineNo">346</span>    public void focusGained(FocusEvent e) {<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        if (component.isEnabled()) {<a name="line.347"></a>
+<span class="sourceLineNo">348</span>            if (component.isEditable()) {<a name="line.348"></a>
+<span class="sourceLineNo">349</span>                setVisible(true);<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            }<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            setSelectionVisible(true);<a name="line.351"></a>
+<span class="sourceLineNo">352</span>        }<a name="line.352"></a>
+<span class="sourceLineNo">353</span>    }<a name="line.353"></a>
+<span class="sourceLineNo">354</span><a name="line.354"></a>
+<span class="sourceLineNo">355</span>    /**<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * Called when the component containing the caret loses<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * focus.  This is implemented to set the caret to visibility<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * to false.<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     *<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * @param e the focus event<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * @see FocusListener#focusLost<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     */<a name="line.362"></a>
+<span class="sourceLineNo">363</span>    public void focusLost(FocusEvent e) {<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        setVisible(false);<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        setSelectionVisible(ownsSelection || e.isTemporary());<a name="line.365"></a>
+<span class="sourceLineNo">366</span>    }<a name="line.366"></a>
+<span class="sourceLineNo">367</span><a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>    /**<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * Selects word based on the MouseEvent<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     */<a name="line.371"></a>
+<span class="sourceLineNo">372</span>    private void selectWord(MouseEvent e) {<a name="line.372"></a>
+<span class="sourceLineNo">373</span>        if (selectedWordEvent != null<a name="line.373"></a>
+<span class="sourceLineNo">374</span>            &amp;&amp; selectedWordEvent.getX() == e.getX()<a name="line.374"></a>
+<span class="sourceLineNo">375</span>            &amp;&amp; selectedWordEvent.getY() == e.getY()) {<a name="line.375"></a>
+<span class="sourceLineNo">376</span>            //we already done selection for this<a name="line.376"></a>
+<span class="sourceLineNo">377</span>            return;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        }<a name="line.378"></a>
+<span class="sourceLineNo">379</span>                    Action a = null;<a name="line.379"></a>
+<span class="sourceLineNo">380</span>                    ActionMap map = getComponent().getActionMap();<a name="line.380"></a>
+<span class="sourceLineNo">381</span>                    if (map != null) {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>                        a = map.get(DefaultEditorKit.selectWordAction);<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                    }<a name="line.383"></a>
+<span class="sourceLineNo">384</span>                    if (a == null) {<a name="line.384"></a>
+<span class="sourceLineNo">385</span>                        if (selectWord == null) {<a name="line.385"></a>
+<span class="sourceLineNo">386</span>                            selectWord = new DefaultEditorKit.SelectWordAction();<a name="line.386"></a>
+<span class="sourceLineNo">387</span>                        }<a name="line.387"></a>
+<span class="sourceLineNo">388</span>                        a = selectWord;<a name="line.388"></a>
+<span class="sourceLineNo">389</span>                    }<a name="line.389"></a>
+<span class="sourceLineNo">390</span>                    a.actionPerformed(new ActionEvent(getComponent(),<a name="line.390"></a>
+<span class="sourceLineNo">391</span>                                                      ActionEvent.ACTION_PERFORMED, null, e.getWhen(), e.getModifiers()));<a name="line.391"></a>
+<span class="sourceLineNo">392</span>        selectedWordEvent = e;<a name="line.392"></a>
+<span class="sourceLineNo">393</span>    }<a name="line.393"></a>
+<span class="sourceLineNo">394</span><a name="line.394"></a>
+<span class="sourceLineNo">395</span>    // --- MouseListener methods -----------------------------------<a name="line.395"></a>
+<span class="sourceLineNo">396</span><a name="line.396"></a>
+<span class="sourceLineNo">397</span>    /**<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * Called when the mouse is clicked.  If the click was generated<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * from button1, a double click selects a word,<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * and a triple click the current line.<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     *<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * @param e the mouse event<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * @see MouseListener#mouseClicked<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     */<a name="line.404"></a>
+<span class="sourceLineNo">405</span>    public void mouseClicked(MouseEvent e) {<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        if (getComponent() == null) {<a name="line.406"></a>
+<span class="sourceLineNo">407</span>            return;<a name="line.407"></a>
+<span class="sourceLineNo">408</span>        }<a name="line.408"></a>
+<span class="sourceLineNo">409</span><a name="line.409"></a>
+<span class="sourceLineNo">410</span>        int nclicks = SwingUtilities2.getAdjustedClickCount(getComponent(), e);<a name="line.410"></a>
+<span class="sourceLineNo">411</span><a name="line.411"></a>
+<span class="sourceLineNo">412</span>        if (! e.isConsumed()) {<a name="line.412"></a>
+<span class="sourceLineNo">413</span>            if (SwingUtilities.isLeftMouseButton(e)) {<a name="line.413"></a>
+<span class="sourceLineNo">414</span>                // mouse 1 behavior<a name="line.414"></a>
+<span class="sourceLineNo">415</span>                if(nclicks == 1) {<a name="line.415"></a>
+<span class="sourceLineNo">416</span>                    selectedWordEvent = null;<a name="line.416"></a>
+<span class="sourceLineNo">417</span>                } else if(nclicks == 2<a name="line.417"></a>
+<span class="sourceLineNo">418</span>                          &amp;&amp; SwingUtilities2.canEventAccessSystemClipboard(e)) {<a name="line.418"></a>
+<span class="sourceLineNo">419</span>                    selectWord(e);<a name="line.419"></a>
+<span class="sourceLineNo">420</span>                    selectedWordEvent = null;<a name="line.420"></a>
+<span class="sourceLineNo">421</span>                } else if(nclicks == 3<a name="line.421"></a>
+<span class="sourceLineNo">422</span>                          &amp;&amp; SwingUtilities2.canEventAccessSystemClipboard(e)) {<a name="line.422"></a>
+<span class="sourceLineNo">423</span>                    Action a = null;<a name="line.423"></a>
+<span class="sourceLineNo">424</span>                    ActionMap map = getComponent().getActionMap();<a name="line.424"></a>
+<span class="sourceLineNo">425</span>                    if (map != null) {<a name="line.425"></a>
+<span class="sourceLineNo">426</span>                        a = map.get(DefaultEditorKit.selectLineAction);<a name="line.426"></a>
+<span class="sourceLineNo">427</span>                    }<a name="line.427"></a>
+<span class="sourceLineNo">428</span>                    if (a == null) {<a name="line.428"></a>
+<span class="sourceLineNo">429</span>                        if (selectLine == null) {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                            selectLine = new DefaultEditorKit.SelectLineAction();<a name="line.430"></a>
+<span class="sourceLineNo">431</span>                        }<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                        a = selectLine;<a name="line.432"></a>
+<span class="sourceLineNo">433</span>                    }<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                    a.actionPerformed(new ActionEvent(getComponent(),<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                                                      ActionEvent.ACTION_PERFORMED, null, e.getWhen(), e.getModifiers()));<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                }<a name="line.436"></a>
+<span class="sourceLineNo">437</span>            } else if (SwingUtilities.isMiddleMouseButton(e)) {<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                // mouse 2 behavior<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                if (nclicks == 1 &amp;&amp; component.isEditable() &amp;&amp; component.isEnabled()<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                    &amp;&amp; SwingUtilities2.canEventAccessSystemClipboard(e)) {<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                    // paste system selection, if it exists<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                    JTextComponent c = (JTextComponent) e.getSource();<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                    if (c != null) {<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                        try {<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                            Toolkit tk = c.getToolkit();<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                            Clipboard buffer = tk.getSystemSelection();<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                            if (buffer != null) {<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                                // platform supports system selections, update it.<a name="line.448"></a>
+<span class="sourceLineNo">449</span>                                adjustCaret(e);<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                                TransferHandler th = c.getTransferHandler();<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                                if (th != null) {<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                                    Transferable trans = null;<a name="line.452"></a>
+<span class="sourceLineNo">453</span><a name="line.453"></a>
+<span class="sourceLineNo">454</span>                                    try {<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                                        trans = buffer.getContents(null);<a name="line.455"></a>
+<span class="sourceLineNo">456</span>                                    } catch (IllegalStateException ise) {<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                                        // clipboard was unavailable<a name="line.457"></a>
+<span class="sourceLineNo">458</span>                                        UIManager.getLookAndFeel().provideErrorFeedback(c);<a name="line.458"></a>
+<span class="sourceLineNo">459</span>                                    }<a name="line.459"></a>
+<span class="sourceLineNo">460</span><a name="line.460"></a>
+<span class="sourceLineNo">461</span>                                    if (trans != null) {<a name="line.461"></a>
+<span class="sourceLineNo">462</span>                                        th.importData(c, trans);<a name="line.462"></a>
+<span class="sourceLineNo">463</span>                                    }<a name="line.463"></a>
+<span class="sourceLineNo">464</span>                                }<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                                adjustFocus(true);<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                            }<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                        } catch (HeadlessException he) {<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                            // do nothing... there is no system clipboard<a name="line.468"></a>
+<span class="sourceLineNo">469</span>                        }<a name="line.469"></a>
+<span class="sourceLineNo">470</span>                    }<a name="line.470"></a>
+<span class="sourceLineNo">471</span>                }<a name="line.471"></a>
+<span class="sourceLineNo">472</span>            }<a name="line.472"></a>
+<span class="sourceLineNo">473</span>        }<a name="line.473"></a>
+<span class="sourceLineNo">474</span>    }<a name="line.474"></a>
+<span class="sourceLineNo">475</span><a name="line.475"></a>
+<span class="sourceLineNo">476</span>    /**<a name="line.476"></a>
+<span class="sourceLineNo">477</span>     * If button 1 is pressed, this is implemented to<a name="line.477"></a>
+<span class="sourceLineNo">478</span>     * request focus on the associated text component,<a name="line.478"></a>
+<span class="sourceLineNo">479</span>     * and to set the caret position. If the shift key is held down,<a name="line.479"></a>
+<span class="sourceLineNo">480</span>     * the caret will be moved, potentially resulting in a selection,<a name="line.480"></a>
+<span class="sourceLineNo">481</span>     * otherwise the<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     * caret position will be set to the new location.  If the component<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     * is not enabled, there will be no request for focus.<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     *<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     * @param e the mouse event<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     * @see MouseListener#mousePressed<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     */<a name="line.487"></a>
+<span class="sourceLineNo">488</span>    public void mousePressed(MouseEvent e) {<a name="line.488"></a>
+<span class="sourceLineNo">489</span>        int nclicks = SwingUtilities2.getAdjustedClickCount(getComponent(), e);<a name="line.489"></a>
+<span class="sourceLineNo">490</span><a name="line.490"></a>
+<span class="sourceLineNo">491</span>        if (SwingUtilities.isLeftMouseButton(e)) {<a name="line.491"></a>
+<span class="sourceLineNo">492</span>            if (e.isConsumed()) {<a name="line.492"></a>
+<span class="sourceLineNo">493</span>                shouldHandleRelease = true;<a name="line.493"></a>
+<span class="sourceLineNo">494</span>            } else {<a name="line.494"></a>
+<span class="sourceLineNo">495</span>                shouldHandleRelease = false;<a name="line.495"></a>
+<span class="sourceLineNo">496</span>                adjustCaretAndFocus(e);<a name="line.496"></a>
+<span class="sourceLineNo">497</span>                if (nclicks == 2<a name="line.497"></a>
+<span class="sourceLineNo">498</span>                    &amp;&amp; SwingUtilities2.canEventAccessSystemClipboard(e)) {<a name="line.498"></a>
+<span class="sourceLineNo">499</span>                    selectWord(e);<a name="line.499"></a>
+<span class="sourceLineNo">500</span>                }<a name="line.500"></a>
+<span class="sourceLineNo">501</span>            }<a name="line.501"></a>
+<span class="sourceLineNo">502</span>        }<a name="line.502"></a>
+<span class="sourceLineNo">503</span>    }<a name="line.503"></a>
+<span class="sourceLineNo">504</span><a name="line.504"></a>
+<span class="sourceLineNo">505</span>    void adjustCaretAndFocus(MouseEvent e) {<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        adjustCaret(e);<a name="line.506"></a>
+<span class="sourceLineNo">507</span>        adjustFocus(false);<a name="line.507"></a>
+<span class="sourceLineNo">508</span>    }<a name="line.508"></a>
+<span class="sourceLineNo">509</span><a name="line.509"></a>
+<span class="sourceLineNo">510</span>    /**<a name="line.510"></a>
+<span class="sourceLineNo">511</span>     * Adjusts the caret location based on the MouseEvent.<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     */<a name="line.512"></a>
+<span class="sourceLineNo">513</span>    private void adjustCaret(MouseEvent e) {<a name="line.513"></a>
+<span class="sourceLineNo">514</span>        if ((e.getModifiers() &amp; ActionEvent.SHIFT_MASK) != 0 &amp;&amp;<a name="line.514"></a>
+<span class="sourceLineNo">515</span>            getDot() != -1) {<a name="line.515"></a>
+<span class="sourceLineNo">516</span>            moveCaret(e);<a name="line.516"></a>
+<span class="sourceLineNo">517</span>        } else if (!e.isPopupTrigger()) {<a name="line.517"></a>
+<span class="sourceLineNo">518</span>            positionCaret(e);<a name="line.518"></a>
+<span class="sourceLineNo">519</span>        }<a name="line.519"></a>
+<span class="sourceLineNo">520</span>    }<a name="line.520"></a>
+<span class="sourceLineNo">521</span><a name="line.521"></a>
+<span class="sourceLineNo">522</span>    /**<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     * Adjusts the focus, if necessary.<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     *<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     * @param inWindow if true indicates requestFocusInWindow should be used<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     */<a name="line.526"></a>
+<span class="sourceLineNo">527</span>    private void adjustFocus(boolean inWindow) {<a name="line.527"></a>
+<span class="sourceLineNo">528</span>        if ((component != null) &amp;&amp; component.isEnabled() &amp;&amp;<a name="line.528"></a>
+<span class="sourceLineNo">529</span>                                   component.isRequestFocusEnabled()) {<a name="line.529"></a>
+<span class="sourceLineNo">530</span>            if (inWindow) {<a name="line.530"></a>
+<span class="sourceLineNo">531</span>                component.requestFocusInWindow();<a name="line.531"></a>
+<span class="sourceLineNo">532</span>            }<a name="line.532"></a>
+<span class="sourceLineNo">533</span>            else {<a name="line.533"></a>
+<span class="sourceLineNo">534</span>                component.requestFocus();<a name="line.534"></a>
+<span class="sourceLineNo">535</span>            }<a name="line.535"></a>
+<span class="sourceLineNo">536</span>        }<a name="line.536"></a>
+<span class="sourceLineNo">537</span>    }<a name="line.537"></a>
+<span class="sourceLineNo">538</span><a name="line.538"></a>
+<span class="sourceLineNo">539</span>    /**<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     * Called when the mouse is released.<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     *<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * @param e the mouse event<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * @see MouseListener#mouseReleased<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     */<a name="line.544"></a>
+<span class="sourceLineNo">545</span>    public void mouseReleased(MouseEvent e) {<a name="line.545"></a>
+<span class="sourceLineNo">546</span>        if (!e.isConsumed()<a name="line.546"></a>
+<span class="sourceLineNo">547</span>                &amp;&amp; shouldHandleRelease<a name="line.547"></a>
+<span class="sourceLineNo">548</span>                &amp;&amp; SwingUtilities.isLeftMouseButton(e)) {<a name="line.548"></a>
+<span class="sourceLineNo">549</span><a name="line.549"></a>
+<span class="sourceLineNo">550</span>            adjustCaretAndFocus(e);<a name="line.550"></a>
+<span class="sourceLineNo">551</span>        }<a name="line.551"></a>
+<span class="sourceLineNo">552</span>    }<a name="line.552"></a>
+<span class="sourceLineNo">553</span><a name="line.553"></a>
+<span class="sourceLineNo">554</span>    /**<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     * Called when the mouse enters a region.<a name="line.555"></a>
+<span class="sourceLineNo">556</span>     *<a name="line.556"></a>
+<span class="sourceLineNo">557</span>     * @param e the mouse event<a name="line.557"></a>
+<span class="sourceLineNo">558</span>     * @see MouseListener#mouseEntered<a name="line.558"></a>
+<span class="sourceLineNo">559</span>     */<a name="line.559"></a>
+<span class="sourceLineNo">560</span>    public void mouseEntered(MouseEvent e) {<a name="line.560"></a>
+<span class="sourceLineNo">561</span>    }<a name="line.561"></a>
+<span class="sourceLineNo">562</span><a name="line.562"></a>
+<span class="sourceLineNo">563</span>    /**<a name="line.563"></a>
+<span class="sourceLineNo">564</span>     * Called when the mouse exits a region.<a name="line.564"></a>
+<span class="sourceLineNo">565</span>     *<a name="line.565"></a>
+<span class="sourceLineNo">566</span>     * @param e the mouse event<a name="line.566"></a>
+<span class="sourceLineNo">567</span>     * @see MouseListener#mouseExited<a name="line.567"></a>
+<span class="sourceLineNo">568</span>     */<a name="line.568"></a>
+<span class="sourceLineNo">569</span>    public void mouseExited(MouseEvent e) {<a name="line.569"></a>
+<span class="sourceLineNo">570</span>    }<a name="line.570"></a>
+<span class="sourceLineNo">571</span><a name="line.571"></a>
+<span class="sourceLineNo">572</span>    // --- MouseMotionListener methods -------------------------<a name="line.572"></a>
+<span class="sourceLineNo">573</span><a name="line.573"></a>
+<span class="sourceLineNo">574</span>    /**<a name="line.574"></a>
+<span class="sourceLineNo">575</span>     * Moves the caret position<a name="line.575"></a>
+<span class="sourceLineNo">576</span>     * according to the mouse pointer's current<a name="line.576"></a>
+<span class="sourceLineNo">577</span>     * location.  This effectively extends the<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     * selection.  By default, this is only done<a name="line.578"></a>
+<span class="sourceLineNo">579</span>     * for mouse button 1.<a name="line.579"></a>
+<span class="sourceLineNo">580</span>     *<a name="line.580"></a>
+<span class="sourceLineNo">581</span>     * @param e the mouse event<a name="line.581"></a>
+<span class="sourceLineNo">582</span>     * @see MouseMotionListener#mouseDragged<a name="line.582"></a>
+<span class="sourceLineNo">583</span>     */<a name="line.583"></a>
+<span class="sourceLineNo">584</span>    public void mouseDragged(MouseEvent e) {<a name="line.584"></a>
+<span class="sourceLineNo">585</span>        if ((! e.isConsumed()) &amp;&amp; SwingUtilities.isLeftMouseButton(e)) {<a name="line.585"></a>
+<span class="sourceLineNo">586</span>            moveCaret(e);<a name="line.586"></a>
+<span class="sourceLineNo">587</span>        }<a name="line.587"></a>
+<span class="sourceLineNo">588</span>    }<a name="line.588"></a>
+<span class="sourceLineNo">589</span><a name="line.589"></a>
+<span class="sourceLineNo">590</span>    /**<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * Called when the mouse is moved.<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     *<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     * @param e the mouse event<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * @see MouseMotionListener#mouseMoved<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     */<a name="line.595"></a>
+<span class="sourceLineNo">596</span>    public void mouseMoved(MouseEvent e) {<a name="line.596"></a>
+<span class="sourceLineNo">597</span>    }<a name="line.597"></a>
+<span class="sourceLineNo">598</span><a name="line.598"></a>
+<span class="sourceLineNo">599</span>    // ---- Caret methods ---------------------------------<a name="line.599"></a>
+<span class="sourceLineNo">600</span><a name="line.600"></a>
+<span class="sourceLineNo">601</span>    /**<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     * Renders the caret as a vertical line.  If this is reimplemented<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * the damage method should also be reimplemented as it assumes the<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * shape of the caret is a vertical line.  Sets the caret color to<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * the value returned by getCaretColor().<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * &lt;p&gt;<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     * If there are multiple text directions present in the associated<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     * document, a flag indicating the caret bias will be rendered.<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     * This will occur only if the associated document is a subclass<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     * of AbstractDocument and there are multiple bidi levels present<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     * in the bidi element structure (i.e. the text has multiple<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     * directions associated with it).<a name="line.612"></a>
+<span class="sourceLineNo">613</span>     *<a name="line.613"></a>
+<span class="sourceLineNo">614</span>     * @param g the graphics context<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     * @see #damage<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     */<a name="line.616"></a>
+<span class="sourceLineNo">617</span>    public void paint(Graphics g) {<a name="line.617"></a>
+<span class="sourceLineNo">618</span>        if(isVisible()) {<a name="line.618"></a>
+<span class="sourceLineNo">619</span>            try {<a name="line.619"></a>
+<span class="sourceLineNo">620</span>                TextUI mapper = component.getUI();<a name="line.620"></a>
+<span class="sourceLineNo">621</span>                Rectangle r = mapper.modelToView(component, dot, dotBias);<a name="line.621"></a>
+<span class="sourceLineNo">622</span><a name="line.622"></a>
+<span class="sourceLineNo">623</span>                if ((r == null) || ((r.width == 0) &amp;&amp; (r.height == 0))) {<a name="line.623"></a>
+<span class="sourceLineNo">624</span>                    return;<a name="line.624"></a>
+<span class="sourceLineNo">625</span>                }<a name="line.625"></a>
+<span class="sourceLineNo">626</span>                if (width &gt; 0 &amp;&amp; height &gt; 0 &amp;&amp;<a name="line.626"></a>
+<span class="sourceLineNo">627</span>                                !this._contains(r.x, r.y, r.width, r.height)) {<a name="line.627"></a>
+<span class="sourceLineNo">628</span>                    // We seem to have gotten out of sync and no longer<a name="line.628"></a>
+<span class="sourceLineNo">629</span>                    // contain the right location, adjust accordingly.<a name="line.629"></a>
+<span class="sourceLineNo">630</span>                    Rectangle clip = g.getClipBounds();<a name="line.630"></a>
+<span class="sourceLineNo">631</span><a name="line.631"></a>
+<span class="sourceLineNo">632</span>                    if (clip != null &amp;&amp; !clip.contains(this)) {<a name="line.632"></a>
+<span class="sourceLineNo">633</span>                        // Clip doesn't contain the old location, force it<a name="line.633"></a>
+<span class="sourceLineNo">634</span>                        // to be repainted lest we leave a caret around.<a name="line.634"></a>
+<span class="sourceLineNo">635</span>                        repaint();<a name="line.635"></a>
+<span class="sourceLineNo">636</span>                    }<a name="line.636"></a>
+<span class="sourceLineNo">637</span>                    // This will potentially cause a repaint of something<a name="line.637"></a>
+<span class="sourceLineNo">638</span>                    // we're already repainting, but without changing the<a name="line.638"></a>
+<span class="sourceLineNo">639</span>                    // semantics of damage we can't really get around this.<a name="line.639"></a>
+<span class="sourceLineNo">640</span>                    damage(r);<a name="line.640"></a>
+<span class="sourceLineNo">641</span>                }<a name="line.641"></a>
+<span class="sourceLineNo">642</span>                g.setColor(component.getCaretColor());<a name="line.642"></a>
+<span class="sourceLineNo">643</span>                int paintWidth = getCaretWidth(r.height);<a name="line.643"></a>
+<span class="sourceLineNo">644</span>                r.x -= paintWidth  &gt;&gt; 1;<a name="line.644"></a>
+<span class="sourceLineNo">645</span>                g.fillRect(r.x, r.y, paintWidth, r.height);<a name="line.645"></a>
+<span class="sourceLineNo">646</span><a name="line.646"></a>
+<span class="sourceLineNo">647</span>                // see if we should paint a flag to indicate the bias<a name="line.647"></a>
+<span class="sourceLineNo">648</span>                // of the caret.<a name="line.648"></a>
+<span class="sourceLineNo">649</span>                // PENDING(prinz) this should be done through<a name="line.649"></a>
+<span class="sourceLineNo">650</span>                // protected methods so that alternative LAF<a name="line.650"></a>
+<span class="sourceLineNo">651</span>                // will show bidi information.<a name="line.651"></a>
+<span class="sourceLineNo">652</span>                Document doc = component.getDocument();<a name="line.652"></a>
+<span class="sourceLineNo">653</span>                if (doc instanceof AbstractDocument) {<a name="line.653"></a>
+<span class="sourceLineNo">654</span>                    Element bidi = ((AbstractDocument)doc).getBidiRootElement();<a name="line.654"></a>
+<span class="sourceLineNo">655</span>                    if ((bidi != null) &amp;&amp; (bidi.getElementCount() &gt; 1)) {<a name="line.655"></a>
+<span class="sourceLineNo">656</span>                        // there are multiple directions present.<a name="line.656"></a>
+<span class="sourceLineNo">657</span>                        flagXPoints[0] = r.x + ((dotLTR) ? paintWidth : 0);<a name="line.657"></a>
+<span class="sourceLineNo">658</span>                        flagYPoints[0] = r.y;<a name="line.658"></a>
+<span class="sourceLineNo">659</span>                        flagXPoints[1] = flagXPoints[0];<a name="line.659"></a>
+<span class="sourceLineNo">660</span>                        flagYPoints[1] = flagYPoints[0] + 4;<a name="line.660"></a>
+<span class="sourceLineNo">661</span>                        flagXPoints[2] = flagXPoints[0] + ((dotLTR) ? 4 : -4);<a name="line.661"></a>
+<span class="sourceLineNo">662</span>                        flagYPoints[2] = flagYPoints[0];<a name="line.662"></a>
+<span class="sourceLineNo">663</span>                        g.fillPolygon(flagXPoints, flagYPoints, 3);<a name="line.663"></a>
+<span class="sourceLineNo">664</span>                    }<a name="line.664"></a>
+<span class="sourceLineNo">665</span>                }<a name="line.665"></a>
+<span class="sourceLineNo">666</span>            } catch (BadLocationException e) {<a name="line.666"></a>
+<span class="sourceLineNo">667</span>                // can't render I guess<a name="line.667"></a>
+<span class="sourceLineNo">668</span>                //System.err.println("Can't render cursor");<a name="line.668"></a>
+<span class="sourceLineNo">669</span>            }<a name="line.669"></a>
+<span class="sourceLineNo">670</span>        }<a name="line.670"></a>
+<span class="sourceLineNo">671</span>    }<a name="line.671"></a>
+<span class="sourceLineNo">672</span><a name="line.672"></a>
+<span class="sourceLineNo">673</span>    /**<a name="line.673"></a>
+<span class="sourceLineNo">674</span>     * Called when the UI is being installed into the<a name="line.674"></a>
+<span class="sourceLineNo">675</span>     * interface of a JTextComponent.  This can be used<a name="line.675"></a>
+<span class="sourceLineNo">676</span>     * to gain access to the model that is being navigated<a name="line.676"></a>
+<span class="sourceLineNo">677</span>     * by the implementation of this interface.  Sets the dot<a name="line.677"></a>
+<span class="sourceLineNo">678</span>     * and mark to 0, and establishes document, property change,<a name="line.678"></a>
+<span class="sourceLineNo">679</span>     * focus, mouse, and mouse motion listeners.<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     *<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     * @param c the component<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     * @see Caret#install<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     */<a name="line.683"></a>
+<span class="sourceLineNo">684</span>    public void install(JTextComponent c) {<a name="line.684"></a>
+<span class="sourceLineNo">685</span>        component = c;<a name="line.685"></a>
+<span class="sourceLineNo">686</span>        Document doc = c.getDocument();<a name="line.686"></a>
+<span class="sourceLineNo">687</span>        dot = mark = 0;<a name="line.687"></a>
+<span class="sourceLineNo">688</span>        dotLTR = markLTR = true;<a name="line.688"></a>
+<span class="sourceLineNo">689</span>        dotBias = markBias = Position.Bias.Forward;<a name="line.689"></a>
+<span class="sourceLineNo">690</span>        if (doc != null) {<a name="line.690"></a>
+<span class="sourceLineNo">691</span>            doc.addDocumentListener(handler);<a name="line.691"></a>
+<span class="sourceLineNo">692</span>        }<a name="line.692"></a>
+<span class="sourceLineNo">693</span>        c.addPropertyChangeListener(handler);<a name="line.693"></a>
+<span class="sourceLineNo">694</span>        c.addFocusListener(this);<a name="line.694"></a>
+<span class="sourceLineNo">695</span>        c.addMouseListener(this);<a name="line.695"></a>
+<span class="sourceLineNo">696</span>        c.addMouseMotionListener(this);<a name="line.696"></a>
+<span class="sourceLineNo">697</span><a name="line.697"></a>
+<span class="sourceLineNo">698</span>        // if the component already has focus, it won't<a name="line.698"></a>
+<span class="sourceLineNo">699</span>        // be notified.<a name="line.699"></a>
+<span class="sourceLineNo">700</span>        if (component.hasFocus()) {<a name="line.700"></a>
+<span class="sourceLineNo">701</span>            focusGained(null);<a name="line.701"></a>
+<span class="sourceLineNo">702</span>        }<a name="line.702"></a>
+<span class="sourceLineNo">703</span><a name="line.703"></a>
+<span class="sourceLineNo">704</span>        Number ratio = (Number) c.getClientProperty("caretAspectRatio");<a name="line.704"></a>
+<span class="sourceLineNo">705</span>        if (ratio != null) {<a name="line.705"></a>
+<span class="sourceLineNo">706</span>            aspectRatio = ratio.floatValue();<a name="line.706"></a>
+<span class="sourceLineNo">707</span>        } else {<a name="line.707"></a>
+<span class="sourceLineNo">708</span>            aspectRatio = -1;<a name="line.708"></a>
+<span class="sourceLineNo">709</span>        }<a name="line.709"></a>
+<span class="sourceLineNo">710</span><a name="line.710"></a>
+<span class="sourceLineNo">711</span>        Integer width = (Integer) c.getClientProperty("caretWidth");<a name="line.711"></a>
+<span class="sourceLineNo">712</span>        if (width != null) {<a name="line.712"></a>
+<span class="sourceLineNo">713</span>            caretWidth = width.intValue();<a name="line.713"></a>
+<span class="sourceLineNo">714</span>        } else {<a name="line.714"></a>
+<span class="sourceLineNo">715</span>            caretWidth = -1;<a name="line.715"></a>
+<span class="sourceLineNo">716</span>        }<a name="line.716"></a>
+<span class="sourceLineNo">717</span>    }<a name="line.717"></a>
+<span class="sourceLineNo">718</span><a name="line.718"></a>
+<span class="sourceLineNo">719</span>    /**<a name="line.719"></a>
+<span class="sourceLineNo">720</span>     * Called when the UI is being removed from the<a name="line.720"></a>
+<span class="sourceLineNo">721</span>     * interface of a JTextComponent.  This is used to<a name="line.721"></a>
+<span class="sourceLineNo">722</span>     * unregister any listeners that were attached.<a name="line.722"></a>
+<span class="sourceLineNo">723</span>     *<a name="line.723"></a>
+<span class="sourceLineNo">724</span>     * @param c the component<a name="line.724"></a>
+<span class="sourceLineNo">725</span>     * @see Caret#deinstall<a name="line.725"></a>
+<span class="sourceLineNo">726</span>     */<a name="line.726"></a>
+<span class="sourceLineNo">727</span>    public void deinstall(JTextComponent c) {<a name="line.727"></a>
+<span class="sourceLineNo">728</span>        c.removeMouseListener(this);<a name="line.728"></a>
+<span class="sourceLineNo">729</span>        c.removeMouseMotionListener(this);<a name="line.729"></a>
+<span class="sourceLineNo">730</span>        c.removeFocusListener(this);<a name="line.730"></a>
+<span class="sourceLineNo">731</span>        c.removePropertyChangeListener(handler);<a name="line.731"></a>
+<span class="sourceLineNo">732</span>        Document doc = c.getDocument();<a name="line.732"></a>
+<span class="sourceLineNo">733</span>        if (doc != null) {<a name="line.733"></a>
+<span class="sourceLineNo">734</span>            doc.removeDocumentListener(handler);<a name="line.734"></a>
+<span class="sourceLineNo">735</span>        }<a name="line.735"></a>
+<span class="sourceLineNo">736</span>        synchronized(this) {<a name="line.736"></a>
+<span class="sourceLineNo">737</span>            component = null;<a name="line.737"></a>
+<span class="sourceLineNo">738</span>        }<a name="line.738"></a>
+<span class="sourceLineNo">739</span>        if (flasher != null) {<a name="line.739"></a>
+<span class="sourceLineNo">740</span>            flasher.stop();<a name="line.740"></a>
+<span class="sourceLineNo">741</span>        }<a name="line.741"></a>
+<span class="sourceLineNo">742</span><a name="line.742"></a>
+<span class="sourceLineNo">743</span><a name="line.743"></a>
+<span class="sourceLineNo">744</span>    }<a name="line.744"></a>
+<span class="sourceLineNo">745</span><a name="line.745"></a>
+<span class="sourceLineNo">746</span>    /**<a name="line.746"></a>
+<span class="sourceLineNo">747</span>     * Adds a listener to track whenever the caret position has<a name="line.747"></a>
+<span class="sourceLineNo">748</span>     * been changed.<a name="line.748"></a>
+<span class="sourceLineNo">749</span>     *<a name="line.749"></a>
+<span class="sourceLineNo">750</span>     * @param l the listener<a name="line.750"></a>
+<span class="sourceLineNo">751</span>     * @see Caret#addChangeListener<a name="line.751"></a>
+<span class="sourceLineNo">752</span>     */<a name="line.752"></a>
+<span class="sourceLineNo">753</span>    public void addChangeListener(ChangeListener l) {<a name="line.753"></a>
+<span class="sourceLineNo">754</span>        listenerList.add(ChangeListener.class, l);<a name="line.754"></a>
+<span class="sourceLineNo">755</span>    }<a name="line.755"></a>
+<span class="sourceLineNo">756</span><a name="line.756"></a>
+<span class="sourceLineNo">757</span>    /**<a name="line.757"></a>
+<span class="sourceLineNo">758</span>     * Removes a listener that was tracking caret position changes.<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     *<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     * @param l the listener<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     * @see Caret#removeChangeListener<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     */<a name="line.762"></a>
+<span class="sourceLineNo">763</span>    public void removeChangeListener(ChangeListener l) {<a name="line.763"></a>
+<span class="sourceLineNo">764</span>        listenerList.remove(ChangeListener.class, l);<a name="line.764"></a>
+<span class="sourceLineNo">765</span>    }<a name="line.765"></a>
+<span class="sourceLineNo">766</span><a name="line.766"></a>
+<span class="sourceLineNo">767</span>    /**<a name="line.767"></a>
+<span class="sourceLineNo">768</span>     * Returns an array of all the change listeners<a name="line.768"></a>
+<span class="sourceLineNo">769</span>     * registered on this caret.<a name="line.769"></a>
+<span class="sourceLineNo">770</span>     *<a name="line.770"></a>
+<span class="sourceLineNo">771</span>     * @return all of this caret's &lt;code&gt;ChangeListener&lt;/code&gt;s<a name="line.771"></a>
+<span class="sourceLineNo">772</span>     *         or an empty<a name="line.772"></a>
+<span class="sourceLineNo">773</span>     *         array if no change listeners are currently registered<a name="line.773"></a>
+<span class="sourceLineNo">774</span>     *<a name="line.774"></a>
+<span class="sourceLineNo">775</span>     * @see #addChangeListener<a name="line.775"></a>
+<span class="sourceLineNo">776</span>     * @see #removeChangeListener<a name="line.776"></a>
+<span class="sourceLineNo">777</span>     *<a name="line.777"></a>
+<span class="sourceLineNo">778</span>     * @since 1.4<a name="line.778"></a>
+<span class="sourceLineNo">779</span>     */<a name="line.779"></a>
+<span class="sourceLineNo">780</span>    public ChangeListener[] getChangeListeners() {<a name="line.780"></a>
+<span class="sourceLineNo">781</span>        return listenerList.getListeners(ChangeListener.class);<a name="line.781"></a>
+<span class="sourceLineNo">782</span>    }<a name="line.782"></a>
+<span class="sourceLineNo">783</span><a name="line.783"></a>
+<span class="sourceLineNo">784</span>    /**<a name="line.784"></a>
+<span class="sourceLineNo">785</span>     * Notifies all listeners that have registered interest for<a name="line.785"></a>
+<span class="sourceLineNo">786</span>     * notification on this event type.  The event instance<a name="line.786"></a>
+<span class="sourceLineNo">787</span>     * is lazily created using the parameters passed into<a name="line.787"></a>
+<span class="sourceLineNo">788</span>     * the fire method.  The listener list is processed last to first.<a name="line.788"></a>
+<span class="sourceLineNo">789</span>     *<a name="line.789"></a>
+<span class="sourceLineNo">790</span>     * @see EventListenerList<a name="line.790"></a>
+<span class="sourceLineNo">791</span>     */<a name="line.791"></a>
+<span class="sourceLineNo">792</span>    protected void fireStateChanged() {<a name="line.792"></a>
+<span class="sourceLineNo">793</span>        // Guaranteed to return a non-null array<a name="line.793"></a>
+<span class="sourceLineNo">794</span>        Object[] listeners = listenerList.getListenerList();<a name="line.794"></a>
+<span class="sourceLineNo">795</span>        // Process the listeners last to first, notifying<a name="line.795"></a>
+<span class="sourceLineNo">796</span>        // those that are interested in this event<a name="line.796"></a>
+<span class="sourceLineNo">797</span>        for (int i = listeners.length-2; i&gt;=0; i-=2) {<a name="line.797"></a>
+<span class="sourceLineNo">798</span>            if (listeners[i]==ChangeListener.class) {<a name="line.798"></a>
+<span class="sourceLineNo">799</span>                // Lazily create the event:<a name="line.799"></a>
+<span class="sourceLineNo">800</span>                if (changeEvent == null)<a name="line.800"></a>
+<span class="sourceLineNo">801</span>                    changeEvent = new ChangeEvent(this);<a name="line.801"></a>
+<span class="sourceLineNo">802</span>                ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);<a name="line.802"></a>
+<span class="sourceLineNo">803</span>            }<a name="line.803"></a>
+<span class="sourceLineNo">804</span>        }<a name="line.804"></a>
+<span class="sourceLineNo">805</span>    }<a name="line.805"></a>
+<span class="sourceLineNo">806</span><a name="line.806"></a>
+<span class="sourceLineNo">807</span>    /**<a name="line.807"></a>
+<span class="sourceLineNo">808</span>     * Returns an array of all the objects currently registered<a name="line.808"></a>
+<span class="sourceLineNo">809</span>     * as &lt;code&gt;&lt;em&gt;Foo&lt;/em&gt;Listener&lt;/code&gt;s<a name="line.809"></a>
+<span class="sourceLineNo">810</span>     * upon this caret.<a name="line.810"></a>
+<span class="sourceLineNo">811</span>     * &lt;code&gt;&lt;em&gt;Foo&lt;/em&gt;Listener&lt;/code&gt;s are registered using the<a name="line.811"></a>
+<span class="sourceLineNo">812</span>     * &lt;code&gt;add&lt;em&gt;Foo&lt;/em&gt;Listener&lt;/code&gt; method.<a name="line.812"></a>
+<span class="sourceLineNo">813</span>     *<a name="line.813"></a>
+<span class="sourceLineNo">814</span>     * &lt;p&gt;<a name="line.814"></a>
+<span class="sourceLineNo">815</span>     *<a name="line.815"></a>
+<span class="sourceLineNo">816</span>     * You can specify the &lt;code&gt;listenerType&lt;/code&gt; argument<a name="line.816"></a>
+<span class="sourceLineNo">817</span>     * with a class literal,<a name="line.817"></a>
+<span class="sourceLineNo">818</span>     * such as<a name="line.818"></a>
+<span class="sourceLineNo">819</span>     * &lt;code&gt;&lt;em&gt;Foo&lt;/em&gt;Listener.class&lt;/code&gt;.<a name="line.819"></a>
+<span class="sourceLineNo">820</span>     * For example, you can query a<a name="line.820"></a>
+<span class="sourceLineNo">821</span>     * &lt;code&gt;DefaultCaret&lt;/code&gt; &lt;code&gt;c&lt;/code&gt;<a name="line.821"></a>
+<span class="sourceLineNo">822</span>     * for its change listeners with the following code:<a name="line.822"></a>
+<span class="sourceLineNo">823</span>     *<a name="line.823"></a>
+<span class="sourceLineNo">824</span>     * &lt;pre&gt;ChangeListener[] cls = (ChangeListener[])(c.getListeners(ChangeListener.class));&lt;/pre&gt;<a name="line.824"></a>
+<span class="sourceLineNo">825</span>     *<a name="line.825"></a>
+<span class="sourceLineNo">826</span>     * If no such listeners exist, this method returns an empty array.<a name="line.826"></a>
+<span class="sourceLineNo">827</span>     *<a name="line.827"></a>
+<span class="sourceLineNo">828</span>     * @param listenerType the type of listeners requested; this parameter<a name="line.828"></a>
+<span class="sourceLineNo">829</span>     *          should specify an interface that descends from<a name="line.829"></a>
+<span class="sourceLineNo">830</span>     *          &lt;code&gt;java.util.EventListener&lt;/code&gt;<a name="line.830"></a>
+<span class="sourceLineNo">831</span>     * @return an array of all objects registered as<a name="line.831"></a>
+<span class="sourceLineNo">832</span>     *          &lt;code&gt;&lt;em&gt;Foo&lt;/em&gt;Listener&lt;/code&gt;s on this component,<a name="line.832"></a>
+<span class="sourceLineNo">833</span>     *          or an empty array if no such<a name="line.833"></a>
+<span class="sourceLineNo">834</span>     *          listeners have been added<a name="line.834"></a>
+<span class="sourceLineNo">835</span>     * @exception ClassCastException if &lt;code&gt;listenerType&lt;/code&gt;<a name="line.835"></a>
+<span class="sourceLineNo">836</span>     *          doesn't specify a class or interface that implements<a name="line.836"></a>
+<span class="sourceLineNo">837</span>     *          &lt;code&gt;java.util.EventListener&lt;/code&gt;<a name="line.837"></a>
+<span class="sourceLineNo">838</span>     *<a name="line.838"></a>
+<span class="sourceLineNo">839</span>     * @see #getChangeListeners<a name="line.839"></a>
+<span class="sourceLineNo">840</span>     *<a name="line.840"></a>
+<span class="sourceLineNo">841</span>     * @since 1.3<a name="line.841"></a>
+<span class="sourceLineNo">842</span>     */<a name="line.842"></a>
+<span class="sourceLineNo">843</span>    public &lt;T extends EventListener&gt; T[] getListeners(Class&lt;T&gt; listenerType) {<a name="line.843"></a>
+<span class="sourceLineNo">844</span>        return listenerList.getListeners(listenerType);<a name="line.844"></a>
+<span class="sourceLineNo">845</span>    }<a name="line.845"></a>
+<span class="sourceLineNo">846</span><a name="line.846"></a>
+<span class="sourceLineNo">847</span>    /**<a name="line.847"></a>
+<span class="sourceLineNo">848</span>     * Changes the selection visibility.<a name="line.848"></a>
+<span class="sourceLineNo">849</span>     *<a name="line.849"></a>
+<span class="sourceLineNo">850</span>     * @param vis the new visibility<a name="line.850"></a>
+<span class="sourceLineNo">851</span>     */<a name="line.851"></a>
+<span class="sourceLineNo">852</span>    public void setSelectionVisible(boolean vis) {<a name="line.852"></a>
+<span class="sourceLineNo">853</span>        if (vis != selectionVisible) {<a name="line.853"></a>
+<span class="sourceLineNo">854</span>            selectionVisible = vis;<a name="line.854"></a>
+<span class="sourceLineNo">855</span>            if (selectionVisible) {<a name="line.855"></a>
+<span class="sourceLineNo">856</span>                // show<a name="line.856"></a>
+<span class="sourceLineNo">857</span>                Highlighter h = component.getHighlighter();<a name="line.857"></a>
+<span class="sourceLineNo">858</span>                if ((dot != mark) &amp;&amp; (h != null) &amp;&amp; (selectionTag == null)) {<a name="line.858"></a>
+<span class="sourceLineNo">859</span>                    int p0 = Math.min(dot, mark);<a name="line.859"></a>
+<span class="sourceLineNo">860</span>                    int p1 = Math.max(dot, mark);<a name="line.860"></a>
+<span class="sourceLineNo">861</span>                    Highlighter.HighlightPainter p = getSelectionPainter();<a name="line.861"></a>
+<span class="sourceLineNo">862</span>                    try {<a name="line.862"></a>
+<span class="sourceLineNo">863</span>                        selectionTag = h.addHighlight(p0, p1, p);<a name="line.863"></a>
+<span class="sourceLineNo">864</span>                    } catch (BadLocationException bl) {<a name="line.864"></a>
+<span class="sourceLineNo">865</span>                        selectionTag = null;<a name="line.865"></a>
+<span class="sourceLineNo">866</span>                    }<a name="line.866"></a>
+<span class="sourceLineNo">867</span>                }<a name="line.867"></a>
+<span class="sourceLineNo">868</span>            } else {<a name="line.868"></a>
+<span class="sourceLineNo">869</span>                // hide<a name="line.869"></a>
+<span class="sourceLineNo">870</span>                if (selectionTag != null) {<a name="line.870"></a>
+<span class="sourceLineNo">871</span>                    Highlighter h = component.getHighlighter();<a name="line.871"></a>
+<span class="sourceLineNo">872</span>                    h.removeHighlight(selectionTag);<a name="line.872"></a>
+<span class="sourceLineNo">873</span>                    selectionTag = null;<a name="line.873"></a>
+<span class="sourceLineNo">874</span>                }<a name="line.874"></a>
+<span class="sourceLineNo">875</span>            }<a name="line.875"></a>
+<span class="sourceLineNo">876</span>        }<a name="line.876"></a>
+<span class="sourceLineNo">877</span>    }<a name="line.877"></a>
+<span class="sourceLineNo">878</span><a name="line.878"></a>
+<span class="sourceLineNo">879</span>    /**<a name="line.879"></a>
+<span class="sourceLineNo">880</span>     * Checks whether the current selection is visible.<a name="line.880"></a>
+<span class="sourceLineNo">881</span>     *<a name="line.881"></a>
+<span class="sourceLineNo">882</span>     * @return true if the selection is visible<a name="line.882"></a>
+<span class="sourceLineNo">883</span>     */<a name="line.883"></a>
+<span class="sourceLineNo">884</span>    public boolean isSelectionVisible() {<a name="line.884"></a>
+<span class="sourceLineNo">885</span>        return selectionVisible;<a name="line.885"></a>
+<span class="sourceLineNo">886</span>    }<a name="line.886"></a>
+<span class="sourceLineNo">887</span><a name="line.887"></a>
+<span class="sourceLineNo">888</span>    /**<a name="line.888"></a>
+<span class="sourceLineNo">889</span>     * Determines if the caret is currently active.<a name="line.889"></a>
+<span class="sourceLineNo">890</span>     * &lt;p&gt;<a name="line.890"></a>
+<span class="sourceLineNo">891</span>     * This method returns whether or not the &lt;code&gt;Caret&lt;/code&gt;<a name="line.891"></a>
+<span class="sourceLineNo">892</span>     * is currently in a blinking state. It does not provide<a name="line.892"></a>
+<span class="sourceLineNo">893</span>     * information as to whether it is currently blinked on or off.<a name="line.893"></a>
+<span class="sourceLineNo">894</span>     * To determine if the caret is currently painted use the<a name="line.894"></a>
+<span class="sourceLineNo">895</span>     * &lt;code&gt;isVisible&lt;/code&gt; method.<a name="line.895"></a>
+<span class="sourceLineNo">896</span>     *<a name="line.896"></a>
+<span class="sourceLineNo">897</span>     * @return &lt;code&gt;true&lt;/code&gt; if active else &lt;code&gt;false&lt;/code&gt;<a name="line.897"></a>
+<span class="sourceLineNo">898</span>     * @see #isVisible<a name="line.898"></a>
+<span class="sourceLineNo">899</span>     *<a name="line.899"></a>
+<span class="sourceLineNo">900</span>     * @since 1.5<a name="line.900"></a>
+<span class="sourceLineNo">901</span>     */<a name="line.901"></a>
+<span class="sourceLineNo">902</span>    public boolean isActive() {<a name="line.902"></a>
+<span class="sourceLineNo">903</span>        return active;<a name="line.903"></a>
+<span class="sourceLineNo">904</span>    }<a name="line.904"></a>
+<span class="sourceLineNo">905</span><a name="line.905"></a>
+<span class="sourceLineNo">906</span>    /**<a name="line.906"></a>
+<span class="sourceLineNo">907</span>     * Indicates whether or not the caret is currently visible. As the<a name="line.907"></a>
+<span class="sourceLineNo">908</span>     * caret flashes on and off the return value of this will change<a name="line.908"></a>
+<span class="sourceLineNo">909</span>     * between true, when the caret is painted, and false, when the<a name="line.909"></a>
+<span class="sourceLineNo">910</span>     * caret is not painted. &lt;code&gt;isActive&lt;/code&gt; indicates whether<a name="line.910"></a>
+<span class="sourceLineNo">911</span>     * or not the caret is in a blinking state, such that it &lt;b&gt;can&lt;/b&gt;<a name="line.911"></a>
+<span class="sourceLineNo">912</span>     * be visible, and &lt;code&gt;isVisible&lt;/code&gt; indicates whether or not<a name="line.912"></a>
+<span class="sourceLineNo">913</span>     * the caret &lt;b&gt;is&lt;/b&gt; actually visible.<a name="line.913"></a>
+<span class="sourceLineNo">914</span>     * &lt;p&gt;<a name="line.914"></a>
+<span class="sourceLineNo">915</span>     * Subclasses that wish to render a different flashing caret<a name="line.915"></a>
+<span class="sourceLineNo">916</span>     * should override paint and only paint the caret if this method<a name="line.916"></a>
+<span class="sourceLineNo">917</span>     * returns true.<a name="line.917"></a>
+<span class="sourceLineNo">918</span>     *<a name="line.918"></a>
+<span class="sourceLineNo">919</span>     * @return true if visible else false<a name="line.919"></a>
+<span class="sourceLineNo">920</span>     * @see Caret#isVisible<a name="line.920"></a>
+<span class="sourceLineNo">921</span>     * @see #isActive<a name="line.921"></a>
+<span class="sourceLineNo">922</span>     */<a name="line.922"></a>
+<span class="sourceLineNo">923</span>    public boolean isVisible() {<a name="line.923"></a>
+<span class="sourceLineNo">924</span>        return visible;<a name="line.924"></a>
+<span class="sourceLineNo">925</span>    }<a name="line.925"></a>
+<span class="sourceLineNo">926</span><a name="line.926"></a>
+<span class="sourceLineNo">927</span>    /**<a name="line.927"></a>
+<span class="sourceLineNo">928</span>     * Sets the caret visibility, and repaints the caret.<a name="line.928"></a>
+<span class="sourceLineNo">929</span>     * It is important to understand the relationship between this method,<a name="line.929"></a>
+<span class="sourceLineNo">930</span>     * &lt;code&gt;isVisible&lt;/code&gt; and &lt;code&gt;isActive&lt;/code&gt;.<a name="line.930"></a>
+<span class="sourceLineNo">931</span>     * Calling this method with a value of &lt;code&gt;true&lt;/code&gt; activates the<a name="line.931"></a>
+<span class="sourceLineNo">932</span>     * caret blinking. Setting it to &lt;code&gt;false&lt;/code&gt; turns it completely off.<a name="line.932"></a>
+<span class="sourceLineNo">933</span>     * To determine whether the blinking is active, you should call<a name="line.933"></a>
+<span class="sourceLineNo">934</span>     * &lt;code&gt;isActive&lt;/code&gt;. In effect, &lt;code&gt;isActive&lt;/code&gt; is an<a name="line.934"></a>
+<span class="sourceLineNo">935</span>     * appropriate corresponding "getter" method for this one.<a name="line.935"></a>
+<span class="sourceLineNo">936</span>     * &lt;code&gt;isVisible&lt;/code&gt; can be used to fetch the current<a name="line.936"></a>
+<span class="sourceLineNo">937</span>     * visibility status of the caret, meaning whether or not it is currently<a name="line.937"></a>
+<span class="sourceLineNo">938</span>     * painted. This status will change as the caret blinks on and off.<a name="line.938"></a>
+<span class="sourceLineNo">939</span>     * &lt;p&gt;<a name="line.939"></a>
+<span class="sourceLineNo">940</span>     * Here's a list showing the potential return values of both<a name="line.940"></a>
+<span class="sourceLineNo">941</span>     * &lt;code&gt;isActive&lt;/code&gt; and &lt;code&gt;isVisible&lt;/code&gt;<a name="line.941"></a>
+<span class="sourceLineNo">942</span>     * after calling this method:<a name="line.942"></a>
+<span class="sourceLineNo">943</span>     * &lt;p&gt;<a name="line.943"></a>
+<span class="sourceLineNo">944</span>     * &lt;b&gt;&lt;code&gt;setVisible(true)&lt;/code&gt;&lt;/b&gt;:<a name="line.944"></a>
+<span class="sourceLineNo">945</span>     * &lt;ul&gt;<a name="line.945"></a>
+<span class="sourceLineNo">946</span>     *     &lt;li&gt;isActive(): true&lt;/li&gt;<a name="line.946"></a>
+<span class="sourceLineNo">947</span>     *     &lt;li&gt;isVisible(): true or false depending on whether<a name="line.947"></a>
+<span class="sourceLineNo">948</span>     *         or not the caret is blinked on or off&lt;/li&gt;<a name="line.948"></a>
+<span class="sourceLineNo">949</span>     * &lt;/ul&gt;<a name="line.949"></a>
+<span class="sourceLineNo">950</span>     * &lt;p&gt;<a name="line.950"></a>
+<span class="sourceLineNo">951</span>     * &lt;b&gt;&lt;code&gt;setVisible(false)&lt;/code&gt;&lt;/b&gt;:<a name="line.951"></a>
+<span class="sourceLineNo">952</span>     * &lt;ul&gt;<a name="line.952"></a>
+<span class="sourceLineNo">953</span>     *     &lt;li&gt;isActive(): false&lt;/li&gt;<a name="line.953"></a>
+<span class="sourceLineNo">954</span>     *     &lt;li&gt;isVisible(): false&lt;/li&gt;<a name="line.954"></a>
+<span class="sourceLineNo">955</span>     * &lt;/ul&gt;<a name="line.955"></a>
+<span class="sourceLineNo">956</span>     *<a name="line.956"></a>
+<span class="sourceLineNo">957</span>     * @param e the visibility specifier<a name="line.957"></a>
+<span class="sourceLineNo">958</span>     * @see #isActive<a name="line.958"></a>
+<span class="sourceLineNo">959</span>     * @see Caret#setVisible<a name="line.959"></a>
+<span class="sourceLineNo">960</span>     */<a name="line.960"></a>
+<span class="sourceLineNo">961</span>    public void setVisible(boolean e) {<a name="line.961"></a>
+<span class="sourceLineNo">962</span>        // focus lost notification can come in later after the<a name="line.962"></a>
+<span class="sourceLineNo">963</span>        // caret has been deinstalled, in which case the component<a name="line.963"></a>
+<span class="sourceLineNo">964</span>        // will be null.<a name="line.964"></a>
+<span class="sourceLineNo">965</span>        if (component != null) {<a name="line.965"></a>
+<span class="sourceLineNo">966</span>            active = e;<a name="line.966"></a>
+<span class="sourceLineNo">967</span>            TextUI mapper = component.getUI();<a name="line.967"></a>
+<span class="sourceLineNo">968</span>            if (visible != e) {<a name="line.968"></a>
+<span class="sourceLineNo">969</span>                visible = e;<a name="line.969"></a>
+<span class="sourceLineNo">970</span>                // repaint the caret<a name="line.970"></a>
+<span class="sourceLineNo">971</span>                try {<a name="line.971"></a>
+<span class="sourceLineNo">972</span>                    Rectangle loc = mapper.modelToView(component, dot,dotBias);<a name="line.972"></a>
+<span class="sourceLineNo">973</span>                    damage(loc);<a name="line.973"></a>
+<span class="sourceLineNo">974</span>                } catch (BadLocationException badloc) {<a name="line.974"></a>
+<span class="sourceLineNo">975</span>                    // hmm... not legally positioned<a name="line.975"></a>
+<span class="sourceLineNo">976</span>                }<a name="line.976"></a>
+<span class="sourceLineNo">977</span>            }<a name="line.977"></a>
+<span class="sourceLineNo">978</span>        }<a name="line.978"></a>
+<span class="sourceLineNo">979</span>        if (flasher != null) {<a name="line.979"></a>
+<span class="sourceLineNo">980</span>            if (visible) {<a name="line.980"></a>
+<span class="sourceLineNo">981</span>                flasher.start();<a name="line.981"></a>
+<span class="sourceLineNo">982</span>            } else {<a name="line.982"></a>
+<span class="sourceLineNo">983</span>                flasher.stop();<a name="line.983"></a>
+<span class="sourceLineNo">984</span>            }<a name="line.984"></a>
+<span class="sourceLineNo">985</span>        }<a name="line.985"></a>
+<span class="sourceLineNo">986</span>    }<a name="line.986"></a>
+<span class="sourceLineNo">987</span><a name="line.987"></a>
+<span class="sourceLineNo">988</span>    /**<a name="line.988"></a>
+<span class="sourceLineNo">989</span>     * Sets the caret blink rate.<a name="line.989"></a>
+<span class="sourceLineNo">990</span>     *<a name="line.990"></a>
+<span class="sourceLineNo">991</span>     * @param rate the rate in milliseconds, 0 to stop blinking<a name="line.991"></a>
+<span class="sourceLineNo">992</span>     * @see Caret#setBlinkRate<a name="line.992"></a>
+<span class="sourceLineNo">993</span>     */<a name="line.993"></a>
+<span class="sourceLineNo">994</span>    public void setBlinkRate(int rate) {<a name="line.994"></a>
+<span class="sourceLineNo">995</span>        if (rate != 0) {<a name="line.995"></a>
+<span class="sourceLineNo">996</span>            if (flasher == null) {<a name="line.996"></a>
+<span class="sourceLineNo">997</span>                flasher = new Timer(rate, handler);<a name="line.997"></a>
+<span class="sourceLineNo">998</span>            }<a name="line.998"></a>
+<span class="sourceLineNo">999</span>            flasher.setDelay(rate);<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>        } else {<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>            if (flasher != null) {<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>                flasher.stop();<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>                flasher.removeActionListener(handler);<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>                flasher = null;<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>            }<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>        }<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>    }<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span><a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>    /**<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>     * Gets the caret blink rate.<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>     *<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>     * @return the delay in milliseconds.  If this is<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>     *  zero the caret will not blink.<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>     * @see Caret#getBlinkRate<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>     */<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>    public int getBlinkRate() {<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>        return (flasher == null) ? 0 : flasher.getDelay();<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>    }<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span><a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>    /**<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>     * Fetches the current position of the caret.<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>     *<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>     * @return the position &amp;gt;= 0<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>     * @see Caret#getDot<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>     */<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>    public int getDot() {<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>        return dot;<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>    }<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span><a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>    /**<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>     * Fetches the current position of the mark.  If there is a selection,<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>     * the dot and mark will not be the same.<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>     *<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>     * @return the position &amp;gt;= 0<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>     * @see Caret#getMark<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>     */<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>    public int getMark() {<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>        return mark;<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>    }<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span><a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>    /**<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>     * Sets the caret position and mark to the specified position,<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>     * with a forward bias. This implicitly sets the<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>     * selection range to zero.<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>     *<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>     * @param dot the position &amp;gt;= 0<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>     * @see #setDot(int, Position.Bias)<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>     * @see Caret#setDot<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>     */<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>    public void setDot(int dot) {<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>        setDot(dot, Position.Bias.Forward);<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>    }<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span><a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>    /**<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>     * Moves the caret position to the specified position,<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>     * with a forward bias.<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>     *<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>     * @param dot the position &amp;gt;= 0<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>     * @see #moveDot(int, javax.swing.text.Position.Bias)<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>     * @see Caret#moveDot<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>     */<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>    public void moveDot(int dot) {<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>        moveDot(dot, Position.Bias.Forward);<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>    }<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span><a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>    // ---- Bidi methods (we could put these in a subclass)<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span><a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>    /**<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>     * Moves the caret position to the specified position, with the<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>     * specified bias.<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>     *<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>     * @param dot the position &amp;gt;= 0<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>     * @param dotBias the bias for this position, not &lt;code&gt;null&lt;/code&gt;<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>     * @throws IllegalArgumentException if the bias is &lt;code&gt;null&lt;/code&gt;<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>     * @see Caret#moveDot<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>     * @since 1.6<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>     */<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>    public void moveDot(int dot, Position.Bias dotBias) {<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>        if (dotBias == null) {<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>            throw new IllegalArgumentException("null bias");<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>        }<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span><a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>        if (! component.isEnabled()) {<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>            // don't allow selection on disabled components.<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>            setDot(dot, dotBias);<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>            return;<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>        }<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>        if (dot != this.dot) {<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>            NavigationFilter filter = component.getNavigationFilter();<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span><a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>            if (filter != null) {<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>                filter.moveDot(getFilterBypass(), dot, dotBias);<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>            }<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>            else {<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>                handleMoveDot(dot, dotBias);<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>            }<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>        }<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>    }<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span><a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>    void handleMoveDot(int dot, Position.Bias dotBias) {<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>        changeCaretPosition(dot, dotBias);<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span><a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>        if (selectionVisible) {<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>            Highlighter h = component.getHighlighter();<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>            if (h != null) {<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>                int p0 = Math.min(dot, mark);<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>                int p1 = Math.max(dot, mark);<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span><a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>                // if p0 == p1 then there should be no highlight, remove it if necessary<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>                if (p0 == p1) {<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>                    if (selectionTag != null) {<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>                        h.removeHighlight(selectionTag);<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>                        selectionTag = null;<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>                    }<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>                // otherwise, change or add the highlight<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>                } else {<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>                    try {<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>                        if (selectionTag != null) {<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>                            h.changeHighlight(selectionTag, p0, p1);<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>                        } else {<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>                            Highlighter.HighlightPainter p = getSelectionPainter();<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>                            selectionTag = h.addHighlight(p0, p1, p);<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>                        }<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>                    } catch (BadLocationException e) {<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>                        throw new StateInvariantError("Bad caret position");<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>                    }<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>                }<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>            }<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>        }<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>    }<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span><a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>    /**<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>     * Sets the caret position and mark to the specified position, with the<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>     * specified bias. This implicitly sets the selection range<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>     * to zero.<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>     *<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>     * @param dot the position &amp;gt;= 0<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>     * @param dotBias the bias for this position, not &lt;code&gt;null&lt;/code&gt;<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>     * @throws IllegalArgumentException if the bias is &lt;code&gt;null&lt;/code&gt;<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>     * @see Caret#setDot<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>     * @since 1.6<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>     */<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>    public void setDot(int dot, Position.Bias dotBias) {<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>        if (dotBias == null) {<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>            throw new IllegalArgumentException("null bias");<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>        }<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span><a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>        NavigationFilter filter = component.getNavigationFilter();<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span><a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>        if (filter != null) {<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>            filter.setDot(getFilterBypass(), dot, dotBias);<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>        }<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>        else {<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>            handleSetDot(dot, dotBias);<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>        }<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>    }<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span><a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>    void handleSetDot(int dot, Position.Bias dotBias) {<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>        // move dot, if it changed<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>        Document doc = component.getDocument();<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>        if (doc != null) {<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>            dot = Math.min(dot, doc.getLength());<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>        }<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>        dot = Math.max(dot, 0);<a name="line.1164"></a>
+<span class="sourceLineNo">1165</span><a name="line.1165"></a>
+<span class="sourceLineNo">1166</span>        // The position (0,Backward) is out of range so disallow it.<a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>        if( dot == 0 )<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>            dotBias = Position.Bias.Forward;<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span><a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>        mark = dot;<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>        if (this.dot != dot || this.dotBias != dotBias ||<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>            selectionTag != null || forceCaretPositionChange) {<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span>            changeCaretPosition(dot, dotBias);<a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>        }<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>        this.markBias = this.dotBias;<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>        this.markLTR = dotLTR;<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>        Highlighter h = component.getHighlighter();<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>        if ((h != null) &amp;&amp; (selectionTag != null)) {<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span>            h.removeHighlight(selectionTag);<a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>            selectionTag = null;<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>        }<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span>    }<a name="line.1182"></a>
+<span class="sourceLineNo">1183</span><a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>    /**<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>     * Returns the bias of the caret position.<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>     *<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>     * @return the bias of the caret position<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>     * @since 1.6<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span>     */<a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>    public Position.Bias getDotBias() {<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>        return dotBias;<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>    }<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span><a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>    /**<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>     * Returns the bias of the mark.<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>     *<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>     * @return the bias of the mark<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>     * @since 1.6<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>     */<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>    public Position.Bias getMarkBias() {<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>        return markBias;<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span>    }<a name="line.1202"></a>
+<span class="sourceLineNo">1203</span><a name="line.1203"></a>
+<span class="sourceLineNo">1204</span>    boolean isDotLeftToRight() {<a name="line.1204"></a>
+<span class="sourceLineNo">1205</span>        return dotLTR;<a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>    }<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span><a name="line.1207"></a>
+<span class="sourceLineNo">1208</span>    boolean isMarkLeftToRight() {<a name="line.1208"></a>
+<span class="sourceLineNo">1209</span>        return markLTR;<a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>    }<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span><a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>    boolean isPositionLTR(int position, Position.Bias bias) {<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span>        Document doc = component.getDocument();<a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>        if(doc instanceof AbstractDocument ) {<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>            if(bias == Position.Bias.Backward &amp;&amp; --position &lt; 0)<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>                position = 0;<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>            return ((AbstractDocument)doc).isLeftToRight(position, position);<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span>        }<a name="line.1218"></a>
+<span class="sourceLineNo">1219</span>        return true;<a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>    }<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span><a name="line.1221"></a>
+<span class="sourceLineNo">1222</span>    Position.Bias guessBiasForOffset(int offset, Position.Bias lastBias,<a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>                                     boolean lastLTR) {<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>        // There is an abiguous case here. That if your model looks like:<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span>        // abAB with the cursor at abB]A (visual representation of<a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>        // 3 forward) deleting could either become abB] or<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span>        // ab[B. I'ld actually prefer abB]. But, if I implement that<a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>        // a delete at abBA] would result in aBA] vs a[BA which I<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span>        // think is totally wrong. To get this right we need to know what<a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>        // was deleted. And we could get this from the bidi structure<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span>        // in the change event. So:<a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>        // PENDING: base this off what was deleted.<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>        if(lastLTR != isPositionLTR(offset, lastBias)) {<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>            lastBias = Position.Bias.Backward;<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span>        }<a name="line.1235"></a>
+<span class="sourceLineNo">1236</span>        else if(lastBias != Position.Bias.Backward &amp;&amp;<a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>                lastLTR != isPositionLTR(offset, Position.Bias.Backward)) {<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span>            lastBias = Position.Bias.Backward;<a name="line.1238"></a>
+<span class="sourceLineNo">1239</span>        }<a name="line.1239"></a>
+<span class="sourceLineNo">1240</span>        if (lastBias == Position.Bias.Backward &amp;&amp; offset &gt; 0) {<a name="line.1240"></a>
+<span class="sourceLineNo">1241</span>            try {<a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>                Segment s = new Segment();<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>                component.getDocument().getText(offset - 1, 1, s);<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span>                if (s.count &gt; 0 &amp;&amp; s.array[s.offset] == '\n') {<a name="line.1244"></a>
+<span class="sourceLineNo">1245</span>                    lastBias = Position.Bias.Forward;<a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>                }<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span>            }<a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>            catch (BadLocationException ble) {}<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>        }<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>        return lastBias;<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span>    }<a name="line.1251"></a>
+<span class="sourceLineNo">1252</span><a name="line.1252"></a>
+<span class="sourceLineNo">1253</span>    // ---- local methods --------------------------------------------<a name="line.1253"></a>
+<span class="sourceLineNo">1254</span><a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>    /**<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span>     * Sets the caret position (dot) to a new location.  This<a name="line.1256"></a>
+<span class="sourceLineNo">1257</span>     * causes the old and new location to be repainted.  It<a name="line.1257"></a>
+<span class="sourceLineNo">1258</span>     * also makes sure that the caret is within the visible<a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>     * region of the view, if the view is scrollable.<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span>     */<a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>    void changeCaretPosition(int dot, Position.Bias dotBias) {<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>        // repaint the old position and set the new value of<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>        // the dot.<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>        repaint();<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span><a name="line.1265"></a>
+<span class="sourceLineNo">1266</span><a name="line.1266"></a>
+<span class="sourceLineNo">1267</span>        // Make sure the caret is visible if this window has the focus.<a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>        if (flasher != null &amp;&amp; flasher.isRunning()) {<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span>            visible = true;<a name="line.1269"></a>
+<span class="sourceLineNo">1270</span>            flasher.restart();<a name="line.1270"></a>
+<span class="sourceLineNo">1271</span>        }<a name="line.1271"></a>
+<span class="sourceLineNo">1272</span><a name="line.1272"></a>
+<span class="sourceLineNo">1273</span>        // notify listeners at the caret moved<a name="line.1273"></a>
+<span class="sourceLineNo">1274</span>        this.dot = dot;<a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>        this.dotBias = dotBias;<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span>        dotLTR = isPositionLTR(dot, dotBias);<a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>        fireStateChanged();<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span><a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>        updateSystemSelection();<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span><a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>        setMagicCaretPosition(null);<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span><a name="line.1282"></a>
+<span class="sourceLineNo">1283</span>        // We try to repaint the caret later, since things<a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>        // may be unstable at the time this is called<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span>        // (i.e. we don't want to depend upon notification<a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>        // order or the fact that this might happen on<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span>        // an unsafe thread).<a name="line.1287"></a>
+<span class="sourceLineNo">1288</span>        Runnable callRepaintNewCaret = new Runnable() {<a name="line.1288"></a>
+<span class="sourceLineNo">1289</span>            public void run() {<a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>                repaintNewCaret();<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span>            }<a name="line.1291"></a>
+<span class="sourceLineNo">1292</span>        };<a name="line.1292"></a>
+<span class="sourceLineNo">1293</span>        SwingUtilities.invokeLater(callRepaintNewCaret);<a name="line.1293"></a>
+<span class="sourceLineNo">1294</span>    }<a name="line.1294"></a>
+<span class="sourceLineNo">1295</span><a name="line.1295"></a>
+<span class="sourceLineNo">1296</span>    /**<a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>     * Repaints the new caret position, with the<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span>     * assumption that this is happening on the<a name="line.1298"></a>
+<span class="sourceLineNo">1299</span>     * event thread so that calling &lt;code&gt;modelToView&lt;/code&gt;<a name="line.1299"></a>
+<span class="sourceLineNo">1300</span>     * is safe.<a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>     */<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>    void repaintNewCaret() {<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>        if (component != null) {<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span>            TextUI mapper = component.getUI();<a name="line.1304"></a>
+<span class="sourceLineNo">1305</span>            Document doc = component.getDocument();<a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>            if ((mapper != null) &amp;&amp; (doc != null)) {<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span>                // determine the new location and scroll if<a name="line.1307"></a>
+<span class="sourceLineNo">1308</span>                // not visible.<a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>                Rectangle newLoc;<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span>                try {<a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>                    newLoc = mapper.modelToView(component, this.dot, this.dotBias);<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>                } catch (BadLocationException e) {<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span>                    newLoc = null;<a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>                }<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span>                if (newLoc != null) {<a name="line.1315"></a>
+<span class="sourceLineNo">1316</span>                    adjustVisibility(newLoc);<a name="line.1316"></a>
+<span class="sourceLineNo">1317</span>                    // If there is no magic caret position, make one<a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>                    if (getMagicCaretPosition() == null) {<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span>                        setMagicCaretPosition(new Point(newLoc.x, newLoc.y));<a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>                    }<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span>                }<a name="line.1321"></a>
+<span class="sourceLineNo">1322</span><a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>                // repaint the new position<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>                damage(newLoc);<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>            }<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span>        }<a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>    }<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span><a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>    private void updateSystemSelection() {<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>        if ( ! SwingUtilities2.canCurrentEventAccessSystemClipboard() ) {<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>            return;<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span>        }<a name="line.1332"></a>
+<span class="sourceLineNo">1333</span>        if (this.dot != this.mark &amp;&amp; component != null &amp;&amp; component.hasFocus()) {<a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>            Clipboard clip = getSystemSelection();<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span>            if (clip != null) {<a name="line.1335"></a>
+<span class="sourceLineNo">1336</span>                String selectedText;<a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>                if (component instanceof JPasswordField<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span>                    &amp;&amp; component.getClientProperty("JPasswordField.cutCopyAllowed") !=<a name="line.1338"></a>
+<span class="sourceLineNo">1339</span>                    Boolean.TRUE) {<a name="line.1339"></a>
+<span class="sourceLineNo">1340</span>                    //fix for 4793761<a name="line.1340"></a>
+<span class="sourceLineNo">1341</span>                    StringBuilder txt = null;<a name="line.1341"></a>
+<span class="sourceLineNo">1342</span>                    char echoChar = ((JPasswordField)component).getEchoChar();<a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>                    int p0 = Math.min(getDot(), getMark());<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span>                    int p1 = Math.max(getDot(), getMark());<a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>                    for (int i = p0; i &lt; p1; i++) {<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>                        if (txt == null) {<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>                            txt = new StringBuilder();<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span>                        }<a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>                        txt.append(echoChar);<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>                    }<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span>                    selectedText = (txt != null) ? txt.toString() : null;<a name="line.1351"></a>
+<span class="sourceLineNo">1352</span>                } else {<a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>                    selectedText = component.getSelectedText();<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span>                }<a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>                try {<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span>                    clip.setContents(<a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>                        new StringSelection(selectedText), getClipboardOwner());<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span><a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>                    ownsSelection = true;<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span>                } catch (IllegalStateException ise) {<a name="line.1360"></a>
+<span class="sourceLineNo">1361</span>                    // clipboard was unavailable<a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>                    // no need to provide error feedback to user since updating<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span>                    // the system selection is not a user invoked action<a name="line.1363"></a>
+<span class="sourceLineNo">1364</span>                }<a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>            }<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span>        }<a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>    }<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span><a name="line.1368"></a>
+<span class="sourceLineNo">1369</span>    private Clipboard getSystemSelection() {<a name="line.1369"></a>
+<span class="sourceLineNo">1370</span>        try {<a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>            return component.getToolkit().getSystemSelection();<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span>        } catch (HeadlessException he) {<a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>            // do nothing... there is no system clipboard<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>        } catch (SecurityException se) {<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span>            // do nothing... there is no allowed system clipboard<a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>        }<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>        return null;<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>    }<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span><a name="line.1379"></a>
+<span class="sourceLineNo">1380</span>    private ClipboardOwner getClipboardOwner() {<a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>        return handler;<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span>    }<a name="line.1382"></a>
+<span class="sourceLineNo">1383</span><a name="line.1383"></a>
+<span class="sourceLineNo">1384</span>    /**<a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>     * This is invoked after the document changes to verify the current<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span>     * dot/mark is valid. We do this in case the &lt;code&gt;NavigationFilter&lt;/code&gt;<a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>     * changed where to position the dot, that resulted in the current location<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span>     * being bogus.<a name="line.1388"></a>
+<span class="sourceLineNo">1389</span>     */<a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>    private void ensureValidPosition() {<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>        int length = component.getDocument().getLength();<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span>        if (dot &gt; length || mark &gt; length) {<a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>            // Current location is bogus and filter likely vetoed the<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span>            // change, force the reset without giving the filter a<a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>            // chance at changing it.<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span>            handleSetDot(length, Position.Bias.Forward);<a name="line.1396"></a>
+<span class="sourceLineNo">1397</span>        }<a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>    }<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span><a name="line.1399"></a>
+<span class="sourceLineNo">1400</span><a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>    /**<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span>     * Saves the current caret position.  This is used when<a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>     * caret up/down actions occur, moving between lines<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span>     * that have uneven end positions.<a name="line.1404"></a>
+<span class="sourceLineNo">1405</span>     *<a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>     * @param p the position<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>     * @see #getMagicCaretPosition<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span>     */<a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>    public void setMagicCaretPosition(Point p) {<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span>        magicCaretPosition = p;<a name="line.1410"></a>
+<span class="sourceLineNo">1411</span>    }<a name="line.1411"></a>
+<span class="sourceLineNo">1412</span><a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>    /**<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span>     * Gets the saved caret position.<a name="line.1414"></a>
+<span class="sourceLineNo">1415</span>     *<a name="line.1415"></a>
+<span class="sourceLineNo">1416</span>     * @return the position<a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>     * see #setMagicCaretPosition<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span>     */<a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>    public Point getMagicCaretPosition() {<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span>        return magicCaretPosition;<a name="line.1420"></a>
+<span class="sourceLineNo">1421</span>    }<a name="line.1421"></a>
+<span class="sourceLineNo">1422</span><a name="line.1422"></a>
+<span class="sourceLineNo">1423</span>    /**<a name="line.1423"></a>
+<span class="sourceLineNo">1424</span>     * Compares this object to the specified object.<a name="line.1424"></a>
+<span class="sourceLineNo">1425</span>     * The superclass behavior of comparing rectangles<a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>     * is not desired, so this is changed to the Object<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span>     * behavior.<a name="line.1427"></a>
+<span class="sourceLineNo">1428</span>     *<a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>     * @param     obj   the object to compare this font with<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span>     * @return    &lt;code&gt;true&lt;/code&gt; if the objects are equal;<a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>     *            &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span>     */<a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>    public boolean equals(Object obj) {<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span>        return (this == obj);<a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>    }<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span><a name="line.1436"></a>
+<span class="sourceLineNo">1437</span>    public String toString() {<a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>        String s = "Dot=(" + dot + ", " + dotBias + ")";<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>        s += " Mark=(" + mark + ", " + markBias + ")";<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>        return s;<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>    }<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span><a name="line.1442"></a>
+<span class="sourceLineNo">1443</span>    private NavigationFilter.FilterBypass getFilterBypass() {<a name="line.1443"></a>
+<span class="sourceLineNo">1444</span>        if (filterBypass == null) {<a name="line.1444"></a>
+<span class="sourceLineNo">1445</span>            filterBypass = new DefaultFilterBypass();<a name="line.1445"></a>
+<span class="sourceLineNo">1446</span>        }<a name="line.1446"></a>
+<span class="sourceLineNo">1447</span>        return filterBypass;<a name="line.1447"></a>
+<span class="sourceLineNo">1448</span>    }<a name="line.1448"></a>
+<span class="sourceLineNo">1449</span><a name="line.1449"></a>
+<span class="sourceLineNo">1450</span>    // Rectangle.contains returns false if passed a rect with a w or h == 0,<a name="line.1450"></a>
+<span class="sourceLineNo">1451</span>    // this won't (assuming X,Y are contained with this rectangle).<a name="line.1451"></a>
+<span class="sourceLineNo">1452</span>    private boolean _contains(int X, int Y, int W, int H) {<a name="line.1452"></a>
+<span class="sourceLineNo">1453</span>        int w = this.width;<a name="line.1453"></a>
+<span class="sourceLineNo">1454</span>        int h = this.height;<a name="line.1454"></a>
+<span class="sourceLineNo">1455</span>        if ((w | h | W | H) &lt; 0) {<a name="line.1455"></a>
+<span class="sourceLineNo">1456</span>            // At least one of the dimensions is negative...<a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>            return false;<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span>        }<a name="line.1458"></a>
+<span class="sourceLineNo">1459</span>        // Note: if any dimension is zero, tests below must return false...<a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>        int x = this.x;<a name="line.1460"></a>
+<span class="sourceLineNo">1461</span>        int y = this.y;<a name="line.1461"></a>
+<span class="sourceLineNo">1462</span>        if (X &lt; x || Y &lt; y) {<a name="line.1462"></a>
+<span class="sourceLineNo">1463</span>            return false;<a name="line.1463"></a>
+<span class="sourceLineNo">1464</span>        }<a name="line.1464"></a>
+<span class="sourceLineNo">1465</span>        if (W &gt; 0) {<a name="line.1465"></a>
+<span class="sourceLineNo">1466</span>            w += x;<a name="line.1466"></a>
+<span class="sourceLineNo">1467</span>            W += X;<a name="line.1467"></a>
+<span class="sourceLineNo">1468</span>            if (W &lt;= X) {<a name="line.1468"></a>
+<span class="sourceLineNo">1469</span>                // X+W overflowed or W was zero, return false if...<a name="line.1469"></a>
+<span class="sourceLineNo">1470</span>                // either original w or W was zero or<a name="line.1470"></a>
+<span class="sourceLineNo">1471</span>                // x+w did not overflow or<a name="line.1471"></a>
+<span class="sourceLineNo">1472</span>                // the overflowed x+w is smaller than the overflowed X+W<a name="line.1472"></a>
+<span class="sourceLineNo">1473</span>                if (w &gt;= x || W &gt; w) return false;<a name="line.1473"></a>
+<span class="sourceLineNo">1474</span>            } else {<a name="line.1474"></a>
+<span class="sourceLineNo">1475</span>                // X+W did not overflow and W was not zero, return false if...<a name="line.1475"></a>
+<span class="sourceLineNo">1476</span>                // original w was zero or<a name="line.1476"></a>
+<span class="sourceLineNo">1477</span>                // x+w did not overflow and x+w is smaller than X+W<a name="line.1477"></a>
+<span class="sourceLineNo">1478</span>                if (w &gt;= x &amp;&amp; W &gt; w) return false;<a name="line.1478"></a>
+<span class="sourceLineNo">1479</span>            }<a name="line.1479"></a>
+<span class="sourceLineNo">1480</span>        }<a name="line.1480"></a>
+<span class="sourceLineNo">1481</span>        else if ((x + w) &lt; X) {<a name="line.1481"></a>
+<span class="sourceLineNo">1482</span>            return false;<a name="line.1482"></a>
+<span class="sourceLineNo">1483</span>        }<a name="line.1483"></a>
+<span class="sourceLineNo">1484</span>        if (H &gt; 0) {<a name="line.1484"></a>
+<span class="sourceLineNo">1485</span>            h += y;<a name="line.1485"></a>
+<span class="sourceLineNo">1486</span>            H += Y;<a name="line.1486"></a>
+<span class="sourceLineNo">1487</span>            if (H &lt;= Y) {<a name="line.1487"></a>
+<span class="sourceLineNo">1488</span>                if (h &gt;= y || H &gt; h) return false;<a name="line.1488"></a>
+<span class="sourceLineNo">1489</span>            } else {<a name="line.1489"></a>
+<span class="sourceLineNo">1490</span>                if (h &gt;= y &amp;&amp; H &gt; h) return false;<a name="line.1490"></a>
+<span class="sourceLineNo">1491</span>            }<a name="line.1491"></a>
+<span class="sourceLineNo">1492</span>        }<a name="line.1492"></a>
+<span class="sourceLineNo">1493</span>        else if ((y + h) &lt; Y) {<a name="line.1493"></a>
+<span class="sourceLineNo">1494</span>            return false;<a name="line.1494"></a>
+<span class="sourceLineNo">1495</span>        }<a name="line.1495"></a>
+<span class="sourceLineNo">1496</span>        return true;<a name="line.1496"></a>
+<span class="sourceLineNo">1497</span>    }<a name="line.1497"></a>
+<span class="sourceLineNo">1498</span><a name="line.1498"></a>
+<span class="sourceLineNo">1499</span>    int getCaretWidth(int height) {<a name="line.1499"></a>
+<span class="sourceLineNo">1500</span>        if (aspectRatio &gt; -1) {<a name="line.1500"></a>
+<span class="sourceLineNo">1501</span>            return (int) (aspectRatio * height) + 1;<a name="line.1501"></a>
+<span class="sourceLineNo">1502</span>        }<a name="line.1502"></a>
+<span class="sourceLineNo">1503</span><a name="line.1503"></a>
+<span class="sourceLineNo">1504</span>        if (caretWidth &gt; -1) {<a name="line.1504"></a>
+<span class="sourceLineNo">1505</span>            return caretWidth;<a name="line.1505"></a>
+<span class="sourceLineNo">1506</span>        } else {<a name="line.1506"></a>
+<span class="sourceLineNo">1507</span>            Object property = UIManager.get("Caret.width");<a name="line.1507"></a>
+<span class="sourceLineNo">1508</span>            if (property instanceof Integer) {<a name="line.1508"></a>
+<span class="sourceLineNo">1509</span>                return ((Integer) property).intValue();<a name="line.1509"></a>
+<span class="sourceLineNo">1510</span>            } else {<a name="line.1510"></a>
+<span class="sourceLineNo">1511</span>                return 1;<a name="line.1511"></a>
+<span class="sourceLineNo">1512</span>            }<a name="line.1512"></a>
+<span class="sourceLineNo">1513</span>        }<a name="line.1513"></a>
+<span class="sourceLineNo">1514</span>    }<a name="line.1514"></a>
+<span class="sourceLineNo">1515</span><a name="line.1515"></a>
+<span class="sourceLineNo">1516</span>    // --- serialization ---------------------------------------------<a name="line.1516"></a>
+<span class="sourceLineNo">1517</span><a name="line.1517"></a>
+<span class="sourceLineNo">1518</span>    private void readObject(ObjectInputStream s)<a name="line.1518"></a>
+<span class="sourceLineNo">1519</span>      throws ClassNotFoundException, IOException<a name="line.1519"></a>
+<span class="sourceLineNo">1520</span>    {<a name="line.1520"></a>
+<span class="sourceLineNo">1521</span>        s.defaultReadObject();<a name="line.1521"></a>
+<span class="sourceLineNo">1522</span>        handler = new Handler();<a name="line.1522"></a>
+<span class="sourceLineNo">1523</span>        if (!s.readBoolean()) {<a name="line.1523"></a>
+<span class="sourceLineNo">1524</span>            dotBias = Position.Bias.Forward;<a name="line.1524"></a>
+<span class="sourceLineNo">1525</span>        }<a name="line.1525"></a>
+<span class="sourceLineNo">1526</span>        else {<a name="line.1526"></a>
+<span class="sourceLineNo">1527</span>            dotBias = Position.Bias.Backward;<a name="line.1527"></a>
+<span class="sourceLineNo">1528</span>        }<a name="line.1528"></a>
+<span class="sourceLineNo">1529</span>        if (!s.readBoolean()) {<a name="line.1529"></a>
+<span class="sourceLineNo">1530</span>            markBias = Position.Bias.Forward;<a name="line.1530"></a>
+<span class="sourceLineNo">1531</span>        }<a name="line.1531"></a>
+<span class="sourceLineNo">1532</span>        else {<a name="line.1532"></a>
+<span class="sourceLineNo">1533</span>            markBias = Position.Bias.Backward;<a name="line.1533"></a>
+<span class="sourceLineNo">1534</span>        }<a name="line.1534"></a>
+<span class="sourceLineNo">1535</span>    }<a name="line.1535"></a>
+<span class="sourceLineNo">1536</span><a name="line.1536"></a>
+<span class="sourceLineNo">1537</span>    private void writeObject(ObjectOutputStream s) throws IOException {<a name="line.1537"></a>
+<span class="sourceLineNo">1538</span>        s.defaultWriteObject();<a name="line.1538"></a>
+<span class="sourceLineNo">1539</span>        s.writeBoolean((dotBias == Position.Bias.Backward));<a name="line.1539"></a>
+<span class="sourceLineNo">1540</span>        s.writeBoolean((markBias == Position.Bias.Backward));<a name="line.1540"></a>
+<span class="sourceLineNo">1541</span>    }<a name="line.1541"></a>
+<span class="sourceLineNo">1542</span><a name="line.1542"></a>
+<span class="sourceLineNo">1543</span>    // ---- member variables ------------------------------------------<a name="line.1543"></a>
+<span class="sourceLineNo">1544</span><a name="line.1544"></a>
+<span class="sourceLineNo">1545</span>    /**<a name="line.1545"></a>
+<span class="sourceLineNo">1546</span>     * The event listener list.<a name="line.1546"></a>
+<span class="sourceLineNo">1547</span>     */<a name="line.1547"></a>
+<span class="sourceLineNo">1548</span>    protected EventListenerList listenerList = new EventListenerList();<a name="line.1548"></a>
+<span class="sourceLineNo">1549</span><a name="line.1549"></a>
+<span class="sourceLineNo">1550</span>    /**<a name="line.1550"></a>
+<span class="sourceLineNo">1551</span>     * The change event for the model.<a name="line.1551"></a>
+<span class="sourceLineNo">1552</span>     * Only one ChangeEvent is needed per model instance since the<a name="line.1552"></a>
+<span class="sourceLineNo">1553</span>     * event's only (read-only) state is the source property.  The source<a name="line.1553"></a>
+<span class="sourceLineNo">1554</span>     * of events generated here is always "this".<a name="line.1554"></a>
+<span class="sourceLineNo">1555</span>     */<a name="line.1555"></a>
+<span class="sourceLineNo">1556</span>    protected transient ChangeEvent changeEvent = null;<a name="line.1556"></a>
+<span class="sourceLineNo">1557</span><a name="line.1557"></a>
+<span class="sourceLineNo">1558</span>    // package-private to avoid inner classes private member<a name="line.1558"></a>
+<span class="sourceLineNo">1559</span>    // access bug<a name="line.1559"></a>
+<span class="sourceLineNo">1560</span>    JTextComponent component;<a name="line.1560"></a>
+<span class="sourceLineNo">1561</span><a name="line.1561"></a>
+<span class="sourceLineNo">1562</span>    int updatePolicy = UPDATE_WHEN_ON_EDT;<a name="line.1562"></a>
+<span class="sourceLineNo">1563</span>    boolean visible;<a name="line.1563"></a>
+<span class="sourceLineNo">1564</span>    boolean active;<a name="line.1564"></a>
+<span class="sourceLineNo">1565</span>    int dot;<a name="line.1565"></a>
+<span class="sourceLineNo">1566</span>    int mark;<a name="line.1566"></a>
+<span class="sourceLineNo">1567</span>    Object selectionTag;<a name="line.1567"></a>
+<span class="sourceLineNo">1568</span>    boolean selectionVisible;<a name="line.1568"></a>
+<span class="sourceLineNo">1569</span>    Timer flasher;<a name="line.1569"></a>
+<span class="sourceLineNo">1570</span>    Point magicCaretPosition;<a name="line.1570"></a>
+<span class="sourceLineNo">1571</span>    transient Position.Bias dotBias;<a name="line.1571"></a>
+<span class="sourceLineNo">1572</span>    transient Position.Bias markBias;<a name="line.1572"></a>
+<span class="sourceLineNo">1573</span>    boolean dotLTR;<a name="line.1573"></a>
+<span class="sourceLineNo">1574</span>    boolean markLTR;<a name="line.1574"></a>
+<span class="sourceLineNo">1575</span>    transient Handler handler = new Handler();<a name="line.1575"></a>
+<span class="sourceLineNo">1576</span>    transient private int[] flagXPoints = new int[3];<a name="line.1576"></a>
+<span class="sourceLineNo">1577</span>    transient private int[] flagYPoints = new int[3];<a name="line.1577"></a>
+<span class="sourceLineNo">1578</span>    private transient NavigationFilter.FilterBypass filterBypass;<a name="line.1578"></a>
+<span class="sourceLineNo">1579</span>    static private transient Action selectWord = null;<a name="line.1579"></a>
+<span class="sourceLineNo">1580</span>    static private transient Action selectLine = null;<a name="line.1580"></a>
+<span class="sourceLineNo">1581</span>    /**<a name="line.1581"></a>
+<span class="sourceLineNo">1582</span>     * This is used to indicate if the caret currently owns the selection.<a name="line.1582"></a>
+<span class="sourceLineNo">1583</span>     * This is always false if the system does not support the system<a name="line.1583"></a>
+<span class="sourceLineNo">1584</span>     * clipboard.<a name="line.1584"></a>
+<span class="sourceLineNo">1585</span>     */<a name="line.1585"></a>
+<span class="sourceLineNo">1586</span>    private boolean ownsSelection;<a name="line.1586"></a>
+<span class="sourceLineNo">1587</span><a name="line.1587"></a>
+<span class="sourceLineNo">1588</span>    /**<a name="line.1588"></a>
+<span class="sourceLineNo">1589</span>     * If this is true, the location of the dot is updated regardless of<a name="line.1589"></a>
+<span class="sourceLineNo">1590</span>     * the current location. This is set in the DocumentListener<a name="line.1590"></a>
+<span class="sourceLineNo">1591</span>     * such that even if the model location of dot hasn't changed (perhaps do<a name="line.1591"></a>
+<span class="sourceLineNo">1592</span>     * to a forward delete) the visual location is updated.<a name="line.1592"></a>
+<span class="sourceLineNo">1593</span>     */<a name="line.1593"></a>
+<span class="sourceLineNo">1594</span>    private boolean forceCaretPositionChange;<a name="line.1594"></a>
+<span class="sourceLineNo">1595</span><a name="line.1595"></a>
+<span class="sourceLineNo">1596</span>    /**<a name="line.1596"></a>
+<span class="sourceLineNo">1597</span>     * Whether or not mouseReleased should adjust the caret and focus.<a name="line.1597"></a>
+<span class="sourceLineNo">1598</span>     * This flag is set by mousePressed if it wanted to adjust the caret<a name="line.1598"></a>
+<span class="sourceLineNo">1599</span>     * and focus but couldn't because of a possible DnD operation.<a name="line.1599"></a>
+<span class="sourceLineNo">1600</span>     */<a name="line.1600"></a>
+<span class="sourceLineNo">1601</span>    private transient boolean shouldHandleRelease;<a name="line.1601"></a>
+<span class="sourceLineNo">1602</span><a name="line.1602"></a>
+<span class="sourceLineNo">1603</span><a name="line.1603"></a>
+<span class="sourceLineNo">1604</span>    /**<a name="line.1604"></a>
+<span class="sourceLineNo">1605</span>     * holds last MouseEvent which caused the word selection<a name="line.1605"></a>
+<span class="sourceLineNo">1606</span>     */<a name="line.1606"></a>
+<span class="sourceLineNo">1607</span>    private transient MouseEvent selectedWordEvent = null;<a name="line.1607"></a>
+<span class="sourceLineNo">1608</span><a name="line.1608"></a>
+<span class="sourceLineNo">1609</span>    /**<a name="line.1609"></a>
+<span class="sourceLineNo">1610</span>     * The width of the caret in pixels.<a name="line.1610"></a>
+<span class="sourceLineNo">1611</span>     */<a name="line.1611"></a>
+<span class="sourceLineNo">1612</span>    private int caretWidth = -1;<a name="line.1612"></a>
+<span class="sourceLineNo">1613</span>    private float aspectRatio = -1;<a name="line.1613"></a>
+<span class="sourceLineNo">1614</span><a name="line.1614"></a>
+<span class="sourceLineNo">1615</span>    class SafeScroller implements Runnable {<a name="line.1615"></a>
+<span class="sourceLineNo">1616</span><a name="line.1616"></a>
+<span class="sourceLineNo">1617</span>        SafeScroller(Rectangle r) {<a name="line.1617"></a>
+<span class="sourceLineNo">1618</span>            this.r = r;<a name="line.1618"></a>
+<span class="sourceLineNo">1619</span>        }<a name="line.1619"></a>
+<span class="sourceLineNo">1620</span><a name="line.1620"></a>
+<span class="sourceLineNo">1621</span>        public void run() {<a name="line.1621"></a>
+<span class="sourceLineNo">1622</span>            if (component != null) {<a name="line.1622"></a>
+<span class="sourceLineNo">1623</span>                component.scrollRectToVisible(r);<a name="line.1623"></a>
+<span class="sourceLineNo">1624</span>            }<a name="line.1624"></a>
+<span class="sourceLineNo">1625</span>        }<a name="line.1625"></a>
+<span class="sourceLineNo">1626</span><a name="line.1626"></a>
+<span class="sourceLineNo">1627</span>        Rectangle r;<a name="line.1627"></a>
+<span class="sourceLineNo">1628</span>    }<a name="line.1628"></a>
+<span class="sourceLineNo">1629</span><a name="line.1629"></a>
+<span class="sourceLineNo">1630</span><a name="line.1630"></a>
+<span class="sourceLineNo">1631</span>    class Handler implements PropertyChangeListener, DocumentListener, ActionListener, ClipboardOwner {<a name="line.1631"></a>
+<span class="sourceLineNo">1632</span><a name="line.1632"></a>
+<span class="sourceLineNo">1633</span>        // --- ActionListener methods ----------------------------------<a name="line.1633"></a>
+<span class="sourceLineNo">1634</span><a name="line.1634"></a>
+<span class="sourceLineNo">1635</span>        /**<a name="line.1635"></a>
+<span class="sourceLineNo">1636</span>         * Invoked when the blink timer fires.  This is called<a name="line.1636"></a>
+<span class="sourceLineNo">1637</span>         * asynchronously.  The simply changes the visibility<a name="line.1637"></a>
+<span class="sourceLineNo">1638</span>         * and repaints the rectangle that last bounded the caret.<a name="line.1638"></a>
+<span class="sourceLineNo">1639</span>         *<a name="line.1639"></a>
+<span class="sourceLineNo">1640</span>         * @param e the action event<a name="line.1640"></a>
+<span class="sourceLineNo">1641</span>         */<a name="line.1641"></a>
+<span class="sourceLineNo">1642</span>        public void actionPerformed(ActionEvent e) {<a name="line.1642"></a>
+<span class="sourceLineNo">1643</span>            if (width == 0 || height == 0) {<a name="line.1643"></a>
+<span class="sourceLineNo">1644</span>                // setVisible(true) will cause a scroll, only do this if the<a name="line.1644"></a>
+<span class="sourceLineNo">1645</span>                // new location is really valid.<a name="line.1645"></a>
+<span class="sourceLineNo">1646</span>                if (component != null) {<a name="line.1646"></a>
+<span class="sourceLineNo">1647</span>                    TextUI mapper = component.getUI();<a name="line.1647"></a>
+<span class="sourceLineNo">1648</span>                    try {<a name="line.1648"></a>
+<span class="sourceLineNo">1649</span>                        Rectangle r = mapper.modelToView(component, dot,<a name="line.1649"></a>
+<span class="sourceLineNo">1650</span>                                                         dotBias);<a name="line.1650"></a>
+<span class="sourceLineNo">1651</span>                        if (r != null &amp;&amp; r.width != 0 &amp;&amp; r.height != 0) {<a name="line.1651"></a>
+<span class="sourceLineNo">1652</span>                            damage(r);<a name="line.1652"></a>
+<span class="sourceLineNo">1653</span>                        }<a name="line.1653"></a>
+<span class="sourceLineNo">1654</span>                    } catch (BadLocationException ble) {<a name="line.1654"></a>
+<span class="sourceLineNo">1655</span>                    }<a name="line.1655"></a>
+<span class="sourceLineNo">1656</span>                }<a name="line.1656"></a>
+<span class="sourceLineNo">1657</span>            }<a name="line.1657"></a>
+<span class="sourceLineNo">1658</span>            visible = !visible;<a name="line.1658"></a>
+<span class="sourceLineNo">1659</span>            repaint();<a name="line.1659"></a>
+<span class="sourceLineNo">1660</span>        }<a name="line.1660"></a>
+<span class="sourceLineNo">1661</span><a name="line.1661"></a>
+<span class="sourceLineNo">1662</span>        // --- DocumentListener methods --------------------------------<a name="line.1662"></a>
+<span class="sourceLineNo">1663</span><a name="line.1663"></a>
+<span class="sourceLineNo">1664</span>        /**<a name="line.1664"></a>
+<span class="sourceLineNo">1665</span>         * Updates the dot and mark if they were changed by<a name="line.1665"></a>
+<span class="sourceLineNo">1666</span>         * the insertion.<a name="line.1666"></a>
+<span class="sourceLineNo">1667</span>         *<a name="line.1667"></a>
+<span class="sourceLineNo">1668</span>         * @param e the document event<a name="line.1668"></a>
+<span class="sourceLineNo">1669</span>         * @see DocumentListener#insertUpdate<a name="line.1669"></a>
+<span class="sourceLineNo">1670</span>         */<a name="line.1670"></a>
+<span class="sourceLineNo">1671</span>        public void insertUpdate(DocumentEvent e) {<a name="line.1671"></a>
+<span class="sourceLineNo">1672</span>            if (getUpdatePolicy() == NEVER_UPDATE ||<a name="line.1672"></a>
+<span class="sourceLineNo">1673</span>                    (getUpdatePolicy() == UPDATE_WHEN_ON_EDT &amp;&amp;<a name="line.1673"></a>
+<span class="sourceLineNo">1674</span>                    !SwingUtilities.isEventDispatchThread())) {<a name="line.1674"></a>
+<span class="sourceLineNo">1675</span><a name="line.1675"></a>
+<span class="sourceLineNo">1676</span>                if ((e.getOffset() &lt;= dot || e.getOffset() &lt;= mark)<a name="line.1676"></a>
+<span class="sourceLineNo">1677</span>                        &amp;&amp; selectionTag != null) {<a name="line.1677"></a>
+<span class="sourceLineNo">1678</span>                    try {<a name="line.1678"></a>
+<span class="sourceLineNo">1679</span>                        component.getHighlighter().changeHighlight(selectionTag,<a name="line.1679"></a>
+<span class="sourceLineNo">1680</span>                                Math.min(dot, mark), Math.max(dot, mark));<a name="line.1680"></a>
+<span class="sourceLineNo">1681</span>                    } catch (BadLocationException e1) {<a name="line.1681"></a>
+<span class="sourceLineNo">1682</span>                        e1.printStackTrace();<a name="line.1682"></a>
+<span class="sourceLineNo">1683</span>                    }<a name="line.1683"></a>
+<span class="sourceLineNo">1684</span>                }<a name="line.1684"></a>
+<span class="sourceLineNo">1685</span>                return;<a name="line.1685"></a>
+<span class="sourceLineNo">1686</span>            }<a name="line.1686"></a>
+<span class="sourceLineNo">1687</span>            int offset = e.getOffset();<a name="line.1687"></a>
+<span class="sourceLineNo">1688</span>            int length = e.getLength();<a name="line.1688"></a>
+<span class="sourceLineNo">1689</span>            int newDot = dot;<a name="line.1689"></a>
+<span class="sourceLineNo">1690</span>            short changed = 0;<a name="line.1690"></a>
+<span class="sourceLineNo">1691</span><a name="line.1691"></a>
+<span class="sourceLineNo">1692</span>            if (e instanceof AbstractDocument.UndoRedoDocumentEvent) {<a name="line.1692"></a>
+<span class="sourceLineNo">1693</span>                setDot(offset + length);<a name="line.1693"></a>
+<span class="sourceLineNo">1694</span>                return;<a name="line.1694"></a>
+<span class="sourceLineNo">1695</span>            }<a name="line.1695"></a>
+<span class="sourceLineNo">1696</span>            if (newDot &gt;= offset) {<a name="line.1696"></a>
+<span class="sourceLineNo">1697</span>                newDot += length;<a name="line.1697"></a>
+<span class="sourceLineNo">1698</span>                changed |= 1;<a name="line.1698"></a>
+<span class="sourceLineNo">1699</span>            }<a name="line.1699"></a>
+<span class="sourceLineNo">1700</span>            int newMark = mark;<a name="line.1700"></a>
+<span class="sourceLineNo">1701</span>            if (newMark &gt;= offset) {<a name="line.1701"></a>
+<span class="sourceLineNo">1702</span>                newMark += length;<a name="line.1702"></a>
+<span class="sourceLineNo">1703</span>                changed |= 2;<a name="line.1703"></a>
+<span class="sourceLineNo">1704</span>            }<a name="line.1704"></a>
+<span class="sourceLineNo">1705</span><a name="line.1705"></a>
+<span class="sourceLineNo">1706</span>            if (changed != 0) {<a name="line.1706"></a>
+<span class="sourceLineNo">1707</span>                Position.Bias dotBias = DefaultCaret.this.dotBias;<a name="line.1707"></a>
+<span class="sourceLineNo">1708</span>                if (dot == offset) {<a name="line.1708"></a>
+<span class="sourceLineNo">1709</span>                    Document doc = component.getDocument();<a name="line.1709"></a>
+<span class="sourceLineNo">1710</span>                    boolean isNewline;<a name="line.1710"></a>
+<span class="sourceLineNo">1711</span>                    try {<a name="line.1711"></a>
+<span class="sourceLineNo">1712</span>                        Segment s = new Segment();<a name="line.1712"></a>
+<span class="sourceLineNo">1713</span>                        doc.getText(newDot - 1, 1, s);<a name="line.1713"></a>
+<span class="sourceLineNo">1714</span>                        isNewline = (s.count &gt; 0 &amp;&amp;<a name="line.1714"></a>
+<span class="sourceLineNo">1715</span>                                s.array[s.offset] == '\n');<a name="line.1715"></a>
+<span class="sourceLineNo">1716</span>                    } catch (BadLocationException ble) {<a name="line.1716"></a>
+<span class="sourceLineNo">1717</span>                        isNewline = false;<a name="line.1717"></a>
+<span class="sourceLineNo">1718</span>                    }<a name="line.1718"></a>
+<span class="sourceLineNo">1719</span>                    if (isNewline) {<a name="line.1719"></a>
+<span class="sourceLineNo">1720</span>                        dotBias = Position.Bias.Forward;<a name="line.1720"></a>
+<span class="sourceLineNo">1721</span>                    } else {<a name="line.1721"></a>
+<span class="sourceLineNo">1722</span>                        dotBias = Position.Bias.Backward;<a name="line.1722"></a>
+<span class="sourceLineNo">1723</span>                    }<a name="line.1723"></a>
+<span class="sourceLineNo">1724</span>                }<a name="line.1724"></a>
+<span class="sourceLineNo">1725</span>                if (newMark == newDot) {<a name="line.1725"></a>
+<span class="sourceLineNo">1726</span>                    setDot(newDot, dotBias);<a name="line.1726"></a>
+<span class="sourceLineNo">1727</span>                    ensureValidPosition();<a name="line.1727"></a>
+<span class="sourceLineNo">1728</span>                }<a name="line.1728"></a>
+<span class="sourceLineNo">1729</span>                else {<a name="line.1729"></a>
+<span class="sourceLineNo">1730</span>                    setDot(newMark, markBias);<a name="line.1730"></a>
+<span class="sourceLineNo">1731</span>                    if (getDot() == newMark) {<a name="line.1731"></a>
+<span class="sourceLineNo">1732</span>                        // Due this test in case the filter vetoed the<a name="line.1732"></a>
+<span class="sourceLineNo">1733</span>                        // change in which case this probably won't be<a name="line.1733"></a>
+<span class="sourceLineNo">1734</span>                        // valid either.<a name="line.1734"></a>
+<span class="sourceLineNo">1735</span>                        moveDot(newDot, dotBias);<a name="line.1735"></a>
+<span class="sourceLineNo">1736</span>                    }<a name="line.1736"></a>
+<span class="sourceLineNo">1737</span>                    ensureValidPosition();<a name="line.1737"></a>
+<span class="sourceLineNo">1738</span>                }<a name="line.1738"></a>
+<span class="sourceLineNo">1739</span>            }<a name="line.1739"></a>
+<span class="sourceLineNo">1740</span>        }<a name="line.1740"></a>
+<span class="sourceLineNo">1741</span><a name="line.1741"></a>
+<span class="sourceLineNo">1742</span>        /**<a name="line.1742"></a>
+<span class="sourceLineNo">1743</span>         * Updates the dot and mark if they were changed<a name="line.1743"></a>
+<span class="sourceLineNo">1744</span>         * by the removal.<a name="line.1744"></a>
+<span class="sourceLineNo">1745</span>         *<a name="line.1745"></a>
+<span class="sourceLineNo">1746</span>         * @param e the document event<a name="line.1746"></a>
+<span class="sourceLineNo">1747</span>         * @see DocumentListener#removeUpdate<a name="line.1747"></a>
+<span class="sourceLineNo">1748</span>         */<a name="line.1748"></a>
+<span class="sourceLineNo">1749</span>        public void removeUpdate(DocumentEvent e) {<a name="line.1749"></a>
+<span class="sourceLineNo">1750</span>            if (getUpdatePolicy() == NEVER_UPDATE ||<a name="line.1750"></a>
+<span class="sourceLineNo">1751</span>                    (getUpdatePolicy() == UPDATE_WHEN_ON_EDT &amp;&amp;<a name="line.1751"></a>
+<span class="sourceLineNo">1752</span>                    !SwingUtilities.isEventDispatchThread())) {<a name="line.1752"></a>
+<span class="sourceLineNo">1753</span><a name="line.1753"></a>
+<span class="sourceLineNo">1754</span>                int length = component.getDocument().getLength();<a name="line.1754"></a>
+<span class="sourceLineNo">1755</span>                dot = Math.min(dot, length);<a name="line.1755"></a>
+<span class="sourceLineNo">1756</span>                mark = Math.min(mark, length);<a name="line.1756"></a>
+<span class="sourceLineNo">1757</span>                if ((e.getOffset() &lt; dot || e.getOffset() &lt; mark)<a name="line.1757"></a>
+<span class="sourceLineNo">1758</span>                        &amp;&amp; selectionTag != null) {<a name="line.1758"></a>
+<span class="sourceLineNo">1759</span>                    try {<a name="line.1759"></a>
+<span class="sourceLineNo">1760</span>                        component.getHighlighter().changeHighlight(selectionTag,<a name="line.1760"></a>
+<span class="sourceLineNo">1761</span>                                Math.min(dot, mark), Math.max(dot, mark));<a name="line.1761"></a>
+<span class="sourceLineNo">1762</span>                    } catch (BadLocationException e1) {<a name="line.1762"></a>
+<span class="sourceLineNo">1763</span>                        e1.printStackTrace();<a name="line.1763"></a>
+<span class="sourceLineNo">1764</span>                    }<a name="line.1764"></a>
+<span class="sourceLineNo">1765</span>                }<a name="line.1765"></a>
+<span class="sourceLineNo">1766</span>                return;<a name="line.1766"></a>
+<span class="sourceLineNo">1767</span>            }<a name="line.1767"></a>
+<span class="sourceLineNo">1768</span>            int offs0 = e.getOffset();<a name="line.1768"></a>
+<span class="sourceLineNo">1769</span>            int offs1 = offs0 + e.getLength();<a name="line.1769"></a>
+<span class="sourceLineNo">1770</span>            int newDot = dot;<a name="line.1770"></a>
+<span class="sourceLineNo">1771</span>            boolean adjustDotBias = false;<a name="line.1771"></a>
+<span class="sourceLineNo">1772</span>            int newMark = mark;<a name="line.1772"></a>
+<span class="sourceLineNo">1773</span>            boolean adjustMarkBias = false;<a name="line.1773"></a>
+<span class="sourceLineNo">1774</span><a name="line.1774"></a>
+<span class="sourceLineNo">1775</span>            if(e instanceof AbstractDocument.UndoRedoDocumentEvent) {<a name="line.1775"></a>
+<span class="sourceLineNo">1776</span>                setDot(offs0);<a name="line.1776"></a>
+<span class="sourceLineNo">1777</span>                return;<a name="line.1777"></a>
+<span class="sourceLineNo">1778</span>            }<a name="line.1778"></a>
+<span class="sourceLineNo">1779</span>            if (newDot &gt;= offs1) {<a name="line.1779"></a>
+<span class="sourceLineNo">1780</span>                newDot -= (offs1 - offs0);<a name="line.1780"></a>
+<span class="sourceLineNo">1781</span>                if(newDot == offs1) {<a name="line.1781"></a>
+<span class="sourceLineNo">1782</span>                    adjustDotBias = true;<a name="line.1782"></a>
+<span class="sourceLineNo">1783</span>                }<a name="line.1783"></a>
+<span class="sourceLineNo">1784</span>            } else if (newDot &gt;= offs0) {<a name="line.1784"></a>
+<span class="sourceLineNo">1785</span>                newDot = offs0;<a name="line.1785"></a>
+<span class="sourceLineNo">1786</span>                adjustDotBias = true;<a name="line.1786"></a>
+<span class="sourceLineNo">1787</span>            }<a name="line.1787"></a>
+<span class="sourceLineNo">1788</span>            if (newMark &gt;= offs1) {<a name="line.1788"></a>
+<span class="sourceLineNo">1789</span>                newMark -= (offs1 - offs0);<a name="line.1789"></a>
+<span class="sourceLineNo">1790</span>                if(newMark == offs1) {<a name="line.1790"></a>
+<span class="sourceLineNo">1791</span>                    adjustMarkBias = true;<a name="line.1791"></a>
+<span class="sourceLineNo">1792</span>                }<a name="line.1792"></a>
+<span class="sourceLineNo">1793</span>            } else if (newMark &gt;= offs0) {<a name="line.1793"></a>
+<span class="sourceLineNo">1794</span>                newMark = offs0;<a name="line.1794"></a>
+<span class="sourceLineNo">1795</span>                adjustMarkBias = true;<a name="line.1795"></a>
+<span class="sourceLineNo">1796</span>            }<a name="line.1796"></a>
+<span class="sourceLineNo">1797</span>            if (newMark == newDot) {<a name="line.1797"></a>
+<span class="sourceLineNo">1798</span>                forceCaretPositionChange = true;<a name="line.1798"></a>
+<span class="sourceLineNo">1799</span>                try {<a name="line.1799"></a>
+<span class="sourceLineNo">1800</span>                    setDot(newDot, guessBiasForOffset(newDot, dotBias,<a name="line.1800"></a>
+<span class="sourceLineNo">1801</span>                            dotLTR));<a name="line.1801"></a>
+<span class="sourceLineNo">1802</span>                } finally {<a name="line.1802"></a>
+<span class="sourceLineNo">1803</span>                    forceCaretPositionChange = false;<a name="line.1803"></a>
+<span class="sourceLineNo">1804</span>                }<a name="line.1804"></a>
+<span class="sourceLineNo">1805</span>                ensureValidPosition();<a name="line.1805"></a>
+<span class="sourceLineNo">1806</span>            } else {<a name="line.1806"></a>
+<span class="sourceLineNo">1807</span>                Position.Bias dotBias = DefaultCaret.this.dotBias;<a name="line.1807"></a>
+<span class="sourceLineNo">1808</span>                Position.Bias markBias = DefaultCaret.this.markBias;<a name="line.1808"></a>
+<span class="sourceLineNo">1809</span>                if(adjustDotBias) {<a name="line.1809"></a>
+<span class="sourceLineNo">1810</span>                    dotBias = guessBiasForOffset(newDot, dotBias, dotLTR);<a name="line.1810"></a>
+<span class="sourceLineNo">1811</span>                }<a name="line.1811"></a>
+<span class="sourceLineNo">1812</span>                if(adjustMarkBias) {<a name="line.1812"></a>
+<span class="sourceLineNo">1813</span>                    markBias = guessBiasForOffset(mark, markBias, markLTR);<a name="line.1813"></a>
+<span class="sourceLineNo">1814</span>                }<a name="line.1814"></a>
+<span class="sourceLineNo">1815</span>                setDot(newMark, markBias);<a name="line.1815"></a>
+<span class="sourceLineNo">1816</span>                if (getDot() == newMark) {<a name="line.1816"></a>
+<span class="sourceLineNo">1817</span>                    // Due this test in case the filter vetoed the change<a name="line.1817"></a>
+<span class="sourceLineNo">1818</span>                    // in which case this probably won't be valid either.<a name="line.1818"></a>
+<span class="sourceLineNo">1819</span>                    moveDot(newDot, dotBias);<a name="line.1819"></a>
+<span class="sourceLineNo">1820</span>                }<a name="line.1820"></a>
+<span class="sourceLineNo">1821</span>                ensureValidPosition();<a name="line.1821"></a>
+<span class="sourceLineNo">1822</span>            }<a name="line.1822"></a>
+<span class="sourceLineNo">1823</span>        }<a name="line.1823"></a>
+<span class="sourceLineNo">1824</span><a name="line.1824"></a>
+<span class="sourceLineNo">1825</span>        /**<a name="line.1825"></a>
+<span class="sourceLineNo">1826</span>         * Gives notification that an attribute or set of attributes changed.<a name="line.1826"></a>
+<span class="sourceLineNo">1827</span>         *<a name="line.1827"></a>
+<span class="sourceLineNo">1828</span>         * @param e the document event<a name="line.1828"></a>
+<span class="sourceLineNo">1829</span>         * @see DocumentListener#changedUpdate<a name="line.1829"></a>
+<span class="sourceLineNo">1830</span>         */<a name="line.1830"></a>
+<span class="sourceLineNo">1831</span>        public void changedUpdate(DocumentEvent e) {<a name="line.1831"></a>
+<span class="sourceLineNo">1832</span>            if (getUpdatePolicy() == NEVER_UPDATE ||<a name="line.1832"></a>
+<span class="sourceLineNo">1833</span>                    (getUpdatePolicy() == UPDATE_WHEN_ON_EDT &amp;&amp;<a name="line.1833"></a>
+<span class="sourceLineNo">1834</span>                    !SwingUtilities.isEventDispatchThread())) {<a name="line.1834"></a>
+<span class="sourceLineNo">1835</span>                return;<a name="line.1835"></a>
+<span class="sourceLineNo">1836</span>            }<a name="line.1836"></a>
+<span class="sourceLineNo">1837</span>            if(e instanceof AbstractDocument.UndoRedoDocumentEvent) {<a name="line.1837"></a>
+<span class="sourceLineNo">1838</span>                setDot(e.getOffset() + e.getLength());<a name="line.1838"></a>
+<span class="sourceLineNo">1839</span>            }<a name="line.1839"></a>
+<span class="sourceLineNo">1840</span>        }<a name="line.1840"></a>
+<span class="sourceLineNo">1841</span><a name="line.1841"></a>
+<span class="sourceLineNo">1842</span>        // --- PropertyChangeListener methods -----------------------<a name="line.1842"></a>
+<span class="sourceLineNo">1843</span><a name="line.1843"></a>
+<span class="sourceLineNo">1844</span>        /**<a name="line.1844"></a>
+<span class="sourceLineNo">1845</span>         * This method gets called when a bound property is changed.<a name="line.1845"></a>
+<span class="sourceLineNo">1846</span>         * We are looking for document changes on the editor.<a name="line.1846"></a>
+<span class="sourceLineNo">1847</span>         */<a name="line.1847"></a>
+<span class="sourceLineNo">1848</span>        public void propertyChange(PropertyChangeEvent evt) {<a name="line.1848"></a>
+<span class="sourceLineNo">1849</span>            Object oldValue = evt.getOldValue();<a name="line.1849"></a>
+<span class="sourceLineNo">1850</span>            Object newValue = evt.getNewValue();<a name="line.1850"></a>
+<span class="sourceLineNo">1851</span>            if ((oldValue instanceof Document) || (newValue instanceof Document)) {<a name="line.1851"></a>
+<span class="sourceLineNo">1852</span>                setDot(0);<a name="line.1852"></a>
+<span class="sourceLineNo">1853</span>                if (oldValue != null) {<a name="line.1853"></a>
+<span class="sourceLineNo">1854</span>                    ((Document)oldValue).removeDocumentListener(this);<a name="line.1854"></a>
+<span class="sourceLineNo">1855</span>                }<a name="line.1855"></a>
+<span class="sourceLineNo">1856</span>                if (newValue != null) {<a name="line.1856"></a>
+<span class="sourceLineNo">1857</span>                    ((Document)newValue).addDocumentListener(this);<a name="line.1857"></a>
+<span class="sourceLineNo">1858</span>                }<a name="line.1858"></a>
+<span class="sourceLineNo">1859</span>            } else if("enabled".equals(evt.getPropertyName())) {<a name="line.1859"></a>
+<span class="sourceLineNo">1860</span>                Boolean enabled = (Boolean) evt.getNewValue();<a name="line.1860"></a>
+<span class="sourceLineNo">1861</span>                if(component.isFocusOwner()) {<a name="line.1861"></a>
+<span class="sourceLineNo">1862</span>                    if(enabled == Boolean.TRUE) {<a name="line.1862"></a>
+<span class="sourceLineNo">1863</span>                        if(component.isEditable()) {<a name="line.1863"></a>
+<span class="sourceLineNo">1864</span>                            setVisible(true);<a name="line.1864"></a>
+<span class="sourceLineNo">1865</span>                        }<a name="line.1865"></a>
+<span class="sourceLineNo">1866</span>                        setSelectionVisible(true);<a name="line.1866"></a>
+<span class="sourceLineNo">1867</span>                    } else {<a name="line.1867"></a>
+<span class="sourceLineNo">1868</span>                        setVisible(false);<a name="line.1868"></a>
+<span class="sourceLineNo">1869</span>                        setSelectionVisible(false);<a name="line.1869"></a>
+<span class="sourceLineNo">1870</span>                    }<a name="line.1870"></a>
+<span class="sourceLineNo">1871</span>                }<a name="line.1871"></a>
+<span class="sourceLineNo">1872</span>            } else if("caretWidth".equals(evt.getPropertyName())) {<a name="line.1872"></a>
+<span class="sourceLineNo">1873</span>                Integer newWidth = (Integer) evt.getNewValue();<a name="line.1873"></a>
+<span class="sourceLineNo">1874</span>                if (newWidth != null) {<a name="line.1874"></a>
+<span class="sourceLineNo">1875</span>                    caretWidth = newWidth.intValue();<a name="line.1875"></a>
+<span class="sourceLineNo">1876</span>                } else {<a name="line.1876"></a>
+<span class="sourceLineNo">1877</span>                    caretWidth = -1;<a name="line.1877"></a>
+<span class="sourceLineNo">1878</span>                }<a name="line.1878"></a>
+<span class="sourceLineNo">1879</span>                repaint();<a name="line.1879"></a>
+<span class="sourceLineNo">1880</span>            } else if("caretAspectRatio".equals(evt.getPropertyName())) {<a name="line.1880"></a>
+<span class="sourceLineNo">1881</span>                Number newRatio = (Number) evt.getNewValue();<a name="line.1881"></a>
+<span class="sourceLineNo">1882</span>                if (newRatio != null) {<a name="line.1882"></a>
+<span class="sourceLineNo">1883</span>                    aspectRatio = newRatio.floatValue();<a name="line.1883"></a>
+<span class="sourceLineNo">1884</span>                } else {<a name="line.1884"></a>
+<span class="sourceLineNo">1885</span>                    aspectRatio = -1;<a name="line.1885"></a>
+<span class="sourceLineNo">1886</span>                }<a name="line.1886"></a>
+<span class="sourceLineNo">1887</span>                repaint();<a name="line.1887"></a>
+<span class="sourceLineNo">1888</span>            }<a name="line.1888"></a>
+<span class="sourceLineNo">1889</span>        }<a name="line.1889"></a>
+<span class="sourceLineNo">1890</span><a name="line.1890"></a>
+<span class="sourceLineNo">1891</span><a name="line.1891"></a>
+<span class="sourceLineNo">1892</span>        //<a name="line.1892"></a>
+<span class="sourceLineNo">1893</span>        // ClipboardOwner<a name="line.1893"></a>
+<span class="sourceLineNo">1894</span>        //<a name="line.1894"></a>
+<span class="sourceLineNo">1895</span>        /**<a name="line.1895"></a>
+<span class="sourceLineNo">1896</span>         * Toggles the visibility of the selection when ownership is lost.<a name="line.1896"></a>
+<span class="sourceLineNo">1897</span>         */<a name="line.1897"></a>
+<span class="sourceLineNo">1898</span>        public void lostOwnership(Clipboard clipboard,<a name="line.1898"></a>
+<span class="sourceLineNo">1899</span>                                      Transferable contents) {<a name="line.1899"></a>
+<span class="sourceLineNo">1900</span>            if (ownsSelection) {<a name="line.1900"></a>
+<span class="sourceLineNo">1901</span>                ownsSelection = false;<a name="line.1901"></a>
+<span class="sourceLineNo">1902</span>                if (component != null &amp;&amp; !component.hasFocus()) {<a name="line.1902"></a>
+<span class="sourceLineNo">1903</span>                    setSelectionVisible(false);<a name="line.1903"></a>
+<span class="sourceLineNo">1904</span>                }<a name="line.1904"></a>
+<span class="sourceLineNo">1905</span>            }<a name="line.1905"></a>
+<span class="sourceLineNo">1906</span>        }<a name="line.1906"></a>
+<span class="sourceLineNo">1907</span>    }<a name="line.1907"></a>
+<span class="sourceLineNo">1908</span><a name="line.1908"></a>
+<span class="sourceLineNo">1909</span><a name="line.1909"></a>
+<span class="sourceLineNo">1910</span>    private class DefaultFilterBypass extends NavigationFilter.FilterBypass {<a name="line.1910"></a>
+<span class="sourceLineNo">1911</span>        public Caret getCaret() {<a name="line.1911"></a>
+<span class="sourceLineNo">1912</span>            return DefaultCaret.this;<a name="line.1912"></a>
+<span class="sourceLineNo">1913</span>        }<a name="line.1913"></a>
+<span class="sourceLineNo">1914</span><a name="line.1914"></a>
+<span class="sourceLineNo">1915</span>        public void setDot(int dot, Position.Bias bias) {<a name="line.1915"></a>
+<span class="sourceLineNo">1916</span>            handleSetDot(dot, bias);<a name="line.1916"></a>
+<span class="sourceLineNo">1917</span>        }<a name="line.1917"></a>
+<span class="sourceLineNo">1918</span><a name="line.1918"></a>
+<span class="sourceLineNo">1919</span>        public void moveDot(int dot, Position.Bias bias) {<a name="line.1919"></a>
+<span class="sourceLineNo">1920</span>            handleMoveDot(dot, bias);<a name="line.1920"></a>
+<span class="sourceLineNo">1921</span>        }<a name="line.1921"></a>
+<span class="sourceLineNo">1922</span>    }<a name="line.1922"></a>
+<span class="sourceLineNo">1923</span>}<a name="line.1923"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,366 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.util.zip;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.FilterInputStream;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.InputStream;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.IOException;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * Implements an input stream filter for compressing data in the "deflate"<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * compression format.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * @since       1.6<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * @author      David R Tribble (david@tribble.com)<a name="line.37"></a>
+<span class="sourceLineNo">038</span> *<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * @see DeflaterOutputStream<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * @see InflaterOutputStream<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * @see InflaterInputStream<a name="line.41"></a>
+<span class="sourceLineNo">042</span> */<a name="line.42"></a>
+<span class="sourceLineNo">043</span><a name="line.43"></a>
+<span class="sourceLineNo">044</span>public class DeflaterInputStream extends FilterInputStream {<a name="line.44"></a>
+<span class="sourceLineNo">045</span>    /** Compressor for this stream. */<a name="line.45"></a>
+<span class="sourceLineNo">046</span>    protected final Deflater def;<a name="line.46"></a>
+<span class="sourceLineNo">047</span><a name="line.47"></a>
+<span class="sourceLineNo">048</span>    /** Input buffer for reading compressed data. */<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    protected final byte[] buf;<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span>    /** Temporary read buffer. */<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    private byte[] rbuf = new byte[1];<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>    /** Default compressor is used. */<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    private boolean usesDefaultDeflater = false;<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>    /** End of the underlying input stream has been reached. */<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    private boolean reachEOF = false;<a name="line.58"></a>
+<span class="sourceLineNo">059</span><a name="line.59"></a>
+<span class="sourceLineNo">060</span>    /**<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * Check to make sure that this stream has not been closed.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     */<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    private void ensureOpen() throws IOException {<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        if (in == null) {<a name="line.64"></a>
+<span class="sourceLineNo">065</span>            throw new IOException("Stream closed");<a name="line.65"></a>
+<span class="sourceLineNo">066</span>        }<a name="line.66"></a>
+<span class="sourceLineNo">067</span>    }<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>    /**<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * Creates a new input stream with a default compressor and buffer<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * size.<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     *<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * @param in input stream to read the uncompressed data to<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * @throws NullPointerException if {@code in} is null<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     */<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    public DeflaterInputStream(InputStream in) {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        this(in, new Deflater());<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        usesDefaultDeflater = true;<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    }<a name="line.79"></a>
+<span class="sourceLineNo">080</span><a name="line.80"></a>
+<span class="sourceLineNo">081</span>    /**<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * Creates a new input stream with the specified compressor and a<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * default buffer size.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     *<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * @param in input stream to read the uncompressed data to<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * @param defl compressor ("deflater") for this stream<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @throws NullPointerException if {@code in} or {@code defl} is null<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     */<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    public DeflaterInputStream(InputStream in, Deflater defl) {<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        this(in, defl, 512);<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    }<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>    /**<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * Creates a new input stream with the specified compressor and buffer<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * size.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @param in input stream to read the uncompressed data to<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * @param defl compressor ("deflater") for this stream<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @param bufLen compression buffer size<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * @throws IllegalArgumentException if {@code bufLen} is &lt;= 0<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * @throws NullPointerException if {@code in} or {@code defl} is null<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     */<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    public DeflaterInputStream(InputStream in, Deflater defl, int bufLen) {<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        super(in);<a name="line.104"></a>
+<span class="sourceLineNo">105</span><a name="line.105"></a>
+<span class="sourceLineNo">106</span>        // Sanity checks<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        if (in == null)<a name="line.107"></a>
+<span class="sourceLineNo">108</span>            throw new NullPointerException("Null input");<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        if (defl == null)<a name="line.109"></a>
+<span class="sourceLineNo">110</span>            throw new NullPointerException("Null deflater");<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        if (bufLen &lt; 1)<a name="line.111"></a>
+<span class="sourceLineNo">112</span>            throw new IllegalArgumentException("Buffer size &lt; 1");<a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>        // Initialize<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        def = defl;<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        buf = new byte[bufLen];<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    }<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>    /**<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * Closes this input stream and its underlying input stream, discarding<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * any pending uncompressed data.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     *<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * @throws IOException if an I/O error occurs<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     */<a name="line.124"></a>
+<span class="sourceLineNo">125</span>    public void close() throws IOException {<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        if (in != null) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            try {<a name="line.127"></a>
+<span class="sourceLineNo">128</span>                // Clean up<a name="line.128"></a>
+<span class="sourceLineNo">129</span>                if (usesDefaultDeflater) {<a name="line.129"></a>
+<span class="sourceLineNo">130</span>                    def.end();<a name="line.130"></a>
+<span class="sourceLineNo">131</span>                }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>                in.close();<a name="line.133"></a>
+<span class="sourceLineNo">134</span>            } finally {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>                in = null;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>            }<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        }<a name="line.137"></a>
+<span class="sourceLineNo">138</span>    }<a name="line.138"></a>
+<span class="sourceLineNo">139</span><a name="line.139"></a>
+<span class="sourceLineNo">140</span>    /**<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * Reads a single byte of compressed data from the input stream.<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * This method will block until some input can be read and compressed.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @return a single byte of compressed data, or -1 if the end of the<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * uncompressed input stream is reached<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @throws IOException if an I/O error occurs or if this stream is<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * already closed<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    public int read() throws IOException {<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        // Read a single byte of compressed data<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        int len = read(rbuf, 0, 1);<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        if (len &lt;= 0)<a name="line.152"></a>
+<span class="sourceLineNo">153</span>            return -1;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        return (rbuf[0] &amp; 0xFF);<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    }<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>    /**<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * Reads compressed data into a byte array.<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * This method will block until some input can be read and compressed.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @param b buffer into which the data is read<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @param off starting offset of the data within {@code b}<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @param len maximum number of compressed bytes to read into {@code b}<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @return the actual number of bytes read, or -1 if the end of the<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * uncompressed input stream is reached<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @throws IndexOutOfBoundsException  if {@code len} &gt; {@code b.length -<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * off}<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * @throws IOException if an I/O error occurs or if this input stream is<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * already closed<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     */<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    public int read(byte[] b, int off, int len) throws IOException {<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        // Sanity checks<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        ensureOpen();<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        if (b == null) {<a name="line.174"></a>
+<span class="sourceLineNo">175</span>            throw new NullPointerException("Null buffer for read");<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        } else if (off &lt; 0 || len &lt; 0 || len &gt; b.length - off) {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>            throw new IndexOutOfBoundsException();<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        } else if (len == 0) {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            return 0;<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        }<a name="line.180"></a>
+<span class="sourceLineNo">181</span><a name="line.181"></a>
+<span class="sourceLineNo">182</span>        // Read and compress (deflate) input data bytes<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        int cnt = 0;<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        while (len &gt; 0 &amp;&amp; !def.finished()) {<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            int n;<a name="line.185"></a>
+<span class="sourceLineNo">186</span><a name="line.186"></a>
+<span class="sourceLineNo">187</span>            // Read data from the input stream<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            if (def.needsInput()) {<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                n = in.read(buf, 0, buf.length);<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                if (n &lt; 0) {<a name="line.190"></a>
+<span class="sourceLineNo">191</span>                    // End of the input stream reached<a name="line.191"></a>
+<span class="sourceLineNo">192</span>                    def.finish();<a name="line.192"></a>
+<span class="sourceLineNo">193</span>                } else if (n &gt; 0) {<a name="line.193"></a>
+<span class="sourceLineNo">194</span>                    def.setInput(buf, 0, n);<a name="line.194"></a>
+<span class="sourceLineNo">195</span>                }<a name="line.195"></a>
+<span class="sourceLineNo">196</span>            }<a name="line.196"></a>
+<span class="sourceLineNo">197</span><a name="line.197"></a>
+<span class="sourceLineNo">198</span>            // Compress the input data, filling the read buffer<a name="line.198"></a>
+<span class="sourceLineNo">199</span>            n = def.deflate(b, off, len);<a name="line.199"></a>
+<span class="sourceLineNo">200</span>            cnt += n;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>            off += n;<a name="line.201"></a>
+<span class="sourceLineNo">202</span>            len -= n;<a name="line.202"></a>
+<span class="sourceLineNo">203</span>        }<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        if (cnt == 0 &amp;&amp; def.finished()) {<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            reachEOF = true;<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            cnt = -1;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        }<a name="line.207"></a>
+<span class="sourceLineNo">208</span><a name="line.208"></a>
+<span class="sourceLineNo">209</span>        return cnt;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    }<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>    /**<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * Skips over and discards data from the input stream.<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * This method may block until the specified number of bytes are read and<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * skipped. &lt;em&gt;Note:&lt;/em&gt; While {@code n} is given as a {@code long},<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * the maximum number of bytes which can be skipped is<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * {@code Integer.MAX_VALUE}.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @param n number of bytes to be skipped<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * @return the actual number of bytes skipped<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * @throws IOException if an I/O error occurs or if this stream is<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * already closed<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     */<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    public long skip(long n) throws IOException {<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        if (n &lt; 0) {<a name="line.225"></a>
+<span class="sourceLineNo">226</span>            throw new IllegalArgumentException("negative skip length");<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        }<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        ensureOpen();<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span>        // Skip bytes by repeatedly decompressing small blocks<a name="line.230"></a>
+<span class="sourceLineNo">231</span>        if (rbuf.length &lt; 512)<a name="line.231"></a>
+<span class="sourceLineNo">232</span>            rbuf = new byte[512];<a name="line.232"></a>
+<span class="sourceLineNo">233</span><a name="line.233"></a>
+<span class="sourceLineNo">234</span>        int total = (int)Math.min(n, Integer.MAX_VALUE);<a name="line.234"></a>
+<span class="sourceLineNo">235</span>        long cnt = 0;<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        while (total &gt; 0) {<a name="line.236"></a>
+<span class="sourceLineNo">237</span>            // Read a small block of uncompressed bytes<a name="line.237"></a>
+<span class="sourceLineNo">238</span>            int len = read(rbuf, 0, (total &lt;= rbuf.length ? total : rbuf.length));<a name="line.238"></a>
+<span class="sourceLineNo">239</span><a name="line.239"></a>
+<span class="sourceLineNo">240</span>            if (len &lt; 0) {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>                break;<a name="line.241"></a>
+<span class="sourceLineNo">242</span>            }<a name="line.242"></a>
+<span class="sourceLineNo">243</span>            cnt += len;<a name="line.243"></a>
+<span class="sourceLineNo">244</span>            total -= len;<a name="line.244"></a>
+<span class="sourceLineNo">245</span>        }<a name="line.245"></a>
+<span class="sourceLineNo">246</span>        return cnt;<a name="line.246"></a>
+<span class="sourceLineNo">247</span>    }<a name="line.247"></a>
+<span class="sourceLineNo">248</span><a name="line.248"></a>
+<span class="sourceLineNo">249</span>    /**<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * Returns 0 after EOF has been reached, otherwise always return 1.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * &lt;p&gt;<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * Programs should not count on this method to return the actual number<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * of bytes that could be read without blocking<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * @return zero after the end of the underlying input stream has been<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * reached, otherwise always returns 1<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @throws IOException if an I/O error occurs or if this stream is<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * already closed<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     */<a name="line.258"></a>
+<span class="sourceLineNo">259</span>    public int available() throws IOException {<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        ensureOpen();<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        if (reachEOF) {<a name="line.261"></a>
+<span class="sourceLineNo">262</span>            return 0;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>        }<a name="line.263"></a>
+<span class="sourceLineNo">264</span>        return 1;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>    }<a name="line.265"></a>
+<span class="sourceLineNo">266</span><a name="line.266"></a>
+<span class="sourceLineNo">267</span>    /**<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * Always returns {@code false} because this input stream does not support<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * the {@link #mark mark()} and {@link #reset reset()} methods.<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     *<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * @return false, always<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     */<a name="line.272"></a>
+<span class="sourceLineNo">273</span>    public boolean markSupported() {<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        return false;<a name="line.274"></a>
+<span class="sourceLineNo">275</span>    }<a name="line.275"></a>
+<span class="sourceLineNo">276</span><a name="line.276"></a>
+<span class="sourceLineNo">277</span>    /**<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * &lt;i&gt;This operation is not supported&lt;/i&gt;.<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     *<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * @param limit maximum bytes that can be read before invalidating the position marker<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     */<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    public void mark(int limit) {<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        // Operation not supported<a name="line.283"></a>
+<span class="sourceLineNo">284</span>    }<a name="line.284"></a>
+<span class="sourceLineNo">285</span><a name="line.285"></a>
+<span class="sourceLineNo">286</span>    /**<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * &lt;i&gt;This operation is not supported&lt;/i&gt;.<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     *<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * @throws IOException always thrown<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     */<a name="line.290"></a>
+<span class="sourceLineNo">291</span>    public void reset() throws IOException {<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        throw new IOException("mark/reset not supported");<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    }<a name="line.293"></a>
+<span class="sourceLineNo">294</span>}<a name="line.294"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

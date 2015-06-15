@@ -1,0 +1,220 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.naming.ldap;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.naming.NamingException;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span>  * This interface represents an LDAPv3 extended operation request as defined in<a name="line.31"></a>
+<span class="sourceLineNo">032</span>  * &lt;A HREF="http://www.ietf.org/rfc/rfc2251.txt"&gt;RFC 2251&lt;/A&gt;.<a name="line.32"></a>
+<span class="sourceLineNo">033</span>  * &lt;pre&gt;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>  *     ExtendedRequest ::= [APPLICATION 23] SEQUENCE {<a name="line.34"></a>
+<span class="sourceLineNo">035</span>  *              requestName      [0] LDAPOID,<a name="line.35"></a>
+<span class="sourceLineNo">036</span>  *              requestValue     [1] OCTET STRING OPTIONAL }<a name="line.36"></a>
+<span class="sourceLineNo">037</span>  * &lt;/pre&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>  * It comprises an object identifier string and an optional ASN.1 BER<a name="line.38"></a>
+<span class="sourceLineNo">039</span>  * encoded value.<a name="line.39"></a>
+<span class="sourceLineNo">040</span>  *&lt;p&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>  * The methods in this class are used by the service provider to construct<a name="line.41"></a>
+<span class="sourceLineNo">042</span>  * the bits to send to the LDAP server. Applications typically only deal with<a name="line.42"></a>
+<span class="sourceLineNo">043</span>  * the classes that implement this interface, supplying them with<a name="line.43"></a>
+<span class="sourceLineNo">044</span>  * any information required for a particular extended operation request.<a name="line.44"></a>
+<span class="sourceLineNo">045</span>  * It would then pass such a class as an argument to the<a name="line.45"></a>
+<span class="sourceLineNo">046</span>  * &lt;tt&gt;LdapContext.extendedOperation()&lt;/tt&gt; method for performing the<a name="line.46"></a>
+<span class="sourceLineNo">047</span>  * LDAPv3 extended operation.<a name="line.47"></a>
+<span class="sourceLineNo">048</span>  *&lt;p&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>  * For example, suppose the LDAP server supported a 'get time' extended operation.<a name="line.49"></a>
+<span class="sourceLineNo">050</span>  * It would supply GetTimeRequest and GetTimeResponse classes:<a name="line.50"></a>
+<span class="sourceLineNo">051</span>  *&lt;blockquote&gt;&lt;pre&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>  * public class GetTimeRequest implements ExtendedRequest {<a name="line.52"></a>
+<span class="sourceLineNo">053</span>  *     public GetTimeRequest() {... };<a name="line.53"></a>
+<span class="sourceLineNo">054</span>  *     public ExtendedResponse createExtendedResponse(String id,<a name="line.54"></a>
+<span class="sourceLineNo">055</span>  *         byte[] berValue, int offset, int length)<a name="line.55"></a>
+<span class="sourceLineNo">056</span>  *         throws NamingException {<a name="line.56"></a>
+<span class="sourceLineNo">057</span>  *         return new GetTimeResponse(id, berValue, offset, length);<a name="line.57"></a>
+<span class="sourceLineNo">058</span>  *     }<a name="line.58"></a>
+<span class="sourceLineNo">059</span>  *     ...<a name="line.59"></a>
+<span class="sourceLineNo">060</span>  * }<a name="line.60"></a>
+<span class="sourceLineNo">061</span>  * public class GetTimeResponse implements ExtendedResponse {<a name="line.61"></a>
+<span class="sourceLineNo">062</span>  *     long time;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>  *     public GetTimeResponse(String id, byte[] berValue, int offset,<a name="line.63"></a>
+<span class="sourceLineNo">064</span>  *         int length) throws NamingException {<a name="line.64"></a>
+<span class="sourceLineNo">065</span>  *         time =      ... // decode berValue to get time<a name="line.65"></a>
+<span class="sourceLineNo">066</span>  *     }<a name="line.66"></a>
+<span class="sourceLineNo">067</span>  *     public java.util.Date getDate() { return new java.util.Date(time) };<a name="line.67"></a>
+<span class="sourceLineNo">068</span>  *     public long getTime() { return time };<a name="line.68"></a>
+<span class="sourceLineNo">069</span>  *     ...<a name="line.69"></a>
+<span class="sourceLineNo">070</span>  * }<a name="line.70"></a>
+<span class="sourceLineNo">071</span>  *&lt;/pre&gt;&lt;/blockquote&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span>  * A program would use then these classes as follows:<a name="line.72"></a>
+<span class="sourceLineNo">073</span>  *&lt;blockquote&gt;&lt;pre&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>  * GetTimeResponse resp =<a name="line.74"></a>
+<span class="sourceLineNo">075</span>  *     (GetTimeResponse) ectx.extendedOperation(new GetTimeRequest());<a name="line.75"></a>
+<span class="sourceLineNo">076</span>  * long time = resp.getTime();<a name="line.76"></a>
+<span class="sourceLineNo">077</span>  *&lt;/pre&gt;&lt;/blockquote&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>  *<a name="line.78"></a>
+<span class="sourceLineNo">079</span>  * @author Rosanna Lee<a name="line.79"></a>
+<span class="sourceLineNo">080</span>  * @author Scott Seligman<a name="line.80"></a>
+<span class="sourceLineNo">081</span>  * @author Vincent Ryan<a name="line.81"></a>
+<span class="sourceLineNo">082</span>  *<a name="line.82"></a>
+<span class="sourceLineNo">083</span>  * @see ExtendedResponse<a name="line.83"></a>
+<span class="sourceLineNo">084</span>  * @see LdapContext#extendedOperation<a name="line.84"></a>
+<span class="sourceLineNo">085</span>  * @since 1.3<a name="line.85"></a>
+<span class="sourceLineNo">086</span>  */<a name="line.86"></a>
+<span class="sourceLineNo">087</span>public interface ExtendedRequest extends java.io.Serializable {<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    /**<a name="line.89"></a>
+<span class="sourceLineNo">090</span>      * Retrieves the object identifier of the request.<a name="line.90"></a>
+<span class="sourceLineNo">091</span>      *<a name="line.91"></a>
+<span class="sourceLineNo">092</span>      * @return The non-null object identifier string representing the LDAP<a name="line.92"></a>
+<span class="sourceLineNo">093</span>      *         &lt;tt&gt;ExtendedRequest.requestName&lt;/tt&gt; component.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>      */<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    public String getID();<a name="line.95"></a>
+<span class="sourceLineNo">096</span><a name="line.96"></a>
+<span class="sourceLineNo">097</span>    /**<a name="line.97"></a>
+<span class="sourceLineNo">098</span>      * Retrieves the ASN.1 BER encoded value of the LDAP extended operation<a name="line.98"></a>
+<span class="sourceLineNo">099</span>      * request. Null is returned if the value is absent.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>      *<a name="line.100"></a>
+<span class="sourceLineNo">101</span>      * The result is the raw BER bytes including the tag and length of<a name="line.101"></a>
+<span class="sourceLineNo">102</span>      * the request value. It does not include the request OID.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>      * This method is called by the service provider to get the bits to<a name="line.103"></a>
+<span class="sourceLineNo">104</span>      * put into the extended operation to be sent to the LDAP server.<a name="line.104"></a>
+<span class="sourceLineNo">105</span>      *<a name="line.105"></a>
+<span class="sourceLineNo">106</span>      * @return A possibly null byte array representing the ASN.1 BER encoded<a name="line.106"></a>
+<span class="sourceLineNo">107</span>      *         contents of the LDAP &lt;tt&gt;ExtendedRequest.requestValue&lt;/tt&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>      *         component.<a name="line.108"></a>
+<span class="sourceLineNo">109</span>      * @exception IllegalStateException If the encoded value cannot be retrieved<a name="line.109"></a>
+<span class="sourceLineNo">110</span>      * because the request contains insufficient or invalid data/state.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>      */<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    public byte[] getEncodedValue();<a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>    /**<a name="line.114"></a>
+<span class="sourceLineNo">115</span>      * Creates the response object that corresponds to this request.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>      *&lt;p&gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>      * After the service provider has sent the extended operation request<a name="line.117"></a>
+<span class="sourceLineNo">118</span>      * to the LDAP server, it will receive a response from the server.<a name="line.118"></a>
+<span class="sourceLineNo">119</span>      * If the operation failed, the provider will throw a NamingException.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>      * If the operation succeeded, the provider will invoke this method<a name="line.120"></a>
+<span class="sourceLineNo">121</span>      * using the data that it got back in the response.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>      * It is the job of this method to return a class that implements<a name="line.122"></a>
+<span class="sourceLineNo">123</span>      * the ExtendedResponse interface that is appropriate for the<a name="line.123"></a>
+<span class="sourceLineNo">124</span>      * extended operation request.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>      *&lt;p&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span>      * For example, a Start TLS extended request class would need to know<a name="line.126"></a>
+<span class="sourceLineNo">127</span>      * how to process a Start TLS extended response. It does this by creating<a name="line.127"></a>
+<span class="sourceLineNo">128</span>      * a class that implements ExtendedResponse.<a name="line.128"></a>
+<span class="sourceLineNo">129</span>      *<a name="line.129"></a>
+<span class="sourceLineNo">130</span>      * @param id       The possibly null object identifier of the response<a name="line.130"></a>
+<span class="sourceLineNo">131</span>      *                 control.<a name="line.131"></a>
+<span class="sourceLineNo">132</span>      * @param berValue The possibly null ASN.1 BER encoded value of the<a name="line.132"></a>
+<span class="sourceLineNo">133</span>      *                 response control.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>      * This is the raw BER bytes including the tag and length of<a name="line.134"></a>
+<span class="sourceLineNo">135</span>      * the response value. It does not include the response OID.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>      * @param offset   The starting position in berValue of the bytes to use.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>      * @param length   The number of bytes in berValue to use.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>      *<a name="line.138"></a>
+<span class="sourceLineNo">139</span>      * @return A non-null object.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>      * @exception NamingException if cannot create extended response<a name="line.140"></a>
+<span class="sourceLineNo">141</span>      *     due to an error.<a name="line.141"></a>
+<span class="sourceLineNo">142</span>      * @see ExtendedResponse<a name="line.142"></a>
+<span class="sourceLineNo">143</span>      */<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    public ExtendedResponse createExtendedResponse(String id,<a name="line.144"></a>
+<span class="sourceLineNo">145</span>                byte[] berValue, int offset, int length) throws NamingException;<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>    // static final long serialVersionUID = -7560110759229059814L;<a name="line.147"></a>
+<span class="sourceLineNo">148</span>}<a name="line.148"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

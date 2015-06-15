@@ -1,0 +1,323 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.imageio.spi;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.security.PrivilegedAction;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.security.AccessController;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.HashMap;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Iterator;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.Map;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.NoSuchElementException;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.util.Set;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.util.Vector;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import com.sun.imageio.spi.FileImageInputStreamSpi;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import com.sun.imageio.spi.FileImageOutputStreamSpi;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import com.sun.imageio.spi.InputStreamImageInputStreamSpi;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import com.sun.imageio.spi.OutputStreamImageOutputStreamSpi;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import com.sun.imageio.spi.RAFImageInputStreamSpi;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import com.sun.imageio.spi.RAFImageOutputStreamSpi;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import com.sun.imageio.plugins.gif.GIFImageReaderSpi;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import com.sun.imageio.plugins.gif.GIFImageWriterSpi;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import com.sun.imageio.plugins.jpeg.JPEGImageReaderSpi;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import com.sun.imageio.plugins.jpeg.JPEGImageWriterSpi;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import com.sun.imageio.plugins.png.PNGImageReaderSpi;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import com.sun.imageio.plugins.png.PNGImageWriterSpi;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import com.sun.imageio.plugins.bmp.BMPImageReaderSpi;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>import com.sun.imageio.plugins.bmp.BMPImageWriterSpi;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>import com.sun.imageio.plugins.wbmp.WBMPImageReaderSpi;<a name="line.50"></a>
+<span class="sourceLineNo">051</span>import com.sun.imageio.plugins.wbmp.WBMPImageWriterSpi;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>import sun.awt.AppContext;<a name="line.52"></a>
+<span class="sourceLineNo">053</span>import java.util.ServiceLoader;<a name="line.53"></a>
+<span class="sourceLineNo">054</span>import java.util.ServiceConfigurationError;<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>/**<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * A registry for service provider instances.  Service provider<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * classes may be detected at run time by means of meta-information in<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * the JAR files containing them.  The intent is that it be relatively<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * inexpensive to load and inspect all available service provider<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * classes.  These classes may them be used to locate and instantiate<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * more heavyweight classes that will perform actual work, in this<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * case instances of &lt;code&gt;ImageReader&lt;/code&gt;,<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;code&gt;ImageWriter&lt;/code&gt;, &lt;code&gt;ImageTranscoder&lt;/code&gt;,<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * &lt;code&gt;ImageInputStream&lt;/code&gt;, and &lt;code&gt;ImageOutputStream&lt;/code&gt;.<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;p&gt; Service providers found on the system classpath (&lt;i&gt;e.g.&lt;/i&gt;,<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * the &lt;code&gt;jre/lib/ext&lt;/code&gt; directory in Sun's implementation of<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * JDK) are automatically loaded as soon as this class is<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * instantiated.<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;p&gt; When the &lt;code&gt;registerApplicationClasspathSpis&lt;/code&gt; method<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * is called, service provider instances declared in the<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * meta-information section of JAR files on the application class path<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * are loaded.  To declare a service provider, a &lt;code&gt;services&lt;/code&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * subdirectory is placed within the &lt;code&gt;META-INF&lt;/code&gt; directory<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * that is present in every JAR file.  This directory contains a file<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * for each service provider interface that has one or more<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * implementation classes present in the JAR file.  For example, if<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * the JAR file contained a class named<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * &lt;code&gt;com.mycompany.imageio.MyFormatReaderSpi&lt;/code&gt; which<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * implements the &lt;code&gt;ImageReaderSpi&lt;/code&gt; interface, the JAR file<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * would contain a file named:<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;pre&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * META-INF/services/javax.imageio.spi.ImageReaderSpi<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * &lt;/pre&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * containing the line:<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;pre&gt;<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * com.mycompany.imageio.MyFormatReaderSpi<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;/pre&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * &lt;p&gt; The service provider classes are intended to be lightweight<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * and quick to load.  Implementations of these interfaces<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * should avoid complex dependencies on other classes and on<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * native code.<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * &lt;p&gt; It is also possible to manually add service providers not found<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * automatically, as well as to remove those that are using the<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * interfaces of the &lt;code&gt;ServiceRegistry&lt;/code&gt; class.  Thus<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * the application may customize the contents of the registry as it<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * sees fit.<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * &lt;p&gt; For more details on declaring service providers, and the JAR<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * format in general, see the &lt;a<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * href="{@docRoot}/../technotes/guides/jar/jar.html"&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * JAR File Specification&lt;/a&gt;.<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *<a name="line.110"></a>
+<span class="sourceLineNo">111</span> */<a name="line.111"></a>
+<span class="sourceLineNo">112</span>public final class IIORegistry extends ServiceRegistry {<a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>    /**<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * A &lt;code&gt;Vector&lt;/code&gt; containing the valid IIO registry<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * categories (superinterfaces) to be used in the constructor.<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     */<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    private static final Vector initialCategories = new Vector(5);<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    static {<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        initialCategories.add(ImageReaderSpi.class);<a name="line.121"></a>
+<span class="sourceLineNo">122</span>        initialCategories.add(ImageWriterSpi.class);<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        initialCategories.add(ImageTranscoderSpi.class);<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        initialCategories.add(ImageInputStreamSpi.class);<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        initialCategories.add(ImageOutputStreamSpi.class);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    }<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span>    /**<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * Set up the valid service provider categories and automatically<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * register all available service providers.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * &lt;p&gt; The constructor is private in order to prevent creation of<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * additional instances.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     */<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    private IIORegistry() {<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        super(initialCategories.iterator());<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        registerStandardSpis();<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        registerApplicationClasspathSpis();<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    }<a name="line.139"></a>
+<span class="sourceLineNo">140</span><a name="line.140"></a>
+<span class="sourceLineNo">141</span>    /**<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * Returns the default &lt;code&gt;IIORegistry&lt;/code&gt; instance used by<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * the Image I/O API.  This instance should be used for all<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * registry functions.<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * &lt;p&gt; Each &lt;code&gt;ThreadGroup&lt;/code&gt; will receive its own<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * instance; this allows different &lt;code&gt;Applet&lt;/code&gt;s in the<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * same browser (for example) to each have their own registry.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * @return the default registry for the current<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * &lt;code&gt;ThreadGroup&lt;/code&gt;.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    public static IIORegistry getDefaultInstance() {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        AppContext context = AppContext.getAppContext();<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        IIORegistry registry =<a name="line.155"></a>
+<span class="sourceLineNo">156</span>            (IIORegistry)context.get(IIORegistry.class);<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        if (registry == null) {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            // Create an instance for this AppContext<a name="line.158"></a>
+<span class="sourceLineNo">159</span>            registry = new IIORegistry();<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            context.put(IIORegistry.class, registry);<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        }<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        return registry;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    }<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>    private void registerStandardSpis() {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        // Hardwire standard SPIs<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        registerServiceProvider(new GIFImageReaderSpi());<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        registerServiceProvider(new GIFImageWriterSpi());<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        registerServiceProvider(new BMPImageReaderSpi());<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        registerServiceProvider(new BMPImageWriterSpi());<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        registerServiceProvider(new WBMPImageReaderSpi());<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        registerServiceProvider(new WBMPImageWriterSpi());<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        registerServiceProvider(new PNGImageReaderSpi());<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        registerServiceProvider(new PNGImageWriterSpi());<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        registerServiceProvider(new JPEGImageReaderSpi());<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        registerServiceProvider(new JPEGImageWriterSpi());<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        registerServiceProvider(new FileImageInputStreamSpi());<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        registerServiceProvider(new FileImageOutputStreamSpi());<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        registerServiceProvider(new InputStreamImageInputStreamSpi());<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        registerServiceProvider(new OutputStreamImageOutputStreamSpi());<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        registerServiceProvider(new RAFImageInputStreamSpi());<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        registerServiceProvider(new RAFImageOutputStreamSpi());<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>        registerInstalledProviders();<a name="line.184"></a>
+<span class="sourceLineNo">185</span>    }<a name="line.185"></a>
+<span class="sourceLineNo">186</span><a name="line.186"></a>
+<span class="sourceLineNo">187</span>    /**<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * Registers all available service providers found on the<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * application class path, using the default<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * &lt;code&gt;ClassLoader&lt;/code&gt;.  This method is typically invoked by<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * the &lt;code&gt;ImageIO.scanForPlugins&lt;/code&gt; method.<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     *<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * @see javax.imageio.ImageIO#scanForPlugins<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * @see ClassLoader#getResources<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     */<a name="line.195"></a>
+<span class="sourceLineNo">196</span>    public void registerApplicationClasspathSpis() {<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        // FIX: load only from application classpath<a name="line.197"></a>
+<span class="sourceLineNo">198</span><a name="line.198"></a>
+<span class="sourceLineNo">199</span>        ClassLoader loader = Thread.currentThread().getContextClassLoader();<a name="line.199"></a>
+<span class="sourceLineNo">200</span><a name="line.200"></a>
+<span class="sourceLineNo">201</span>        Iterator categories = getCategories();<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        while (categories.hasNext()) {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>            Class&lt;IIOServiceProvider&gt; c = (Class)categories.next();<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            Iterator&lt;IIOServiceProvider&gt; riter =<a name="line.204"></a>
+<span class="sourceLineNo">205</span>                    ServiceLoader.load(c, loader).iterator();<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            while (riter.hasNext()) {<a name="line.206"></a>
+<span class="sourceLineNo">207</span>                try {<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                    // Note that the next() call is required to be inside<a name="line.208"></a>
+<span class="sourceLineNo">209</span>                    // the try/catch block; see 6342404.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>                    IIOServiceProvider r = riter.next();<a name="line.210"></a>
+<span class="sourceLineNo">211</span>                    registerServiceProvider(r);<a name="line.211"></a>
+<span class="sourceLineNo">212</span>                } catch (ServiceConfigurationError err) {<a name="line.212"></a>
+<span class="sourceLineNo">213</span>                    if (System.getSecurityManager() != null) {<a name="line.213"></a>
+<span class="sourceLineNo">214</span>                        // In the applet case, we will catch the  error so<a name="line.214"></a>
+<span class="sourceLineNo">215</span>                        // registration of other plugins can  proceed<a name="line.215"></a>
+<span class="sourceLineNo">216</span>                        err.printStackTrace();<a name="line.216"></a>
+<span class="sourceLineNo">217</span>                    } else {<a name="line.217"></a>
+<span class="sourceLineNo">218</span>                        // In the application case, we will  throw the<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                        // error to indicate app/system  misconfiguration<a name="line.219"></a>
+<span class="sourceLineNo">220</span>                        throw err;<a name="line.220"></a>
+<span class="sourceLineNo">221</span>                    }<a name="line.221"></a>
+<span class="sourceLineNo">222</span>                }<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            }<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        }<a name="line.224"></a>
+<span class="sourceLineNo">225</span>    }<a name="line.225"></a>
+<span class="sourceLineNo">226</span><a name="line.226"></a>
+<span class="sourceLineNo">227</span>    private void registerInstalledProviders() {<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        /*<a name="line.228"></a>
+<span class="sourceLineNo">229</span>          We need load installed providers from lib/ext<a name="line.229"></a>
+<span class="sourceLineNo">230</span>          directory in the privileged mode in order to<a name="line.230"></a>
+<span class="sourceLineNo">231</span>          be able read corresponding jar files even if<a name="line.231"></a>
+<span class="sourceLineNo">232</span>          file read capability is restricted (like the<a name="line.232"></a>
+<span class="sourceLineNo">233</span>          applet context case).<a name="line.233"></a>
+<span class="sourceLineNo">234</span>         */<a name="line.234"></a>
+<span class="sourceLineNo">235</span>        PrivilegedAction doRegistration =<a name="line.235"></a>
+<span class="sourceLineNo">236</span>            new PrivilegedAction() {<a name="line.236"></a>
+<span class="sourceLineNo">237</span>                public Object run() {<a name="line.237"></a>
+<span class="sourceLineNo">238</span>                    Iterator categories = getCategories();<a name="line.238"></a>
+<span class="sourceLineNo">239</span>                    while (categories.hasNext()) {<a name="line.239"></a>
+<span class="sourceLineNo">240</span>                        Class&lt;IIOServiceProvider&gt; c = (Class)categories.next();<a name="line.240"></a>
+<span class="sourceLineNo">241</span>                        for (IIOServiceProvider p : ServiceLoader.loadInstalled(c)) {<a name="line.241"></a>
+<span class="sourceLineNo">242</span>                            registerServiceProvider(p);<a name="line.242"></a>
+<span class="sourceLineNo">243</span>                        }<a name="line.243"></a>
+<span class="sourceLineNo">244</span>                    }<a name="line.244"></a>
+<span class="sourceLineNo">245</span>                    return this;<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                }<a name="line.246"></a>
+<span class="sourceLineNo">247</span>            };<a name="line.247"></a>
+<span class="sourceLineNo">248</span><a name="line.248"></a>
+<span class="sourceLineNo">249</span>        AccessController.doPrivileged(doRegistration);<a name="line.249"></a>
+<span class="sourceLineNo">250</span>    }<a name="line.250"></a>
+<span class="sourceLineNo">251</span>}<a name="line.251"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

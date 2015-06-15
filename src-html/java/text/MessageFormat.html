@@ -1,0 +1,1666 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1996, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>/*<a name="line.26"></a>
+<span class="sourceLineNo">027</span> * (C) Copyright Taligent, Inc. 1996, 1997 - All Rights Reserved<a name="line.27"></a>
+<span class="sourceLineNo">028</span> * (C) Copyright IBM Corp. 1996 - 1998 - All Rights Reserved<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *   The original version of this source code and documentation is copyrighted<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * and owned by Taligent, Inc., a wholly-owned subsidiary of IBM. These<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * materials are provided under terms of a License Agreement between Taligent<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * and Sun. This technology is protected by multiple US and International<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * patents. This notice and attribution to Taligent may not be removed.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *   Taligent is a registered trademark of Taligent, Inc.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> */<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>package java.text;<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>import java.io.InvalidObjectException;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import java.io.IOException;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import java.io.ObjectInputStream;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import java.text.DecimalFormat;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import java.util.ArrayList;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import java.util.Arrays;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import java.util.Date;<a name="line.47"></a>
+<span class="sourceLineNo">048</span>import java.util.List;<a name="line.48"></a>
+<span class="sourceLineNo">049</span>import java.util.Locale;<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span>/**<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;code&gt;MessageFormat&lt;/code&gt; provides a means to produce concatenated<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * messages in a language-neutral way. Use this to construct messages<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * displayed for end users.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;p&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;code&gt;MessageFormat&lt;/code&gt; takes a set of objects, formats them, then<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * inserts the formatted strings into the pattern at the appropriate places.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;p&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * &lt;strong&gt;Note:&lt;/strong&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;code&gt;MessageFormat&lt;/code&gt; differs from the other &lt;code&gt;Format&lt;/code&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * classes in that you create a &lt;code&gt;MessageFormat&lt;/code&gt; object with one<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * of its constructors (not with a &lt;code&gt;getInstance&lt;/code&gt; style factory<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * method). The factory methods aren't necessary because &lt;code&gt;MessageFormat&lt;/code&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * itself doesn't implement locale specific behavior. Any locale specific<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * behavior is defined by the pattern that you provide as well as the<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * subformats used for inserted arguments.<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;h4&gt;&lt;a name="patterns"&gt;Patterns and Their Interpretation&lt;/a&gt;&lt;/h4&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * &lt;code&gt;MessageFormat&lt;/code&gt; uses patterns of the following form:<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;i&gt;MessageFormatPattern:&lt;/i&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *         &lt;i&gt;String&lt;/i&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *         &lt;i&gt;MessageFormatPattern&lt;/i&gt; &lt;i&gt;FormatElement&lt;/i&gt; &lt;i&gt;String&lt;/i&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * &lt;i&gt;FormatElement:&lt;/i&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *         { &lt;i&gt;ArgumentIndex&lt;/i&gt; }<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *         { &lt;i&gt;ArgumentIndex&lt;/i&gt; , &lt;i&gt;FormatType&lt;/i&gt; }<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *         { &lt;i&gt;ArgumentIndex&lt;/i&gt; , &lt;i&gt;FormatType&lt;/i&gt; , &lt;i&gt;FormatStyle&lt;/i&gt; }<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * &lt;i&gt;FormatType: one of &lt;/i&gt;<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *         number date time choice<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * &lt;i&gt;FormatStyle:&lt;/i&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *         short<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *         medium<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *         long<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *         full<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *         integer<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *         currency<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *         percent<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *         &lt;i&gt;SubformatPattern&lt;/i&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span> *<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * &lt;p&gt;Within a &lt;i&gt;String&lt;/i&gt;, a pair of single quotes can be used to<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * quote any arbitrary characters except single quotes. For example,<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * pattern string &lt;code&gt;"'{0}'"&lt;/code&gt; represents string<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * &lt;code&gt;"{0}"&lt;/code&gt;, not a &lt;i&gt;FormatElement&lt;/i&gt;. A single quote itself<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * must be represented by doubled single quotes {@code ''} throughout a<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * &lt;i&gt;String&lt;/i&gt;.  For example, pattern string &lt;code&gt;"'{''}'"&lt;/code&gt; is<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * interpreted as a sequence of &lt;code&gt;'{&lt;/code&gt; (start of quoting and a<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * left curly brace), &lt;code&gt;''&lt;/code&gt; (a single quote), and<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * &lt;code&gt;}'&lt;/code&gt; (a right curly brace and end of quoting),<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * &lt;em&gt;not&lt;/em&gt; &lt;code&gt;'{'&lt;/code&gt; and &lt;code&gt;'}'&lt;/code&gt; (quoted left and<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * right curly braces): representing string &lt;code&gt;"{'}"&lt;/code&gt;,<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * &lt;em&gt;not&lt;/em&gt; &lt;code&gt;"{}"&lt;/code&gt;.<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * &lt;p&gt;A &lt;i&gt;SubformatPattern&lt;/i&gt; is interpreted by its corresponding<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * subformat, and subformat-dependent pattern rules apply. For example,<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * pattern string &lt;code&gt;"{1,number,&lt;u&gt;$'#',##&lt;/u&gt;}"&lt;/code&gt;<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * (&lt;i&gt;SubformatPattern&lt;/i&gt; with underline) will produce a number format<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * with the pound-sign quoted, with a result such as: {@code<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * "$#31,45"}. Refer to each {@code Format} subclass documentation for<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * details.<a name="line.117"></a>
+<span class="sourceLineNo">118</span> *<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * &lt;p&gt;Any unmatched quote is treated as closed at the end of the given<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * pattern. For example, pattern string {@code "'{0}"} is treated as<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * pattern {@code "'{0}'"}.<a name="line.121"></a>
+<span class="sourceLineNo">122</span> *<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * &lt;p&gt;Any curly braces within an unquoted pattern must be balanced. For<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * example, &lt;code&gt;"ab {0} de"&lt;/code&gt; and &lt;code&gt;"ab '}' de"&lt;/code&gt; are<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * valid patterns, but &lt;code&gt;"ab {0'}' de"&lt;/code&gt;, &lt;code&gt;"ab } de"&lt;/code&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * and &lt;code&gt;"''{''"&lt;/code&gt; are not.<a name="line.126"></a>
+<span class="sourceLineNo">127</span> *<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * &lt;p&gt;<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * &lt;dl&gt;&lt;dt&gt;&lt;b&gt;Warning:&lt;/b&gt;&lt;dd&gt;The rules for using quotes within message<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * format patterns unfortunately have shown to be somewhat confusing.<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * In particular, it isn't always obvious to localizers whether single<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * quotes need to be doubled or not. Make sure to inform localizers about<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * the rules, and tell them (for example, by using comments in resource<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * bundle source files) which strings will be processed by {@code MessageFormat}.<a name="line.134"></a>
+<span class="sourceLineNo">135</span> * Note that localizers may need to use single quotes in translated<a name="line.135"></a>
+<span class="sourceLineNo">136</span> * strings where the original version doesn't have them.<a name="line.136"></a>
+<span class="sourceLineNo">137</span> * &lt;/dl&gt;<a name="line.137"></a>
+<span class="sourceLineNo">138</span> * &lt;p&gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span> * The &lt;i&gt;ArgumentIndex&lt;/i&gt; value is a non-negative integer written<a name="line.139"></a>
+<span class="sourceLineNo">140</span> * using the digits {@code '0'} through {@code '9'}, and represents an index into the<a name="line.140"></a>
+<span class="sourceLineNo">141</span> * {@code arguments} array passed to the {@code format} methods<a name="line.141"></a>
+<span class="sourceLineNo">142</span> * or the result array returned by the {@code parse} methods.<a name="line.142"></a>
+<span class="sourceLineNo">143</span> * &lt;p&gt;<a name="line.143"></a>
+<span class="sourceLineNo">144</span> * The &lt;i&gt;FormatType&lt;/i&gt; and &lt;i&gt;FormatStyle&lt;/i&gt; values are used to create<a name="line.144"></a>
+<span class="sourceLineNo">145</span> * a {@code Format} instance for the format element. The following<a name="line.145"></a>
+<span class="sourceLineNo">146</span> * table shows how the values map to {@code Format} instances. Combinations not<a name="line.146"></a>
+<span class="sourceLineNo">147</span> * shown in the table are illegal. A &lt;i&gt;SubformatPattern&lt;/i&gt; must<a name="line.147"></a>
+<span class="sourceLineNo">148</span> * be a valid pattern string for the {@code Format} subclass used.<a name="line.148"></a>
+<span class="sourceLineNo">149</span> * &lt;p&gt;<a name="line.149"></a>
+<span class="sourceLineNo">150</span> * &lt;table border=1 summary="Shows how FormatType and FormatStyle values map to Format instances"&gt;<a name="line.150"></a>
+<span class="sourceLineNo">151</span> *    &lt;tr&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span> *       &lt;th id="ft" class="TableHeadingColor"&gt;FormatType<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *       &lt;th id="fs" class="TableHeadingColor"&gt;FormatStyle<a name="line.153"></a>
+<span class="sourceLineNo">154</span> *       &lt;th id="sc" class="TableHeadingColor"&gt;Subformat Created<a name="line.154"></a>
+<span class="sourceLineNo">155</span> *    &lt;tr&gt;<a name="line.155"></a>
+<span class="sourceLineNo">156</span> *       &lt;td headers="ft"&gt;&lt;i&gt;(none)&lt;/i&gt;<a name="line.156"></a>
+<span class="sourceLineNo">157</span> *       &lt;td headers="fs"&gt;&lt;i&gt;(none)&lt;/i&gt;<a name="line.157"></a>
+<span class="sourceLineNo">158</span> *       &lt;td headers="sc"&gt;&lt;code&gt;null&lt;/code&gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span> *    &lt;tr&gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span> *       &lt;td headers="ft" rowspan=5&gt;&lt;code&gt;number&lt;/code&gt;<a name="line.160"></a>
+<span class="sourceLineNo">161</span> *       &lt;td headers="fs"&gt;&lt;i&gt;(none)&lt;/i&gt;<a name="line.161"></a>
+<span class="sourceLineNo">162</span> *       &lt;td headers="sc"&gt;{@link NumberFormat#getInstance(Locale) NumberFormat.getInstance}{@code (getLocale())}<a name="line.162"></a>
+<span class="sourceLineNo">163</span> *    &lt;tr&gt;<a name="line.163"></a>
+<span class="sourceLineNo">164</span> *       &lt;td headers="fs"&gt;&lt;code&gt;integer&lt;/code&gt;<a name="line.164"></a>
+<span class="sourceLineNo">165</span> *       &lt;td headers="sc"&gt;{@link NumberFormat#getIntegerInstance(Locale) NumberFormat.getIntegerInstance}{@code (getLocale())}<a name="line.165"></a>
+<span class="sourceLineNo">166</span> *    &lt;tr&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span> *       &lt;td headers="fs"&gt;&lt;code&gt;currency&lt;/code&gt;<a name="line.167"></a>
+<span class="sourceLineNo">168</span> *       &lt;td headers="sc"&gt;{@link NumberFormat#getCurrencyInstance(Locale) NumberFormat.getCurrencyInstance}{@code (getLocale())}<a name="line.168"></a>
+<span class="sourceLineNo">169</span> *    &lt;tr&gt;<a name="line.169"></a>
+<span class="sourceLineNo">170</span> *       &lt;td headers="fs"&gt;&lt;code&gt;percent&lt;/code&gt;<a name="line.170"></a>
+<span class="sourceLineNo">171</span> *       &lt;td headers="sc"&gt;{@link NumberFormat#getPercentInstance(Locale) NumberFormat.getPercentInstance}{@code (getLocale())}<a name="line.171"></a>
+<span class="sourceLineNo">172</span> *    &lt;tr&gt;<a name="line.172"></a>
+<span class="sourceLineNo">173</span> *       &lt;td headers="fs"&gt;&lt;i&gt;SubformatPattern&lt;/i&gt;<a name="line.173"></a>
+<span class="sourceLineNo">174</span> *       &lt;td headers="sc"&gt;{@code new} {@link DecimalFormat#DecimalFormat(String,DecimalFormatSymbols) DecimalFormat}{@code (subformatPattern,} {@link DecimalFormatSymbols#getInstance(Locale) DecimalFormatSymbols.getInstance}{@code (getLocale()))}<a name="line.174"></a>
+<span class="sourceLineNo">175</span> *    &lt;tr&gt;<a name="line.175"></a>
+<span class="sourceLineNo">176</span> *       &lt;td headers="ft" rowspan=6&gt;&lt;code&gt;date&lt;/code&gt;<a name="line.176"></a>
+<span class="sourceLineNo">177</span> *       &lt;td headers="fs"&gt;&lt;i&gt;(none)&lt;/i&gt;<a name="line.177"></a>
+<span class="sourceLineNo">178</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getDateInstance(int,Locale) DateFormat.getDateInstance}{@code (}{@link DateFormat#DEFAULT}{@code , getLocale())}<a name="line.178"></a>
+<span class="sourceLineNo">179</span> *    &lt;tr&gt;<a name="line.179"></a>
+<span class="sourceLineNo">180</span> *       &lt;td headers="fs"&gt;&lt;code&gt;short&lt;/code&gt;<a name="line.180"></a>
+<span class="sourceLineNo">181</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getDateInstance(int,Locale) DateFormat.getDateInstance}{@code (}{@link DateFormat#SHORT}{@code , getLocale())}<a name="line.181"></a>
+<span class="sourceLineNo">182</span> *    &lt;tr&gt;<a name="line.182"></a>
+<span class="sourceLineNo">183</span> *       &lt;td headers="fs"&gt;&lt;code&gt;medium&lt;/code&gt;<a name="line.183"></a>
+<span class="sourceLineNo">184</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getDateInstance(int,Locale) DateFormat.getDateInstance}{@code (}{@link DateFormat#DEFAULT}{@code , getLocale())}<a name="line.184"></a>
+<span class="sourceLineNo">185</span> *    &lt;tr&gt;<a name="line.185"></a>
+<span class="sourceLineNo">186</span> *       &lt;td headers="fs"&gt;&lt;code&gt;long&lt;/code&gt;<a name="line.186"></a>
+<span class="sourceLineNo">187</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getDateInstance(int,Locale) DateFormat.getDateInstance}{@code (}{@link DateFormat#LONG}{@code , getLocale())}<a name="line.187"></a>
+<span class="sourceLineNo">188</span> *    &lt;tr&gt;<a name="line.188"></a>
+<span class="sourceLineNo">189</span> *       &lt;td headers="fs"&gt;&lt;code&gt;full&lt;/code&gt;<a name="line.189"></a>
+<span class="sourceLineNo">190</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getDateInstance(int,Locale) DateFormat.getDateInstance}{@code (}{@link DateFormat#FULL}{@code , getLocale())}<a name="line.190"></a>
+<span class="sourceLineNo">191</span> *    &lt;tr&gt;<a name="line.191"></a>
+<span class="sourceLineNo">192</span> *       &lt;td headers="fs"&gt;&lt;i&gt;SubformatPattern&lt;/i&gt;<a name="line.192"></a>
+<span class="sourceLineNo">193</span> *       &lt;td headers="sc"&gt;{@code new} {@link SimpleDateFormat#SimpleDateFormat(String,Locale) SimpleDateFormat}{@code (subformatPattern, getLocale())}<a name="line.193"></a>
+<span class="sourceLineNo">194</span> *    &lt;tr&gt;<a name="line.194"></a>
+<span class="sourceLineNo">195</span> *       &lt;td headers="ft" rowspan=6&gt;&lt;code&gt;time&lt;/code&gt;<a name="line.195"></a>
+<span class="sourceLineNo">196</span> *       &lt;td headers="fs"&gt;&lt;i&gt;(none)&lt;/i&gt;<a name="line.196"></a>
+<span class="sourceLineNo">197</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getTimeInstance(int,Locale) DateFormat.getTimeInstance}{@code (}{@link DateFormat#DEFAULT}{@code , getLocale())}<a name="line.197"></a>
+<span class="sourceLineNo">198</span> *    &lt;tr&gt;<a name="line.198"></a>
+<span class="sourceLineNo">199</span> *       &lt;td headers="fs"&gt;&lt;code&gt;short&lt;/code&gt;<a name="line.199"></a>
+<span class="sourceLineNo">200</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getTimeInstance(int,Locale) DateFormat.getTimeInstance}{@code (}{@link DateFormat#SHORT}{@code , getLocale())}<a name="line.200"></a>
+<span class="sourceLineNo">201</span> *    &lt;tr&gt;<a name="line.201"></a>
+<span class="sourceLineNo">202</span> *       &lt;td headers="fs"&gt;&lt;code&gt;medium&lt;/code&gt;<a name="line.202"></a>
+<span class="sourceLineNo">203</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getTimeInstance(int,Locale) DateFormat.getTimeInstance}{@code (}{@link DateFormat#DEFAULT}{@code , getLocale())}<a name="line.203"></a>
+<span class="sourceLineNo">204</span> *    &lt;tr&gt;<a name="line.204"></a>
+<span class="sourceLineNo">205</span> *       &lt;td headers="fs"&gt;&lt;code&gt;long&lt;/code&gt;<a name="line.205"></a>
+<span class="sourceLineNo">206</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getTimeInstance(int,Locale) DateFormat.getTimeInstance}{@code (}{@link DateFormat#LONG}{@code , getLocale())}<a name="line.206"></a>
+<span class="sourceLineNo">207</span> *    &lt;tr&gt;<a name="line.207"></a>
+<span class="sourceLineNo">208</span> *       &lt;td headers="fs"&gt;&lt;code&gt;full&lt;/code&gt;<a name="line.208"></a>
+<span class="sourceLineNo">209</span> *       &lt;td headers="sc"&gt;{@link DateFormat#getTimeInstance(int,Locale) DateFormat.getTimeInstance}{@code (}{@link DateFormat#FULL}{@code , getLocale())}<a name="line.209"></a>
+<span class="sourceLineNo">210</span> *    &lt;tr&gt;<a name="line.210"></a>
+<span class="sourceLineNo">211</span> *       &lt;td headers="fs"&gt;&lt;i&gt;SubformatPattern&lt;/i&gt;<a name="line.211"></a>
+<span class="sourceLineNo">212</span> *       &lt;td headers="sc"&gt;{@code new} {@link SimpleDateFormat#SimpleDateFormat(String,Locale) SimpleDateFormat}{@code (subformatPattern, getLocale())}<a name="line.212"></a>
+<span class="sourceLineNo">213</span> *    &lt;tr&gt;<a name="line.213"></a>
+<span class="sourceLineNo">214</span> *       &lt;td headers="ft"&gt;&lt;code&gt;choice&lt;/code&gt;<a name="line.214"></a>
+<span class="sourceLineNo">215</span> *       &lt;td headers="fs"&gt;&lt;i&gt;SubformatPattern&lt;/i&gt;<a name="line.215"></a>
+<span class="sourceLineNo">216</span> *       &lt;td headers="sc"&gt;{@code new} {@link ChoiceFormat#ChoiceFormat(String) ChoiceFormat}{@code (subformatPattern)}<a name="line.216"></a>
+<span class="sourceLineNo">217</span> * &lt;/table&gt;<a name="line.217"></a>
+<span class="sourceLineNo">218</span> * &lt;p&gt;<a name="line.218"></a>
+<span class="sourceLineNo">219</span> *<a name="line.219"></a>
+<span class="sourceLineNo">220</span> * &lt;h4&gt;Usage Information&lt;/h4&gt;<a name="line.220"></a>
+<span class="sourceLineNo">221</span> *<a name="line.221"></a>
+<span class="sourceLineNo">222</span> * &lt;p&gt;<a name="line.222"></a>
+<span class="sourceLineNo">223</span> * Here are some examples of usage.<a name="line.223"></a>
+<span class="sourceLineNo">224</span> * In real internationalized programs, the message format pattern and other<a name="line.224"></a>
+<span class="sourceLineNo">225</span> * static strings will, of course, be obtained from resource bundles.<a name="line.225"></a>
+<span class="sourceLineNo">226</span> * Other parameters will be dynamically determined at runtime.<a name="line.226"></a>
+<span class="sourceLineNo">227</span> * &lt;p&gt;<a name="line.227"></a>
+<span class="sourceLineNo">228</span> * The first example uses the static method &lt;code&gt;MessageFormat.format&lt;/code&gt;,<a name="line.228"></a>
+<span class="sourceLineNo">229</span> * which internally creates a &lt;code&gt;MessageFormat&lt;/code&gt; for one-time use:<a name="line.229"></a>
+<span class="sourceLineNo">230</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.230"></a>
+<span class="sourceLineNo">231</span> * int planet = 7;<a name="line.231"></a>
+<span class="sourceLineNo">232</span> * String event = "a disturbance in the Force";<a name="line.232"></a>
+<span class="sourceLineNo">233</span> *<a name="line.233"></a>
+<span class="sourceLineNo">234</span> * String result = MessageFormat.format(<a name="line.234"></a>
+<span class="sourceLineNo">235</span> *     "At {1,time} on {1,date}, there was {2} on planet {0,number,integer}.",<a name="line.235"></a>
+<span class="sourceLineNo">236</span> *     planet, new Date(), event);<a name="line.236"></a>
+<span class="sourceLineNo">237</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.237"></a>
+<span class="sourceLineNo">238</span> * The output is:<a name="line.238"></a>
+<span class="sourceLineNo">239</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.239"></a>
+<span class="sourceLineNo">240</span> * At 12:30 PM on Jul 3, 2053, there was a disturbance in the Force on planet 7.<a name="line.240"></a>
+<span class="sourceLineNo">241</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.241"></a>
+<span class="sourceLineNo">242</span> *<a name="line.242"></a>
+<span class="sourceLineNo">243</span> * &lt;p&gt;<a name="line.243"></a>
+<span class="sourceLineNo">244</span> * The following example creates a &lt;code&gt;MessageFormat&lt;/code&gt; instance that<a name="line.244"></a>
+<span class="sourceLineNo">245</span> * can be used repeatedly:<a name="line.245"></a>
+<span class="sourceLineNo">246</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.246"></a>
+<span class="sourceLineNo">247</span> * int fileCount = 1273;<a name="line.247"></a>
+<span class="sourceLineNo">248</span> * String diskName = "MyDisk";<a name="line.248"></a>
+<span class="sourceLineNo">249</span> * Object[] testArgs = {new Long(fileCount), diskName};<a name="line.249"></a>
+<span class="sourceLineNo">250</span> *<a name="line.250"></a>
+<span class="sourceLineNo">251</span> * MessageFormat form = new MessageFormat(<a name="line.251"></a>
+<span class="sourceLineNo">252</span> *     "The disk \"{1}\" contains {0} file(s).");<a name="line.252"></a>
+<span class="sourceLineNo">253</span> *<a name="line.253"></a>
+<span class="sourceLineNo">254</span> * System.out.println(form.format(testArgs));<a name="line.254"></a>
+<span class="sourceLineNo">255</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.255"></a>
+<span class="sourceLineNo">256</span> * The output with different values for &lt;code&gt;fileCount&lt;/code&gt;:<a name="line.256"></a>
+<span class="sourceLineNo">257</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.257"></a>
+<span class="sourceLineNo">258</span> * The disk "MyDisk" contains 0 file(s).<a name="line.258"></a>
+<span class="sourceLineNo">259</span> * The disk "MyDisk" contains 1 file(s).<a name="line.259"></a>
+<span class="sourceLineNo">260</span> * The disk "MyDisk" contains 1,273 file(s).<a name="line.260"></a>
+<span class="sourceLineNo">261</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.261"></a>
+<span class="sourceLineNo">262</span> *<a name="line.262"></a>
+<span class="sourceLineNo">263</span> * &lt;p&gt;<a name="line.263"></a>
+<span class="sourceLineNo">264</span> * For more sophisticated patterns, you can use a &lt;code&gt;ChoiceFormat&lt;/code&gt;<a name="line.264"></a>
+<span class="sourceLineNo">265</span> * to produce correct forms for singular and plural:<a name="line.265"></a>
+<span class="sourceLineNo">266</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.266"></a>
+<span class="sourceLineNo">267</span> * MessageFormat form = new MessageFormat("The disk \"{1}\" contains {0}.");<a name="line.267"></a>
+<span class="sourceLineNo">268</span> * double[] filelimits = {0,1,2};<a name="line.268"></a>
+<span class="sourceLineNo">269</span> * String[] filepart = {"no files","one file","{0,number} files"};<a name="line.269"></a>
+<span class="sourceLineNo">270</span> * ChoiceFormat fileform = new ChoiceFormat(filelimits, filepart);<a name="line.270"></a>
+<span class="sourceLineNo">271</span> * form.setFormatByArgumentIndex(0, fileform);<a name="line.271"></a>
+<span class="sourceLineNo">272</span> *<a name="line.272"></a>
+<span class="sourceLineNo">273</span> * int fileCount = 1273;<a name="line.273"></a>
+<span class="sourceLineNo">274</span> * String diskName = "MyDisk";<a name="line.274"></a>
+<span class="sourceLineNo">275</span> * Object[] testArgs = {new Long(fileCount), diskName};<a name="line.275"></a>
+<span class="sourceLineNo">276</span> *<a name="line.276"></a>
+<span class="sourceLineNo">277</span> * System.out.println(form.format(testArgs));<a name="line.277"></a>
+<span class="sourceLineNo">278</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.278"></a>
+<span class="sourceLineNo">279</span> * The output with different values for &lt;code&gt;fileCount&lt;/code&gt;:<a name="line.279"></a>
+<span class="sourceLineNo">280</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.280"></a>
+<span class="sourceLineNo">281</span> * The disk "MyDisk" contains no files.<a name="line.281"></a>
+<span class="sourceLineNo">282</span> * The disk "MyDisk" contains one file.<a name="line.282"></a>
+<span class="sourceLineNo">283</span> * The disk "MyDisk" contains 1,273 files.<a name="line.283"></a>
+<span class="sourceLineNo">284</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.284"></a>
+<span class="sourceLineNo">285</span> *<a name="line.285"></a>
+<span class="sourceLineNo">286</span> * &lt;p&gt;<a name="line.286"></a>
+<span class="sourceLineNo">287</span> * You can create the &lt;code&gt;ChoiceFormat&lt;/code&gt; programmatically, as in the<a name="line.287"></a>
+<span class="sourceLineNo">288</span> * above example, or by using a pattern. See {@link ChoiceFormat}<a name="line.288"></a>
+<span class="sourceLineNo">289</span> * for more information.<a name="line.289"></a>
+<span class="sourceLineNo">290</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.290"></a>
+<span class="sourceLineNo">291</span> * form.applyPattern(<a name="line.291"></a>
+<span class="sourceLineNo">292</span> *    "There {0,choice,0#are no files|1#is one file|1&amp;lt;are {0,number,integer} files}.");<a name="line.292"></a>
+<span class="sourceLineNo">293</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.293"></a>
+<span class="sourceLineNo">294</span> *<a name="line.294"></a>
+<span class="sourceLineNo">295</span> * &lt;p&gt;<a name="line.295"></a>
+<span class="sourceLineNo">296</span> * &lt;strong&gt;Note:&lt;/strong&gt; As we see above, the string produced<a name="line.296"></a>
+<span class="sourceLineNo">297</span> * by a &lt;code&gt;ChoiceFormat&lt;/code&gt; in &lt;code&gt;MessageFormat&lt;/code&gt; is treated as special;<a name="line.297"></a>
+<span class="sourceLineNo">298</span> * occurrences of '{' are used to indicate subformats, and cause recursion.<a name="line.298"></a>
+<span class="sourceLineNo">299</span> * If you create both a &lt;code&gt;MessageFormat&lt;/code&gt; and &lt;code&gt;ChoiceFormat&lt;/code&gt;<a name="line.299"></a>
+<span class="sourceLineNo">300</span> * programmatically (instead of using the string patterns), then be careful not to<a name="line.300"></a>
+<span class="sourceLineNo">301</span> * produce a format that recurses on itself, which will cause an infinite loop.<a name="line.301"></a>
+<span class="sourceLineNo">302</span> * &lt;p&gt;<a name="line.302"></a>
+<span class="sourceLineNo">303</span> * When a single argument is parsed more than once in the string, the last match<a name="line.303"></a>
+<span class="sourceLineNo">304</span> * will be the final result of the parsing.  For example,<a name="line.304"></a>
+<span class="sourceLineNo">305</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.305"></a>
+<span class="sourceLineNo">306</span> * MessageFormat mf = new MessageFormat("{0,number,#.##}, {0,number,#.#}");<a name="line.306"></a>
+<span class="sourceLineNo">307</span> * Object[] objs = {new Double(3.1415)};<a name="line.307"></a>
+<span class="sourceLineNo">308</span> * String result = mf.format( objs );<a name="line.308"></a>
+<span class="sourceLineNo">309</span> * // result now equals "3.14, 3.1"<a name="line.309"></a>
+<span class="sourceLineNo">310</span> * objs = null;<a name="line.310"></a>
+<span class="sourceLineNo">311</span> * objs = mf.parse(result, new ParsePosition(0));<a name="line.311"></a>
+<span class="sourceLineNo">312</span> * // objs now equals {new Double(3.1)}<a name="line.312"></a>
+<span class="sourceLineNo">313</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.313"></a>
+<span class="sourceLineNo">314</span> *<a name="line.314"></a>
+<span class="sourceLineNo">315</span> * &lt;p&gt;<a name="line.315"></a>
+<span class="sourceLineNo">316</span> * Likewise, parsing with a {@code MessageFormat} object using patterns containing<a name="line.316"></a>
+<span class="sourceLineNo">317</span> * multiple occurrences of the same argument would return the last match.  For<a name="line.317"></a>
+<span class="sourceLineNo">318</span> * example,<a name="line.318"></a>
+<span class="sourceLineNo">319</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.319"></a>
+<span class="sourceLineNo">320</span> * MessageFormat mf = new MessageFormat("{0}, {0}, {0}");<a name="line.320"></a>
+<span class="sourceLineNo">321</span> * String forParsing = "x, y, z";<a name="line.321"></a>
+<span class="sourceLineNo">322</span> * Object[] objs = mf.parse(forParsing, new ParsePosition(0));<a name="line.322"></a>
+<span class="sourceLineNo">323</span> * // result now equals {new String("z")}<a name="line.323"></a>
+<span class="sourceLineNo">324</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.324"></a>
+<span class="sourceLineNo">325</span> *<a name="line.325"></a>
+<span class="sourceLineNo">326</span> * &lt;h4&gt;&lt;a name="synchronization"&gt;Synchronization&lt;/a&gt;&lt;/h4&gt;<a name="line.326"></a>
+<span class="sourceLineNo">327</span> *<a name="line.327"></a>
+<span class="sourceLineNo">328</span> * &lt;p&gt;<a name="line.328"></a>
+<span class="sourceLineNo">329</span> * Message formats are not synchronized.<a name="line.329"></a>
+<span class="sourceLineNo">330</span> * It is recommended to create separate format instances for each thread.<a name="line.330"></a>
+<span class="sourceLineNo">331</span> * If multiple threads access a format concurrently, it must be synchronized<a name="line.331"></a>
+<span class="sourceLineNo">332</span> * externally.<a name="line.332"></a>
+<span class="sourceLineNo">333</span> *<a name="line.333"></a>
+<span class="sourceLineNo">334</span> * @see          java.util.Locale<a name="line.334"></a>
+<span class="sourceLineNo">335</span> * @see          Format<a name="line.335"></a>
+<span class="sourceLineNo">336</span> * @see          NumberFormat<a name="line.336"></a>
+<span class="sourceLineNo">337</span> * @see          DecimalFormat<a name="line.337"></a>
+<span class="sourceLineNo">338</span> * @see          DecimalFormatSymbols<a name="line.338"></a>
+<span class="sourceLineNo">339</span> * @see          ChoiceFormat<a name="line.339"></a>
+<span class="sourceLineNo">340</span> * @see          DateFormat<a name="line.340"></a>
+<span class="sourceLineNo">341</span> * @see          SimpleDateFormat<a name="line.341"></a>
+<span class="sourceLineNo">342</span> *<a name="line.342"></a>
+<span class="sourceLineNo">343</span> * @author       Mark Davis<a name="line.343"></a>
+<span class="sourceLineNo">344</span> */<a name="line.344"></a>
+<span class="sourceLineNo">345</span><a name="line.345"></a>
+<span class="sourceLineNo">346</span>public class MessageFormat extends Format {<a name="line.346"></a>
+<span class="sourceLineNo">347</span><a name="line.347"></a>
+<span class="sourceLineNo">348</span>    private static final long serialVersionUID = 6479157306784022952L;<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>    /**<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * Constructs a MessageFormat for the default locale and the<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     * specified pattern.<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * The constructor first sets the locale, then parses the pattern and<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * creates a list of subformats for the format elements contained in it.<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * Patterns and their interpretation are specified in the<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * &lt;a href="#patterns"&gt;class description&lt;/a&gt;.<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     *<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * @param pattern the pattern for this message format<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * @exception IllegalArgumentException if the pattern is invalid<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     */<a name="line.360"></a>
+<span class="sourceLineNo">361</span>    public MessageFormat(String pattern) {<a name="line.361"></a>
+<span class="sourceLineNo">362</span>        this.locale = Locale.getDefault(Locale.Category.FORMAT);<a name="line.362"></a>
+<span class="sourceLineNo">363</span>        applyPattern(pattern);<a name="line.363"></a>
+<span class="sourceLineNo">364</span>    }<a name="line.364"></a>
+<span class="sourceLineNo">365</span><a name="line.365"></a>
+<span class="sourceLineNo">366</span>    /**<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     * Constructs a MessageFormat for the specified locale and<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * pattern.<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * The constructor first sets the locale, then parses the pattern and<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * creates a list of subformats for the format elements contained in it.<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * Patterns and their interpretation are specified in the<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * &lt;a href="#patterns"&gt;class description&lt;/a&gt;.<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     *<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * @param pattern the pattern for this message format<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * @param locale the locale for this message format<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * @exception IllegalArgumentException if the pattern is invalid<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * @since 1.4<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     */<a name="line.378"></a>
+<span class="sourceLineNo">379</span>    public MessageFormat(String pattern, Locale locale) {<a name="line.379"></a>
+<span class="sourceLineNo">380</span>        this.locale = locale;<a name="line.380"></a>
+<span class="sourceLineNo">381</span>        applyPattern(pattern);<a name="line.381"></a>
+<span class="sourceLineNo">382</span>    }<a name="line.382"></a>
+<span class="sourceLineNo">383</span><a name="line.383"></a>
+<span class="sourceLineNo">384</span>    /**<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * Sets the locale to be used when creating or comparing subformats.<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * This affects subsequent calls<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * &lt;ul&gt;<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * &lt;li&gt;to the {@link #applyPattern applyPattern}<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     *     and {@link #toPattern toPattern} methods if format elements specify<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     *     a format type and therefore have the subformats created in the<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     *     &lt;code&gt;applyPattern&lt;/code&gt; method, as well as<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * &lt;li&gt;to the &lt;code&gt;format&lt;/code&gt; and<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     *     {@link #formatToCharacterIterator formatToCharacterIterator} methods<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     *     if format elements do not specify a format type and therefore have<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     *     the subformats created in the formatting methods.<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * &lt;/ul&gt;<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * Subformats that have already been created are not affected.<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     *<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * @param locale the locale to be used when creating or comparing subformats<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     */<a name="line.400"></a>
+<span class="sourceLineNo">401</span>    public void setLocale(Locale locale) {<a name="line.401"></a>
+<span class="sourceLineNo">402</span>        this.locale = locale;<a name="line.402"></a>
+<span class="sourceLineNo">403</span>    }<a name="line.403"></a>
+<span class="sourceLineNo">404</span><a name="line.404"></a>
+<span class="sourceLineNo">405</span>    /**<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * Gets the locale that's used when creating or comparing subformats.<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     *<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * @return the locale used when creating or comparing subformats<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     */<a name="line.409"></a>
+<span class="sourceLineNo">410</span>    public Locale getLocale() {<a name="line.410"></a>
+<span class="sourceLineNo">411</span>        return locale;<a name="line.411"></a>
+<span class="sourceLineNo">412</span>    }<a name="line.412"></a>
+<span class="sourceLineNo">413</span><a name="line.413"></a>
+<span class="sourceLineNo">414</span><a name="line.414"></a>
+<span class="sourceLineNo">415</span>    /**<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     * Sets the pattern used by this message format.<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     * The method parses the pattern and creates a list of subformats<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * for the format elements contained in it.<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * Patterns and their interpretation are specified in the<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * &lt;a href="#patterns"&gt;class description&lt;/a&gt;.<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     *<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     * @param pattern the pattern for this message format<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     * @exception IllegalArgumentException if the pattern is invalid<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     */<a name="line.424"></a>
+<span class="sourceLineNo">425</span>    public void applyPattern(String pattern) {<a name="line.425"></a>
+<span class="sourceLineNo">426</span>            StringBuilder[] segments = new StringBuilder[4];<a name="line.426"></a>
+<span class="sourceLineNo">427</span>            // Allocate only segments[SEG_RAW] here. The rest are<a name="line.427"></a>
+<span class="sourceLineNo">428</span>            // allocated on demand.<a name="line.428"></a>
+<span class="sourceLineNo">429</span>            segments[SEG_RAW] = new StringBuilder();<a name="line.429"></a>
+<span class="sourceLineNo">430</span><a name="line.430"></a>
+<span class="sourceLineNo">431</span>            int part = SEG_RAW;<a name="line.431"></a>
+<span class="sourceLineNo">432</span>            int formatNumber = 0;<a name="line.432"></a>
+<span class="sourceLineNo">433</span>            boolean inQuote = false;<a name="line.433"></a>
+<span class="sourceLineNo">434</span>            int braceStack = 0;<a name="line.434"></a>
+<span class="sourceLineNo">435</span>            maxOffset = -1;<a name="line.435"></a>
+<span class="sourceLineNo">436</span>            for (int i = 0; i &lt; pattern.length(); ++i) {<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                char ch = pattern.charAt(i);<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                if (part == SEG_RAW) {<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                    if (ch == '\'') {<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                        if (i + 1 &lt; pattern.length()<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                            &amp;&amp; pattern.charAt(i+1) == '\'') {<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                            segments[part].append(ch);  // handle doubles<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                            ++i;<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                        } else {<a name="line.444"></a>
+<span class="sourceLineNo">445</span>                            inQuote = !inQuote;<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                        }<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                    } else if (ch == '{' &amp;&amp; !inQuote) {<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                        part = SEG_INDEX;<a name="line.448"></a>
+<span class="sourceLineNo">449</span>                        if (segments[SEG_INDEX] == null) {<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                            segments[SEG_INDEX] = new StringBuilder();<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                        }<a name="line.451"></a>
+<span class="sourceLineNo">452</span>                    } else {<a name="line.452"></a>
+<span class="sourceLineNo">453</span>                        segments[part].append(ch);<a name="line.453"></a>
+<span class="sourceLineNo">454</span>                    }<a name="line.454"></a>
+<span class="sourceLineNo">455</span>                } else  {<a name="line.455"></a>
+<span class="sourceLineNo">456</span>                    if (inQuote) {              // just copy quotes in parts<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                        segments[part].append(ch);<a name="line.457"></a>
+<span class="sourceLineNo">458</span>                        if (ch == '\'') {<a name="line.458"></a>
+<span class="sourceLineNo">459</span>                            inQuote = false;<a name="line.459"></a>
+<span class="sourceLineNo">460</span>                        }<a name="line.460"></a>
+<span class="sourceLineNo">461</span>                    } else {<a name="line.461"></a>
+<span class="sourceLineNo">462</span>                        switch (ch) {<a name="line.462"></a>
+<span class="sourceLineNo">463</span>                        case ',':<a name="line.463"></a>
+<span class="sourceLineNo">464</span>                            if (part &lt; SEG_MODIFIER) {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                                if (segments[++part] == null) {<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                                    segments[part] = new StringBuilder();<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                                }<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                            } else {<a name="line.468"></a>
+<span class="sourceLineNo">469</span>                                segments[part].append(ch);<a name="line.469"></a>
+<span class="sourceLineNo">470</span>                            }<a name="line.470"></a>
+<span class="sourceLineNo">471</span>                            break;<a name="line.471"></a>
+<span class="sourceLineNo">472</span>                        case '{':<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                            ++braceStack;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>                            segments[part].append(ch);<a name="line.474"></a>
+<span class="sourceLineNo">475</span>                            break;<a name="line.475"></a>
+<span class="sourceLineNo">476</span>                        case '}':<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                            if (braceStack == 0) {<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                                part = SEG_RAW;<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                                makeFormat(i, formatNumber, segments);<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                                formatNumber++;<a name="line.480"></a>
+<span class="sourceLineNo">481</span>                                // throw away other segments<a name="line.481"></a>
+<span class="sourceLineNo">482</span>                                segments[SEG_INDEX] = null;<a name="line.482"></a>
+<span class="sourceLineNo">483</span>                                segments[SEG_TYPE] = null;<a name="line.483"></a>
+<span class="sourceLineNo">484</span>                                segments[SEG_MODIFIER] = null;<a name="line.484"></a>
+<span class="sourceLineNo">485</span>                            } else {<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                                --braceStack;<a name="line.486"></a>
+<span class="sourceLineNo">487</span>                                segments[part].append(ch);<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                            }<a name="line.488"></a>
+<span class="sourceLineNo">489</span>                            break;<a name="line.489"></a>
+<span class="sourceLineNo">490</span>                        case ' ':<a name="line.490"></a>
+<span class="sourceLineNo">491</span>                            // Skip any leading space chars for SEG_TYPE.<a name="line.491"></a>
+<span class="sourceLineNo">492</span>                            if (part != SEG_TYPE || segments[SEG_TYPE].length() &gt; 0) {<a name="line.492"></a>
+<span class="sourceLineNo">493</span>                                segments[part].append(ch);<a name="line.493"></a>
+<span class="sourceLineNo">494</span>                            }<a name="line.494"></a>
+<span class="sourceLineNo">495</span>                            break;<a name="line.495"></a>
+<span class="sourceLineNo">496</span>                        case '\'':<a name="line.496"></a>
+<span class="sourceLineNo">497</span>                            inQuote = true;<a name="line.497"></a>
+<span class="sourceLineNo">498</span>                            // fall through, so we keep quotes in other parts<a name="line.498"></a>
+<span class="sourceLineNo">499</span>                        default:<a name="line.499"></a>
+<span class="sourceLineNo">500</span>                            segments[part].append(ch);<a name="line.500"></a>
+<span class="sourceLineNo">501</span>                            break;<a name="line.501"></a>
+<span class="sourceLineNo">502</span>                        }<a name="line.502"></a>
+<span class="sourceLineNo">503</span>                    }<a name="line.503"></a>
+<span class="sourceLineNo">504</span>                }<a name="line.504"></a>
+<span class="sourceLineNo">505</span>            }<a name="line.505"></a>
+<span class="sourceLineNo">506</span>            if (braceStack == 0 &amp;&amp; part != 0) {<a name="line.506"></a>
+<span class="sourceLineNo">507</span>                maxOffset = -1;<a name="line.507"></a>
+<span class="sourceLineNo">508</span>                throw new IllegalArgumentException("Unmatched braces in the pattern.");<a name="line.508"></a>
+<span class="sourceLineNo">509</span>            }<a name="line.509"></a>
+<span class="sourceLineNo">510</span>            this.pattern = segments[0].toString();<a name="line.510"></a>
+<span class="sourceLineNo">511</span>    }<a name="line.511"></a>
+<span class="sourceLineNo">512</span><a name="line.512"></a>
+<span class="sourceLineNo">513</span><a name="line.513"></a>
+<span class="sourceLineNo">514</span>    /**<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     * Returns a pattern representing the current state of the message format.<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     * The string is constructed from internal information and therefore<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * does not necessarily equal the previously applied pattern.<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     *<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     * @return a pattern representing the current state of the message format<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     */<a name="line.520"></a>
+<span class="sourceLineNo">521</span>    public String toPattern() {<a name="line.521"></a>
+<span class="sourceLineNo">522</span>        // later, make this more extensible<a name="line.522"></a>
+<span class="sourceLineNo">523</span>        int lastOffset = 0;<a name="line.523"></a>
+<span class="sourceLineNo">524</span>        StringBuilder result = new StringBuilder();<a name="line.524"></a>
+<span class="sourceLineNo">525</span>        for (int i = 0; i &lt;= maxOffset; ++i) {<a name="line.525"></a>
+<span class="sourceLineNo">526</span>            copyAndFixQuotes(pattern, lastOffset, offsets[i], result);<a name="line.526"></a>
+<span class="sourceLineNo">527</span>            lastOffset = offsets[i];<a name="line.527"></a>
+<span class="sourceLineNo">528</span>            result.append('{').append(argumentNumbers[i]);<a name="line.528"></a>
+<span class="sourceLineNo">529</span>            Format fmt = formats[i];<a name="line.529"></a>
+<span class="sourceLineNo">530</span>            if (fmt == null) {<a name="line.530"></a>
+<span class="sourceLineNo">531</span>                // do nothing, string format<a name="line.531"></a>
+<span class="sourceLineNo">532</span>            } else if (fmt instanceof NumberFormat) {<a name="line.532"></a>
+<span class="sourceLineNo">533</span>                if (fmt.equals(NumberFormat.getInstance(locale))) {<a name="line.533"></a>
+<span class="sourceLineNo">534</span>                    result.append(",number");<a name="line.534"></a>
+<span class="sourceLineNo">535</span>                } else if (fmt.equals(NumberFormat.getCurrencyInstance(locale))) {<a name="line.535"></a>
+<span class="sourceLineNo">536</span>                    result.append(",number,currency");<a name="line.536"></a>
+<span class="sourceLineNo">537</span>                } else if (fmt.equals(NumberFormat.getPercentInstance(locale))) {<a name="line.537"></a>
+<span class="sourceLineNo">538</span>                    result.append(",number,percent");<a name="line.538"></a>
+<span class="sourceLineNo">539</span>                } else if (fmt.equals(NumberFormat.getIntegerInstance(locale))) {<a name="line.539"></a>
+<span class="sourceLineNo">540</span>                    result.append(",number,integer");<a name="line.540"></a>
+<span class="sourceLineNo">541</span>                } else {<a name="line.541"></a>
+<span class="sourceLineNo">542</span>                    if (fmt instanceof DecimalFormat) {<a name="line.542"></a>
+<span class="sourceLineNo">543</span>                        result.append(",number,").append(((DecimalFormat)fmt).toPattern());<a name="line.543"></a>
+<span class="sourceLineNo">544</span>                    } else if (fmt instanceof ChoiceFormat) {<a name="line.544"></a>
+<span class="sourceLineNo">545</span>                        result.append(",choice,").append(((ChoiceFormat)fmt).toPattern());<a name="line.545"></a>
+<span class="sourceLineNo">546</span>                    } else {<a name="line.546"></a>
+<span class="sourceLineNo">547</span>                        // UNKNOWN<a name="line.547"></a>
+<span class="sourceLineNo">548</span>                    }<a name="line.548"></a>
+<span class="sourceLineNo">549</span>                }<a name="line.549"></a>
+<span class="sourceLineNo">550</span>            } else if (fmt instanceof DateFormat) {<a name="line.550"></a>
+<span class="sourceLineNo">551</span>                int index;<a name="line.551"></a>
+<span class="sourceLineNo">552</span>                for (index = MODIFIER_DEFAULT; index &lt; DATE_TIME_MODIFIERS.length; index++) {<a name="line.552"></a>
+<span class="sourceLineNo">553</span>                    DateFormat df = DateFormat.getDateInstance(DATE_TIME_MODIFIERS[index],<a name="line.553"></a>
+<span class="sourceLineNo">554</span>                                                               locale);<a name="line.554"></a>
+<span class="sourceLineNo">555</span>                    if (fmt.equals(df)) {<a name="line.555"></a>
+<span class="sourceLineNo">556</span>                        result.append(",date");<a name="line.556"></a>
+<span class="sourceLineNo">557</span>                        break;<a name="line.557"></a>
+<span class="sourceLineNo">558</span>                    }<a name="line.558"></a>
+<span class="sourceLineNo">559</span>                    df = DateFormat.getTimeInstance(DATE_TIME_MODIFIERS[index],<a name="line.559"></a>
+<span class="sourceLineNo">560</span>                                                    locale);<a name="line.560"></a>
+<span class="sourceLineNo">561</span>                    if (fmt.equals(df)) {<a name="line.561"></a>
+<span class="sourceLineNo">562</span>                        result.append(",time");<a name="line.562"></a>
+<span class="sourceLineNo">563</span>                        break;<a name="line.563"></a>
+<span class="sourceLineNo">564</span>                    }<a name="line.564"></a>
+<span class="sourceLineNo">565</span>                }<a name="line.565"></a>
+<span class="sourceLineNo">566</span>                if (index &gt;= DATE_TIME_MODIFIERS.length) {<a name="line.566"></a>
+<span class="sourceLineNo">567</span>                    if (fmt instanceof SimpleDateFormat) {<a name="line.567"></a>
+<span class="sourceLineNo">568</span>                        result.append(",date,").append(((SimpleDateFormat)fmt).toPattern());<a name="line.568"></a>
+<span class="sourceLineNo">569</span>                    } else {<a name="line.569"></a>
+<span class="sourceLineNo">570</span>                        // UNKNOWN<a name="line.570"></a>
+<span class="sourceLineNo">571</span>                    }<a name="line.571"></a>
+<span class="sourceLineNo">572</span>                } else if (index != MODIFIER_DEFAULT) {<a name="line.572"></a>
+<span class="sourceLineNo">573</span>                    result.append(',').append(DATE_TIME_MODIFIER_KEYWORDS[index]);<a name="line.573"></a>
+<span class="sourceLineNo">574</span>                }<a name="line.574"></a>
+<span class="sourceLineNo">575</span>            } else {<a name="line.575"></a>
+<span class="sourceLineNo">576</span>                //result.append(", unknown");<a name="line.576"></a>
+<span class="sourceLineNo">577</span>            }<a name="line.577"></a>
+<span class="sourceLineNo">578</span>            result.append('}');<a name="line.578"></a>
+<span class="sourceLineNo">579</span>        }<a name="line.579"></a>
+<span class="sourceLineNo">580</span>        copyAndFixQuotes(pattern, lastOffset, pattern.length(), result);<a name="line.580"></a>
+<span class="sourceLineNo">581</span>        return result.toString();<a name="line.581"></a>
+<span class="sourceLineNo">582</span>    }<a name="line.582"></a>
+<span class="sourceLineNo">583</span><a name="line.583"></a>
+<span class="sourceLineNo">584</span>    /**<a name="line.584"></a>
+<span class="sourceLineNo">585</span>     * Sets the formats to use for the values passed into<a name="line.585"></a>
+<span class="sourceLineNo">586</span>     * &lt;code&gt;format&lt;/code&gt; methods or returned from &lt;code&gt;parse&lt;/code&gt;<a name="line.586"></a>
+<span class="sourceLineNo">587</span>     * methods. The indices of elements in &lt;code&gt;newFormats&lt;/code&gt;<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * correspond to the argument indices used in the previously set<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     * pattern string.<a name="line.589"></a>
+<span class="sourceLineNo">590</span>     * The order of formats in &lt;code&gt;newFormats&lt;/code&gt; thus corresponds to<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * the order of elements in the &lt;code&gt;arguments&lt;/code&gt; array passed<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * to the &lt;code&gt;format&lt;/code&gt; methods or the result array returned<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     * by the &lt;code&gt;parse&lt;/code&gt; methods.<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * &lt;p&gt;<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     * If an argument index is used for more than one format element<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     * in the pattern string, then the corresponding new format is used<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     * for all such format elements. If an argument index is not used<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * for any format element in the pattern string, then the<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * corresponding new format is ignored. If fewer formats are provided<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     * than needed, then only the formats for argument indices less<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     * than &lt;code&gt;newFormats.length&lt;/code&gt; are replaced.<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     *<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * @param newFormats the new formats to use<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * @exception NullPointerException if &lt;code&gt;newFormats&lt;/code&gt; is null<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * @since 1.4<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     */<a name="line.606"></a>
+<span class="sourceLineNo">607</span>    public void setFormatsByArgumentIndex(Format[] newFormats) {<a name="line.607"></a>
+<span class="sourceLineNo">608</span>        for (int i = 0; i &lt;= maxOffset; i++) {<a name="line.608"></a>
+<span class="sourceLineNo">609</span>            int j = argumentNumbers[i];<a name="line.609"></a>
+<span class="sourceLineNo">610</span>            if (j &lt; newFormats.length) {<a name="line.610"></a>
+<span class="sourceLineNo">611</span>                formats[i] = newFormats[j];<a name="line.611"></a>
+<span class="sourceLineNo">612</span>            }<a name="line.612"></a>
+<span class="sourceLineNo">613</span>        }<a name="line.613"></a>
+<span class="sourceLineNo">614</span>    }<a name="line.614"></a>
+<span class="sourceLineNo">615</span><a name="line.615"></a>
+<span class="sourceLineNo">616</span>    /**<a name="line.616"></a>
+<span class="sourceLineNo">617</span>     * Sets the formats to use for the format elements in the<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     * previously set pattern string.<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     * The order of formats in &lt;code&gt;newFormats&lt;/code&gt; corresponds to<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     * the order of format elements in the pattern string.<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     * &lt;p&gt;<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     * If more formats are provided than needed by the pattern string,<a name="line.622"></a>
+<span class="sourceLineNo">623</span>     * the remaining ones are ignored. If fewer formats are provided<a name="line.623"></a>
+<span class="sourceLineNo">624</span>     * than needed, then only the first &lt;code&gt;newFormats.length&lt;/code&gt;<a name="line.624"></a>
+<span class="sourceLineNo">625</span>     * formats are replaced.<a name="line.625"></a>
+<span class="sourceLineNo">626</span>     * &lt;p&gt;<a name="line.626"></a>
+<span class="sourceLineNo">627</span>     * Since the order of format elements in a pattern string often<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     * changes during localization, it is generally better to use the<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     * {@link #setFormatsByArgumentIndex setFormatsByArgumentIndex}<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     * method, which assumes an order of formats corresponding to the<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * order of elements in the &lt;code&gt;arguments&lt;/code&gt; array passed to<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * the &lt;code&gt;format&lt;/code&gt; methods or the result array returned by<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     * the &lt;code&gt;parse&lt;/code&gt; methods.<a name="line.633"></a>
+<span class="sourceLineNo">634</span>     *<a name="line.634"></a>
+<span class="sourceLineNo">635</span>     * @param newFormats the new formats to use<a name="line.635"></a>
+<span class="sourceLineNo">636</span>     * @exception NullPointerException if &lt;code&gt;newFormats&lt;/code&gt; is null<a name="line.636"></a>
+<span class="sourceLineNo">637</span>     */<a name="line.637"></a>
+<span class="sourceLineNo">638</span>    public void setFormats(Format[] newFormats) {<a name="line.638"></a>
+<span class="sourceLineNo">639</span>        int runsToCopy = newFormats.length;<a name="line.639"></a>
+<span class="sourceLineNo">640</span>        if (runsToCopy &gt; maxOffset + 1) {<a name="line.640"></a>
+<span class="sourceLineNo">641</span>            runsToCopy = maxOffset + 1;<a name="line.641"></a>
+<span class="sourceLineNo">642</span>        }<a name="line.642"></a>
+<span class="sourceLineNo">643</span>        for (int i = 0; i &lt; runsToCopy; i++) {<a name="line.643"></a>
+<span class="sourceLineNo">644</span>            formats[i] = newFormats[i];<a name="line.644"></a>
+<span class="sourceLineNo">645</span>        }<a name="line.645"></a>
+<span class="sourceLineNo">646</span>    }<a name="line.646"></a>
+<span class="sourceLineNo">647</span><a name="line.647"></a>
+<span class="sourceLineNo">648</span>    /**<a name="line.648"></a>
+<span class="sourceLineNo">649</span>     * Sets the format to use for the format elements within the<a name="line.649"></a>
+<span class="sourceLineNo">650</span>     * previously set pattern string that use the given argument<a name="line.650"></a>
+<span class="sourceLineNo">651</span>     * index.<a name="line.651"></a>
+<span class="sourceLineNo">652</span>     * The argument index is part of the format element definition and<a name="line.652"></a>
+<span class="sourceLineNo">653</span>     * represents an index into the &lt;code&gt;arguments&lt;/code&gt; array passed<a name="line.653"></a>
+<span class="sourceLineNo">654</span>     * to the &lt;code&gt;format&lt;/code&gt; methods or the result array returned<a name="line.654"></a>
+<span class="sourceLineNo">655</span>     * by the &lt;code&gt;parse&lt;/code&gt; methods.<a name="line.655"></a>
+<span class="sourceLineNo">656</span>     * &lt;p&gt;<a name="line.656"></a>
+<span class="sourceLineNo">657</span>     * If the argument index is used for more than one format element<a name="line.657"></a>
+<span class="sourceLineNo">658</span>     * in the pattern string, then the new format is used for all such<a name="line.658"></a>
+<span class="sourceLineNo">659</span>     * format elements. If the argument index is not used for any format<a name="line.659"></a>
+<span class="sourceLineNo">660</span>     * element in the pattern string, then the new format is ignored.<a name="line.660"></a>
+<span class="sourceLineNo">661</span>     *<a name="line.661"></a>
+<span class="sourceLineNo">662</span>     * @param argumentIndex the argument index for which to use the new format<a name="line.662"></a>
+<span class="sourceLineNo">663</span>     * @param newFormat the new format to use<a name="line.663"></a>
+<span class="sourceLineNo">664</span>     * @since 1.4<a name="line.664"></a>
+<span class="sourceLineNo">665</span>     */<a name="line.665"></a>
+<span class="sourceLineNo">666</span>    public void setFormatByArgumentIndex(int argumentIndex, Format newFormat) {<a name="line.666"></a>
+<span class="sourceLineNo">667</span>        for (int j = 0; j &lt;= maxOffset; j++) {<a name="line.667"></a>
+<span class="sourceLineNo">668</span>            if (argumentNumbers[j] == argumentIndex) {<a name="line.668"></a>
+<span class="sourceLineNo">669</span>                formats[j] = newFormat;<a name="line.669"></a>
+<span class="sourceLineNo">670</span>            }<a name="line.670"></a>
+<span class="sourceLineNo">671</span>        }<a name="line.671"></a>
+<span class="sourceLineNo">672</span>    }<a name="line.672"></a>
+<span class="sourceLineNo">673</span><a name="line.673"></a>
+<span class="sourceLineNo">674</span>    /**<a name="line.674"></a>
+<span class="sourceLineNo">675</span>     * Sets the format to use for the format element with the given<a name="line.675"></a>
+<span class="sourceLineNo">676</span>     * format element index within the previously set pattern string.<a name="line.676"></a>
+<span class="sourceLineNo">677</span>     * The format element index is the zero-based number of the format<a name="line.677"></a>
+<span class="sourceLineNo">678</span>     * element counting from the start of the pattern string.<a name="line.678"></a>
+<span class="sourceLineNo">679</span>     * &lt;p&gt;<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     * Since the order of format elements in a pattern string often<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     * changes during localization, it is generally better to use the<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     * {@link #setFormatByArgumentIndex setFormatByArgumentIndex}<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     * method, which accesses format elements based on the argument<a name="line.683"></a>
+<span class="sourceLineNo">684</span>     * index they specify.<a name="line.684"></a>
+<span class="sourceLineNo">685</span>     *<a name="line.685"></a>
+<span class="sourceLineNo">686</span>     * @param formatElementIndex the index of a format element within the pattern<a name="line.686"></a>
+<span class="sourceLineNo">687</span>     * @param newFormat the format to use for the specified format element<a name="line.687"></a>
+<span class="sourceLineNo">688</span>     * @exception ArrayIndexOutOfBoundsException if {@code formatElementIndex} is equal to or<a name="line.688"></a>
+<span class="sourceLineNo">689</span>     *            larger than the number of format elements in the pattern string<a name="line.689"></a>
+<span class="sourceLineNo">690</span>     */<a name="line.690"></a>
+<span class="sourceLineNo">691</span>    public void setFormat(int formatElementIndex, Format newFormat) {<a name="line.691"></a>
+<span class="sourceLineNo">692</span>        formats[formatElementIndex] = newFormat;<a name="line.692"></a>
+<span class="sourceLineNo">693</span>    }<a name="line.693"></a>
+<span class="sourceLineNo">694</span><a name="line.694"></a>
+<span class="sourceLineNo">695</span>    /**<a name="line.695"></a>
+<span class="sourceLineNo">696</span>     * Gets the formats used for the values passed into<a name="line.696"></a>
+<span class="sourceLineNo">697</span>     * &lt;code&gt;format&lt;/code&gt; methods or returned from &lt;code&gt;parse&lt;/code&gt;<a name="line.697"></a>
+<span class="sourceLineNo">698</span>     * methods. The indices of elements in the returned array<a name="line.698"></a>
+<span class="sourceLineNo">699</span>     * correspond to the argument indices used in the previously set<a name="line.699"></a>
+<span class="sourceLineNo">700</span>     * pattern string.<a name="line.700"></a>
+<span class="sourceLineNo">701</span>     * The order of formats in the returned array thus corresponds to<a name="line.701"></a>
+<span class="sourceLineNo">702</span>     * the order of elements in the &lt;code&gt;arguments&lt;/code&gt; array passed<a name="line.702"></a>
+<span class="sourceLineNo">703</span>     * to the &lt;code&gt;format&lt;/code&gt; methods or the result array returned<a name="line.703"></a>
+<span class="sourceLineNo">704</span>     * by the &lt;code&gt;parse&lt;/code&gt; methods.<a name="line.704"></a>
+<span class="sourceLineNo">705</span>     * &lt;p&gt;<a name="line.705"></a>
+<span class="sourceLineNo">706</span>     * If an argument index is used for more than one format element<a name="line.706"></a>
+<span class="sourceLineNo">707</span>     * in the pattern string, then the format used for the last such<a name="line.707"></a>
+<span class="sourceLineNo">708</span>     * format element is returned in the array. If an argument index<a name="line.708"></a>
+<span class="sourceLineNo">709</span>     * is not used for any format element in the pattern string, then<a name="line.709"></a>
+<span class="sourceLineNo">710</span>     * null is returned in the array.<a name="line.710"></a>
+<span class="sourceLineNo">711</span>     *<a name="line.711"></a>
+<span class="sourceLineNo">712</span>     * @return the formats used for the arguments within the pattern<a name="line.712"></a>
+<span class="sourceLineNo">713</span>     * @since 1.4<a name="line.713"></a>
+<span class="sourceLineNo">714</span>     */<a name="line.714"></a>
+<span class="sourceLineNo">715</span>    public Format[] getFormatsByArgumentIndex() {<a name="line.715"></a>
+<span class="sourceLineNo">716</span>        int maximumArgumentNumber = -1;<a name="line.716"></a>
+<span class="sourceLineNo">717</span>        for (int i = 0; i &lt;= maxOffset; i++) {<a name="line.717"></a>
+<span class="sourceLineNo">718</span>            if (argumentNumbers[i] &gt; maximumArgumentNumber) {<a name="line.718"></a>
+<span class="sourceLineNo">719</span>                maximumArgumentNumber = argumentNumbers[i];<a name="line.719"></a>
+<span class="sourceLineNo">720</span>            }<a name="line.720"></a>
+<span class="sourceLineNo">721</span>        }<a name="line.721"></a>
+<span class="sourceLineNo">722</span>        Format[] resultArray = new Format[maximumArgumentNumber + 1];<a name="line.722"></a>
+<span class="sourceLineNo">723</span>        for (int i = 0; i &lt;= maxOffset; i++) {<a name="line.723"></a>
+<span class="sourceLineNo">724</span>            resultArray[argumentNumbers[i]] = formats[i];<a name="line.724"></a>
+<span class="sourceLineNo">725</span>        }<a name="line.725"></a>
+<span class="sourceLineNo">726</span>        return resultArray;<a name="line.726"></a>
+<span class="sourceLineNo">727</span>    }<a name="line.727"></a>
+<span class="sourceLineNo">728</span><a name="line.728"></a>
+<span class="sourceLineNo">729</span>    /**<a name="line.729"></a>
+<span class="sourceLineNo">730</span>     * Gets the formats used for the format elements in the<a name="line.730"></a>
+<span class="sourceLineNo">731</span>     * previously set pattern string.<a name="line.731"></a>
+<span class="sourceLineNo">732</span>     * The order of formats in the returned array corresponds to<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     * the order of format elements in the pattern string.<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     * &lt;p&gt;<a name="line.734"></a>
+<span class="sourceLineNo">735</span>     * Since the order of format elements in a pattern string often<a name="line.735"></a>
+<span class="sourceLineNo">736</span>     * changes during localization, it's generally better to use the<a name="line.736"></a>
+<span class="sourceLineNo">737</span>     * {@link #getFormatsByArgumentIndex getFormatsByArgumentIndex}<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * method, which assumes an order of formats corresponding to the<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     * order of elements in the &lt;code&gt;arguments&lt;/code&gt; array passed to<a name="line.739"></a>
+<span class="sourceLineNo">740</span>     * the &lt;code&gt;format&lt;/code&gt; methods or the result array returned by<a name="line.740"></a>
+<span class="sourceLineNo">741</span>     * the &lt;code&gt;parse&lt;/code&gt; methods.<a name="line.741"></a>
+<span class="sourceLineNo">742</span>     *<a name="line.742"></a>
+<span class="sourceLineNo">743</span>     * @return the formats used for the format elements in the pattern<a name="line.743"></a>
+<span class="sourceLineNo">744</span>     */<a name="line.744"></a>
+<span class="sourceLineNo">745</span>    public Format[] getFormats() {<a name="line.745"></a>
+<span class="sourceLineNo">746</span>        Format[] resultArray = new Format[maxOffset + 1];<a name="line.746"></a>
+<span class="sourceLineNo">747</span>        System.arraycopy(formats, 0, resultArray, 0, maxOffset + 1);<a name="line.747"></a>
+<span class="sourceLineNo">748</span>        return resultArray;<a name="line.748"></a>
+<span class="sourceLineNo">749</span>    }<a name="line.749"></a>
+<span class="sourceLineNo">750</span><a name="line.750"></a>
+<span class="sourceLineNo">751</span>    /**<a name="line.751"></a>
+<span class="sourceLineNo">752</span>     * Formats an array of objects and appends the &lt;code&gt;MessageFormat&lt;/code&gt;'s<a name="line.752"></a>
+<span class="sourceLineNo">753</span>     * pattern, with format elements replaced by the formatted objects, to the<a name="line.753"></a>
+<span class="sourceLineNo">754</span>     * provided &lt;code&gt;StringBuffer&lt;/code&gt;.<a name="line.754"></a>
+<span class="sourceLineNo">755</span>     * &lt;p&gt;<a name="line.755"></a>
+<span class="sourceLineNo">756</span>     * The text substituted for the individual format elements is derived from<a name="line.756"></a>
+<span class="sourceLineNo">757</span>     * the current subformat of the format element and the<a name="line.757"></a>
+<span class="sourceLineNo">758</span>     * &lt;code&gt;arguments&lt;/code&gt; element at the format element's argument index<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     * as indicated by the first matching line of the following table. An<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     * argument is &lt;i&gt;unavailable&lt;/i&gt; if &lt;code&gt;arguments&lt;/code&gt; is<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     * &lt;code&gt;null&lt;/code&gt; or has fewer than argumentIndex+1 elements.<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     * &lt;p&gt;<a name="line.762"></a>
+<span class="sourceLineNo">763</span>     * &lt;table border=1 summary="Examples of subformat,argument,and formatted text"&gt;<a name="line.763"></a>
+<span class="sourceLineNo">764</span>     *    &lt;tr&gt;<a name="line.764"></a>
+<span class="sourceLineNo">765</span>     *       &lt;th&gt;Subformat<a name="line.765"></a>
+<span class="sourceLineNo">766</span>     *       &lt;th&gt;Argument<a name="line.766"></a>
+<span class="sourceLineNo">767</span>     *       &lt;th&gt;Formatted Text<a name="line.767"></a>
+<span class="sourceLineNo">768</span>     *    &lt;tr&gt;<a name="line.768"></a>
+<span class="sourceLineNo">769</span>     *       &lt;td&gt;&lt;i&gt;any&lt;/i&gt;<a name="line.769"></a>
+<span class="sourceLineNo">770</span>     *       &lt;td&gt;&lt;i&gt;unavailable&lt;/i&gt;<a name="line.770"></a>
+<span class="sourceLineNo">771</span>     *       &lt;td&gt;&lt;code&gt;"{" + argumentIndex + "}"&lt;/code&gt;<a name="line.771"></a>
+<span class="sourceLineNo">772</span>     *    &lt;tr&gt;<a name="line.772"></a>
+<span class="sourceLineNo">773</span>     *       &lt;td&gt;&lt;i&gt;any&lt;/i&gt;<a name="line.773"></a>
+<span class="sourceLineNo">774</span>     *       &lt;td&gt;&lt;code&gt;null&lt;/code&gt;<a name="line.774"></a>
+<span class="sourceLineNo">775</span>     *       &lt;td&gt;&lt;code&gt;"null"&lt;/code&gt;<a name="line.775"></a>
+<span class="sourceLineNo">776</span>     *    &lt;tr&gt;<a name="line.776"></a>
+<span class="sourceLineNo">777</span>     *       &lt;td&gt;&lt;code&gt;instanceof ChoiceFormat&lt;/code&gt;<a name="line.777"></a>
+<span class="sourceLineNo">778</span>     *       &lt;td&gt;&lt;i&gt;any&lt;/i&gt;<a name="line.778"></a>
+<span class="sourceLineNo">779</span>     *       &lt;td&gt;&lt;code&gt;subformat.format(argument).indexOf('{') &gt;= 0 ?&lt;br&gt;<a name="line.779"></a>
+<span class="sourceLineNo">780</span>     *           (new MessageFormat(subformat.format(argument), getLocale())).format(argument) :<a name="line.780"></a>
+<span class="sourceLineNo">781</span>     *           subformat.format(argument)&lt;/code&gt;<a name="line.781"></a>
+<span class="sourceLineNo">782</span>     *    &lt;tr&gt;<a name="line.782"></a>
+<span class="sourceLineNo">783</span>     *       &lt;td&gt;&lt;code&gt;!= null&lt;/code&gt;<a name="line.783"></a>
+<span class="sourceLineNo">784</span>     *       &lt;td&gt;&lt;i&gt;any&lt;/i&gt;<a name="line.784"></a>
+<span class="sourceLineNo">785</span>     *       &lt;td&gt;&lt;code&gt;subformat.format(argument)&lt;/code&gt;<a name="line.785"></a>
+<span class="sourceLineNo">786</span>     *    &lt;tr&gt;<a name="line.786"></a>
+<span class="sourceLineNo">787</span>     *       &lt;td&gt;&lt;code&gt;null&lt;/code&gt;<a name="line.787"></a>
+<span class="sourceLineNo">788</span>     *       &lt;td&gt;&lt;code&gt;instanceof Number&lt;/code&gt;<a name="line.788"></a>
+<span class="sourceLineNo">789</span>     *       &lt;td&gt;&lt;code&gt;NumberFormat.getInstance(getLocale()).format(argument)&lt;/code&gt;<a name="line.789"></a>
+<span class="sourceLineNo">790</span>     *    &lt;tr&gt;<a name="line.790"></a>
+<span class="sourceLineNo">791</span>     *       &lt;td&gt;&lt;code&gt;null&lt;/code&gt;<a name="line.791"></a>
+<span class="sourceLineNo">792</span>     *       &lt;td&gt;&lt;code&gt;instanceof Date&lt;/code&gt;<a name="line.792"></a>
+<span class="sourceLineNo">793</span>     *       &lt;td&gt;&lt;code&gt;DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, getLocale()).format(argument)&lt;/code&gt;<a name="line.793"></a>
+<span class="sourceLineNo">794</span>     *    &lt;tr&gt;<a name="line.794"></a>
+<span class="sourceLineNo">795</span>     *       &lt;td&gt;&lt;code&gt;null&lt;/code&gt;<a name="line.795"></a>
+<span class="sourceLineNo">796</span>     *       &lt;td&gt;&lt;code&gt;instanceof String&lt;/code&gt;<a name="line.796"></a>
+<span class="sourceLineNo">797</span>     *       &lt;td&gt;&lt;code&gt;argument&lt;/code&gt;<a name="line.797"></a>
+<span class="sourceLineNo">798</span>     *    &lt;tr&gt;<a name="line.798"></a>
+<span class="sourceLineNo">799</span>     *       &lt;td&gt;&lt;code&gt;null&lt;/code&gt;<a name="line.799"></a>
+<span class="sourceLineNo">800</span>     *       &lt;td&gt;&lt;i&gt;any&lt;/i&gt;<a name="line.800"></a>
+<span class="sourceLineNo">801</span>     *       &lt;td&gt;&lt;code&gt;argument.toString()&lt;/code&gt;<a name="line.801"></a>
+<span class="sourceLineNo">802</span>     * &lt;/table&gt;<a name="line.802"></a>
+<span class="sourceLineNo">803</span>     * &lt;p&gt;<a name="line.803"></a>
+<span class="sourceLineNo">804</span>     * If &lt;code&gt;pos&lt;/code&gt; is non-null, and refers to<a name="line.804"></a>
+<span class="sourceLineNo">805</span>     * &lt;code&gt;Field.ARGUMENT&lt;/code&gt;, the location of the first formatted<a name="line.805"></a>
+<span class="sourceLineNo">806</span>     * string will be returned.<a name="line.806"></a>
+<span class="sourceLineNo">807</span>     *<a name="line.807"></a>
+<span class="sourceLineNo">808</span>     * @param arguments an array of objects to be formatted and substituted.<a name="line.808"></a>
+<span class="sourceLineNo">809</span>     * @param result where text is appended.<a name="line.809"></a>
+<span class="sourceLineNo">810</span>     * @param pos On input: an alignment field, if desired.<a name="line.810"></a>
+<span class="sourceLineNo">811</span>     *            On output: the offsets of the alignment field.<a name="line.811"></a>
+<span class="sourceLineNo">812</span>     * @exception IllegalArgumentException if an argument in the<a name="line.812"></a>
+<span class="sourceLineNo">813</span>     *            &lt;code&gt;arguments&lt;/code&gt; array is not of the type<a name="line.813"></a>
+<span class="sourceLineNo">814</span>     *            expected by the format element(s) that use it.<a name="line.814"></a>
+<span class="sourceLineNo">815</span>     */<a name="line.815"></a>
+<span class="sourceLineNo">816</span>    public final StringBuffer format(Object[] arguments, StringBuffer result,<a name="line.816"></a>
+<span class="sourceLineNo">817</span>                                     FieldPosition pos)<a name="line.817"></a>
+<span class="sourceLineNo">818</span>    {<a name="line.818"></a>
+<span class="sourceLineNo">819</span>        return subformat(arguments, result, pos, null);<a name="line.819"></a>
+<span class="sourceLineNo">820</span>    }<a name="line.820"></a>
+<span class="sourceLineNo">821</span><a name="line.821"></a>
+<span class="sourceLineNo">822</span>    /**<a name="line.822"></a>
+<span class="sourceLineNo">823</span>     * Creates a MessageFormat with the given pattern and uses it<a name="line.823"></a>
+<span class="sourceLineNo">824</span>     * to format the given arguments. This is equivalent to<a name="line.824"></a>
+<span class="sourceLineNo">825</span>     * &lt;blockquote&gt;<a name="line.825"></a>
+<span class="sourceLineNo">826</span>     *     &lt;code&gt;(new {@link #MessageFormat(String) MessageFormat}(pattern)).{@link #format(java.lang.Object[], java.lang.StringBuffer, java.text.FieldPosition) format}(arguments, new StringBuffer(), null).toString()&lt;/code&gt;<a name="line.826"></a>
+<span class="sourceLineNo">827</span>     * &lt;/blockquote&gt;<a name="line.827"></a>
+<span class="sourceLineNo">828</span>     *<a name="line.828"></a>
+<span class="sourceLineNo">829</span>     * @exception IllegalArgumentException if the pattern is invalid,<a name="line.829"></a>
+<span class="sourceLineNo">830</span>     *            or if an argument in the &lt;code&gt;arguments&lt;/code&gt; array<a name="line.830"></a>
+<span class="sourceLineNo">831</span>     *            is not of the type expected by the format element(s)<a name="line.831"></a>
+<span class="sourceLineNo">832</span>     *            that use it.<a name="line.832"></a>
+<span class="sourceLineNo">833</span>     */<a name="line.833"></a>
+<span class="sourceLineNo">834</span>    public static String format(String pattern, Object ... arguments) {<a name="line.834"></a>
+<span class="sourceLineNo">835</span>        MessageFormat temp = new MessageFormat(pattern);<a name="line.835"></a>
+<span class="sourceLineNo">836</span>        return temp.format(arguments);<a name="line.836"></a>
+<span class="sourceLineNo">837</span>    }<a name="line.837"></a>
+<span class="sourceLineNo">838</span><a name="line.838"></a>
+<span class="sourceLineNo">839</span>    // Overrides<a name="line.839"></a>
+<span class="sourceLineNo">840</span>    /**<a name="line.840"></a>
+<span class="sourceLineNo">841</span>     * Formats an array of objects and appends the &lt;code&gt;MessageFormat&lt;/code&gt;'s<a name="line.841"></a>
+<span class="sourceLineNo">842</span>     * pattern, with format elements replaced by the formatted objects, to the<a name="line.842"></a>
+<span class="sourceLineNo">843</span>     * provided &lt;code&gt;StringBuffer&lt;/code&gt;.<a name="line.843"></a>
+<span class="sourceLineNo">844</span>     * This is equivalent to<a name="line.844"></a>
+<span class="sourceLineNo">845</span>     * &lt;blockquote&gt;<a name="line.845"></a>
+<span class="sourceLineNo">846</span>     *     &lt;code&gt;{@link #format(java.lang.Object[], java.lang.StringBuffer, java.text.FieldPosition) format}((Object[]) arguments, result, pos)&lt;/code&gt;<a name="line.846"></a>
+<span class="sourceLineNo">847</span>     * &lt;/blockquote&gt;<a name="line.847"></a>
+<span class="sourceLineNo">848</span>     *<a name="line.848"></a>
+<span class="sourceLineNo">849</span>     * @param arguments an array of objects to be formatted and substituted.<a name="line.849"></a>
+<span class="sourceLineNo">850</span>     * @param result where text is appended.<a name="line.850"></a>
+<span class="sourceLineNo">851</span>     * @param pos On input: an alignment field, if desired.<a name="line.851"></a>
+<span class="sourceLineNo">852</span>     *            On output: the offsets of the alignment field.<a name="line.852"></a>
+<span class="sourceLineNo">853</span>     * @exception IllegalArgumentException if an argument in the<a name="line.853"></a>
+<span class="sourceLineNo">854</span>     *            &lt;code&gt;arguments&lt;/code&gt; array is not of the type<a name="line.854"></a>
+<span class="sourceLineNo">855</span>     *            expected by the format element(s) that use it.<a name="line.855"></a>
+<span class="sourceLineNo">856</span>     */<a name="line.856"></a>
+<span class="sourceLineNo">857</span>    public final StringBuffer format(Object arguments, StringBuffer result,<a name="line.857"></a>
+<span class="sourceLineNo">858</span>                                     FieldPosition pos)<a name="line.858"></a>
+<span class="sourceLineNo">859</span>    {<a name="line.859"></a>
+<span class="sourceLineNo">860</span>        return subformat((Object[]) arguments, result, pos, null);<a name="line.860"></a>
+<span class="sourceLineNo">861</span>    }<a name="line.861"></a>
+<span class="sourceLineNo">862</span><a name="line.862"></a>
+<span class="sourceLineNo">863</span>    /**<a name="line.863"></a>
+<span class="sourceLineNo">864</span>     * Formats an array of objects and inserts them into the<a name="line.864"></a>
+<span class="sourceLineNo">865</span>     * &lt;code&gt;MessageFormat&lt;/code&gt;'s pattern, producing an<a name="line.865"></a>
+<span class="sourceLineNo">866</span>     * &lt;code&gt;AttributedCharacterIterator&lt;/code&gt;.<a name="line.866"></a>
+<span class="sourceLineNo">867</span>     * You can use the returned &lt;code&gt;AttributedCharacterIterator&lt;/code&gt;<a name="line.867"></a>
+<span class="sourceLineNo">868</span>     * to build the resulting String, as well as to determine information<a name="line.868"></a>
+<span class="sourceLineNo">869</span>     * about the resulting String.<a name="line.869"></a>
+<span class="sourceLineNo">870</span>     * &lt;p&gt;<a name="line.870"></a>
+<span class="sourceLineNo">871</span>     * The text of the returned &lt;code&gt;AttributedCharacterIterator&lt;/code&gt; is<a name="line.871"></a>
+<span class="sourceLineNo">872</span>     * the same that would be returned by<a name="line.872"></a>
+<span class="sourceLineNo">873</span>     * &lt;blockquote&gt;<a name="line.873"></a>
+<span class="sourceLineNo">874</span>     *     &lt;code&gt;{@link #format(java.lang.Object[], java.lang.StringBuffer, java.text.FieldPosition) format}(arguments, new StringBuffer(), null).toString()&lt;/code&gt;<a name="line.874"></a>
+<span class="sourceLineNo">875</span>     * &lt;/blockquote&gt;<a name="line.875"></a>
+<span class="sourceLineNo">876</span>     * &lt;p&gt;<a name="line.876"></a>
+<span class="sourceLineNo">877</span>     * In addition, the &lt;code&gt;AttributedCharacterIterator&lt;/code&gt; contains at<a name="line.877"></a>
+<span class="sourceLineNo">878</span>     * least attributes indicating where text was generated from an<a name="line.878"></a>
+<span class="sourceLineNo">879</span>     * argument in the &lt;code&gt;arguments&lt;/code&gt; array. The keys of these attributes are of<a name="line.879"></a>
+<span class="sourceLineNo">880</span>     * type &lt;code&gt;MessageFormat.Field&lt;/code&gt;, their values are<a name="line.880"></a>
+<span class="sourceLineNo">881</span>     * &lt;code&gt;Integer&lt;/code&gt; objects indicating the index in the &lt;code&gt;arguments&lt;/code&gt;<a name="line.881"></a>
+<span class="sourceLineNo">882</span>     * array of the argument from which the text was generated.<a name="line.882"></a>
+<span class="sourceLineNo">883</span>     * &lt;p&gt;<a name="line.883"></a>
+<span class="sourceLineNo">884</span>     * The attributes/value from the underlying &lt;code&gt;Format&lt;/code&gt;<a name="line.884"></a>
+<span class="sourceLineNo">885</span>     * instances that &lt;code&gt;MessageFormat&lt;/code&gt; uses will also be<a name="line.885"></a>
+<span class="sourceLineNo">886</span>     * placed in the resulting &lt;code&gt;AttributedCharacterIterator&lt;/code&gt;.<a name="line.886"></a>
+<span class="sourceLineNo">887</span>     * This allows you to not only find where an argument is placed in the<a name="line.887"></a>
+<span class="sourceLineNo">888</span>     * resulting String, but also which fields it contains in turn.<a name="line.888"></a>
+<span class="sourceLineNo">889</span>     *<a name="line.889"></a>
+<span class="sourceLineNo">890</span>     * @param arguments an array of objects to be formatted and substituted.<a name="line.890"></a>
+<span class="sourceLineNo">891</span>     * @return AttributedCharacterIterator describing the formatted value.<a name="line.891"></a>
+<span class="sourceLineNo">892</span>     * @exception NullPointerException if &lt;code&gt;arguments&lt;/code&gt; is null.<a name="line.892"></a>
+<span class="sourceLineNo">893</span>     * @exception IllegalArgumentException if an argument in the<a name="line.893"></a>
+<span class="sourceLineNo">894</span>     *            &lt;code&gt;arguments&lt;/code&gt; array is not of the type<a name="line.894"></a>
+<span class="sourceLineNo">895</span>     *            expected by the format element(s) that use it.<a name="line.895"></a>
+<span class="sourceLineNo">896</span>     * @since 1.4<a name="line.896"></a>
+<span class="sourceLineNo">897</span>     */<a name="line.897"></a>
+<span class="sourceLineNo">898</span>    public AttributedCharacterIterator formatToCharacterIterator(Object arguments) {<a name="line.898"></a>
+<span class="sourceLineNo">899</span>        StringBuffer result = new StringBuffer();<a name="line.899"></a>
+<span class="sourceLineNo">900</span>        ArrayList iterators = new ArrayList();<a name="line.900"></a>
+<span class="sourceLineNo">901</span><a name="line.901"></a>
+<span class="sourceLineNo">902</span>        if (arguments == null) {<a name="line.902"></a>
+<span class="sourceLineNo">903</span>            throw new NullPointerException(<a name="line.903"></a>
+<span class="sourceLineNo">904</span>                   "formatToCharacterIterator must be passed non-null object");<a name="line.904"></a>
+<span class="sourceLineNo">905</span>        }<a name="line.905"></a>
+<span class="sourceLineNo">906</span>        subformat((Object[]) arguments, result, null, iterators);<a name="line.906"></a>
+<span class="sourceLineNo">907</span>        if (iterators.size() == 0) {<a name="line.907"></a>
+<span class="sourceLineNo">908</span>            return createAttributedCharacterIterator("");<a name="line.908"></a>
+<span class="sourceLineNo">909</span>        }<a name="line.909"></a>
+<span class="sourceLineNo">910</span>        return createAttributedCharacterIterator(<a name="line.910"></a>
+<span class="sourceLineNo">911</span>                     (AttributedCharacterIterator[])iterators.toArray(<a name="line.911"></a>
+<span class="sourceLineNo">912</span>                     new AttributedCharacterIterator[iterators.size()]));<a name="line.912"></a>
+<span class="sourceLineNo">913</span>    }<a name="line.913"></a>
+<span class="sourceLineNo">914</span><a name="line.914"></a>
+<span class="sourceLineNo">915</span>    /**<a name="line.915"></a>
+<span class="sourceLineNo">916</span>     * Parses the string.<a name="line.916"></a>
+<span class="sourceLineNo">917</span>     *<a name="line.917"></a>
+<span class="sourceLineNo">918</span>     * &lt;p&gt;Caveats: The parse may fail in a number of circumstances.<a name="line.918"></a>
+<span class="sourceLineNo">919</span>     * For example:<a name="line.919"></a>
+<span class="sourceLineNo">920</span>     * &lt;ul&gt;<a name="line.920"></a>
+<span class="sourceLineNo">921</span>     * &lt;li&gt;If one of the arguments does not occur in the pattern.<a name="line.921"></a>
+<span class="sourceLineNo">922</span>     * &lt;li&gt;If the format of an argument loses information, such as<a name="line.922"></a>
+<span class="sourceLineNo">923</span>     *     with a choice format where a large number formats to "many".<a name="line.923"></a>
+<span class="sourceLineNo">924</span>     * &lt;li&gt;Does not yet handle recursion (where<a name="line.924"></a>
+<span class="sourceLineNo">925</span>     *     the substituted strings contain {n} references.)<a name="line.925"></a>
+<span class="sourceLineNo">926</span>     * &lt;li&gt;Will not always find a match (or the correct match)<a name="line.926"></a>
+<span class="sourceLineNo">927</span>     *     if some part of the parse is ambiguous.<a name="line.927"></a>
+<span class="sourceLineNo">928</span>     *     For example, if the pattern "{1},{2}" is used with the<a name="line.928"></a>
+<span class="sourceLineNo">929</span>     *     string arguments {"a,b", "c"}, it will format as "a,b,c".<a name="line.929"></a>
+<span class="sourceLineNo">930</span>     *     When the result is parsed, it will return {"a", "b,c"}.<a name="line.930"></a>
+<span class="sourceLineNo">931</span>     * &lt;li&gt;If a single argument is parsed more than once in the string,<a name="line.931"></a>
+<span class="sourceLineNo">932</span>     *     then the later parse wins.<a name="line.932"></a>
+<span class="sourceLineNo">933</span>     * &lt;/ul&gt;<a name="line.933"></a>
+<span class="sourceLineNo">934</span>     * When the parse fails, use ParsePosition.getErrorIndex() to find out<a name="line.934"></a>
+<span class="sourceLineNo">935</span>     * where in the string the parsing failed.  The returned error<a name="line.935"></a>
+<span class="sourceLineNo">936</span>     * index is the starting offset of the sub-patterns that the string<a name="line.936"></a>
+<span class="sourceLineNo">937</span>     * is comparing with.  For example, if the parsing string "AAA {0} BBB"<a name="line.937"></a>
+<span class="sourceLineNo">938</span>     * is comparing against the pattern "AAD {0} BBB", the error index is<a name="line.938"></a>
+<span class="sourceLineNo">939</span>     * 0. When an error occurs, the call to this method will return null.<a name="line.939"></a>
+<span class="sourceLineNo">940</span>     * If the source is null, return an empty array.<a name="line.940"></a>
+<span class="sourceLineNo">941</span>     */<a name="line.941"></a>
+<span class="sourceLineNo">942</span>    public Object[] parse(String source, ParsePosition pos) {<a name="line.942"></a>
+<span class="sourceLineNo">943</span>        if (source == null) {<a name="line.943"></a>
+<span class="sourceLineNo">944</span>            Object[] empty = {};<a name="line.944"></a>
+<span class="sourceLineNo">945</span>            return empty;<a name="line.945"></a>
+<span class="sourceLineNo">946</span>        }<a name="line.946"></a>
+<span class="sourceLineNo">947</span><a name="line.947"></a>
+<span class="sourceLineNo">948</span>        int maximumArgumentNumber = -1;<a name="line.948"></a>
+<span class="sourceLineNo">949</span>        for (int i = 0; i &lt;= maxOffset; i++) {<a name="line.949"></a>
+<span class="sourceLineNo">950</span>            if (argumentNumbers[i] &gt; maximumArgumentNumber) {<a name="line.950"></a>
+<span class="sourceLineNo">951</span>                maximumArgumentNumber = argumentNumbers[i];<a name="line.951"></a>
+<span class="sourceLineNo">952</span>            }<a name="line.952"></a>
+<span class="sourceLineNo">953</span>        }<a name="line.953"></a>
+<span class="sourceLineNo">954</span>        Object[] resultArray = new Object[maximumArgumentNumber + 1];<a name="line.954"></a>
+<span class="sourceLineNo">955</span><a name="line.955"></a>
+<span class="sourceLineNo">956</span>        int patternOffset = 0;<a name="line.956"></a>
+<span class="sourceLineNo">957</span>        int sourceOffset = pos.index;<a name="line.957"></a>
+<span class="sourceLineNo">958</span>        ParsePosition tempStatus = new ParsePosition(0);<a name="line.958"></a>
+<span class="sourceLineNo">959</span>        for (int i = 0; i &lt;= maxOffset; ++i) {<a name="line.959"></a>
+<span class="sourceLineNo">960</span>            // match up to format<a name="line.960"></a>
+<span class="sourceLineNo">961</span>            int len = offsets[i] - patternOffset;<a name="line.961"></a>
+<span class="sourceLineNo">962</span>            if (len == 0 || pattern.regionMatches(patternOffset,<a name="line.962"></a>
+<span class="sourceLineNo">963</span>                                                  source, sourceOffset, len)) {<a name="line.963"></a>
+<span class="sourceLineNo">964</span>                sourceOffset += len;<a name="line.964"></a>
+<span class="sourceLineNo">965</span>                patternOffset += len;<a name="line.965"></a>
+<span class="sourceLineNo">966</span>            } else {<a name="line.966"></a>
+<span class="sourceLineNo">967</span>                pos.errorIndex = sourceOffset;<a name="line.967"></a>
+<span class="sourceLineNo">968</span>                return null; // leave index as is to signal error<a name="line.968"></a>
+<span class="sourceLineNo">969</span>            }<a name="line.969"></a>
+<span class="sourceLineNo">970</span><a name="line.970"></a>
+<span class="sourceLineNo">971</span>            // now use format<a name="line.971"></a>
+<span class="sourceLineNo">972</span>            if (formats[i] == null) {   // string format<a name="line.972"></a>
+<span class="sourceLineNo">973</span>                // if at end, use longest possible match<a name="line.973"></a>
+<span class="sourceLineNo">974</span>                // otherwise uses first match to intervening string<a name="line.974"></a>
+<span class="sourceLineNo">975</span>                // does NOT recursively try all possibilities<a name="line.975"></a>
+<span class="sourceLineNo">976</span>                int tempLength = (i != maxOffset) ? offsets[i+1] : pattern.length();<a name="line.976"></a>
+<span class="sourceLineNo">977</span><a name="line.977"></a>
+<span class="sourceLineNo">978</span>                int next;<a name="line.978"></a>
+<span class="sourceLineNo">979</span>                if (patternOffset &gt;= tempLength) {<a name="line.979"></a>
+<span class="sourceLineNo">980</span>                    next = source.length();<a name="line.980"></a>
+<span class="sourceLineNo">981</span>                }else{<a name="line.981"></a>
+<span class="sourceLineNo">982</span>                    next = source.indexOf(pattern.substring(patternOffset, tempLength),<a name="line.982"></a>
+<span class="sourceLineNo">983</span>                                          sourceOffset);<a name="line.983"></a>
+<span class="sourceLineNo">984</span>                }<a name="line.984"></a>
+<span class="sourceLineNo">985</span><a name="line.985"></a>
+<span class="sourceLineNo">986</span>                if (next &lt; 0) {<a name="line.986"></a>
+<span class="sourceLineNo">987</span>                    pos.errorIndex = sourceOffset;<a name="line.987"></a>
+<span class="sourceLineNo">988</span>                    return null; // leave index as is to signal error<a name="line.988"></a>
+<span class="sourceLineNo">989</span>                } else {<a name="line.989"></a>
+<span class="sourceLineNo">990</span>                    String strValue= source.substring(sourceOffset,next);<a name="line.990"></a>
+<span class="sourceLineNo">991</span>                    if (!strValue.equals("{"+argumentNumbers[i]+"}"))<a name="line.991"></a>
+<span class="sourceLineNo">992</span>                        resultArray[argumentNumbers[i]]<a name="line.992"></a>
+<span class="sourceLineNo">993</span>                            = source.substring(sourceOffset,next);<a name="line.993"></a>
+<span class="sourceLineNo">994</span>                    sourceOffset = next;<a name="line.994"></a>
+<span class="sourceLineNo">995</span>                }<a name="line.995"></a>
+<span class="sourceLineNo">996</span>            } else {<a name="line.996"></a>
+<span class="sourceLineNo">997</span>                tempStatus.index = sourceOffset;<a name="line.997"></a>
+<span class="sourceLineNo">998</span>                resultArray[argumentNumbers[i]]<a name="line.998"></a>
+<span class="sourceLineNo">999</span>                    = formats[i].parseObject(source,tempStatus);<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>                if (tempStatus.index == sourceOffset) {<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>                    pos.errorIndex = sourceOffset;<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>                    return null; // leave index as is to signal error<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>                }<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>                sourceOffset = tempStatus.index; // update<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>            }<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>        }<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>        int len = pattern.length() - patternOffset;<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>        if (len == 0 || pattern.regionMatches(patternOffset,<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>                                              source, sourceOffset, len)) {<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>            pos.index = sourceOffset + len;<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>        } else {<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>            pos.errorIndex = sourceOffset;<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>            return null; // leave index as is to signal error<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>        }<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>        return resultArray;<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>    }<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span><a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>    /**<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>     * Parses text from the beginning of the given string to produce an object<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>     * array.<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>     * The method may not use the entire text of the given string.<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>     * &lt;p&gt;<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>     * See the {@link #parse(String, ParsePosition)} method for more information<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>     * on message parsing.<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>     *<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>     * @param source A &lt;code&gt;String&lt;/code&gt; whose beginning should be parsed.<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>     * @return An &lt;code&gt;Object&lt;/code&gt; array parsed from the string.<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>     * @exception ParseException if the beginning of the specified string<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>     *            cannot be parsed.<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>     */<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>    public Object[] parse(String source) throws ParseException {<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>        ParsePosition pos  = new ParsePosition(0);<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>        Object[] result = parse(source, pos);<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>        if (pos.index == 0)  // unchanged, returned object is null<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>            throw new ParseException("MessageFormat parse error!", pos.errorIndex);<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span><a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>        return result;<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>    }<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span><a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>    /**<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>     * Parses text from a string to produce an object array.<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>     * &lt;p&gt;<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>     * The method attempts to parse text starting at the index given by<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>     * &lt;code&gt;pos&lt;/code&gt;.<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>     * If parsing succeeds, then the index of &lt;code&gt;pos&lt;/code&gt; is updated<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>     * to the index after the last character used (parsing does not necessarily<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>     * use all characters up to the end of the string), and the parsed<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>     * object array is returned. The updated &lt;code&gt;pos&lt;/code&gt; can be used to<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>     * indicate the starting point for the next call to this method.<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>     * If an error occurs, then the index of &lt;code&gt;pos&lt;/code&gt; is not<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>     * changed, the error index of &lt;code&gt;pos&lt;/code&gt; is set to the index of<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>     * the character where the error occurred, and null is returned.<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>     * &lt;p&gt;<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>     * See the {@link #parse(String, ParsePosition)} method for more information<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>     * on message parsing.<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>     *<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>     * @param source A &lt;code&gt;String&lt;/code&gt;, part of which should be parsed.<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>     * @param pos A &lt;code&gt;ParsePosition&lt;/code&gt; object with index and error<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>     *            index information as described above.<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>     * @return An &lt;code&gt;Object&lt;/code&gt; array parsed from the string. In case of<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>     *         error, returns null.<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>     * @exception NullPointerException if &lt;code&gt;pos&lt;/code&gt; is null.<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>     */<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>    public Object parseObject(String source, ParsePosition pos) {<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span>        return parse(source, pos);<a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>    }<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span><a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>    /**<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>     * Creates and returns a copy of this object.<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>     *<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>     * @return a clone of this instance.<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>     */<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>    public Object clone() {<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>        MessageFormat other = (MessageFormat) super.clone();<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span><a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>        // clone arrays. Can't do with utility because of bug in Cloneable<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>        other.formats = (Format[]) formats.clone(); // shallow clone<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>        for (int i = 0; i &lt; formats.length; ++i) {<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>            if (formats[i] != null)<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>                other.formats[i] = (Format)formats[i].clone();<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>        }<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>        // for primitives or immutables, shallow clone is enough<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>        other.offsets = (int[]) offsets.clone();<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>        other.argumentNumbers = (int[]) argumentNumbers.clone();<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span><a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>        return other;<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>    }<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span><a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>    /**<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>     * Equality comparison between two message format objects<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>     */<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>    public boolean equals(Object obj) {<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>        if (this == obj)                      // quick check<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>            return true;<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>        if (obj == null || getClass() != obj.getClass())<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>            return false;<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>        MessageFormat other = (MessageFormat) obj;<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>        return (maxOffset == other.maxOffset<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>                &amp;&amp; pattern.equals(other.pattern)<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>                &amp;&amp; ((locale != null &amp;&amp; locale.equals(other.locale))<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>                 || (locale == null &amp;&amp; other.locale == null))<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>                &amp;&amp; Arrays.equals(offsets,other.offsets)<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>                &amp;&amp; Arrays.equals(argumentNumbers,other.argumentNumbers)<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>                &amp;&amp; Arrays.equals(formats,other.formats));<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>    }<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span><a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>    /**<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>     * Generates a hash code for the message format object.<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>     */<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>    public int hashCode() {<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>        return pattern.hashCode(); // enough for reasonable distribution<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>    }<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span><a name="line.1113"></a>
+<span class="sourceLineNo">1114</span><a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>    /**<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>     * Defines constants that are used as attribute keys in the<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>     * &lt;code&gt;AttributedCharacterIterator&lt;/code&gt; returned<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>     * from &lt;code&gt;MessageFormat.formatToCharacterIterator&lt;/code&gt;.<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>     *<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>     * @since 1.4<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>     */<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>    public static class Field extends Format.Field {<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span><a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>        // Proclaim serial compatibility with 1.4 FCS<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>        private static final long serialVersionUID = 7899943957617360810L;<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span><a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>        /**<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>         * Creates a Field with the specified name.<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>         *<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>         * @param name Name of the attribute<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>         */<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>        protected Field(String name) {<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>            super(name);<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>        }<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span><a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>        /**<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>         * Resolves instances being deserialized to the predefined constants.<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>         *<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>         * @throws InvalidObjectException if the constant could not be<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>         *         resolved.<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>         * @return resolved MessageFormat.Field constant<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>         */<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>        protected Object readResolve() throws InvalidObjectException {<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>            if (this.getClass() != MessageFormat.Field.class) {<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>                throw new InvalidObjectException("subclass didn't correctly implement readResolve");<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>            }<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span><a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>            return ARGUMENT;<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>        }<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span><a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>        //<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>        // The constants<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>        //<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span><a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>        /**<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>         * Constant identifying a portion of a message that was generated<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span>         * from an argument passed into &lt;code&gt;formatToCharacterIterator&lt;/code&gt;.<a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>         * The value associated with the key will be an &lt;code&gt;Integer&lt;/code&gt;<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>         * indicating the index in the &lt;code&gt;arguments&lt;/code&gt; array of the<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>         * argument from which the text was generated.<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>         */<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>        public final static Field ARGUMENT =<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>                           new Field("message argument field");<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>    }<a name="line.1164"></a>
+<span class="sourceLineNo">1165</span><a name="line.1165"></a>
+<span class="sourceLineNo">1166</span>    // ===========================privates============================<a name="line.1166"></a>
+<span class="sourceLineNo">1167</span><a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>    /**<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>     * The locale to use for formatting numbers and dates.<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>     * @serial<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>     */<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>    private Locale locale;<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span><a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>    /**<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>     * The string that the formatted values are to be plugged into.  In other words, this<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>     * is the pattern supplied on construction with all of the {} expressions taken out.<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>     * @serial<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>     */<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span>    private String pattern = "";<a name="line.1179"></a>
+<span class="sourceLineNo">1180</span><a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>    /** The initially expected number of subformats in the format */<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span>    private static final int INITIAL_FORMATS = 10;<a name="line.1182"></a>
+<span class="sourceLineNo">1183</span><a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>    /**<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>     * An array of formatters, which are used to format the arguments.<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>     * @serial<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>     */<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>    private Format[] formats = new Format[INITIAL_FORMATS];<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span><a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>    /**<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>     * The positions where the results of formatting each argument are to be inserted<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>     * into the pattern.<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span>     * @serial<a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>     */<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>    private int[] offsets = new int[INITIAL_FORMATS];<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span><a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>    /**<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>     * The argument numbers corresponding to each formatter.  (The formatters are stored<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>     * in the order they occur in the pattern, not in the order in which the arguments<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>     * are specified.)<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>     * @serial<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span>     */<a name="line.1202"></a>
+<span class="sourceLineNo">1203</span>    private int[] argumentNumbers = new int[INITIAL_FORMATS];<a name="line.1203"></a>
+<span class="sourceLineNo">1204</span><a name="line.1204"></a>
+<span class="sourceLineNo">1205</span>    /**<a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>     * One less than the number of entries in &lt;code&gt;offsets&lt;/code&gt;.  Can also be thought of<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span>     * as the index of the highest-numbered element in &lt;code&gt;offsets&lt;/code&gt; that is being used.<a name="line.1207"></a>
+<span class="sourceLineNo">1208</span>     * All of these arrays should have the same number of elements being used as &lt;code&gt;offsets&lt;/code&gt;<a name="line.1208"></a>
+<span class="sourceLineNo">1209</span>     * does, and so this variable suffices to tell us how many entries are in all of them.<a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>     * @serial<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span>     */<a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>    private int maxOffset = -1;<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span><a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>    /**<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>     * Internal routine used by format. If &lt;code&gt;characterIterators&lt;/code&gt; is<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>     * non-null, AttributedCharacterIterator will be created from the<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>     * subformats as necessary. If &lt;code&gt;characterIterators&lt;/code&gt; is null<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span>     * and &lt;code&gt;fp&lt;/code&gt; is non-null and identifies<a name="line.1218"></a>
+<span class="sourceLineNo">1219</span>     * &lt;code&gt;Field.MESSAGE_ARGUMENT&lt;/code&gt;, the location of<a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>     * the first replaced argument will be set in it.<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span>     *<a name="line.1221"></a>
+<span class="sourceLineNo">1222</span>     * @exception IllegalArgumentException if an argument in the<a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>     *            &lt;code&gt;arguments&lt;/code&gt; array is not of the type<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>     *            expected by the format element(s) that use it.<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span>     */<a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>    private StringBuffer subformat(Object[] arguments, StringBuffer result,<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span>                                   FieldPosition fp, List characterIterators) {<a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>        // note: this implementation assumes a fast substring &amp; index.<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span>        // if this is not true, would be better to append chars one by one.<a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>        int lastOffset = 0;<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span>        int last = result.length();<a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>        for (int i = 0; i &lt;= maxOffset; ++i) {<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>            result.append(pattern.substring(lastOffset, offsets[i]));<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>            lastOffset = offsets[i];<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span>            int argumentNumber = argumentNumbers[i];<a name="line.1235"></a>
+<span class="sourceLineNo">1236</span>            if (arguments == null || argumentNumber &gt;= arguments.length) {<a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>                result.append('{').append(argumentNumber).append('}');<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span>                continue;<a name="line.1238"></a>
+<span class="sourceLineNo">1239</span>            }<a name="line.1239"></a>
+<span class="sourceLineNo">1240</span>            // int argRecursion = ((recursionProtection &gt;&gt; (argumentNumber*2)) &amp; 0x3);<a name="line.1240"></a>
+<span class="sourceLineNo">1241</span>            if (false) { // if (argRecursion == 3){<a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>                // prevent loop!!!<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>                result.append('\uFFFD');<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span>            } else {<a name="line.1244"></a>
+<span class="sourceLineNo">1245</span>                Object obj = arguments[argumentNumber];<a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>                String arg = null;<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span>                Format subFormatter = null;<a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>                if (obj == null) {<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>                    arg = "null";<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>                } else if (formats[i] != null) {<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span>                    subFormatter = formats[i];<a name="line.1251"></a>
+<span class="sourceLineNo">1252</span>                    if (subFormatter instanceof ChoiceFormat) {<a name="line.1252"></a>
+<span class="sourceLineNo">1253</span>                        arg = formats[i].format(obj);<a name="line.1253"></a>
+<span class="sourceLineNo">1254</span>                        if (arg.indexOf('{') &gt;= 0) {<a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>                            subFormatter = new MessageFormat(arg, locale);<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span>                            obj = arguments;<a name="line.1256"></a>
+<span class="sourceLineNo">1257</span>                            arg = null;<a name="line.1257"></a>
+<span class="sourceLineNo">1258</span>                        }<a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>                    }<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span>                } else if (obj instanceof Number) {<a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>                    // format number if can<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>                    subFormatter = NumberFormat.getInstance(locale);<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>                } else if (obj instanceof Date) {<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>                    // format a Date if can<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span>                    subFormatter = DateFormat.getDateTimeInstance(<a name="line.1265"></a>
+<span class="sourceLineNo">1266</span>                             DateFormat.SHORT, DateFormat.SHORT, locale);//fix<a name="line.1266"></a>
+<span class="sourceLineNo">1267</span>                } else if (obj instanceof String) {<a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>                    arg = (String) obj;<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span><a name="line.1269"></a>
+<span class="sourceLineNo">1270</span>                } else {<a name="line.1270"></a>
+<span class="sourceLineNo">1271</span>                    arg = obj.toString();<a name="line.1271"></a>
+<span class="sourceLineNo">1272</span>                    if (arg == null) arg = "null";<a name="line.1272"></a>
+<span class="sourceLineNo">1273</span>                }<a name="line.1273"></a>
+<span class="sourceLineNo">1274</span><a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>                // At this point we are in two states, either subFormatter<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span>                // is non-null indicating we should format obj using it,<a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>                // or arg is non-null and we should use it as the value.<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span><a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>                if (characterIterators != null) {<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span>                    // If characterIterators is non-null, it indicates we need<a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>                    // to get the CharacterIterator from the child formatter.<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span>                    if (last != result.length()) {<a name="line.1282"></a>
+<span class="sourceLineNo">1283</span>                        characterIterators.add(<a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>                            createAttributedCharacterIterator(result.substring<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span>                                                              (last)));<a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>                        last = result.length();<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span>                    }<a name="line.1287"></a>
+<span class="sourceLineNo">1288</span>                    if (subFormatter != null) {<a name="line.1288"></a>
+<span class="sourceLineNo">1289</span>                        AttributedCharacterIterator subIterator =<a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>                                   subFormatter.formatToCharacterIterator(obj);<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span><a name="line.1291"></a>
+<span class="sourceLineNo">1292</span>                        append(result, subIterator);<a name="line.1292"></a>
+<span class="sourceLineNo">1293</span>                        if (last != result.length()) {<a name="line.1293"></a>
+<span class="sourceLineNo">1294</span>                            characterIterators.add(<a name="line.1294"></a>
+<span class="sourceLineNo">1295</span>                                         createAttributedCharacterIterator(<a name="line.1295"></a>
+<span class="sourceLineNo">1296</span>                                         subIterator, Field.ARGUMENT,<a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>                                         Integer.valueOf(argumentNumber)));<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span>                            last = result.length();<a name="line.1298"></a>
+<span class="sourceLineNo">1299</span>                        }<a name="line.1299"></a>
+<span class="sourceLineNo">1300</span>                        arg = null;<a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>                    }<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>                    if (arg != null &amp;&amp; arg.length() &gt; 0) {<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>                        result.append(arg);<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span>                        characterIterators.add(<a name="line.1304"></a>
+<span class="sourceLineNo">1305</span>                                 createAttributedCharacterIterator(<a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>                                 arg, Field.ARGUMENT,<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span>                                 Integer.valueOf(argumentNumber)));<a name="line.1307"></a>
+<span class="sourceLineNo">1308</span>                        last = result.length();<a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>                    }<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span>                }<a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>                else {<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>                    if (subFormatter != null) {<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span>                        arg = subFormatter.format(obj);<a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>                    }<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span>                    last = result.length();<a name="line.1315"></a>
+<span class="sourceLineNo">1316</span>                    result.append(arg);<a name="line.1316"></a>
+<span class="sourceLineNo">1317</span>                    if (i == 0 &amp;&amp; fp != null &amp;&amp; Field.ARGUMENT.equals(<a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>                                  fp.getFieldAttribute())) {<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span>                        fp.setBeginIndex(last);<a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>                        fp.setEndIndex(result.length());<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span>                    }<a name="line.1321"></a>
+<span class="sourceLineNo">1322</span>                    last = result.length();<a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>                }<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>            }<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>        }<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span>        result.append(pattern.substring(lastOffset, pattern.length()));<a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>        if (characterIterators != null &amp;&amp; last != result.length()) {<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span>            characterIterators.add(createAttributedCharacterIterator(<a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>                                   result.substring(last)));<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>        }<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>        return result;<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span>    }<a name="line.1332"></a>
+<span class="sourceLineNo">1333</span><a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>    /**<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span>     * Convenience method to append all the characters in<a name="line.1335"></a>
+<span class="sourceLineNo">1336</span>     * &lt;code&gt;iterator&lt;/code&gt; to the StringBuffer &lt;code&gt;result&lt;/code&gt;.<a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>     */<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span>    private void append(StringBuffer result, CharacterIterator iterator) {<a name="line.1338"></a>
+<span class="sourceLineNo">1339</span>        if (iterator.first() != CharacterIterator.DONE) {<a name="line.1339"></a>
+<span class="sourceLineNo">1340</span>            char aChar;<a name="line.1340"></a>
+<span class="sourceLineNo">1341</span><a name="line.1341"></a>
+<span class="sourceLineNo">1342</span>            result.append(iterator.first());<a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>            while ((aChar = iterator.next()) != CharacterIterator.DONE) {<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span>                result.append(aChar);<a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>            }<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>        }<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>    }<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span><a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>    // Indices for segments<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>    private static final int SEG_RAW      = 0;<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span>    private static final int SEG_INDEX    = 1;<a name="line.1351"></a>
+<span class="sourceLineNo">1352</span>    private static final int SEG_TYPE     = 2;<a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>    private static final int SEG_MODIFIER = 3; // modifier or subformat<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span><a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>    // Indices for type keywords<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span>    private static final int TYPE_NULL    = 0;<a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>    private static final int TYPE_NUMBER  = 1;<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span>    private static final int TYPE_DATE    = 2;<a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>    private static final int TYPE_TIME    = 3;<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span>    private static final int TYPE_CHOICE  = 4;<a name="line.1360"></a>
+<span class="sourceLineNo">1361</span><a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>    private static final String[] TYPE_KEYWORDS = {<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span>        "",<a name="line.1363"></a>
+<span class="sourceLineNo">1364</span>        "number",<a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>        "date",<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span>        "time",<a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>        "choice"<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span>    };<a name="line.1368"></a>
+<span class="sourceLineNo">1369</span><a name="line.1369"></a>
+<span class="sourceLineNo">1370</span>    // Indices for number modifiers<a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>    private static final int MODIFIER_DEFAULT  = 0; // common in number and date-time<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span>    private static final int MODIFIER_CURRENCY = 1;<a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>    private static final int MODIFIER_PERCENT  = 2;<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>    private static final int MODIFIER_INTEGER  = 3;<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span><a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>    private static final String[] NUMBER_MODIFIER_KEYWORDS = {<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>        "",<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>        "currency",<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span>        "percent",<a name="line.1379"></a>
+<span class="sourceLineNo">1380</span>        "integer"<a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>    };<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span><a name="line.1382"></a>
+<span class="sourceLineNo">1383</span>    // Indices for date-time modifiers<a name="line.1383"></a>
+<span class="sourceLineNo">1384</span>    private static final int MODIFIER_SHORT   = 1;<a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>    private static final int MODIFIER_MEDIUM  = 2;<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span>    private static final int MODIFIER_LONG    = 3;<a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>    private static final int MODIFIER_FULL    = 4;<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span><a name="line.1388"></a>
+<span class="sourceLineNo">1389</span>    private static final String[] DATE_TIME_MODIFIER_KEYWORDS = {<a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>        "",<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>        "short",<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span>        "medium",<a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>        "long",<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span>        "full"<a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>    };<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span><a name="line.1396"></a>
+<span class="sourceLineNo">1397</span>    // Date-time style values corresponding to the date-time modifiers.<a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>    private static final int[] DATE_TIME_MODIFIERS = {<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span>        DateFormat.DEFAULT,<a name="line.1399"></a>
+<span class="sourceLineNo">1400</span>        DateFormat.SHORT,<a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>        DateFormat.MEDIUM,<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span>        DateFormat.LONG,<a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>        DateFormat.FULL,<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span>    };<a name="line.1404"></a>
+<span class="sourceLineNo">1405</span><a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>    private void makeFormat(int position, int offsetNumber,<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>                            StringBuilder[] textSegments)<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span>    {<a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>        String[] segments = new String[textSegments.length];<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span>        for (int i = 0; i &lt; textSegments.length; i++) {<a name="line.1410"></a>
+<span class="sourceLineNo">1411</span>            StringBuilder oneseg = textSegments[i];<a name="line.1411"></a>
+<span class="sourceLineNo">1412</span>            segments[i] = (oneseg != null) ? oneseg.toString() : "";<a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>        }<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span><a name="line.1414"></a>
+<span class="sourceLineNo">1415</span>        // get the argument number<a name="line.1415"></a>
+<span class="sourceLineNo">1416</span>        int argumentNumber;<a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>        try {<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span>            argumentNumber = Integer.parseInt(segments[SEG_INDEX]); // always unlocalized!<a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>        } catch (NumberFormatException e) {<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span>            throw new IllegalArgumentException("can't parse argument number: "<a name="line.1420"></a>
+<span class="sourceLineNo">1421</span>                                               + segments[SEG_INDEX], e);<a name="line.1421"></a>
+<span class="sourceLineNo">1422</span>        }<a name="line.1422"></a>
+<span class="sourceLineNo">1423</span>        if (argumentNumber &lt; 0) {<a name="line.1423"></a>
+<span class="sourceLineNo">1424</span>            throw new IllegalArgumentException("negative argument number: "<a name="line.1424"></a>
+<span class="sourceLineNo">1425</span>                                               + argumentNumber);<a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>        }<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span><a name="line.1427"></a>
+<span class="sourceLineNo">1428</span>        // resize format information arrays if necessary<a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>        if (offsetNumber &gt;= formats.length) {<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span>            int newLength = formats.length * 2;<a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>            Format[] newFormats = new Format[newLength];<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span>            int[] newOffsets = new int[newLength];<a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>            int[] newArgumentNumbers = new int[newLength];<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span>            System.arraycopy(formats, 0, newFormats, 0, maxOffset + 1);<a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>            System.arraycopy(offsets, 0, newOffsets, 0, maxOffset + 1);<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span>            System.arraycopy(argumentNumbers, 0, newArgumentNumbers, 0, maxOffset + 1);<a name="line.1436"></a>
+<span class="sourceLineNo">1437</span>            formats = newFormats;<a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>            offsets = newOffsets;<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>            argumentNumbers = newArgumentNumbers;<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>        }<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>        int oldMaxOffset = maxOffset;<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span>        maxOffset = offsetNumber;<a name="line.1442"></a>
+<span class="sourceLineNo">1443</span>        offsets[offsetNumber] = segments[SEG_RAW].length();<a name="line.1443"></a>
+<span class="sourceLineNo">1444</span>        argumentNumbers[offsetNumber] = argumentNumber;<a name="line.1444"></a>
+<span class="sourceLineNo">1445</span><a name="line.1445"></a>
+<span class="sourceLineNo">1446</span>        // now get the format<a name="line.1446"></a>
+<span class="sourceLineNo">1447</span>        Format newFormat = null;<a name="line.1447"></a>
+<span class="sourceLineNo">1448</span>        if (segments[SEG_TYPE].length() != 0) {<a name="line.1448"></a>
+<span class="sourceLineNo">1449</span>            int type = findKeyword(segments[SEG_TYPE], TYPE_KEYWORDS);<a name="line.1449"></a>
+<span class="sourceLineNo">1450</span>            switch (type) {<a name="line.1450"></a>
+<span class="sourceLineNo">1451</span>            case TYPE_NULL:<a name="line.1451"></a>
+<span class="sourceLineNo">1452</span>                // Type "" is allowed. e.g., "{0,}", "{0,,}", and "{0,,#}"<a name="line.1452"></a>
+<span class="sourceLineNo">1453</span>                // are treated as "{0}".<a name="line.1453"></a>
+<span class="sourceLineNo">1454</span>                break;<a name="line.1454"></a>
+<span class="sourceLineNo">1455</span><a name="line.1455"></a>
+<span class="sourceLineNo">1456</span>            case TYPE_NUMBER:<a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>                switch (findKeyword(segments[SEG_MODIFIER], NUMBER_MODIFIER_KEYWORDS)) {<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span>                case MODIFIER_DEFAULT:<a name="line.1458"></a>
+<span class="sourceLineNo">1459</span>                    newFormat = NumberFormat.getInstance(locale);<a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>                    break;<a name="line.1460"></a>
+<span class="sourceLineNo">1461</span>                case MODIFIER_CURRENCY:<a name="line.1461"></a>
+<span class="sourceLineNo">1462</span>                    newFormat = NumberFormat.getCurrencyInstance(locale);<a name="line.1462"></a>
+<span class="sourceLineNo">1463</span>                    break;<a name="line.1463"></a>
+<span class="sourceLineNo">1464</span>                case MODIFIER_PERCENT:<a name="line.1464"></a>
+<span class="sourceLineNo">1465</span>                    newFormat = NumberFormat.getPercentInstance(locale);<a name="line.1465"></a>
+<span class="sourceLineNo">1466</span>                    break;<a name="line.1466"></a>
+<span class="sourceLineNo">1467</span>                case MODIFIER_INTEGER:<a name="line.1467"></a>
+<span class="sourceLineNo">1468</span>                    newFormat = NumberFormat.getIntegerInstance(locale);<a name="line.1468"></a>
+<span class="sourceLineNo">1469</span>                    break;<a name="line.1469"></a>
+<span class="sourceLineNo">1470</span>                default: // DecimalFormat pattern<a name="line.1470"></a>
+<span class="sourceLineNo">1471</span>                    try {<a name="line.1471"></a>
+<span class="sourceLineNo">1472</span>                        newFormat = new DecimalFormat(segments[SEG_MODIFIER],<a name="line.1472"></a>
+<span class="sourceLineNo">1473</span>                                                      DecimalFormatSymbols.getInstance(locale));<a name="line.1473"></a>
+<span class="sourceLineNo">1474</span>                    } catch (IllegalArgumentException e) {<a name="line.1474"></a>
+<span class="sourceLineNo">1475</span>                        maxOffset = oldMaxOffset;<a name="line.1475"></a>
+<span class="sourceLineNo">1476</span>                        throw e;<a name="line.1476"></a>
+<span class="sourceLineNo">1477</span>                    }<a name="line.1477"></a>
+<span class="sourceLineNo">1478</span>                    break;<a name="line.1478"></a>
+<span class="sourceLineNo">1479</span>                }<a name="line.1479"></a>
+<span class="sourceLineNo">1480</span>                break;<a name="line.1480"></a>
+<span class="sourceLineNo">1481</span><a name="line.1481"></a>
+<span class="sourceLineNo">1482</span>            case TYPE_DATE:<a name="line.1482"></a>
+<span class="sourceLineNo">1483</span>            case TYPE_TIME:<a name="line.1483"></a>
+<span class="sourceLineNo">1484</span>                int mod = findKeyword(segments[SEG_MODIFIER], DATE_TIME_MODIFIER_KEYWORDS);<a name="line.1484"></a>
+<span class="sourceLineNo">1485</span>                if (mod &gt;= 0 &amp;&amp; mod &lt; DATE_TIME_MODIFIER_KEYWORDS.length) {<a name="line.1485"></a>
+<span class="sourceLineNo">1486</span>                    if (type == TYPE_DATE) {<a name="line.1486"></a>
+<span class="sourceLineNo">1487</span>                        newFormat = DateFormat.getDateInstance(DATE_TIME_MODIFIERS[mod],<a name="line.1487"></a>
+<span class="sourceLineNo">1488</span>                                                               locale);<a name="line.1488"></a>
+<span class="sourceLineNo">1489</span>                    } else {<a name="line.1489"></a>
+<span class="sourceLineNo">1490</span>                        newFormat = DateFormat.getTimeInstance(DATE_TIME_MODIFIERS[mod],<a name="line.1490"></a>
+<span class="sourceLineNo">1491</span>                                                               locale);<a name="line.1491"></a>
+<span class="sourceLineNo">1492</span>                    }<a name="line.1492"></a>
+<span class="sourceLineNo">1493</span>                } else {<a name="line.1493"></a>
+<span class="sourceLineNo">1494</span>                    // SimpleDateFormat pattern<a name="line.1494"></a>
+<span class="sourceLineNo">1495</span>                    try {<a name="line.1495"></a>
+<span class="sourceLineNo">1496</span>                        newFormat = new SimpleDateFormat(segments[SEG_MODIFIER], locale);<a name="line.1496"></a>
+<span class="sourceLineNo">1497</span>                    } catch (IllegalArgumentException e) {<a name="line.1497"></a>
+<span class="sourceLineNo">1498</span>                        maxOffset = oldMaxOffset;<a name="line.1498"></a>
+<span class="sourceLineNo">1499</span>                        throw e;<a name="line.1499"></a>
+<span class="sourceLineNo">1500</span>                    }<a name="line.1500"></a>
+<span class="sourceLineNo">1501</span>                }<a name="line.1501"></a>
+<span class="sourceLineNo">1502</span>                break;<a name="line.1502"></a>
+<span class="sourceLineNo">1503</span><a name="line.1503"></a>
+<span class="sourceLineNo">1504</span>            case TYPE_CHOICE:<a name="line.1504"></a>
+<span class="sourceLineNo">1505</span>                try {<a name="line.1505"></a>
+<span class="sourceLineNo">1506</span>                    // ChoiceFormat pattern<a name="line.1506"></a>
+<span class="sourceLineNo">1507</span>                    newFormat = new ChoiceFormat(segments[SEG_MODIFIER]);<a name="line.1507"></a>
+<span class="sourceLineNo">1508</span>                } catch (Exception e) {<a name="line.1508"></a>
+<span class="sourceLineNo">1509</span>                    maxOffset = oldMaxOffset;<a name="line.1509"></a>
+<span class="sourceLineNo">1510</span>                    throw new IllegalArgumentException("Choice Pattern incorrect: "<a name="line.1510"></a>
+<span class="sourceLineNo">1511</span>                                                       + segments[SEG_MODIFIER], e);<a name="line.1511"></a>
+<span class="sourceLineNo">1512</span>                }<a name="line.1512"></a>
+<span class="sourceLineNo">1513</span>                break;<a name="line.1513"></a>
+<span class="sourceLineNo">1514</span><a name="line.1514"></a>
+<span class="sourceLineNo">1515</span>            default:<a name="line.1515"></a>
+<span class="sourceLineNo">1516</span>                maxOffset = oldMaxOffset;<a name="line.1516"></a>
+<span class="sourceLineNo">1517</span>                throw new IllegalArgumentException("unknown format type: " +<a name="line.1517"></a>
+<span class="sourceLineNo">1518</span>                                                   segments[SEG_TYPE]);<a name="line.1518"></a>
+<span class="sourceLineNo">1519</span>            }<a name="line.1519"></a>
+<span class="sourceLineNo">1520</span>        }<a name="line.1520"></a>
+<span class="sourceLineNo">1521</span>        formats[offsetNumber] = newFormat;<a name="line.1521"></a>
+<span class="sourceLineNo">1522</span>    }<a name="line.1522"></a>
+<span class="sourceLineNo">1523</span><a name="line.1523"></a>
+<span class="sourceLineNo">1524</span>    private static final int findKeyword(String s, String[] list) {<a name="line.1524"></a>
+<span class="sourceLineNo">1525</span>        for (int i = 0; i &lt; list.length; ++i) {<a name="line.1525"></a>
+<span class="sourceLineNo">1526</span>            if (s.equals(list[i]))<a name="line.1526"></a>
+<span class="sourceLineNo">1527</span>                return i;<a name="line.1527"></a>
+<span class="sourceLineNo">1528</span>        }<a name="line.1528"></a>
+<span class="sourceLineNo">1529</span><a name="line.1529"></a>
+<span class="sourceLineNo">1530</span>        // Try trimmed lowercase.<a name="line.1530"></a>
+<span class="sourceLineNo">1531</span>        String ls = s.trim().toLowerCase(Locale.ROOT);<a name="line.1531"></a>
+<span class="sourceLineNo">1532</span>        if (ls != s) {<a name="line.1532"></a>
+<span class="sourceLineNo">1533</span>            for (int i = 0; i &lt; list.length; ++i) {<a name="line.1533"></a>
+<span class="sourceLineNo">1534</span>                if (ls.equals(list[i]))<a name="line.1534"></a>
+<span class="sourceLineNo">1535</span>                    return i;<a name="line.1535"></a>
+<span class="sourceLineNo">1536</span>            }<a name="line.1536"></a>
+<span class="sourceLineNo">1537</span>        }<a name="line.1537"></a>
+<span class="sourceLineNo">1538</span>        return -1;<a name="line.1538"></a>
+<span class="sourceLineNo">1539</span>    }<a name="line.1539"></a>
+<span class="sourceLineNo">1540</span><a name="line.1540"></a>
+<span class="sourceLineNo">1541</span>    private static final void copyAndFixQuotes(String source, int start, int end,<a name="line.1541"></a>
+<span class="sourceLineNo">1542</span>                                               StringBuilder target) {<a name="line.1542"></a>
+<span class="sourceLineNo">1543</span>        boolean quoted = false;<a name="line.1543"></a>
+<span class="sourceLineNo">1544</span><a name="line.1544"></a>
+<span class="sourceLineNo">1545</span>        for (int i = start; i &lt; end; ++i) {<a name="line.1545"></a>
+<span class="sourceLineNo">1546</span>            char ch = source.charAt(i);<a name="line.1546"></a>
+<span class="sourceLineNo">1547</span>            if (ch == '{') {<a name="line.1547"></a>
+<span class="sourceLineNo">1548</span>                if (!quoted) {<a name="line.1548"></a>
+<span class="sourceLineNo">1549</span>                    target.append('\'');<a name="line.1549"></a>
+<span class="sourceLineNo">1550</span>                    quoted = true;<a name="line.1550"></a>
+<span class="sourceLineNo">1551</span>                }<a name="line.1551"></a>
+<span class="sourceLineNo">1552</span>                target.append(ch);<a name="line.1552"></a>
+<span class="sourceLineNo">1553</span>            } else if (ch == '\'') {<a name="line.1553"></a>
+<span class="sourceLineNo">1554</span>                target.append("''");<a name="line.1554"></a>
+<span class="sourceLineNo">1555</span>            } else {<a name="line.1555"></a>
+<span class="sourceLineNo">1556</span>                if (quoted) {<a name="line.1556"></a>
+<span class="sourceLineNo">1557</span>                    target.append('\'');<a name="line.1557"></a>
+<span class="sourceLineNo">1558</span>                    quoted = false;<a name="line.1558"></a>
+<span class="sourceLineNo">1559</span>                }<a name="line.1559"></a>
+<span class="sourceLineNo">1560</span>                target.append(ch);<a name="line.1560"></a>
+<span class="sourceLineNo">1561</span>            }<a name="line.1561"></a>
+<span class="sourceLineNo">1562</span>        }<a name="line.1562"></a>
+<span class="sourceLineNo">1563</span>        if (quoted) {<a name="line.1563"></a>
+<span class="sourceLineNo">1564</span>            target.append('\'');<a name="line.1564"></a>
+<span class="sourceLineNo">1565</span>        }<a name="line.1565"></a>
+<span class="sourceLineNo">1566</span>    }<a name="line.1566"></a>
+<span class="sourceLineNo">1567</span><a name="line.1567"></a>
+<span class="sourceLineNo">1568</span>    /**<a name="line.1568"></a>
+<span class="sourceLineNo">1569</span>     * After reading an object from the input stream, do a simple verification<a name="line.1569"></a>
+<span class="sourceLineNo">1570</span>     * to maintain class invariants.<a name="line.1570"></a>
+<span class="sourceLineNo">1571</span>     * @throws InvalidObjectException if the objects read from the stream is invalid.<a name="line.1571"></a>
+<span class="sourceLineNo">1572</span>     */<a name="line.1572"></a>
+<span class="sourceLineNo">1573</span>    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {<a name="line.1573"></a>
+<span class="sourceLineNo">1574</span>        in.defaultReadObject();<a name="line.1574"></a>
+<span class="sourceLineNo">1575</span>        boolean isValid = maxOffset &gt;= -1<a name="line.1575"></a>
+<span class="sourceLineNo">1576</span>                &amp;&amp; formats.length &gt; maxOffset<a name="line.1576"></a>
+<span class="sourceLineNo">1577</span>                &amp;&amp; offsets.length &gt; maxOffset<a name="line.1577"></a>
+<span class="sourceLineNo">1578</span>                &amp;&amp; argumentNumbers.length &gt; maxOffset;<a name="line.1578"></a>
+<span class="sourceLineNo">1579</span>        if (isValid) {<a name="line.1579"></a>
+<span class="sourceLineNo">1580</span>            int lastOffset = pattern.length() + 1;<a name="line.1580"></a>
+<span class="sourceLineNo">1581</span>            for (int i = maxOffset; i &gt;= 0; --i) {<a name="line.1581"></a>
+<span class="sourceLineNo">1582</span>                if ((offsets[i] &lt; 0) || (offsets[i] &gt; lastOffset)) {<a name="line.1582"></a>
+<span class="sourceLineNo">1583</span>                    isValid = false;<a name="line.1583"></a>
+<span class="sourceLineNo">1584</span>                    break;<a name="line.1584"></a>
+<span class="sourceLineNo">1585</span>                } else {<a name="line.1585"></a>
+<span class="sourceLineNo">1586</span>                    lastOffset = offsets[i];<a name="line.1586"></a>
+<span class="sourceLineNo">1587</span>                }<a name="line.1587"></a>
+<span class="sourceLineNo">1588</span>            }<a name="line.1588"></a>
+<span class="sourceLineNo">1589</span>        }<a name="line.1589"></a>
+<span class="sourceLineNo">1590</span>        if (!isValid) {<a name="line.1590"></a>
+<span class="sourceLineNo">1591</span>            throw new InvalidObjectException("Could not reconstruct MessageFormat from corrupt stream.");<a name="line.1591"></a>
+<span class="sourceLineNo">1592</span>        }<a name="line.1592"></a>
+<span class="sourceLineNo">1593</span>    }<a name="line.1593"></a>
+<span class="sourceLineNo">1594</span>}<a name="line.1594"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>/*<a name="line.25"></a>
+<span class="sourceLineNo">026</span> * @author    IBM Corp.<a name="line.26"></a>
+<span class="sourceLineNo">027</span> *<a name="line.27"></a>
+<span class="sourceLineNo">028</span> * Copyright IBM Corp. 1999-2000.  All rights reserved.<a name="line.28"></a>
+<span class="sourceLineNo">029</span> */<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>package javax.management.modelmbean;<a name="line.31"></a>
+<span class="sourceLineNo">032</span><a name="line.32"></a>
+<span class="sourceLineNo">033</span>import javax.management.DynamicMBean;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import javax.management.InstanceNotFoundException;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import javax.management.MBeanException;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import javax.management.PersistentMBean;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import javax.management.RuntimeOperationsException;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>/**<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * This interface must be implemented by the ModelMBeans. An implementation of this interface<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * must be shipped with every JMX Agent.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;P&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * Java resources wishing to be manageable instantiate the ModelMBean using the MBeanServer's<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * createMBean method.  The resource then sets the ModelMBeanInfo (with Descriptors) for the ModelMBean<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * instance. The attributes and operations exposed via the ModelMBeanInfo for the ModelMBean are accessible<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * from MBeans, connectors/adaptors like other MBeans. Through the ModelMBeanInfo Descriptors, values and methods in<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * the managed application can be defined and mapped to attributes and operations of the ModelMBean.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * This mapping can be defined during development in an XML formatted file or dynamically and<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * programmatically at runtime.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;P&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * Every ModelMBean which is instantiated in the MBeanServer becomes manageable:<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * its attributes and operations<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * become remotely accessible through the connectors/adaptors connected to that MBeanServer.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * A Java object cannot be registered in the MBeanServer unless it is a JMX compliant MBean.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * By instantiating a ModelMBean, resources are guaranteed that the MBean is valid.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;P&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * MBeanException and RuntimeOperationsException must be thrown on every public method.  This allows<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * for wrapping exceptions from distributed communications (RMI, EJB, etc.).  These exceptions do<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * not have to be thrown by the implementation except in the scenarios described in the specification<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * and javadoc.<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * @since 1.5<a name="line.62"></a>
+<span class="sourceLineNo">063</span> */<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>public interface ModelMBean extends<a name="line.65"></a>
+<span class="sourceLineNo">066</span>         DynamicMBean,<a name="line.66"></a>
+<span class="sourceLineNo">067</span>         PersistentMBean,<a name="line.67"></a>
+<span class="sourceLineNo">068</span>         ModelMBeanNotificationBroadcaster<a name="line.68"></a>
+<span class="sourceLineNo">069</span>{<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>        /**<a name="line.71"></a>
+<span class="sourceLineNo">072</span>         * Initializes a ModelMBean object using ModelMBeanInfo passed in.<a name="line.72"></a>
+<span class="sourceLineNo">073</span>         * This method makes it possible to set a customized ModelMBeanInfo on<a name="line.73"></a>
+<span class="sourceLineNo">074</span>         * the ModelMBean as long as it is not registered with the MBeanServer.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>         * &lt;br&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>         * Once the ModelMBean's ModelMBeanInfo (with Descriptors) are<a name="line.76"></a>
+<span class="sourceLineNo">077</span>         * customized and set on the ModelMBean, the  ModelMBean can be<a name="line.77"></a>
+<span class="sourceLineNo">078</span>         * registered with the MBeanServer.<a name="line.78"></a>
+<span class="sourceLineNo">079</span>         * &lt;P&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span>         * If the ModelMBean is currently registered, this method throws<a name="line.80"></a>
+<span class="sourceLineNo">081</span>         * a {@link javax.management.RuntimeOperationsException} wrapping an<a name="line.81"></a>
+<span class="sourceLineNo">082</span>         * {@link IllegalStateException}<a name="line.82"></a>
+<span class="sourceLineNo">083</span>         *<a name="line.83"></a>
+<span class="sourceLineNo">084</span>         * @param inModelMBeanInfo The ModelMBeanInfo object to be used<a name="line.84"></a>
+<span class="sourceLineNo">085</span>         *        by the ModelMBean.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>         *<a name="line.86"></a>
+<span class="sourceLineNo">087</span>         * @exception MBeanException Wraps a distributed communication<a name="line.87"></a>
+<span class="sourceLineNo">088</span>         *        Exception.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>         * @exception RuntimeOperationsException<a name="line.89"></a>
+<span class="sourceLineNo">090</span>         * &lt;ul&gt;&lt;li&gt;Wraps an {@link IllegalArgumentException} if<a name="line.90"></a>
+<span class="sourceLineNo">091</span>         *         the MBeanInfo passed in parameter is null.&lt;/li&gt;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>         *     &lt;li&gt;Wraps an {@link IllegalStateException} if the ModelMBean<a name="line.92"></a>
+<span class="sourceLineNo">093</span>         *         is currently registered in the MBeanServer.&lt;/li&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span>         * &lt;/ul&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span>         *<a name="line.95"></a>
+<span class="sourceLineNo">096</span>         **/<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        public void setModelMBeanInfo(ModelMBeanInfo inModelMBeanInfo)<a name="line.97"></a>
+<span class="sourceLineNo">098</span>            throws MBeanException, RuntimeOperationsException;<a name="line.98"></a>
+<span class="sourceLineNo">099</span><a name="line.99"></a>
+<span class="sourceLineNo">100</span>        /**<a name="line.100"></a>
+<span class="sourceLineNo">101</span>         * Sets the instance handle of the object against which to<a name="line.101"></a>
+<span class="sourceLineNo">102</span>         * execute all methods in this ModelMBean management interface<a name="line.102"></a>
+<span class="sourceLineNo">103</span>         * (MBeanInfo and Descriptors).<a name="line.103"></a>
+<span class="sourceLineNo">104</span>         *<a name="line.104"></a>
+<span class="sourceLineNo">105</span>         * @param mr Object that is the managed resource<a name="line.105"></a>
+<span class="sourceLineNo">106</span>         * @param mr_type The type of reference for the managed resource.  Can be: ObjectReference,<a name="line.106"></a>
+<span class="sourceLineNo">107</span>         *               Handle, IOR, EJBHandle, RMIReference.<a name="line.107"></a>
+<span class="sourceLineNo">108</span>         *               If the MBeanServer cannot process the mr_type passed in, an InvalidTargetTypeException<a name="line.108"></a>
+<span class="sourceLineNo">109</span>         *               will be thrown.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>         *<a name="line.110"></a>
+<span class="sourceLineNo">111</span>         *<a name="line.111"></a>
+<span class="sourceLineNo">112</span>         * @exception MBeanException The initializer of the object has thrown an exception.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>         * @exception RuntimeOperationsException Wraps an IllegalArgumentException:<a name="line.113"></a>
+<span class="sourceLineNo">114</span>         *       The managed resource type passed in parameter is null.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>         * @exception InstanceNotFoundException The managed resource object could not be found<a name="line.115"></a>
+<span class="sourceLineNo">116</span>         * @exception InvalidTargetObjectTypeException The managed resource type cannot be processed by the<a name="line.116"></a>
+<span class="sourceLineNo">117</span>         * ModelMBean or JMX Agent.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>         */<a name="line.118"></a>
+<span class="sourceLineNo">119</span>        public void setManagedResource(Object mr, String mr_type)<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        throws MBeanException, RuntimeOperationsException,<a name="line.120"></a>
+<span class="sourceLineNo">121</span>                 InstanceNotFoundException, InvalidTargetObjectTypeException ;<a name="line.121"></a>
+<span class="sourceLineNo">122</span><a name="line.122"></a>
+<span class="sourceLineNo">123</span>}<a name="line.123"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.xml.bind.attachment;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.activation.DataHandler;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.xml.bind.Marshaller;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>/**<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * &lt;p&gt;Enable JAXB marshalling to optimize storage of binary data.&lt;/p&gt;<a name="line.32"></a>
+<span class="sourceLineNo">033</span> *<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * &lt;p&gt;This API enables an efficient cooperative creation of optimized<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * binary data formats between a JAXB marshalling process and a MIME-based package<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * processor. A JAXB implementation marshals the root body of a MIME-based package,<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * delegating the creation of referenceable MIME parts to<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * the MIME-based package processor that implements this abstraction.&lt;/p&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> *<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * &lt;p&gt;XOP processing is enabled when {@link #isXOPPackage()} is true.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *    See {@link #addMtomAttachment(DataHandler, String, String)} for details.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;/p&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;p&gt;WS-I Attachment Profile 1.0 is supported by<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * {@link #addSwaRefAttachment(DataHandler)} being called by the<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * marshaller for each JAXB property related to<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * {http://ws-i.org/profiles/basic/1.1/xsd}swaRef.&lt;/p&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * @author Marc Hadley<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * @author Kohsuke Kawaguchi<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * @author Joseph Fialli<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * @since JAXB 2.0<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * @see Marshaller#setAttachmentMarshaller(AttachmentMarshaller)<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * @see &lt;a href="http://www.w3.org/TR/2005/REC-xop10-20050125/"&gt;XML-binary Optimized Packaging&lt;/a&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * @see &lt;a href="http://www.ws-i.org/Profiles/AttachmentsProfile-1.0-2004-08-24.html"&gt;WS-I Attachments Profile Version 1.0.&lt;/a&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> */<a name="line.59"></a>
+<span class="sourceLineNo">060</span>public abstract class AttachmentMarshaller {<a name="line.60"></a>
+<span class="sourceLineNo">061</span><a name="line.61"></a>
+<span class="sourceLineNo">062</span>    /**<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * &lt;p&gt;Consider MIME content &lt;code&gt;data&lt;/code&gt; for optimized binary storage as an attachment.<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     *<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * &lt;p&gt;<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * This method is called by JAXB marshal process when {@link #isXOPPackage()} is<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * &lt;code&gt;true&lt;/code&gt;, for each element whose datatype is "base64Binary", as described in<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * Step 3 in<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * &lt;a href="http://www.w3.org/TR/2005/REC-xop10-20050125/#creating_xop_packages"&gt;Creating XOP Packages&lt;/a&gt;.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     *<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * &lt;p&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * The method implementor determines whether &lt;code&gt;data&lt;/code&gt; shall be attached separately<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * or inlined as base64Binary data. If the implementation chooses to optimize the storage<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * of the binary data as a MIME part, it is responsible for attaching &lt;code&gt;data&lt;/code&gt; to the<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * MIME-based package, and then assigning an unique content-id, cid, that identifies<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * the MIME part within the MIME message. This method returns the cid,<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * which enables the JAXB marshaller to marshal a XOP element that refers to that cid in place<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * of marshalling the binary data. When the method returns null, the JAXB marshaller<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * inlines &lt;code&gt;data&lt;/code&gt; as base64binary data.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     *<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * &lt;p&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * The caller of this method is required to meet the following constraint.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * If the element infoset item containing &lt;code&gt;data&lt;/code&gt; has the attribute<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * &lt;code&gt;xmime:contentType&lt;/code&gt; or if the JAXB property/field representing<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * &lt;code&gt;data&lt;/code&gt;is annotated with a known MIME type,<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * &lt;code&gt;data.getContentType()&lt;/code&gt; should be set to that MIME type.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     *<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * &lt;p&gt;<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * The &lt;code&gt;elementNamespace&lt;/code&gt; and &lt;code&gt;elementLocalName&lt;/code&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * parameters provide the<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * context that contains the binary data. This information could<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * be used by the MIME-based package processor to determine if the<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * binary data should be inlined or optimized as an attachment.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     *<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * @param data<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *       represents the data to be attached. Must be non-null.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @param elementNamespace<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *      the namespace URI of the element that encloses the base64Binary data.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     *      Can be empty but never null.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * @param elementLocalName<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *      The local name of the element. Always a non-null valid string.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     *<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * @return<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     *     a valid content-id URI (see &lt;a href="http://www.w3.org/TR/xop10/#RFC2387"&gt;RFC 2387&lt;/a&gt;) that identifies the attachment containing &lt;code&gt;data&lt;/code&gt;.<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     *     Otherwise, null if the attachment was not added and should instead be inlined in the message.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     *<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * @see &lt;a href="http://www.w3.org/TR/2005/REC-xop10-20050125/"&gt;XML-binary Optimized Packaging&lt;/a&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * @see &lt;a href="http://www.w3.org/TR/xml-media-types/"&gt;Describing Media Content of Binary Data in XML&lt;/a&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     */<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    public abstract String addMtomAttachment(DataHandler data, String elementNamespace, String elementLocalName);<a name="line.110"></a>
+<span class="sourceLineNo">111</span><a name="line.111"></a>
+<span class="sourceLineNo">112</span>    /**<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * &lt;p&gt;Consider binary &lt;code&gt;data&lt;/code&gt; for optimized binary storage as an attachment.<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * &lt;p&gt;Since content type is not known, the attachment's MIME content type must be set to "application/octet-stream".&lt;/p&gt;<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * &lt;p&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * The &lt;code&gt;elementNamespace&lt;/code&gt; and &lt;code&gt;elementLocalName&lt;/code&gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * parameters provide the<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * context that contains the binary data. This information could<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * be used by the MIME-based package processor to determine if the<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * binary data should be inlined or optimized as an attachment.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @param data<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     *      represents the data to be attached. Must be non-null. The actual data region is<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     *      specified by &lt;tt&gt;(data,offset,length)&lt;/tt&gt; tuple.<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     *<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @param offset<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     *       The offset within the array of the first byte to be read;<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *       must be non-negative and no larger than array.length<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @param length<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *       The number of bytes to be read from the given array;<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *       must be non-negative and no larger than array.length<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @param mimeType<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *      If the data has an associated MIME type known to JAXB, that is passed<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     *      as this parameter. If none is known, "application/octet-stream".<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *      This parameter may never be null.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @param elementNamespace<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *      the namespace URI of the element that encloses the base64Binary data.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *      Can be empty but never null.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * @param elementLocalName<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     *      The local name of the element. Always a non-null valid string.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * @return content-id URI, cid, to the attachment containing<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *         &lt;code&gt;data&lt;/code&gt; or null if data should be inlined.<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @see #addMtomAttachment(DataHandler, String, String)<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    public abstract String addMtomAttachment(byte[] data, int offset, int length, String mimeType, String elementNamespace, String elementLocalName);<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    /**<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * &lt;p&gt;Read-only property that returns true if JAXB marshaller should enable XOP creation.&lt;/p&gt;<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * &lt;p&gt;This value must not change during the marshalling process. When this<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * value is true, the &lt;code&gt;addMtomAttachment(...)&lt;/code&gt; method<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * is invoked when the appropriate binary datatypes are encountered by<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * the marshal process.&lt;/p&gt;<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * &lt;p&gt;Marshaller.marshal() must throw IllegalStateException if this value is &lt;code&gt;true&lt;/code&gt;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * and the XML content to be marshalled violates Step 1 in<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * &lt;a href="http://www.w3.org/TR/2005/REC-xop10-20050125/#creating_xop_packages"&gt;Creating XOP Pacakges&lt;/a&gt;<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * http://www.w3.org/TR/2005/REC-xop10-20050125/#creating_xop_packages.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * &lt;i&gt;"Ensure the Original XML Infoset contains no element information item with a<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * [namespace name] of "http://www.w3.org/2004/08/xop/include" and a [local name] of Include"&lt;/i&gt;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * &lt;p&gt;When this method returns true and during the marshal process<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * at least one call to &lt;code&gt;addMtomAttachment(...)&lt;/code&gt; returns<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * a content-id, the MIME-based package processor must label the<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * root part with the application/xop+xml media type as described in<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * Step 5 of<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * &lt;a href="http://www.w3.org/TR/2005/REC-xop10-20050125/#creating_xop_packages"&gt;Creating XOP Pacakges&lt;/a&gt;.&lt;p&gt;<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @return true when MIME context is a XOP Package.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     */<a name="line.178"></a>
+<span class="sourceLineNo">179</span>    public boolean isXOPPackage() { return false; }<a name="line.179"></a>
+<span class="sourceLineNo">180</span><a name="line.180"></a>
+<span class="sourceLineNo">181</span>   /**<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    * &lt;p&gt;Add MIME &lt;code&gt;data&lt;/code&gt; as an attachment and return attachment's content-id, cid.&lt;/p&gt;<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    *<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    * &lt;p&gt;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>    * This method is called by JAXB marshal process for each element/attribute typed as<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    * {http://ws-i.org/profiles/basic/1.1/xsd}swaRef. The MIME-based package processor<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    * implementing this method is responsible for attaching the specified data to a<a name="line.187"></a>
+<span class="sourceLineNo">188</span>    * MIME attachment, and generating a content-id, cid, that uniquely identifies the attachment<a name="line.188"></a>
+<span class="sourceLineNo">189</span>    * within the MIME-based package.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>    *<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    * &lt;p&gt;Caller inserts the returned content-id, cid, into the XML content being marshalled.&lt;/p&gt;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>    *<a name="line.192"></a>
+<span class="sourceLineNo">193</span>    * @param data<a name="line.193"></a>
+<span class="sourceLineNo">194</span>    *       represents the data to be attached. Must be non-null.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    * @return<a name="line.195"></a>
+<span class="sourceLineNo">196</span>    *       must be a valid URI used as cid. Must satisfy Conformance Requirement R2928 from<a name="line.196"></a>
+<span class="sourceLineNo">197</span>    *       &lt;a href="http://www.ws-i.org/Profiles/AttachmentsProfile-1.0-2004-08-24.html#Referencing_Attachments_from_the_SOAP_Envelope"&gt;WS-I Attachments Profile Version 1.0.&lt;/a&gt;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    */<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    public abstract String addSwaRefAttachment(DataHandler data);<a name="line.199"></a>
+<span class="sourceLineNo">200</span>}<a name="line.200"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

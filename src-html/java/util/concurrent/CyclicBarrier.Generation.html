@@ -1,0 +1,555 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> *<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> */<a name="line.23"></a>
+<span class="sourceLineNo">024</span><a name="line.24"></a>
+<span class="sourceLineNo">025</span>/*<a name="line.25"></a>
+<span class="sourceLineNo">026</span> *<a name="line.26"></a>
+<span class="sourceLineNo">027</span> *<a name="line.27"></a>
+<span class="sourceLineNo">028</span> *<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * Written by Doug Lea with assistance from members of JCP JSR-166<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * Expert Group and released to the public domain, as explained at<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * http://creativecommons.org/publicdomain/zero/1.0/<a name="line.33"></a>
+<span class="sourceLineNo">034</span> */<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>package java.util.concurrent;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.util.concurrent.locks.*;<a name="line.37"></a>
+<span class="sourceLineNo">038</span><a name="line.38"></a>
+<span class="sourceLineNo">039</span>/**<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * A synchronization aid that allows a set of threads to all wait for<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * each other to reach a common barrier point.  CyclicBarriers are<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * useful in programs involving a fixed sized party of threads that<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * must occasionally wait for each other. The barrier is called<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;em&gt;cyclic&lt;/em&gt; because it can be re-used after the waiting threads<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * are released.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;p&gt;A &lt;tt&gt;CyclicBarrier&lt;/tt&gt; supports an optional {@link Runnable} command<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * that is run once per barrier point, after the last thread in the party<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * arrives, but before any threads are released.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * This &lt;em&gt;barrier action&lt;/em&gt; is useful<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * for updating shared-state before any of the parties continue.<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;p&gt;&lt;b&gt;Sample usage:&lt;/b&gt; Here is an example of<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *  using a barrier in a parallel decomposition design:<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;pre&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * class Solver {<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *   final int N;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *   final float[][] data;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *   final CyclicBarrier barrier;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *   class Worker implements Runnable {<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *     int myRow;<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *     Worker(int row) { myRow = row; }<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *     public void run() {<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *       while (!done()) {<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *         processRow(myRow);<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *         try {<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *           barrier.await();<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *         } catch (InterruptedException ex) {<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *           return;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *         } catch (BrokenBarrierException ex) {<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *           return;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *         }<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *       }<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *     }<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *   }<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *   public Solver(float[][] matrix) {<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *     data = matrix;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *     N = matrix.length;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *     barrier = new CyclicBarrier(N,<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *                                 new Runnable() {<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *                                   public void run() {<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *                                     mergeRows(...);<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *                                   }<a name="line.86"></a>
+<span class="sourceLineNo">087</span> *                                 });<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *     for (int i = 0; i &lt; N; ++i)<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *       new Thread(new Worker(i)).start();<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *     waitUntilDone();<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *   }<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * }<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;/pre&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * Here, each worker thread processes a row of the matrix then waits at the<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * barrier until all rows have been processed. When all rows are processed<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * the supplied {@link Runnable} barrier action is executed and merges the<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * rows. If the merger<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * determines that a solution has been found then &lt;tt&gt;done()&lt;/tt&gt; will return<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * &lt;tt&gt;true&lt;/tt&gt; and each worker will terminate.<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * &lt;p&gt;If the barrier action does not rely on the parties being suspended when<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * it is executed, then any of the threads in the party could execute that<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * action when it is released. To facilitate this, each invocation of<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * {@link #await} returns the arrival index of that thread at the barrier.<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * You can then choose which thread should execute the barrier action, for<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * example:<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * &lt;pre&gt;  if (barrier.await() == 0) {<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *     // log the completion of this iteration<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *   }&lt;/pre&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * &lt;p&gt;The &lt;tt&gt;CyclicBarrier&lt;/tt&gt; uses an all-or-none breakage model<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * for failed synchronization attempts: If a thread leaves a barrier<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * point prematurely because of interruption, failure, or timeout, all<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * other threads waiting at that barrier point will also leave<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * abnormally via {@link BrokenBarrierException} (or<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * {@link InterruptedException} if they too were interrupted at about<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * the same time).<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * &lt;p&gt;Memory consistency effects: Actions in a thread prior to calling<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * {@code await()}<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * &lt;a href="package-summary.html#MemoryVisibility"&gt;&lt;i&gt;happen-before&lt;/i&gt;&lt;/a&gt;<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * actions that are part of the barrier action, which in turn<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * &lt;i&gt;happen-before&lt;/i&gt; actions following a successful return from the<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * corresponding {@code await()} in other threads.<a name="line.125"></a>
+<span class="sourceLineNo">126</span> *<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * @since 1.5<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * @see CountDownLatch<a name="line.128"></a>
+<span class="sourceLineNo">129</span> *<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * @author Doug Lea<a name="line.130"></a>
+<span class="sourceLineNo">131</span> */<a name="line.131"></a>
+<span class="sourceLineNo">132</span>public class CyclicBarrier {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    /**<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * Each use of the barrier is represented as a generation instance.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * The generation changes whenever the barrier is tripped, or<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * is reset. There can be many generations associated with threads<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * using the barrier - due to the non-deterministic way the lock<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * may be allocated to waiting threads - but only one of these<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * can be active at a time (the one to which &lt;tt&gt;count&lt;/tt&gt; applies)<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * and all the rest are either broken or tripped.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * There need not be an active generation if there has been a break<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * but no subsequent reset.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     */<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    private static class Generation {<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        boolean broken = false;<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    }<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>    /** The lock for guarding barrier entry */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    private final ReentrantLock lock = new ReentrantLock();<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    /** Condition to wait on until tripped */<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    private final Condition trip = lock.newCondition();<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    /** The number of parties */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    private final int parties;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    /* The command to run when tripped */<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    private final Runnable barrierCommand;<a name="line.155"></a>
+<span class="sourceLineNo">156</span>    /** The current generation */<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    private Generation generation = new Generation();<a name="line.157"></a>
+<span class="sourceLineNo">158</span><a name="line.158"></a>
+<span class="sourceLineNo">159</span>    /**<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * Number of parties still waiting. Counts down from parties to 0<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * on each generation.  It is reset to parties on each new<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * generation or when broken.<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     */<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    private int count;<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>    /**<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * Updates state on barrier trip and wakes up everyone.<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * Called only while holding lock.<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     */<a name="line.169"></a>
+<span class="sourceLineNo">170</span>    private void nextGeneration() {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        // signal completion of last generation<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        trip.signalAll();<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        // set up next generation<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        count = parties;<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        generation = new Generation();<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    }<a name="line.176"></a>
+<span class="sourceLineNo">177</span><a name="line.177"></a>
+<span class="sourceLineNo">178</span>    /**<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * Sets current barrier generation as broken and wakes up everyone.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * Called only while holding lock.<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     */<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    private void breakBarrier() {<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        generation.broken = true;<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        count = parties;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        trip.signalAll();<a name="line.185"></a>
+<span class="sourceLineNo">186</span>    }<a name="line.186"></a>
+<span class="sourceLineNo">187</span><a name="line.187"></a>
+<span class="sourceLineNo">188</span>    /**<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * Main barrier code, covering the various policies.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    private int dowait(boolean timed, long nanos)<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        throws InterruptedException, BrokenBarrierException,<a name="line.192"></a>
+<span class="sourceLineNo">193</span>               TimeoutException {<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        final ReentrantLock lock = this.lock;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        lock.lock();<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        try {<a name="line.196"></a>
+<span class="sourceLineNo">197</span>            final Generation g = generation;<a name="line.197"></a>
+<span class="sourceLineNo">198</span><a name="line.198"></a>
+<span class="sourceLineNo">199</span>            if (g.broken)<a name="line.199"></a>
+<span class="sourceLineNo">200</span>                throw new BrokenBarrierException();<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>            if (Thread.interrupted()) {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>                breakBarrier();<a name="line.203"></a>
+<span class="sourceLineNo">204</span>                throw new InterruptedException();<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            }<a name="line.205"></a>
+<span class="sourceLineNo">206</span><a name="line.206"></a>
+<span class="sourceLineNo">207</span>           int index = --count;<a name="line.207"></a>
+<span class="sourceLineNo">208</span>           if (index == 0) {  // tripped<a name="line.208"></a>
+<span class="sourceLineNo">209</span>               boolean ranAction = false;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>               try {<a name="line.210"></a>
+<span class="sourceLineNo">211</span>                   final Runnable command = barrierCommand;<a name="line.211"></a>
+<span class="sourceLineNo">212</span>                   if (command != null)<a name="line.212"></a>
+<span class="sourceLineNo">213</span>                       command.run();<a name="line.213"></a>
+<span class="sourceLineNo">214</span>                   ranAction = true;<a name="line.214"></a>
+<span class="sourceLineNo">215</span>                   nextGeneration();<a name="line.215"></a>
+<span class="sourceLineNo">216</span>                   return 0;<a name="line.216"></a>
+<span class="sourceLineNo">217</span>               } finally {<a name="line.217"></a>
+<span class="sourceLineNo">218</span>                   if (!ranAction)<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                       breakBarrier();<a name="line.219"></a>
+<span class="sourceLineNo">220</span>               }<a name="line.220"></a>
+<span class="sourceLineNo">221</span>           }<a name="line.221"></a>
+<span class="sourceLineNo">222</span><a name="line.222"></a>
+<span class="sourceLineNo">223</span>            // loop until tripped, broken, interrupted, or timed out<a name="line.223"></a>
+<span class="sourceLineNo">224</span>            for (;;) {<a name="line.224"></a>
+<span class="sourceLineNo">225</span>                try {<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                    if (!timed)<a name="line.226"></a>
+<span class="sourceLineNo">227</span>                        trip.await();<a name="line.227"></a>
+<span class="sourceLineNo">228</span>                    else if (nanos &gt; 0L)<a name="line.228"></a>
+<span class="sourceLineNo">229</span>                        nanos = trip.awaitNanos(nanos);<a name="line.229"></a>
+<span class="sourceLineNo">230</span>                } catch (InterruptedException ie) {<a name="line.230"></a>
+<span class="sourceLineNo">231</span>                    if (g == generation &amp;&amp; ! g.broken) {<a name="line.231"></a>
+<span class="sourceLineNo">232</span>                        breakBarrier();<a name="line.232"></a>
+<span class="sourceLineNo">233</span>                        throw ie;<a name="line.233"></a>
+<span class="sourceLineNo">234</span>                    } else {<a name="line.234"></a>
+<span class="sourceLineNo">235</span>                        // We're about to finish waiting even if we had not<a name="line.235"></a>
+<span class="sourceLineNo">236</span>                        // been interrupted, so this interrupt is deemed to<a name="line.236"></a>
+<span class="sourceLineNo">237</span>                        // "belong" to subsequent execution.<a name="line.237"></a>
+<span class="sourceLineNo">238</span>                        Thread.currentThread().interrupt();<a name="line.238"></a>
+<span class="sourceLineNo">239</span>                    }<a name="line.239"></a>
+<span class="sourceLineNo">240</span>                }<a name="line.240"></a>
+<span class="sourceLineNo">241</span><a name="line.241"></a>
+<span class="sourceLineNo">242</span>                if (g.broken)<a name="line.242"></a>
+<span class="sourceLineNo">243</span>                    throw new BrokenBarrierException();<a name="line.243"></a>
+<span class="sourceLineNo">244</span><a name="line.244"></a>
+<span class="sourceLineNo">245</span>                if (g != generation)<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                    return index;<a name="line.246"></a>
+<span class="sourceLineNo">247</span><a name="line.247"></a>
+<span class="sourceLineNo">248</span>                if (timed &amp;&amp; nanos &lt;= 0L) {<a name="line.248"></a>
+<span class="sourceLineNo">249</span>                    breakBarrier();<a name="line.249"></a>
+<span class="sourceLineNo">250</span>                    throw new TimeoutException();<a name="line.250"></a>
+<span class="sourceLineNo">251</span>                }<a name="line.251"></a>
+<span class="sourceLineNo">252</span>            }<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        } finally {<a name="line.253"></a>
+<span class="sourceLineNo">254</span>            lock.unlock();<a name="line.254"></a>
+<span class="sourceLineNo">255</span>        }<a name="line.255"></a>
+<span class="sourceLineNo">256</span>    }<a name="line.256"></a>
+<span class="sourceLineNo">257</span><a name="line.257"></a>
+<span class="sourceLineNo">258</span>    /**<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * Creates a new &lt;tt&gt;CyclicBarrier&lt;/tt&gt; that will trip when the<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * given number of parties (threads) are waiting upon it, and which<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * will execute the given barrier action when the barrier is tripped,<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * performed by the last thread entering the barrier.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     *<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * @param parties the number of threads that must invoke {@link #await}<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     *        before the barrier is tripped<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * @param barrierAction the command to execute when the barrier is<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     *        tripped, or {@code null} if there is no action<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * @throws IllegalArgumentException if {@code parties} is less than 1<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     */<a name="line.269"></a>
+<span class="sourceLineNo">270</span>    public CyclicBarrier(int parties, Runnable barrierAction) {<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        if (parties &lt;= 0) throw new IllegalArgumentException();<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        this.parties = parties;<a name="line.272"></a>
+<span class="sourceLineNo">273</span>        this.count = parties;<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        this.barrierCommand = barrierAction;<a name="line.274"></a>
+<span class="sourceLineNo">275</span>    }<a name="line.275"></a>
+<span class="sourceLineNo">276</span><a name="line.276"></a>
+<span class="sourceLineNo">277</span>    /**<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * Creates a new &lt;tt&gt;CyclicBarrier&lt;/tt&gt; that will trip when the<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * given number of parties (threads) are waiting upon it, and<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * does not perform a predefined action when the barrier is tripped.<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     *<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * @param parties the number of threads that must invoke {@link #await}<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     *        before the barrier is tripped<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * @throws IllegalArgumentException if {@code parties} is less than 1<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     */<a name="line.285"></a>
+<span class="sourceLineNo">286</span>    public CyclicBarrier(int parties) {<a name="line.286"></a>
+<span class="sourceLineNo">287</span>        this(parties, null);<a name="line.287"></a>
+<span class="sourceLineNo">288</span>    }<a name="line.288"></a>
+<span class="sourceLineNo">289</span><a name="line.289"></a>
+<span class="sourceLineNo">290</span>    /**<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * Returns the number of parties required to trip this barrier.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     *<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * @return the number of parties required to trip this barrier<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     */<a name="line.294"></a>
+<span class="sourceLineNo">295</span>    public int getParties() {<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        return parties;<a name="line.296"></a>
+<span class="sourceLineNo">297</span>    }<a name="line.297"></a>
+<span class="sourceLineNo">298</span><a name="line.298"></a>
+<span class="sourceLineNo">299</span>    /**<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * Waits until all {@linkplain #getParties parties} have invoked<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * &lt;tt&gt;await&lt;/tt&gt; on this barrier.<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     *<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * &lt;p&gt;If the current thread is not the last to arrive then it is<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * disabled for thread scheduling purposes and lies dormant until<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * one of the following things happens:<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * &lt;ul&gt;<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * &lt;li&gt;The last thread arrives; or<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * &lt;li&gt;Some other thread {@linkplain Thread#interrupt interrupts}<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * the current thread; or<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * &lt;li&gt;Some other thread {@linkplain Thread#interrupt interrupts}<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * one of the other waiting threads; or<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * &lt;li&gt;Some other thread times out while waiting for barrier; or<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * &lt;li&gt;Some other thread invokes {@link #reset} on this barrier.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * &lt;/ul&gt;<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     *<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * &lt;p&gt;If the current thread:<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * &lt;ul&gt;<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * &lt;li&gt;has its interrupted status set on entry to this method; or<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * &lt;li&gt;is {@linkplain Thread#interrupt interrupted} while waiting<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * &lt;/ul&gt;<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * then {@link InterruptedException} is thrown and the current thread's<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * interrupted status is cleared.<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     *<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * &lt;p&gt;If the barrier is {@link #reset} while any thread is waiting,<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * or if the barrier {@linkplain #isBroken is broken} when<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * &lt;tt&gt;await&lt;/tt&gt; is invoked, or while any thread is waiting, then<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * {@link BrokenBarrierException} is thrown.<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     *<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * &lt;p&gt;If any thread is {@linkplain Thread#interrupt interrupted} while waiting,<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * then all other waiting threads will throw<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * {@link BrokenBarrierException} and the barrier is placed in the broken<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * state.<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     *<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * &lt;p&gt;If the current thread is the last thread to arrive, and a<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * non-null barrier action was supplied in the constructor, then the<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * current thread runs the action before allowing the other threads to<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * continue.<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * If an exception occurs during the barrier action then that exception<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * will be propagated in the current thread and the barrier is placed in<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * the broken state.<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     *<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * @return the arrival index of the current thread, where index<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     *         &lt;tt&gt;{@link #getParties()} - 1&lt;/tt&gt; indicates the first<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     *         to arrive and zero indicates the last to arrive<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * @throws InterruptedException if the current thread was interrupted<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     *         while waiting<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * @throws BrokenBarrierException if &lt;em&gt;another&lt;/em&gt; thread was<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     *         interrupted or timed out while the current thread was<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     *         waiting, or the barrier was reset, or the barrier was<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     *         broken when {@code await} was called, or the barrier<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     *         action (if present) failed due an exception.<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     */<a name="line.352"></a>
+<span class="sourceLineNo">353</span>    public int await() throws InterruptedException, BrokenBarrierException {<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        try {<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            return dowait(false, 0L);<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        } catch (TimeoutException toe) {<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            throw new Error(toe); // cannot happen;<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        }<a name="line.358"></a>
+<span class="sourceLineNo">359</span>    }<a name="line.359"></a>
+<span class="sourceLineNo">360</span><a name="line.360"></a>
+<span class="sourceLineNo">361</span>    /**<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * Waits until all {@linkplain #getParties parties} have invoked<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * &lt;tt&gt;await&lt;/tt&gt; on this barrier, or the specified waiting time elapses.<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     *<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * &lt;p&gt;If the current thread is not the last to arrive then it is<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * disabled for thread scheduling purposes and lies dormant until<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     * one of the following things happens:<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * &lt;ul&gt;<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * &lt;li&gt;The last thread arrives; or<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * &lt;li&gt;The specified timeout elapses; or<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * &lt;li&gt;Some other thread {@linkplain Thread#interrupt interrupts}<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * the current thread; or<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * &lt;li&gt;Some other thread {@linkplain Thread#interrupt interrupts}<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * one of the other waiting threads; or<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * &lt;li&gt;Some other thread times out while waiting for barrier; or<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * &lt;li&gt;Some other thread invokes {@link #reset} on this barrier.<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * &lt;/ul&gt;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     *<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * &lt;p&gt;If the current thread:<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * &lt;ul&gt;<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * &lt;li&gt;has its interrupted status set on entry to this method; or<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     * &lt;li&gt;is {@linkplain Thread#interrupt interrupted} while waiting<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * &lt;/ul&gt;<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     * then {@link InterruptedException} is thrown and the current thread's<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * interrupted status is cleared.<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     *<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * &lt;p&gt;If the specified waiting time elapses then {@link TimeoutException}<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * is thrown. If the time is less than or equal to zero, the<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * method will not wait at all.<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     *<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * &lt;p&gt;If the barrier is {@link #reset} while any thread is waiting,<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * or if the barrier {@linkplain #isBroken is broken} when<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * &lt;tt&gt;await&lt;/tt&gt; is invoked, or while any thread is waiting, then<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * {@link BrokenBarrierException} is thrown.<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     *<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * &lt;p&gt;If any thread is {@linkplain Thread#interrupt interrupted} while<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * waiting, then all other waiting threads will throw {@link<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * BrokenBarrierException} and the barrier is placed in the broken<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * state.<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     *<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     * &lt;p&gt;If the current thread is the last thread to arrive, and a<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * non-null barrier action was supplied in the constructor, then the<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * current thread runs the action before allowing the other threads to<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * continue.<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * If an exception occurs during the barrier action then that exception<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * will be propagated in the current thread and the barrier is placed in<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * the broken state.<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     *<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * @param timeout the time to wait for the barrier<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * @param unit the time unit of the timeout parameter<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * @return the arrival index of the current thread, where index<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     *         &lt;tt&gt;{@link #getParties()} - 1&lt;/tt&gt; indicates the first<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     *         to arrive and zero indicates the last to arrive<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     * @throws InterruptedException if the current thread was interrupted<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     *         while waiting<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     * @throws TimeoutException if the specified timeout elapses<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     * @throws BrokenBarrierException if &lt;em&gt;another&lt;/em&gt; thread was<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     *         interrupted or timed out while the current thread was<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     *         waiting, or the barrier was reset, or the barrier was broken<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     *         when {@code await} was called, or the barrier action (if<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     *         present) failed due an exception<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     */<a name="line.422"></a>
+<span class="sourceLineNo">423</span>    public int await(long timeout, TimeUnit unit)<a name="line.423"></a>
+<span class="sourceLineNo">424</span>        throws InterruptedException,<a name="line.424"></a>
+<span class="sourceLineNo">425</span>               BrokenBarrierException,<a name="line.425"></a>
+<span class="sourceLineNo">426</span>               TimeoutException {<a name="line.426"></a>
+<span class="sourceLineNo">427</span>        return dowait(true, unit.toNanos(timeout));<a name="line.427"></a>
+<span class="sourceLineNo">428</span>    }<a name="line.428"></a>
+<span class="sourceLineNo">429</span><a name="line.429"></a>
+<span class="sourceLineNo">430</span>    /**<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * Queries if this barrier is in a broken state.<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     *<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     * @return {@code true} if one or more parties broke out of this<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     *         barrier due to interruption or timeout since<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     *         construction or the last reset, or a barrier action<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     *         failed due to an exception; {@code false} otherwise.<a name="line.436"></a>
+<span class="sourceLineNo">437</span>     */<a name="line.437"></a>
+<span class="sourceLineNo">438</span>    public boolean isBroken() {<a name="line.438"></a>
+<span class="sourceLineNo">439</span>        final ReentrantLock lock = this.lock;<a name="line.439"></a>
+<span class="sourceLineNo">440</span>        lock.lock();<a name="line.440"></a>
+<span class="sourceLineNo">441</span>        try {<a name="line.441"></a>
+<span class="sourceLineNo">442</span>            return generation.broken;<a name="line.442"></a>
+<span class="sourceLineNo">443</span>        } finally {<a name="line.443"></a>
+<span class="sourceLineNo">444</span>            lock.unlock();<a name="line.444"></a>
+<span class="sourceLineNo">445</span>        }<a name="line.445"></a>
+<span class="sourceLineNo">446</span>    }<a name="line.446"></a>
+<span class="sourceLineNo">447</span><a name="line.447"></a>
+<span class="sourceLineNo">448</span>    /**<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     * Resets the barrier to its initial state.  If any parties are<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * currently waiting at the barrier, they will return with a<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     * {@link BrokenBarrierException}. Note that resets &lt;em&gt;after&lt;/em&gt;<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     * a breakage has occurred for other reasons can be complicated to<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     * carry out; threads need to re-synchronize in some other way,<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     * and choose one to perform the reset.  It may be preferable to<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * instead create a new barrier for subsequent use.<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     */<a name="line.456"></a>
+<span class="sourceLineNo">457</span>    public void reset() {<a name="line.457"></a>
+<span class="sourceLineNo">458</span>        final ReentrantLock lock = this.lock;<a name="line.458"></a>
+<span class="sourceLineNo">459</span>        lock.lock();<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        try {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>            breakBarrier();   // break the current generation<a name="line.461"></a>
+<span class="sourceLineNo">462</span>            nextGeneration(); // start a new generation<a name="line.462"></a>
+<span class="sourceLineNo">463</span>        } finally {<a name="line.463"></a>
+<span class="sourceLineNo">464</span>            lock.unlock();<a name="line.464"></a>
+<span class="sourceLineNo">465</span>        }<a name="line.465"></a>
+<span class="sourceLineNo">466</span>    }<a name="line.466"></a>
+<span class="sourceLineNo">467</span><a name="line.467"></a>
+<span class="sourceLineNo">468</span>    /**<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     * Returns the number of parties currently waiting at the barrier.<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     * This method is primarily useful for debugging and assertions.<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     *<a name="line.471"></a>
+<span class="sourceLineNo">472</span>     * @return the number of parties currently blocked in {@link #await}<a name="line.472"></a>
+<span class="sourceLineNo">473</span>     */<a name="line.473"></a>
+<span class="sourceLineNo">474</span>    public int getNumberWaiting() {<a name="line.474"></a>
+<span class="sourceLineNo">475</span>        final ReentrantLock lock = this.lock;<a name="line.475"></a>
+<span class="sourceLineNo">476</span>        lock.lock();<a name="line.476"></a>
+<span class="sourceLineNo">477</span>        try {<a name="line.477"></a>
+<span class="sourceLineNo">478</span>            return parties - count;<a name="line.478"></a>
+<span class="sourceLineNo">479</span>        } finally {<a name="line.479"></a>
+<span class="sourceLineNo">480</span>            lock.unlock();<a name="line.480"></a>
+<span class="sourceLineNo">481</span>        }<a name="line.481"></a>
+<span class="sourceLineNo">482</span>    }<a name="line.482"></a>
+<span class="sourceLineNo">483</span>}<a name="line.483"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

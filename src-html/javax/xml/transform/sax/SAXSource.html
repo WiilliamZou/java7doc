@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.xml.transform.sax;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.xml.transform.Source;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.xml.transform.stream.StreamSource;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>import org.xml.sax.InputSource;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import org.xml.sax.XMLReader;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;p&gt;Acts as an holder for SAX-style Source.&lt;/p&gt;<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;Note that XSLT requires namespace support. Attempting to transform an<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * input source that is not<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * generated with a namespace-aware parser may result in errors.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * Parsers can be made namespace aware by calling the<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * {@link javax.xml.parsers.SAXParserFactory#setNamespaceAware(boolean awareness)} method.&lt;/p&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * @author &lt;a href="mailto:Jeff.Suttor@Sun.com"&gt;Jeff Suttor&lt;/a&gt;<a name="line.43"></a>
+<span class="sourceLineNo">044</span> */<a name="line.44"></a>
+<span class="sourceLineNo">045</span>public class SAXSource implements Source {<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>    /**<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * If {@link javax.xml.transform.TransformerFactory#getFeature}<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * returns true when passed this value as an argument,<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * the Transformer supports Source input of this type.<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     */<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    public static final String FEATURE =<a name="line.52"></a>
+<span class="sourceLineNo">053</span>        "http://javax.xml.transform.sax.SAXSource/feature";<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>    /**<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * &lt;p&gt;Zero-argument default constructor.  If this constructor is used, and<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * no SAX source is set using<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * {@link #setInputSource(InputSource inputSource)} , then the<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * &lt;code&gt;Transformer&lt;/code&gt; will<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * create an empty source {@link org.xml.sax.InputSource} using<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * {@link org.xml.sax.InputSource#InputSource() new InputSource()}.&lt;/p&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     *<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * @see javax.xml.transform.Transformer#transform(Source xmlSource, Result outputTarget)<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     */<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    public SAXSource() { }<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>    /**<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * Create a &lt;code&gt;SAXSource&lt;/code&gt;, using an {@link org.xml.sax.XMLReader}<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * and a SAX InputSource. The {@link javax.xml.transform.Transformer}<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * or {@link javax.xml.transform.sax.SAXTransformerFactory} will set itself<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * to be the reader's {@link org.xml.sax.ContentHandler}, and then will call<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * reader.parse(inputSource).<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     *<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * @param reader An XMLReader to be used for the parse.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * @param inputSource A SAX input source reference that must be non-null<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * and that will be passed to the reader parse method.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     */<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    public SAXSource(XMLReader reader, InputSource inputSource) {<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        this.reader      = reader;<a name="line.79"></a>
+<span class="sourceLineNo">080</span>        this.inputSource = inputSource;<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    }<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    /**<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * Create a &lt;code&gt;SAXSource&lt;/code&gt;, using a SAX &lt;code&gt;InputSource&lt;/code&gt;.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * The {@link javax.xml.transform.Transformer} or<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * {@link javax.xml.transform.sax.SAXTransformerFactory} creates a<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * reader via {@link org.xml.sax.helpers.XMLReaderFactory}<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * (if setXMLReader is not used), sets itself as<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * the reader's {@link org.xml.sax.ContentHandler}, and calls<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * reader.parse(inputSource).<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @param inputSource An input source reference that must be non-null<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * and that will be passed to the parse method of the reader.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     */<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    public SAXSource(InputSource inputSource) {<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        this.inputSource = inputSource;<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    }<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * Set the XMLReader to be used for the Source.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @param reader A valid XMLReader or XMLFilter reference.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    public void setXMLReader(XMLReader reader) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        this.reader = reader;<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    }<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    /**<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * Get the XMLReader to be used for the Source.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     *<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * @return A valid XMLReader or XMLFilter reference, or null.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     */<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    public XMLReader getXMLReader() {<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        return reader;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    }<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>    /**<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * Set the SAX InputSource to be used for the Source.<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     *<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * @param inputSource A valid InputSource reference.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     */<a name="line.121"></a>
+<span class="sourceLineNo">122</span>    public void setInputSource(InputSource inputSource) {<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        this.inputSource = inputSource;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    }<a name="line.124"></a>
+<span class="sourceLineNo">125</span><a name="line.125"></a>
+<span class="sourceLineNo">126</span>    /**<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * Get the SAX InputSource to be used for the Source.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     *<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * @return A valid InputSource reference, or null.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     */<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    public InputSource getInputSource() {<a name="line.131"></a>
+<span class="sourceLineNo">132</span>        return inputSource;<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    }<a name="line.133"></a>
+<span class="sourceLineNo">134</span><a name="line.134"></a>
+<span class="sourceLineNo">135</span>    /**<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * Set the system identifier for this Source.  If an input source<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * has already been set, it will set the system ID or that<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * input source, otherwise it will create a new input source.<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * &lt;p&gt;The system identifier is optional if there is a byte stream<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * or a character stream, but it is still useful to provide one,<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * since the application can use it to resolve relative URIs<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * and can include it in error messages and warnings (the parser<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * will attempt to open a connection to the URI only if<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * no byte stream or character stream is specified).&lt;/p&gt;<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     *<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @param systemId The system identifier as a URI string.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    public void setSystemId(String systemId) {<a name="line.149"></a>
+<span class="sourceLineNo">150</span><a name="line.150"></a>
+<span class="sourceLineNo">151</span>        if (null == inputSource) {<a name="line.151"></a>
+<span class="sourceLineNo">152</span>            inputSource = new InputSource(systemId);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        } else {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>            inputSource.setSystemId(systemId);<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        }<a name="line.155"></a>
+<span class="sourceLineNo">156</span>    }<a name="line.156"></a>
+<span class="sourceLineNo">157</span><a name="line.157"></a>
+<span class="sourceLineNo">158</span>    /**<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * &lt;p&gt;Get the base ID (URI or system ID) from where URIs<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * will be resolved.&lt;/p&gt;<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @return Base URL for the &lt;code&gt;Source&lt;/code&gt;, or &lt;code&gt;null&lt;/code&gt;.<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     */<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    public String getSystemId() {<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>        if (inputSource == null) {<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            return null;<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        } else {<a name="line.168"></a>
+<span class="sourceLineNo">169</span>            return inputSource.getSystemId();<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        }<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    }<a name="line.171"></a>
+<span class="sourceLineNo">172</span><a name="line.172"></a>
+<span class="sourceLineNo">173</span>    /**<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * The XMLReader to be used for the source tree input. May be null.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     */<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    private XMLReader reader;<a name="line.176"></a>
+<span class="sourceLineNo">177</span><a name="line.177"></a>
+<span class="sourceLineNo">178</span>    /**<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * &lt;p&gt;The SAX InputSource to be used for the source tree input.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * Should not be &lt;code&gt;null&lt;/code&gt;.&lt;/p&gt;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     */<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    private InputSource inputSource;<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>    /**<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * Attempt to obtain a SAX InputSource object from a Source<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * object.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     *<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * @param source Must be a non-null Source reference.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * @return An InputSource, or null if Source can not be converted.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     */<a name="line.191"></a>
+<span class="sourceLineNo">192</span>    public static InputSource sourceToInputSource(Source source) {<a name="line.192"></a>
+<span class="sourceLineNo">193</span><a name="line.193"></a>
+<span class="sourceLineNo">194</span>        if (source instanceof SAXSource) {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>            return ((SAXSource) source).getInputSource();<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        } else if (source instanceof StreamSource) {<a name="line.196"></a>
+<span class="sourceLineNo">197</span>            StreamSource ss      = (StreamSource) source;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>            InputSource  isource = new InputSource(ss.getSystemId());<a name="line.198"></a>
+<span class="sourceLineNo">199</span><a name="line.199"></a>
+<span class="sourceLineNo">200</span>            isource.setByteStream(ss.getInputStream());<a name="line.200"></a>
+<span class="sourceLineNo">201</span>            isource.setCharacterStream(ss.getReader());<a name="line.201"></a>
+<span class="sourceLineNo">202</span>            isource.setPublicId(ss.getPublicId());<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>            return isource;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        } else {<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            return null;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        }<a name="line.207"></a>
+<span class="sourceLineNo">208</span>    }<a name="line.208"></a>
+<span class="sourceLineNo">209</span>}<a name="line.209"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

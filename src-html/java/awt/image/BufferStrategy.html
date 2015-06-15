@@ -1,0 +1,277 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt.image;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.BufferCapabilities;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.Graphics;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.Image;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * The &lt;code&gt;BufferStrategy&lt;/code&gt; class represents the mechanism with which<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * to organize complex memory on a particular &lt;code&gt;Canvas&lt;/code&gt; or<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;code&gt;Window&lt;/code&gt;.  Hardware and software limitations determine whether and<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * how a particular buffer strategy can be implemented.  These limitations<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * are detectible through the capabilities of the<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;code&gt;GraphicsConfiguration&lt;/code&gt; used when creating the<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;code&gt;Canvas&lt;/code&gt; or &lt;code&gt;Window&lt;/code&gt;.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * &lt;p&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * It is worth noting that the terms &lt;i&gt;buffer&lt;/i&gt; and &lt;i&gt;surface&lt;/i&gt; are meant<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * to be synonymous: an area of contiguous memory, either in video device<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * memory or in system memory.<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;p&gt;<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * There are several types of complex buffer strategies, including<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * sequential ring buffering and blit buffering.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * Sequential ring buffering (i.e., double or triple<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * buffering) is the most common; an application draws to a single &lt;i&gt;back<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * buffer&lt;/i&gt; and then moves the contents to the front (display) in a single<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * step, either by copying the data or moving the video pointer.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * Moving the video pointer exchanges the buffers so that the first buffer<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * drawn becomes the &lt;i&gt;front buffer&lt;/i&gt;, or what is currently displayed on the<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * device; this is called &lt;i&gt;page flipping&lt;/i&gt;.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * Alternatively, the contents of the back buffer can be copied, or<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;i&gt;blitted&lt;/i&gt; forward in a chain instead of moving the video pointer.<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;p&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;pre&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * Double buffering:<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *                    ***********         ***********<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *                    *         * ------&gt; *         *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * [To display] &lt;---- * Front B *   Show  * Back B. * &lt;---- Rendering<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *                    *         * &lt;------ *         *<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *                    ***********         ***********<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * Triple buffering:<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * [To      ***********         ***********        ***********<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * display] *         * --------+---------+------&gt; *         *<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *    &lt;---- * Front B *   Show  * Mid. B. *        * Back B. * &lt;---- Rendering<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *          *         * &lt;------ *         * &lt;----- *         *<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *          ***********         ***********        ***********<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;/pre&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * &lt;p&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * Here is an example of how buffer strategies can be created and used:<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * &lt;pre&gt;&lt;code&gt;<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * // Check the capabilities of the GraphicsConfiguration<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * ...<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * // Create our component<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * Window w = new Window(gc);<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * // Show our window<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * w.setVisible(true);<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * // Create a general double-buffering strategy<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * w.createBufferStrategy(2);<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * BufferStrategy strategy = w.getBufferStrategy();<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * // Main loop<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * while (!done) {<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *     // Prepare for rendering the next frame<a name="line.95"></a>
+<span class="sourceLineNo">096</span> *     // ...<a name="line.96"></a>
+<span class="sourceLineNo">097</span> *<a name="line.97"></a>
+<span class="sourceLineNo">098</span> *     // Render single frame<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *     do {<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *         // The following loop ensures that the contents of the drawing buffer<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *         // are consistent in case the underlying surface was recreated<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *         do {<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *             // Get a new graphics context every time through the loop<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *             // to make sure the strategy is validated<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *             Graphics graphics = strategy.getDrawGraphics();<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *             // Render to graphics<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *             // ...<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *             // Dispose the graphics<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *             graphics.dispose();<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *             // Repeat the rendering if the drawing buffer contents<a name="line.113"></a>
+<span class="sourceLineNo">114</span> *             // were restored<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *         } while (strategy.contentsRestored());<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *<a name="line.116"></a>
+<span class="sourceLineNo">117</span> *         // Display the buffer<a name="line.117"></a>
+<span class="sourceLineNo">118</span> *         strategy.show();<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *<a name="line.119"></a>
+<span class="sourceLineNo">120</span> *         // Repeat the rendering if the drawing buffer was lost<a name="line.120"></a>
+<span class="sourceLineNo">121</span> *     } while (strategy.contentsLost());<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * }<a name="line.122"></a>
+<span class="sourceLineNo">123</span> *<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * // Dispose the window<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * w.setVisible(false);<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * w.dispose();<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * &lt;/code&gt;&lt;/pre&gt;<a name="line.127"></a>
+<span class="sourceLineNo">128</span> *<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * @see java.awt.Window<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * @see java.awt.Canvas<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * @see java.awt.GraphicsConfiguration<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * @see VolatileImage<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * @author Michael Martak<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * @since 1.4<a name="line.134"></a>
+<span class="sourceLineNo">135</span> */<a name="line.135"></a>
+<span class="sourceLineNo">136</span>public abstract class BufferStrategy {<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>    /**<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * Returns the &lt;code&gt;BufferCapabilities&lt;/code&gt; for this<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * &lt;code&gt;BufferStrategy&lt;/code&gt;.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     *<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * @return the buffering capabilities of this strategy<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     */<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    public abstract BufferCapabilities getCapabilities();<a name="line.144"></a>
+<span class="sourceLineNo">145</span><a name="line.145"></a>
+<span class="sourceLineNo">146</span>    /**<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * Creates a graphics context for the drawing buffer.  This method may not<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * be synchronized for performance reasons; use of this method by multiple<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * threads should be handled at the application level.  Disposal of the<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * graphics object obtained must be handled by the application.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     *<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * @return a graphics context for the drawing buffer<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     */<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    public abstract Graphics getDrawGraphics();<a name="line.154"></a>
+<span class="sourceLineNo">155</span><a name="line.155"></a>
+<span class="sourceLineNo">156</span>    /**<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * Returns whether the drawing buffer was lost since the last call to<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * &lt;code&gt;getDrawGraphics&lt;/code&gt;.  Since the buffers in a buffer strategy<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * are usually type &lt;code&gt;VolatileImage&lt;/code&gt;, they may become lost.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * For a discussion on lost buffers, see &lt;code&gt;VolatileImage&lt;/code&gt;.<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @return Whether or not the drawing buffer was lost since the last call<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * to &lt;code&gt;getDrawGraphics&lt;/code&gt;.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @see java.awt.image.VolatileImage<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     */<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    public abstract boolean contentsLost();<a name="line.166"></a>
+<span class="sourceLineNo">167</span><a name="line.167"></a>
+<span class="sourceLineNo">168</span>    /**<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * Returns whether the drawing buffer was recently restored from a lost<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * state and reinitialized to the default background color (white).<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * Since the buffers in a buffer strategy are usually type<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * &lt;code&gt;VolatileImage&lt;/code&gt;, they may become lost.  If a surface has<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * been recently restored from a lost state since the last call to<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * &lt;code&gt;getDrawGraphics&lt;/code&gt;, it may require repainting.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * For a discussion on lost buffers, see &lt;code&gt;VolatileImage&lt;/code&gt;.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @return Whether or not the drawing buffer was restored since the last<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *         call to &lt;code&gt;getDrawGraphics&lt;/code&gt;.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @see java.awt.image.VolatileImage<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    public abstract boolean contentsRestored();<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Makes the next available buffer visible by either copying the memory<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * (blitting) or changing the display pointer (flipping).<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     */<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    public abstract void show();<a name="line.187"></a>
+<span class="sourceLineNo">188</span><a name="line.188"></a>
+<span class="sourceLineNo">189</span>    /**<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * Releases system resources currently consumed by this<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * &lt;code&gt;BufferStrategy&lt;/code&gt; and<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * removes it from the associated Component.  After invoking this<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * method, &lt;code&gt;getBufferStrategy&lt;/code&gt; will return null.  Trying<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * to use a &lt;code&gt;BufferStrategy&lt;/code&gt; after it has been disposed will<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * result in undefined behavior.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     *<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @see java.awt.Window#createBufferStrategy<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * @see java.awt.Canvas#createBufferStrategy<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * @see java.awt.Window#getBufferStrategy<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * @see java.awt.Canvas#getBufferStrategy<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * @since 1.6<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     */<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    public void dispose() {<a name="line.203"></a>
+<span class="sourceLineNo">204</span>    }<a name="line.204"></a>
+<span class="sourceLineNo">205</span>}<a name="line.205"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

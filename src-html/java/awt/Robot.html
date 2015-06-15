@@ -1,0 +1,665 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2009, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.event.InputEvent;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.event.KeyEvent;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.image.BufferedImage;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.image.DataBufferInt;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.image.DirectColorModel;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.awt.image.Raster;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.awt.image.WritableRaster;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.awt.peer.RobotPeer;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.lang.reflect.InvocationTargetException;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import sun.awt.ComponentFactory;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import sun.awt.SunToolkit;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import sun.awt.image.SunWritableRaster;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import sun.security.util.SecurityConstants;<a name="line.40"></a>
+<span class="sourceLineNo">041</span><a name="line.41"></a>
+<span class="sourceLineNo">042</span>/**<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * This class is used to generate native system input events<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * for the purposes of test automation, self-running demos, and<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * other applications where control of the mouse and keyboard<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * is needed. The primary purpose of Robot is to facilitate<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * automated testing of Java platform implementations.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;p&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * Using the class to generate input events differs from posting<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * events to the AWT event queue or AWT components in that the<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * events are generated in the platform's native input<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * queue. For example, &lt;code&gt;Robot.mouseMove&lt;/code&gt; will actually move<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * the mouse cursor instead of just generating mouse move events.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * Note that some platforms require special privileges or extensions<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * to access low-level input control. If the current platform configuration<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * does not allow input control, an &lt;code&gt;AWTException&lt;/code&gt; will be thrown<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * when trying to construct Robot objects. For example, X-Window systems<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * will throw the exception if the XTEST 2.2 standard extension is not supported<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * (or not enabled) by the X server.<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;p&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * Applications that use Robot for purposes other than self-testing should<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * handle these error conditions gracefully.<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * @author      Robi Khan<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * @since       1.3<a name="line.66"></a>
+<span class="sourceLineNo">067</span> */<a name="line.67"></a>
+<span class="sourceLineNo">068</span>public class Robot {<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    private static final int MAX_DELAY = 60000;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    private RobotPeer peer;<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    private boolean isAutoWaitForIdle = false;<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    private int autoDelay = 0;<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    private static int LEGAL_BUTTON_MASK = 0;<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    // location of robot's GC, used in mouseMove(), getPixelColor() and captureScreenImage()<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    private Point gdLoc;<a name="line.76"></a>
+<span class="sourceLineNo">077</span><a name="line.77"></a>
+<span class="sourceLineNo">078</span>    private DirectColorModel screenCapCM = null;<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>    /**<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * Constructs a Robot object in the coordinate system of the primary screen.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * &lt;p&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     *<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * @throws  AWTException if the platform configuration does not allow<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * low-level input control.  This exception is always thrown when<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * GraphicsEnvironment.isHeadless() returns true<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @throws  SecurityException if &lt;code&gt;createRobot&lt;/code&gt; permission is not granted<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * @see     java.awt.GraphicsEnvironment#isHeadless<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @see     SecurityManager#checkPermission<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @see     AWTPermission<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     */<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    public Robot() throws AWTException {<a name="line.92"></a>
+<span class="sourceLineNo">093</span>        if (GraphicsEnvironment.isHeadless()) {<a name="line.93"></a>
+<span class="sourceLineNo">094</span>            throw new AWTException("headless environment");<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        }<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        init(GraphicsEnvironment.getLocalGraphicsEnvironment()<a name="line.96"></a>
+<span class="sourceLineNo">097</span>            .getDefaultScreenDevice());<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    }<a name="line.98"></a>
+<span class="sourceLineNo">099</span><a name="line.99"></a>
+<span class="sourceLineNo">100</span>    /**<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * Creates a Robot for the given screen device. Coordinates passed<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * to Robot method calls like mouseMove and createScreenCapture will<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * be interpreted as being in the same coordinate system as the<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * specified screen. Note that depending on the platform configuration,<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * multiple screens may either:<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * &lt;ul&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * &lt;li&gt;share the same coordinate system to form a combined virtual screen&lt;/li&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * &lt;li&gt;use different coordinate systems to act as independent screens&lt;/li&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * &lt;/ul&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * This constructor is meant for the latter case.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * &lt;p&gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * If screen devices are reconfigured such that the coordinate system is<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * affected, the behavior of existing Robot objects is undefined.<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @param screen    A screen GraphicsDevice indicating the coordinate<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *                  system the Robot will operate in.<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @throws  AWTException if the platform configuration does not allow<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * low-level input control.  This exception is always thrown when<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * GraphicsEnvironment.isHeadless() returns true.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * @throws  IllegalArgumentException if &lt;code&gt;screen&lt;/code&gt; is not a screen<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *          GraphicsDevice.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @throws  SecurityException if &lt;code&gt;createRobot&lt;/code&gt; permission is not granted<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * @see     java.awt.GraphicsEnvironment#isHeadless<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @see     GraphicsDevice<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @see     SecurityManager#checkPermission<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * @see     AWTPermission<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     */<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    public Robot(GraphicsDevice screen) throws AWTException {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        checkIsScreenDevice(screen);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        init(screen);<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>    private void init(GraphicsDevice screen) throws AWTException {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        checkRobotAllowed();<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        gdLoc = screen.getDefaultConfiguration().getBounds().getLocation();<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        Toolkit toolkit = Toolkit.getDefaultToolkit();<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        if (toolkit instanceof ComponentFactory) {<a name="line.137"></a>
+<span class="sourceLineNo">138</span>            peer = ((ComponentFactory)toolkit).createRobot(this, screen);<a name="line.138"></a>
+<span class="sourceLineNo">139</span>            disposer = new RobotDisposer(peer);<a name="line.139"></a>
+<span class="sourceLineNo">140</span>            sun.java2d.Disposer.addRecord(anchor, disposer);<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        }<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        initLegalButtonMask();<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    }<a name="line.143"></a>
+<span class="sourceLineNo">144</span><a name="line.144"></a>
+<span class="sourceLineNo">145</span>    private static synchronized void initLegalButtonMask() {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        if (LEGAL_BUTTON_MASK != 0) return;<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>        int tmpMask = 0;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        if (Toolkit.getDefaultToolkit().areExtraMouseButtonsEnabled()){<a name="line.149"></a>
+<span class="sourceLineNo">150</span>            if (Toolkit.getDefaultToolkit() instanceof SunToolkit) {<a name="line.150"></a>
+<span class="sourceLineNo">151</span>                final int buttonsNumber = ((SunToolkit)(Toolkit.getDefaultToolkit())).getNumberOfButtons();<a name="line.151"></a>
+<span class="sourceLineNo">152</span>                for (int i = 0; i &lt; buttonsNumber; i++){<a name="line.152"></a>
+<span class="sourceLineNo">153</span>                    tmpMask |= InputEvent.getMaskForButton(i+1);<a name="line.153"></a>
+<span class="sourceLineNo">154</span>                }<a name="line.154"></a>
+<span class="sourceLineNo">155</span>            }<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        }<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        tmpMask |= InputEvent.BUTTON1_MASK|<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            InputEvent.BUTTON2_MASK|<a name="line.158"></a>
+<span class="sourceLineNo">159</span>            InputEvent.BUTTON3_MASK|<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            InputEvent.BUTTON1_DOWN_MASK|<a name="line.160"></a>
+<span class="sourceLineNo">161</span>            InputEvent.BUTTON2_DOWN_MASK|<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            InputEvent.BUTTON3_DOWN_MASK;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        LEGAL_BUTTON_MASK = tmpMask;<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    }<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>    /* determine if the security policy allows Robot's to be created */<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    private void checkRobotAllowed() {<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        SecurityManager security = System.getSecurityManager();<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        if (security != null) {<a name="line.169"></a>
+<span class="sourceLineNo">170</span>            security.checkPermission(SecurityConstants.AWT.CREATE_ROBOT_PERMISSION);<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        }<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    }<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>    /* check if the given device is a screen device */<a name="line.174"></a>
+<span class="sourceLineNo">175</span>    private void checkIsScreenDevice(GraphicsDevice device) {<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        if (device == null || device.getType() != GraphicsDevice.TYPE_RASTER_SCREEN) {<a name="line.176"></a>
+<span class="sourceLineNo">177</span>            throw new IllegalArgumentException("not a valid screen device");<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        }<a name="line.178"></a>
+<span class="sourceLineNo">179</span>    }<a name="line.179"></a>
+<span class="sourceLineNo">180</span><a name="line.180"></a>
+<span class="sourceLineNo">181</span>    private transient Object anchor = new Object();<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    static class RobotDisposer implements sun.java2d.DisposerRecord {<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        private final RobotPeer peer;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        public RobotDisposer(RobotPeer peer) {<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            this.peer = peer;<a name="line.186"></a>
+<span class="sourceLineNo">187</span>        }<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        public void dispose() {<a name="line.188"></a>
+<span class="sourceLineNo">189</span>            if (peer != null) {<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                peer.dispose();<a name="line.190"></a>
+<span class="sourceLineNo">191</span>            }<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        }<a name="line.192"></a>
+<span class="sourceLineNo">193</span>    }<a name="line.193"></a>
+<span class="sourceLineNo">194</span><a name="line.194"></a>
+<span class="sourceLineNo">195</span>    private transient RobotDisposer disposer;<a name="line.195"></a>
+<span class="sourceLineNo">196</span><a name="line.196"></a>
+<span class="sourceLineNo">197</span>    /**<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * Moves mouse pointer to given screen coordinates.<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * @param x         X position<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * @param y         Y position<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     */<a name="line.201"></a>
+<span class="sourceLineNo">202</span>    public synchronized void mouseMove(int x, int y) {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>        peer.mouseMove(gdLoc.x + x, gdLoc.y + y);<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        afterEvent();<a name="line.204"></a>
+<span class="sourceLineNo">205</span>    }<a name="line.205"></a>
+<span class="sourceLineNo">206</span><a name="line.206"></a>
+<span class="sourceLineNo">207</span>    /**<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * Presses one or more mouse buttons.  The mouse buttons should<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * be released using the {@link #mouseRelease(int)} method.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * @param buttons the Button mask; a combination of one or more<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * mouse button masks.<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * &lt;p&gt;<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * It is allowed to use only a combination of valid values as a {@code buttons} parameter.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * A valid combination consists of {@code InputEvent.BUTTON1_DOWN_MASK},<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * {@code InputEvent.BUTTON2_DOWN_MASK}, {@code InputEvent.BUTTON3_DOWN_MASK}<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * and values returned by the<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * {@link InputEvent#getMaskForButton(int) InputEvent.getMaskForButton(button)} method.<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     *<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * The valid combination also depends on a<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * {@link Toolkit#areExtraMouseButtonsEnabled() Toolkit.areExtraMouseButtonsEnabled()} value as follows:<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * &lt;ul&gt;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * &lt;li&gt; If support for extended mouse buttons is<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * {@link Toolkit#areExtraMouseButtonsEnabled() disabled} by Java<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * then it is allowed to use only the following standard button masks:<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * {@code InputEvent.BUTTON1_DOWN_MASK}, {@code InputEvent.BUTTON2_DOWN_MASK},<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * {@code InputEvent.BUTTON3_DOWN_MASK}.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * &lt;li&gt; If support for extended mouse buttons is<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * {@link Toolkit#areExtraMouseButtonsEnabled() enabled} by Java<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * then it is allowed to use the standard button masks<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * and masks for existing extended mouse buttons, if the mouse has more then three buttons.<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * In that way, it is allowed to use the button masks corresponding to the buttons<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * in the range from 1 to {@link java.awt.MouseInfo#getNumberOfButtons() MouseInfo.getNumberOfButtons()}.<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * &lt;br&gt;<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * It is recommended to use the {@link InputEvent#getMaskForButton(int) InputEvent.getMaskForButton(button)}<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * method to obtain the mask for any mouse button by its number.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * &lt;/ul&gt;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * &lt;p&gt;<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * The following standard button masks are also accepted:<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * &lt;ul&gt;<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * &lt;li&gt;{@code InputEvent.BUTTON1_MASK}<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * &lt;li&gt;{@code InputEvent.BUTTON2_MASK}<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * &lt;li&gt;{@code InputEvent.BUTTON3_MASK}<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * &lt;/ul&gt;<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * However, it is recommended to use {@code InputEvent.BUTTON1_DOWN_MASK},<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * {@code InputEvent.BUTTON2_DOWN_MASK},  {@code InputEvent.BUTTON3_DOWN_MASK} instead.<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * Either extended {@code _DOWN_MASK} or old {@code _MASK} values<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * should be used, but both those models should not be mixed.<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * @throws IllegalArgumentException if the {@code buttons} mask contains the mask for extra mouse button<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     *         and support for extended mouse buttons is {@link Toolkit#areExtraMouseButtonsEnabled() disabled} by Java<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * @throws IllegalArgumentException if the {@code buttons} mask contains the mask for extra mouse button<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     *         that does not exist on the mouse and support for extended mouse buttons is {@link Toolkit#areExtraMouseButtonsEnabled() enabled} by Java<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * @see #mouseRelease(int)<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * @see InputEvent#getMaskForButton(int)<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * @see Toolkit#areExtraMouseButtonsEnabled()<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @see java.awt.MouseInfo#getNumberOfButtons()<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * @see java.awt.event.MouseEvent<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     */<a name="line.258"></a>
+<span class="sourceLineNo">259</span>    public synchronized void mousePress(int buttons) {<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        checkButtonsArgument(buttons);<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        peer.mousePress(buttons);<a name="line.261"></a>
+<span class="sourceLineNo">262</span>        afterEvent();<a name="line.262"></a>
+<span class="sourceLineNo">263</span>    }<a name="line.263"></a>
+<span class="sourceLineNo">264</span><a name="line.264"></a>
+<span class="sourceLineNo">265</span>    /**<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * Releases one or more mouse buttons.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     *<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * @param buttons the Button mask; a combination of one or more<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * mouse button masks.<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * &lt;p&gt;<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * It is allowed to use only a combination of valid values as a {@code buttons} parameter.<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * A valid combination consists of {@code InputEvent.BUTTON1_DOWN_MASK},<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * {@code InputEvent.BUTTON2_DOWN_MASK}, {@code InputEvent.BUTTON3_DOWN_MASK}<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * and values returned by the<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * {@link InputEvent#getMaskForButton(int) InputEvent.getMaskForButton(button)} method.<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     *<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * The valid combination also depends on a<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * {@link Toolkit#areExtraMouseButtonsEnabled() Toolkit.areExtraMouseButtonsEnabled()} value as follows:<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * &lt;ul&gt;<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * &lt;li&gt; If the support for extended mouse buttons is<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * {@link Toolkit#areExtraMouseButtonsEnabled() disabled} by Java<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * then it is allowed to use only the following standard button masks:<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * {@code InputEvent.BUTTON1_DOWN_MASK}, {@code InputEvent.BUTTON2_DOWN_MASK},<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * {@code InputEvent.BUTTON3_DOWN_MASK}.<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * &lt;li&gt; If the support for extended mouse buttons is<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * {@link Toolkit#areExtraMouseButtonsEnabled() enabled} by Java<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * then it is allowed to use the standard button masks<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * and masks for existing extended mouse buttons, if the mouse has more then three buttons.<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * In that way, it is allowed to use the button masks corresponding to the buttons<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * in the range from 1 to {@link java.awt.MouseInfo#getNumberOfButtons() MouseInfo.getNumberOfButtons()}.<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * &lt;br&gt;<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * It is recommended to use the {@link InputEvent#getMaskForButton(int) InputEvent.getMaskForButton(button)}<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * method to obtain the mask for any mouse button by its number.<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * &lt;/ul&gt;<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * &lt;p&gt;<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * The following standard button masks are also accepted:<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * &lt;ul&gt;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * &lt;li&gt;{@code InputEvent.BUTTON1_MASK}<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * &lt;li&gt;{@code InputEvent.BUTTON2_MASK}<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * &lt;li&gt;{@code InputEvent.BUTTON3_MASK}<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * &lt;/ul&gt;<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * However, it is recommended to use {@code InputEvent.BUTTON1_DOWN_MASK},<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * {@code InputEvent.BUTTON2_DOWN_MASK},  {@code InputEvent.BUTTON3_DOWN_MASK} instead.<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * Either extended {@code _DOWN_MASK} or old {@code _MASK} values<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * should be used, but both those models should not be mixed.<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * @throws IllegalArgumentException if the {@code buttons} mask contains the mask for extra mouse button<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     *         and support for extended mouse buttons is {@link Toolkit#areExtraMouseButtonsEnabled() disabled} by Java<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * @throws IllegalArgumentException if the {@code buttons} mask contains the mask for extra mouse button<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     *         that does not exist on the mouse and support for extended mouse buttons is {@link Toolkit#areExtraMouseButtonsEnabled() enabled} by Java<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * @see #mousePress(int)<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @see InputEvent#getMaskForButton(int)<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * @see Toolkit#areExtraMouseButtonsEnabled()<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * @see java.awt.MouseInfo#getNumberOfButtons()<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * @see java.awt.event.MouseEvent<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     */<a name="line.315"></a>
+<span class="sourceLineNo">316</span>    public synchronized void mouseRelease(int buttons) {<a name="line.316"></a>
+<span class="sourceLineNo">317</span>        checkButtonsArgument(buttons);<a name="line.317"></a>
+<span class="sourceLineNo">318</span>        peer.mouseRelease(buttons);<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        afterEvent();<a name="line.319"></a>
+<span class="sourceLineNo">320</span>    }<a name="line.320"></a>
+<span class="sourceLineNo">321</span><a name="line.321"></a>
+<span class="sourceLineNo">322</span>    private void checkButtonsArgument(int buttons) {<a name="line.322"></a>
+<span class="sourceLineNo">323</span>        if ( (buttons|LEGAL_BUTTON_MASK) != LEGAL_BUTTON_MASK ) {<a name="line.323"></a>
+<span class="sourceLineNo">324</span>            throw new IllegalArgumentException("Invalid combination of button flags");<a name="line.324"></a>
+<span class="sourceLineNo">325</span>        }<a name="line.325"></a>
+<span class="sourceLineNo">326</span>    }<a name="line.326"></a>
+<span class="sourceLineNo">327</span><a name="line.327"></a>
+<span class="sourceLineNo">328</span>    /**<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * Rotates the scroll wheel on wheel-equipped mice.<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     *<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * @param wheelAmt  number of "notches" to move the mouse wheel<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     *                  Negative values indicate movement up/away from the user,<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     *                  positive values indicate movement down/towards the user.<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     *<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * @since 1.4<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     */<a name="line.336"></a>
+<span class="sourceLineNo">337</span>    public synchronized void mouseWheel(int wheelAmt) {<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        peer.mouseWheel(wheelAmt);<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        afterEvent();<a name="line.339"></a>
+<span class="sourceLineNo">340</span>    }<a name="line.340"></a>
+<span class="sourceLineNo">341</span><a name="line.341"></a>
+<span class="sourceLineNo">342</span>    /**<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * Presses a given key.  The key should be released using the<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * &lt;code&gt;keyRelease&lt;/code&gt; method.<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     * &lt;p&gt;<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * Key codes that have more than one physical key associated with them<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * (e.g. &lt;code&gt;KeyEvent.VK_SHIFT&lt;/code&gt; could mean either the<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * left or right shift key) will map to the left key.<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     *<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     * @param   keycode Key to press (e.g. &lt;code&gt;KeyEvent.VK_A&lt;/code&gt;)<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * @throws  IllegalArgumentException if &lt;code&gt;keycode&lt;/code&gt; is not<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     *          a valid key<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * @see     #keyRelease(int)<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * @see     java.awt.event.KeyEvent<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     */<a name="line.355"></a>
+<span class="sourceLineNo">356</span>    public synchronized void keyPress(int keycode) {<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        checkKeycodeArgument(keycode);<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        peer.keyPress(keycode);<a name="line.358"></a>
+<span class="sourceLineNo">359</span>        afterEvent();<a name="line.359"></a>
+<span class="sourceLineNo">360</span>    }<a name="line.360"></a>
+<span class="sourceLineNo">361</span><a name="line.361"></a>
+<span class="sourceLineNo">362</span>    /**<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * Releases a given key.<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * &lt;p&gt;<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * Key codes that have more than one physical key associated with them<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * (e.g. &lt;code&gt;KeyEvent.VK_SHIFT&lt;/code&gt; could mean either the<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     * left or right shift key) will map to the left key.<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     *<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * @param   keycode Key to release (e.g. &lt;code&gt;KeyEvent.VK_A&lt;/code&gt;)<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * @throws  IllegalArgumentException if &lt;code&gt;keycode&lt;/code&gt; is not a<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     *          valid key<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * @see  #keyPress(int)<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * @see     java.awt.event.KeyEvent<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     */<a name="line.374"></a>
+<span class="sourceLineNo">375</span>    public synchronized void keyRelease(int keycode) {<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        checkKeycodeArgument(keycode);<a name="line.376"></a>
+<span class="sourceLineNo">377</span>        peer.keyRelease(keycode);<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        afterEvent();<a name="line.378"></a>
+<span class="sourceLineNo">379</span>    }<a name="line.379"></a>
+<span class="sourceLineNo">380</span><a name="line.380"></a>
+<span class="sourceLineNo">381</span>    private void checkKeycodeArgument(int keycode) {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>        // rather than build a big table or switch statement here, we'll<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        // just check that the key isn't VK_UNDEFINED and assume that the<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        // peer implementations will throw an exception for other bogus<a name="line.384"></a>
+<span class="sourceLineNo">385</span>        // values e.g. -1, 999999<a name="line.385"></a>
+<span class="sourceLineNo">386</span>        if (keycode == KeyEvent.VK_UNDEFINED) {<a name="line.386"></a>
+<span class="sourceLineNo">387</span>            throw new IllegalArgumentException("Invalid key code");<a name="line.387"></a>
+<span class="sourceLineNo">388</span>        }<a name="line.388"></a>
+<span class="sourceLineNo">389</span>    }<a name="line.389"></a>
+<span class="sourceLineNo">390</span><a name="line.390"></a>
+<span class="sourceLineNo">391</span>    /**<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * Returns the color of a pixel at the given screen coordinates.<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * @param   x       X position of pixel<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * @param   y       Y position of pixel<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * @return  Color of the pixel<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     */<a name="line.396"></a>
+<span class="sourceLineNo">397</span>    public synchronized Color getPixelColor(int x, int y) {<a name="line.397"></a>
+<span class="sourceLineNo">398</span>        Color color = new Color(peer.getRGBPixel(gdLoc.x + x, gdLoc.y + y));<a name="line.398"></a>
+<span class="sourceLineNo">399</span>        return color;<a name="line.399"></a>
+<span class="sourceLineNo">400</span>    }<a name="line.400"></a>
+<span class="sourceLineNo">401</span><a name="line.401"></a>
+<span class="sourceLineNo">402</span>    /**<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * Creates an image containing pixels read from the screen.  This image does<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * not include the mouse cursor.<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * @param   screenRect      Rect to capture in screen coordinates<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * @return  The captured image<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * @throws  IllegalArgumentException if &lt;code&gt;screenRect&lt;/code&gt; width and height are not greater than zero<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * @throws  SecurityException if &lt;code&gt;readDisplayPixels&lt;/code&gt; permission is not granted<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * @see     SecurityManager#checkPermission<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * @see     AWTPermission<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     */<a name="line.411"></a>
+<span class="sourceLineNo">412</span>    public synchronized BufferedImage createScreenCapture(Rectangle screenRect) {<a name="line.412"></a>
+<span class="sourceLineNo">413</span>        checkScreenCaptureAllowed();<a name="line.413"></a>
+<span class="sourceLineNo">414</span><a name="line.414"></a>
+<span class="sourceLineNo">415</span>        // according to the spec, screenRect is relative to robot's GD<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        Rectangle translatedRect = new Rectangle(screenRect);<a name="line.416"></a>
+<span class="sourceLineNo">417</span>        translatedRect.translate(gdLoc.x, gdLoc.y);<a name="line.417"></a>
+<span class="sourceLineNo">418</span>        checkValidRect(translatedRect);<a name="line.418"></a>
+<span class="sourceLineNo">419</span><a name="line.419"></a>
+<span class="sourceLineNo">420</span>        BufferedImage image;<a name="line.420"></a>
+<span class="sourceLineNo">421</span>        DataBufferInt buffer;<a name="line.421"></a>
+<span class="sourceLineNo">422</span>        WritableRaster raster;<a name="line.422"></a>
+<span class="sourceLineNo">423</span><a name="line.423"></a>
+<span class="sourceLineNo">424</span>        if (screenCapCM == null) {<a name="line.424"></a>
+<span class="sourceLineNo">425</span>            /*<a name="line.425"></a>
+<span class="sourceLineNo">426</span>             * Fix for 4285201<a name="line.426"></a>
+<span class="sourceLineNo">427</span>             * Create a DirectColorModel equivalent to the default RGB ColorModel,<a name="line.427"></a>
+<span class="sourceLineNo">428</span>             * except with no Alpha component.<a name="line.428"></a>
+<span class="sourceLineNo">429</span>             */<a name="line.429"></a>
+<span class="sourceLineNo">430</span><a name="line.430"></a>
+<span class="sourceLineNo">431</span>            screenCapCM = new DirectColorModel(24,<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                                               /* red mask */    0x00FF0000,<a name="line.432"></a>
+<span class="sourceLineNo">433</span>                                               /* green mask */  0x0000FF00,<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                                               /* blue mask */   0x000000FF);<a name="line.434"></a>
+<span class="sourceLineNo">435</span>        }<a name="line.435"></a>
+<span class="sourceLineNo">436</span><a name="line.436"></a>
+<span class="sourceLineNo">437</span>        // need to sync the toolkit prior to grabbing the pixels since in some<a name="line.437"></a>
+<span class="sourceLineNo">438</span>        // cases rendering to the screen may be delayed<a name="line.438"></a>
+<span class="sourceLineNo">439</span>        Toolkit.getDefaultToolkit().sync();<a name="line.439"></a>
+<span class="sourceLineNo">440</span><a name="line.440"></a>
+<span class="sourceLineNo">441</span>        int pixels[];<a name="line.441"></a>
+<span class="sourceLineNo">442</span>        int[] bandmasks = new int[3];<a name="line.442"></a>
+<span class="sourceLineNo">443</span><a name="line.443"></a>
+<span class="sourceLineNo">444</span>        pixels = peer.getRGBPixels(translatedRect);<a name="line.444"></a>
+<span class="sourceLineNo">445</span>        buffer = new DataBufferInt(pixels, pixels.length);<a name="line.445"></a>
+<span class="sourceLineNo">446</span><a name="line.446"></a>
+<span class="sourceLineNo">447</span>        bandmasks[0] = screenCapCM.getRedMask();<a name="line.447"></a>
+<span class="sourceLineNo">448</span>        bandmasks[1] = screenCapCM.getGreenMask();<a name="line.448"></a>
+<span class="sourceLineNo">449</span>        bandmasks[2] = screenCapCM.getBlueMask();<a name="line.449"></a>
+<span class="sourceLineNo">450</span><a name="line.450"></a>
+<span class="sourceLineNo">451</span>        raster = Raster.createPackedRaster(buffer, translatedRect.width, translatedRect.height, translatedRect.width, bandmasks, null);<a name="line.451"></a>
+<span class="sourceLineNo">452</span>        SunWritableRaster.makeTrackable(buffer);<a name="line.452"></a>
+<span class="sourceLineNo">453</span><a name="line.453"></a>
+<span class="sourceLineNo">454</span>        image = new BufferedImage(screenCapCM, raster, false, null);<a name="line.454"></a>
+<span class="sourceLineNo">455</span><a name="line.455"></a>
+<span class="sourceLineNo">456</span>        return image;<a name="line.456"></a>
+<span class="sourceLineNo">457</span>    }<a name="line.457"></a>
+<span class="sourceLineNo">458</span><a name="line.458"></a>
+<span class="sourceLineNo">459</span>    private static void checkValidRect(Rectangle rect) {<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        if (rect.width &lt;= 0 || rect.height &lt;= 0) {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>            throw new IllegalArgumentException("Rectangle width and height must be &gt; 0");<a name="line.461"></a>
+<span class="sourceLineNo">462</span>        }<a name="line.462"></a>
+<span class="sourceLineNo">463</span>    }<a name="line.463"></a>
+<span class="sourceLineNo">464</span><a name="line.464"></a>
+<span class="sourceLineNo">465</span>    private static void checkScreenCaptureAllowed() {<a name="line.465"></a>
+<span class="sourceLineNo">466</span>        SecurityManager security = System.getSecurityManager();<a name="line.466"></a>
+<span class="sourceLineNo">467</span>        if (security != null) {<a name="line.467"></a>
+<span class="sourceLineNo">468</span>            security.checkPermission(<a name="line.468"></a>
+<span class="sourceLineNo">469</span>                SecurityConstants.AWT.READ_DISPLAY_PIXELS_PERMISSION);<a name="line.469"></a>
+<span class="sourceLineNo">470</span>        }<a name="line.470"></a>
+<span class="sourceLineNo">471</span>    }<a name="line.471"></a>
+<span class="sourceLineNo">472</span><a name="line.472"></a>
+<span class="sourceLineNo">473</span>    /*<a name="line.473"></a>
+<span class="sourceLineNo">474</span>     * Called after an event is generated<a name="line.474"></a>
+<span class="sourceLineNo">475</span>     */<a name="line.475"></a>
+<span class="sourceLineNo">476</span>    private void afterEvent() {<a name="line.476"></a>
+<span class="sourceLineNo">477</span>        autoWaitForIdle();<a name="line.477"></a>
+<span class="sourceLineNo">478</span>        autoDelay();<a name="line.478"></a>
+<span class="sourceLineNo">479</span>    }<a name="line.479"></a>
+<span class="sourceLineNo">480</span><a name="line.480"></a>
+<span class="sourceLineNo">481</span>    /**<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     * Returns whether this Robot automatically invokes &lt;code&gt;waitForIdle&lt;/code&gt;<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     * after generating an event.<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * @return Whether &lt;code&gt;waitForIdle&lt;/code&gt; is automatically called<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     */<a name="line.485"></a>
+<span class="sourceLineNo">486</span>    public synchronized boolean isAutoWaitForIdle() {<a name="line.486"></a>
+<span class="sourceLineNo">487</span>        return isAutoWaitForIdle;<a name="line.487"></a>
+<span class="sourceLineNo">488</span>    }<a name="line.488"></a>
+<span class="sourceLineNo">489</span><a name="line.489"></a>
+<span class="sourceLineNo">490</span>    /**<a name="line.490"></a>
+<span class="sourceLineNo">491</span>     * Sets whether this Robot automatically invokes &lt;code&gt;waitForIdle&lt;/code&gt;<a name="line.491"></a>
+<span class="sourceLineNo">492</span>     * after generating an event.<a name="line.492"></a>
+<span class="sourceLineNo">493</span>     * @param   isOn    Whether &lt;code&gt;waitForIdle&lt;/code&gt; is automatically invoked<a name="line.493"></a>
+<span class="sourceLineNo">494</span>     */<a name="line.494"></a>
+<span class="sourceLineNo">495</span>    public synchronized void setAutoWaitForIdle(boolean isOn) {<a name="line.495"></a>
+<span class="sourceLineNo">496</span>        isAutoWaitForIdle = isOn;<a name="line.496"></a>
+<span class="sourceLineNo">497</span>    }<a name="line.497"></a>
+<span class="sourceLineNo">498</span><a name="line.498"></a>
+<span class="sourceLineNo">499</span>    /*<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     * Calls waitForIdle after every event if so desired.<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     */<a name="line.501"></a>
+<span class="sourceLineNo">502</span>    private void autoWaitForIdle() {<a name="line.502"></a>
+<span class="sourceLineNo">503</span>        if (isAutoWaitForIdle) {<a name="line.503"></a>
+<span class="sourceLineNo">504</span>            waitForIdle();<a name="line.504"></a>
+<span class="sourceLineNo">505</span>        }<a name="line.505"></a>
+<span class="sourceLineNo">506</span>    }<a name="line.506"></a>
+<span class="sourceLineNo">507</span><a name="line.507"></a>
+<span class="sourceLineNo">508</span>    /**<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     * Returns the number of milliseconds this Robot sleeps after generating an event.<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     */<a name="line.510"></a>
+<span class="sourceLineNo">511</span>    public synchronized int getAutoDelay() {<a name="line.511"></a>
+<span class="sourceLineNo">512</span>        return autoDelay;<a name="line.512"></a>
+<span class="sourceLineNo">513</span>    }<a name="line.513"></a>
+<span class="sourceLineNo">514</span><a name="line.514"></a>
+<span class="sourceLineNo">515</span>    /**<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     * Sets the number of milliseconds this Robot sleeps after generating an event.<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * @throws  IllegalArgumentException If &lt;code&gt;ms&lt;/code&gt; is not between 0 and 60,000 milliseconds inclusive<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     */<a name="line.518"></a>
+<span class="sourceLineNo">519</span>    public synchronized void setAutoDelay(int ms) {<a name="line.519"></a>
+<span class="sourceLineNo">520</span>        checkDelayArgument(ms);<a name="line.520"></a>
+<span class="sourceLineNo">521</span>        autoDelay = ms;<a name="line.521"></a>
+<span class="sourceLineNo">522</span>    }<a name="line.522"></a>
+<span class="sourceLineNo">523</span><a name="line.523"></a>
+<span class="sourceLineNo">524</span>    /*<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     * Automatically sleeps for the specified interval after event generated.<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     */<a name="line.526"></a>
+<span class="sourceLineNo">527</span>    private void autoDelay() {<a name="line.527"></a>
+<span class="sourceLineNo">528</span>        delay(autoDelay);<a name="line.528"></a>
+<span class="sourceLineNo">529</span>    }<a name="line.529"></a>
+<span class="sourceLineNo">530</span><a name="line.530"></a>
+<span class="sourceLineNo">531</span>    /**<a name="line.531"></a>
+<span class="sourceLineNo">532</span>     * Sleeps for the specified time.<a name="line.532"></a>
+<span class="sourceLineNo">533</span>     * To catch any &lt;code&gt;InterruptedException&lt;/code&gt;s that occur,<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * &lt;code&gt;Thread.sleep()&lt;/code&gt; may be used instead.<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     * @param   ms      time to sleep in milliseconds<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * @throws  IllegalArgumentException if &lt;code&gt;ms&lt;/code&gt; is not between 0 and 60,000 milliseconds inclusive<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * @see     java.lang.Thread#sleep<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     */<a name="line.538"></a>
+<span class="sourceLineNo">539</span>    public synchronized void delay(int ms) {<a name="line.539"></a>
+<span class="sourceLineNo">540</span>        checkDelayArgument(ms);<a name="line.540"></a>
+<span class="sourceLineNo">541</span>        try {<a name="line.541"></a>
+<span class="sourceLineNo">542</span>            Thread.sleep(ms);<a name="line.542"></a>
+<span class="sourceLineNo">543</span>        } catch(InterruptedException ite) {<a name="line.543"></a>
+<span class="sourceLineNo">544</span>            ite.printStackTrace();<a name="line.544"></a>
+<span class="sourceLineNo">545</span>        }<a name="line.545"></a>
+<span class="sourceLineNo">546</span>    }<a name="line.546"></a>
+<span class="sourceLineNo">547</span><a name="line.547"></a>
+<span class="sourceLineNo">548</span>    private void checkDelayArgument(int ms) {<a name="line.548"></a>
+<span class="sourceLineNo">549</span>        if (ms &lt; 0 || ms &gt; MAX_DELAY) {<a name="line.549"></a>
+<span class="sourceLineNo">550</span>            throw new IllegalArgumentException("Delay must be to 0 to 60,000ms");<a name="line.550"></a>
+<span class="sourceLineNo">551</span>        }<a name="line.551"></a>
+<span class="sourceLineNo">552</span>    }<a name="line.552"></a>
+<span class="sourceLineNo">553</span><a name="line.553"></a>
+<span class="sourceLineNo">554</span>    /**<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     * Waits until all events currently on the event queue have been processed.<a name="line.555"></a>
+<span class="sourceLineNo">556</span>     * @throws  IllegalThreadStateException if called on the AWT event dispatching thread<a name="line.556"></a>
+<span class="sourceLineNo">557</span>     */<a name="line.557"></a>
+<span class="sourceLineNo">558</span>    public synchronized void waitForIdle() {<a name="line.558"></a>
+<span class="sourceLineNo">559</span>        checkNotDispatchThread();<a name="line.559"></a>
+<span class="sourceLineNo">560</span>        // post a dummy event to the queue so we know when<a name="line.560"></a>
+<span class="sourceLineNo">561</span>        // all the events before it have been processed<a name="line.561"></a>
+<span class="sourceLineNo">562</span>        try {<a name="line.562"></a>
+<span class="sourceLineNo">563</span>            SunToolkit.flushPendingEvents();<a name="line.563"></a>
+<span class="sourceLineNo">564</span>            EventQueue.invokeAndWait( new Runnable() {<a name="line.564"></a>
+<span class="sourceLineNo">565</span>                                            public void run() {<a name="line.565"></a>
+<span class="sourceLineNo">566</span>                                                // dummy implementation<a name="line.566"></a>
+<span class="sourceLineNo">567</span>                                            }<a name="line.567"></a>
+<span class="sourceLineNo">568</span>                                        } );<a name="line.568"></a>
+<span class="sourceLineNo">569</span>        } catch(InterruptedException ite) {<a name="line.569"></a>
+<span class="sourceLineNo">570</span>            System.err.println("Robot.waitForIdle, non-fatal exception caught:");<a name="line.570"></a>
+<span class="sourceLineNo">571</span>            ite.printStackTrace();<a name="line.571"></a>
+<span class="sourceLineNo">572</span>        } catch(InvocationTargetException ine) {<a name="line.572"></a>
+<span class="sourceLineNo">573</span>            System.err.println("Robot.waitForIdle, non-fatal exception caught:");<a name="line.573"></a>
+<span class="sourceLineNo">574</span>            ine.printStackTrace();<a name="line.574"></a>
+<span class="sourceLineNo">575</span>        }<a name="line.575"></a>
+<span class="sourceLineNo">576</span>    }<a name="line.576"></a>
+<span class="sourceLineNo">577</span><a name="line.577"></a>
+<span class="sourceLineNo">578</span>    private void checkNotDispatchThread() {<a name="line.578"></a>
+<span class="sourceLineNo">579</span>        if (EventQueue.isDispatchThread()) {<a name="line.579"></a>
+<span class="sourceLineNo">580</span>            throw new IllegalThreadStateException("Cannot call method from the event dispatcher thread");<a name="line.580"></a>
+<span class="sourceLineNo">581</span>        }<a name="line.581"></a>
+<span class="sourceLineNo">582</span>    }<a name="line.582"></a>
+<span class="sourceLineNo">583</span><a name="line.583"></a>
+<span class="sourceLineNo">584</span>    /**<a name="line.584"></a>
+<span class="sourceLineNo">585</span>     * Returns a string representation of this Robot.<a name="line.585"></a>
+<span class="sourceLineNo">586</span>     *<a name="line.586"></a>
+<span class="sourceLineNo">587</span>     * @return  the string representation.<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     */<a name="line.588"></a>
+<span class="sourceLineNo">589</span>    public synchronized String toString() {<a name="line.589"></a>
+<span class="sourceLineNo">590</span>        String params = "autoDelay = "+getAutoDelay()+", "+"autoWaitForIdle = "+isAutoWaitForIdle();<a name="line.590"></a>
+<span class="sourceLineNo">591</span>        return getClass().getName() + "[ " + params + " ]";<a name="line.591"></a>
+<span class="sourceLineNo">592</span>    }<a name="line.592"></a>
+<span class="sourceLineNo">593</span>}<a name="line.593"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

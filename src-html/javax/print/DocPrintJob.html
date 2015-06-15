@@ -1,0 +1,248 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.print;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import javax.print.attribute.PrintJobAttributeSet;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.print.attribute.PrintRequestAttributeSet;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.print.event.PrintJobAttributeListener;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import javax.print.event.PrintJobListener;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import javax.print.PrintException;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * This interface represents a print job that can print a specified<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * document with a set of job attributes.  An object implementing<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * this interface is obtained from a print service.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> *<a name="line.39"></a>
+<span class="sourceLineNo">040</span> */<a name="line.40"></a>
+<span class="sourceLineNo">041</span><a name="line.41"></a>
+<span class="sourceLineNo">042</span>public interface DocPrintJob {<a name="line.42"></a>
+<span class="sourceLineNo">043</span><a name="line.43"></a>
+<span class="sourceLineNo">044</span>    /**<a name="line.44"></a>
+<span class="sourceLineNo">045</span>     * Determines the {@link PrintService} object to which this print job<a name="line.45"></a>
+<span class="sourceLineNo">046</span>     * object is bound.<a name="line.46"></a>
+<span class="sourceLineNo">047</span>     *<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * @return  &lt;code&gt;PrintService&lt;/code&gt; object.<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     *<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     */<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    public PrintService getPrintService();<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /**<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * Obtains this Print Job's set of printing attributes.<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * The returned attribute set object is unmodifiable.<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * The returned attribute set object is a "snapshot" of this Print Job's<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * attribute set at the time of the {@link #getAttributes()} method<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * call; that is, the returned attribute set's object's contents will<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * not be updated if this Print Job's attribute set's contents change<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * in the future. To detect changes in attribute values, call<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * &lt;code&gt;getAttributes()&lt;/code&gt; again and compare the new attribute<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * set to the previous attribute set; alternatively, register a<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * listener for print job events.<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * The returned value may be an empty set but should not be null.<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * @return the print job attributes<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     */<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     public PrintJobAttributeSet getAttributes();<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>    /**<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * Registers a listener for event occurring during this print job.<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * If listener is null, no exception is thrown and no action is<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * performed.<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * If listener is already registered, it will be registered again.<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * @see #removePrintJobListener<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     *<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * @param listener  The object implementing the listener interface<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     *<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     */<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    public void addPrintJobListener(PrintJobListener listener);<a name="line.79"></a>
+<span class="sourceLineNo">080</span><a name="line.80"></a>
+<span class="sourceLineNo">081</span>    /**<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * Removes a listener from this print job.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * This method performs no function, nor does it throw an exception,<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * if the listener specified by the argument was not previously added<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * to this component. If listener is null, no exception is thrown and<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * no action is performed. If a listener was registered more than once<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * only one of the registrations will be removed.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * @see #addPrintJobListener<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     *<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @param listener  The object implementing the listener interface<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     */<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    public void removePrintJobListener(PrintJobListener listener);<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>    /**<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * Registers a listener for changes in the specified attributes.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * If listener is null, no exception is thrown and no action is<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * performed.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * To determine the attribute updates that may be reported by this job,<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * a client can call &lt;code&gt;getAttributes()&lt;/code&gt; and identify the<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * subset that are interesting and likely to be reported to the<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * listener. Clients expecting to be updated about changes in a<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * specific job attribute should verify it is in that set, but<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * updates about an attribute will be made only if it changes and this<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * is detected by the job. Also updates may be subject to batching<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * by the job. To minimise overhead in print job processing it is<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * recommended to listen on only that subset of attributes which<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * are likely to change.<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * If the specified set is empty no attribute updates will be reported<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * to the listener.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * If the attribute set is null, then this means to listen on all<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * dynamic attributes that the job supports. This may result in no<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * update notifications if a job can not report any attribute updates.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * If listener is already registered, it will be registered again.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @see #removePrintJobAttributeListener<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     *<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @param listener  The object implementing the listener interface<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * @param attributes The attributes to listen on, or null to mean<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * all attributes that can change, as determined by the job.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     */<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    public void addPrintJobAttributeListener(<a name="line.121"></a>
+<span class="sourceLineNo">122</span>                                  PrintJobAttributeListener listener,<a name="line.122"></a>
+<span class="sourceLineNo">123</span>                                  PrintJobAttributeSet attributes);<a name="line.123"></a>
+<span class="sourceLineNo">124</span><a name="line.124"></a>
+<span class="sourceLineNo">125</span>    /**<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * Removes an attribute listener from this print job.<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * This method performs no function, nor does it throw an exception,<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * if the listener specified by the argument was not previously added<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * to this component. If the listener is null, no exception is thrown<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * and no action is performed.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * If a listener is registered more than once, even for a different<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * set of attributes, no guarantee is made which listener is removed.<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * @see #addPrintJobAttributeListener<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     *<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * @param listener  The object implementing the listener interface<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     *<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     */<a name="line.137"></a>
+<span class="sourceLineNo">138</span>    public void removePrintJobAttributeListener(<a name="line.138"></a>
+<span class="sourceLineNo">139</span>                                      PrintJobAttributeListener listener);<a name="line.139"></a>
+<span class="sourceLineNo">140</span><a name="line.140"></a>
+<span class="sourceLineNo">141</span>    /**<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * Prints a document with the specified job attributes.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * This method should only be called once for a given print job.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * Calling it again will not result in a new job being spooled to<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * the printer. The service implementation will define policy<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * for service interruption and recovery.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * When the print method returns, printing may not yet have completed as<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * printing may happen asynchronously, perhaps in a different thread.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * Application clients which  want to monitor the success or failure<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * should register a PrintJobListener.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * &lt;p&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * Print service implementors should close any print data streams (ie<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * Reader or InputStream implementations) that they obtain<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * from the client doc. Robust clients may still wish to verify this.<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * An exception is always generated if a &lt;code&gt;DocFlavor&lt;/code&gt; cannot<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * be printed.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * @param doc       The document to be printed. If must be a flavor<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *                                  supported by this PrintJob.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @param attributes The job attributes to be applied to this print job.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *        If this parameter is null then the default attributes are used.<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @throws PrintException The exception additionally may implement<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * an interface that more precisely describes the cause of the<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * exception<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * &lt;ul&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * &lt;li&gt;FlavorException.<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     *  If the document has a flavor not supported by this print job.<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * &lt;li&gt;AttributeException.<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *  If one or more of the attributes are not valid for this print job.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * &lt;/ul&gt;<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    public void print(Doc doc, PrintRequestAttributeSet attributes)<a name="line.173"></a>
+<span class="sourceLineNo">174</span>          throws PrintException;<a name="line.174"></a>
+<span class="sourceLineNo">175</span><a name="line.175"></a>
+<span class="sourceLineNo">176</span>}<a name="line.176"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,1021 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.Component;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.Image;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.image.ImageObserver;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * The &lt;code&gt;MediaTracker&lt;/code&gt; class is a utility class to track<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * the status of a number of media objects. Media objects could<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * include audio clips as well as images, though currently only<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * images are supported.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * To use a media tracker, create an instance of<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;code&gt;MediaTracker&lt;/code&gt; and call its &lt;code&gt;addImage&lt;/code&gt;<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * method for each image to be tracked. In addition, each image can<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * be assigned a unique identifier. This identifier controls the<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * priority order in which the images are fetched. It can also be used<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * to identify unique subsets of the images that can be waited on<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * independently. Images with a lower ID are loaded in preference to<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * those with a higher ID number.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;p&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * Tracking an animated image<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * might not always be useful<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * due to the multi-part nature of animated image<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * loading and painting,<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * but it is supported.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;code&gt;MediaTracker&lt;/code&gt; treats an animated image<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * as completely loaded<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * when the first frame is completely loaded.<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * At that point, the &lt;code&gt;MediaTracker&lt;/code&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * signals any waiters<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * that the image is completely loaded.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * If no &lt;code&gt;ImageObserver&lt;/code&gt;s are observing the image<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * when the first frame has finished loading,<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * the image might flush itself<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * to conserve resources<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * (see {@link Image#flush()}).<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;p&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * Here is an example of using &lt;code&gt;MediaTracker&lt;/code&gt;:<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;p&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * &lt;hr&gt;&lt;blockquote&gt;&lt;pre&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * import java.applet.Applet;<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * import java.awt.Color;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * import java.awt.Image;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * import java.awt.Graphics;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * import java.awt.MediaTracker;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * public class ImageBlaster extends Applet implements Runnable {<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *      MediaTracker tracker;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *      Image bg;<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *      Image anim[] = new Image[5];<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *      int index;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *      Thread animator;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *      // Get the images for the background (id == 0)<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *      // and the animation frames (id == 1)<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *      // and add them to the MediaTracker<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *      public void init() {<a name="line.86"></a>
+<span class="sourceLineNo">087</span> *          tracker = new MediaTracker(this);<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *          bg = getImage(getDocumentBase(),<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *                  "images/background.gif");<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *          tracker.addImage(bg, 0);<a name="line.90"></a>
+<span class="sourceLineNo">091</span> *          for (int i = 0; i &lt; 5; i++) {<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *              anim[i] = getImage(getDocumentBase(),<a name="line.92"></a>
+<span class="sourceLineNo">093</span> *                      "images/anim"+i+".gif");<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *              tracker.addImage(anim[i], 1);<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *          }<a name="line.95"></a>
+<span class="sourceLineNo">096</span> *      }<a name="line.96"></a>
+<span class="sourceLineNo">097</span> *<a name="line.97"></a>
+<span class="sourceLineNo">098</span> *      // Start the animation thread.<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *      public void start() {<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *          animator = new Thread(this);<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *          animator.start();<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *      }<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *      // Stop the animation thread.<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *      public void stop() {<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *          animator = null;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *      }<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *      // Run the animation thread.<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *      // First wait for the background image to fully load<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *      // and paint.  Then wait for all of the animation<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *      // frames to finish loading. Finally, loop and<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *      // increment the animation frame index.<a name="line.113"></a>
+<span class="sourceLineNo">114</span> *      public void run() {<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *          try {<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *              tracker.waitForID(0);<a name="line.116"></a>
+<span class="sourceLineNo">117</span> *              tracker.waitForID(1);<a name="line.117"></a>
+<span class="sourceLineNo">118</span> *          } catch (InterruptedException e) {<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *              return;<a name="line.119"></a>
+<span class="sourceLineNo">120</span> *          }<a name="line.120"></a>
+<span class="sourceLineNo">121</span> *          Thread me = Thread.currentThread();<a name="line.121"></a>
+<span class="sourceLineNo">122</span> *          while (animator == me) {<a name="line.122"></a>
+<span class="sourceLineNo">123</span> *              try {<a name="line.123"></a>
+<span class="sourceLineNo">124</span> *                  Thread.sleep(100);<a name="line.124"></a>
+<span class="sourceLineNo">125</span> *              } catch (InterruptedException e) {<a name="line.125"></a>
+<span class="sourceLineNo">126</span> *                  break;<a name="line.126"></a>
+<span class="sourceLineNo">127</span> *              }<a name="line.127"></a>
+<span class="sourceLineNo">128</span> *              synchronized (this) {<a name="line.128"></a>
+<span class="sourceLineNo">129</span> *                  index++;<a name="line.129"></a>
+<span class="sourceLineNo">130</span> *                  if (index &gt;= anim.length) {<a name="line.130"></a>
+<span class="sourceLineNo">131</span> *                      index = 0;<a name="line.131"></a>
+<span class="sourceLineNo">132</span> *                  }<a name="line.132"></a>
+<span class="sourceLineNo">133</span> *              }<a name="line.133"></a>
+<span class="sourceLineNo">134</span> *              repaint();<a name="line.134"></a>
+<span class="sourceLineNo">135</span> *          }<a name="line.135"></a>
+<span class="sourceLineNo">136</span> *      }<a name="line.136"></a>
+<span class="sourceLineNo">137</span> *<a name="line.137"></a>
+<span class="sourceLineNo">138</span> *      // The background image fills the frame so we<a name="line.138"></a>
+<span class="sourceLineNo">139</span> *      // don't need to clear the applet on repaints.<a name="line.139"></a>
+<span class="sourceLineNo">140</span> *      // Just call the paint method.<a name="line.140"></a>
+<span class="sourceLineNo">141</span> *      public void update(Graphics g) {<a name="line.141"></a>
+<span class="sourceLineNo">142</span> *          paint(g);<a name="line.142"></a>
+<span class="sourceLineNo">143</span> *      }<a name="line.143"></a>
+<span class="sourceLineNo">144</span> *<a name="line.144"></a>
+<span class="sourceLineNo">145</span> *      // Paint a large red rectangle if there are any errors<a name="line.145"></a>
+<span class="sourceLineNo">146</span> *      // loading the images.  Otherwise always paint the<a name="line.146"></a>
+<span class="sourceLineNo">147</span> *      // background so that it appears incrementally as it<a name="line.147"></a>
+<span class="sourceLineNo">148</span> *      // is loading.  Finally, only paint the current animation<a name="line.148"></a>
+<span class="sourceLineNo">149</span> *      // frame if all of the frames (id == 1) are done loading,<a name="line.149"></a>
+<span class="sourceLineNo">150</span> *      // so that we don't get partial animations.<a name="line.150"></a>
+<span class="sourceLineNo">151</span> *      public void paint(Graphics g) {<a name="line.151"></a>
+<span class="sourceLineNo">152</span> *          if ((tracker.statusAll(false) &amp; MediaTracker.ERRORED) != 0) {<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *              g.setColor(Color.red);<a name="line.153"></a>
+<span class="sourceLineNo">154</span> *              g.fillRect(0, 0, size().width, size().height);<a name="line.154"></a>
+<span class="sourceLineNo">155</span> *              return;<a name="line.155"></a>
+<span class="sourceLineNo">156</span> *          }<a name="line.156"></a>
+<span class="sourceLineNo">157</span> *          g.drawImage(bg, 0, 0, this);<a name="line.157"></a>
+<span class="sourceLineNo">158</span> *          if (tracker.statusID(1, false) == MediaTracker.COMPLETE) {<a name="line.158"></a>
+<span class="sourceLineNo">159</span> *              g.drawImage(anim[index], 10, 10, this);<a name="line.159"></a>
+<span class="sourceLineNo">160</span> *          }<a name="line.160"></a>
+<span class="sourceLineNo">161</span> *      }<a name="line.161"></a>
+<span class="sourceLineNo">162</span> * }<a name="line.162"></a>
+<span class="sourceLineNo">163</span> * &lt;/pre&gt;&lt;/blockquote&gt;&lt;hr&gt;<a name="line.163"></a>
+<span class="sourceLineNo">164</span> *<a name="line.164"></a>
+<span class="sourceLineNo">165</span> * @author      Jim Graham<a name="line.165"></a>
+<span class="sourceLineNo">166</span> * @since       JDK1.0<a name="line.166"></a>
+<span class="sourceLineNo">167</span> */<a name="line.167"></a>
+<span class="sourceLineNo">168</span>public class MediaTracker implements java.io.Serializable {<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    /**<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * A given &lt;code&gt;Component&lt;/code&gt; that will be<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * tracked by a media tracker where the image will<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * eventually be drawn.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @serial<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @see #MediaTracker(Component)<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     */<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    Component target;<a name="line.178"></a>
+<span class="sourceLineNo">179</span>    /**<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * The head of the list of &lt;code&gt;Images&lt;/code&gt; that is being<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * tracked by the &lt;code&gt;MediaTracker&lt;/code&gt;.<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     *<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * @serial<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * @see #addImage(Image, int)<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * @see #removeImage(Image)<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     */<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    MediaEntry head;<a name="line.187"></a>
+<span class="sourceLineNo">188</span><a name="line.188"></a>
+<span class="sourceLineNo">189</span>    /*<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * JDK 1.1 serialVersionUID<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     */<a name="line.191"></a>
+<span class="sourceLineNo">192</span>    private static final long serialVersionUID = -483174189758638095L;<a name="line.192"></a>
+<span class="sourceLineNo">193</span><a name="line.193"></a>
+<span class="sourceLineNo">194</span>    /**<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * Creates a media tracker to track images for a given component.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @param     comp the component on which the images<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *                     will eventually be drawn<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     */<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    public MediaTracker(Component comp) {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        target = comp;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>    }<a name="line.201"></a>
+<span class="sourceLineNo">202</span><a name="line.202"></a>
+<span class="sourceLineNo">203</span>    /**<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * Adds an image to the list of images being tracked by this media<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * tracker. The image will eventually be rendered at its default<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * (unscaled) size.<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * @param     image   the image to be tracked<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * @param     id      an identifier used to track this image<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     */<a name="line.209"></a>
+<span class="sourceLineNo">210</span>    public void addImage(Image image, int id) {<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        addImage(image, id, -1, -1);<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    }<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>    /**<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * Adds a scaled image to the list of images being tracked<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * by this media tracker. The image will eventually be<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * rendered at the indicated width and height.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @param     image   the image to be tracked<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * @param     id   an identifier that can be used to track this image<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * @param     w    the width at which the image is rendered<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * @param     h    the height at which the image is rendered<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     */<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    public synchronized void addImage(Image image, int id, int w, int h) {<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        head = MediaEntry.insert(head,<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                                 new ImageMediaEntry(this, image, id, w, h));<a name="line.226"></a>
+<span class="sourceLineNo">227</span>    }<a name="line.227"></a>
+<span class="sourceLineNo">228</span><a name="line.228"></a>
+<span class="sourceLineNo">229</span>    /**<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * Flag indicating that media is currently being loaded.<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * @see         java.awt.MediaTracker#statusAll<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * @see         java.awt.MediaTracker#statusID<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     */<a name="line.233"></a>
+<span class="sourceLineNo">234</span>    public static final int LOADING = 1;<a name="line.234"></a>
+<span class="sourceLineNo">235</span><a name="line.235"></a>
+<span class="sourceLineNo">236</span>    /**<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * Flag indicating that the downloading of media was aborted.<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * @see         java.awt.MediaTracker#statusAll<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * @see         java.awt.MediaTracker#statusID<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     */<a name="line.240"></a>
+<span class="sourceLineNo">241</span>    public static final int ABORTED = 2;<a name="line.241"></a>
+<span class="sourceLineNo">242</span><a name="line.242"></a>
+<span class="sourceLineNo">243</span>    /**<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * Flag indicating that the downloading of media encountered<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * an error.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * @see         java.awt.MediaTracker#statusAll<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * @see         java.awt.MediaTracker#statusID<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     */<a name="line.248"></a>
+<span class="sourceLineNo">249</span>    public static final int ERRORED = 4;<a name="line.249"></a>
+<span class="sourceLineNo">250</span><a name="line.250"></a>
+<span class="sourceLineNo">251</span>    /**<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * Flag indicating that the downloading of media was completed<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * successfully.<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * @see         java.awt.MediaTracker#statusAll<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * @see         java.awt.MediaTracker#statusID<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     */<a name="line.256"></a>
+<span class="sourceLineNo">257</span>    public static final int COMPLETE = 8;<a name="line.257"></a>
+<span class="sourceLineNo">258</span><a name="line.258"></a>
+<span class="sourceLineNo">259</span>    static final int DONE = (ABORTED | ERRORED | COMPLETE);<a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>    /**<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * Checks to see if all images being tracked by this media tracker<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * have finished loading.<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * &lt;p&gt;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * This method does not start loading the images if they are not<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * already loading.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * &lt;p&gt;<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * If there is an error while loading or scaling an image, then that<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * image is considered to have finished loading. Use the<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * &lt;code&gt;isErrorAny&lt;/code&gt; or &lt;code&gt;isErrorID&lt;/code&gt; methods to<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * check for errors.<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @return      &lt;code&gt;true&lt;/code&gt; if all images have finished loading,<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     *                       have been aborted, or have encountered<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     *                       an error; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * @see         java.awt.MediaTracker#checkAll(boolean)<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * @see         java.awt.MediaTracker#checkID<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * @see         java.awt.MediaTracker#isErrorAny<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * @see         java.awt.MediaTracker#isErrorID<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     */<a name="line.279"></a>
+<span class="sourceLineNo">280</span>    public boolean checkAll() {<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        return checkAll(false, true);<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    }<a name="line.282"></a>
+<span class="sourceLineNo">283</span><a name="line.283"></a>
+<span class="sourceLineNo">284</span>    /**<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * Checks to see if all images being tracked by this media tracker<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * have finished loading.<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * &lt;p&gt;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * If the value of the &lt;code&gt;load&lt;/code&gt; flag is &lt;code&gt;true&lt;/code&gt;,<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * then this method starts loading any images that are not yet<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * being loaded.<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * &lt;p&gt;<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * If there is an error while loading or scaling an image, that<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * image is considered to have finished loading. Use the<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * &lt;code&gt;isErrorAny&lt;/code&gt; and &lt;code&gt;isErrorID&lt;/code&gt; methods to<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * check for errors.<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * @param       load   if &lt;code&gt;true&lt;/code&gt;, start loading any<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     *                       images that are not yet being loaded<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * @return      &lt;code&gt;true&lt;/code&gt; if all images have finished loading,<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     *                       have been aborted, or have encountered<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     *                       an error; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * @see         java.awt.MediaTracker#checkID<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * @see         java.awt.MediaTracker#checkAll()<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * @see         java.awt.MediaTracker#isErrorAny()<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * @see         java.awt.MediaTracker#isErrorID(int)<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     */<a name="line.305"></a>
+<span class="sourceLineNo">306</span>    public boolean checkAll(boolean load) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>        return checkAll(load, true);<a name="line.307"></a>
+<span class="sourceLineNo">308</span>    }<a name="line.308"></a>
+<span class="sourceLineNo">309</span><a name="line.309"></a>
+<span class="sourceLineNo">310</span>    private synchronized boolean checkAll(boolean load, boolean verify) {<a name="line.310"></a>
+<span class="sourceLineNo">311</span>        MediaEntry cur = head;<a name="line.311"></a>
+<span class="sourceLineNo">312</span>        boolean done = true;<a name="line.312"></a>
+<span class="sourceLineNo">313</span>        while (cur != null) {<a name="line.313"></a>
+<span class="sourceLineNo">314</span>            if ((cur.getStatus(load, verify) &amp; DONE) == 0) {<a name="line.314"></a>
+<span class="sourceLineNo">315</span>                done = false;<a name="line.315"></a>
+<span class="sourceLineNo">316</span>            }<a name="line.316"></a>
+<span class="sourceLineNo">317</span>            cur = cur.next;<a name="line.317"></a>
+<span class="sourceLineNo">318</span>        }<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        return done;<a name="line.319"></a>
+<span class="sourceLineNo">320</span>    }<a name="line.320"></a>
+<span class="sourceLineNo">321</span><a name="line.321"></a>
+<span class="sourceLineNo">322</span>    /**<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * Checks the error status of all of the images.<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * @return   &lt;code&gt;true&lt;/code&gt; if any of the images tracked<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     *                  by this media tracker had an error during<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     *                  loading; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * @see      java.awt.MediaTracker#isErrorID<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * @see      java.awt.MediaTracker#getErrorsAny<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     */<a name="line.329"></a>
+<span class="sourceLineNo">330</span>    public synchronized boolean isErrorAny() {<a name="line.330"></a>
+<span class="sourceLineNo">331</span>        MediaEntry cur = head;<a name="line.331"></a>
+<span class="sourceLineNo">332</span>        while (cur != null) {<a name="line.332"></a>
+<span class="sourceLineNo">333</span>            if ((cur.getStatus(false, true) &amp; ERRORED) != 0) {<a name="line.333"></a>
+<span class="sourceLineNo">334</span>                return true;<a name="line.334"></a>
+<span class="sourceLineNo">335</span>            }<a name="line.335"></a>
+<span class="sourceLineNo">336</span>            cur = cur.next;<a name="line.336"></a>
+<span class="sourceLineNo">337</span>        }<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        return false;<a name="line.338"></a>
+<span class="sourceLineNo">339</span>    }<a name="line.339"></a>
+<span class="sourceLineNo">340</span><a name="line.340"></a>
+<span class="sourceLineNo">341</span>    /**<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * Returns a list of all media that have encountered an error.<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * @return       an array of media objects tracked by this<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     *                        media tracker that have encountered<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     *                        an error, or &lt;code&gt;null&lt;/code&gt; if<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     *                        there are none with errors<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * @see          java.awt.MediaTracker#isErrorAny<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * @see          java.awt.MediaTracker#getErrorsID<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     */<a name="line.349"></a>
+<span class="sourceLineNo">350</span>    public synchronized Object[] getErrorsAny() {<a name="line.350"></a>
+<span class="sourceLineNo">351</span>        MediaEntry cur = head;<a name="line.351"></a>
+<span class="sourceLineNo">352</span>        int numerrors = 0;<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        while (cur != null) {<a name="line.353"></a>
+<span class="sourceLineNo">354</span>            if ((cur.getStatus(false, true) &amp; ERRORED) != 0) {<a name="line.354"></a>
+<span class="sourceLineNo">355</span>                numerrors++;<a name="line.355"></a>
+<span class="sourceLineNo">356</span>            }<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            cur = cur.next;<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        }<a name="line.358"></a>
+<span class="sourceLineNo">359</span>        if (numerrors == 0) {<a name="line.359"></a>
+<span class="sourceLineNo">360</span>            return null;<a name="line.360"></a>
+<span class="sourceLineNo">361</span>        }<a name="line.361"></a>
+<span class="sourceLineNo">362</span>        Object errors[] = new Object[numerrors];<a name="line.362"></a>
+<span class="sourceLineNo">363</span>        cur = head;<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        numerrors = 0;<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        while (cur != null) {<a name="line.365"></a>
+<span class="sourceLineNo">366</span>            if ((cur.getStatus(false, false) &amp; ERRORED) != 0) {<a name="line.366"></a>
+<span class="sourceLineNo">367</span>                errors[numerrors++] = cur.getMedia();<a name="line.367"></a>
+<span class="sourceLineNo">368</span>            }<a name="line.368"></a>
+<span class="sourceLineNo">369</span>            cur = cur.next;<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        }<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        return errors;<a name="line.371"></a>
+<span class="sourceLineNo">372</span>    }<a name="line.372"></a>
+<span class="sourceLineNo">373</span><a name="line.373"></a>
+<span class="sourceLineNo">374</span>    /**<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * Starts loading all images tracked by this media tracker. This<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * method waits until all the images being tracked have finished<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * loading.<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     * &lt;p&gt;<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * If there is an error while loading or scaling an image, then that<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * image is considered to have finished loading. Use the<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * &lt;code&gt;isErrorAny&lt;/code&gt; or &lt;code&gt;isErrorID&lt;/code&gt; methods to<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     * check for errors.<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * @see         java.awt.MediaTracker#waitForID(int)<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     * @see         java.awt.MediaTracker#waitForAll(long)<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * @see         java.awt.MediaTracker#isErrorAny<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * @see         java.awt.MediaTracker#isErrorID<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     * @exception   InterruptedException  if any thread has<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     *                                     interrupted this thread<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     */<a name="line.389"></a>
+<span class="sourceLineNo">390</span>    public void waitForAll() throws InterruptedException {<a name="line.390"></a>
+<span class="sourceLineNo">391</span>        waitForAll(0);<a name="line.391"></a>
+<span class="sourceLineNo">392</span>    }<a name="line.392"></a>
+<span class="sourceLineNo">393</span><a name="line.393"></a>
+<span class="sourceLineNo">394</span>    /**<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * Starts loading all images tracked by this media tracker. This<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * method waits until all the images being tracked have finished<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * loading, or until the length of time specified in milliseconds<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * by the &lt;code&gt;ms&lt;/code&gt; argument has passed.<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * &lt;p&gt;<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * If there is an error while loading or scaling an image, then<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     * that image is considered to have finished loading. Use the<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * &lt;code&gt;isErrorAny&lt;/code&gt; or &lt;code&gt;isErrorID&lt;/code&gt; methods to<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * check for errors.<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * @param       ms       the number of milliseconds to wait<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     *                       for the loading to complete<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * @return      &lt;code&gt;true&lt;/code&gt; if all images were successfully<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     *                       loaded; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * @see         java.awt.MediaTracker#waitForID(int)<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * @see         java.awt.MediaTracker#waitForAll(long)<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * @see         java.awt.MediaTracker#isErrorAny<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * @see         java.awt.MediaTracker#isErrorID<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * @exception   InterruptedException  if any thread has<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     *                                     interrupted this thread.<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     */<a name="line.414"></a>
+<span class="sourceLineNo">415</span>    public synchronized boolean waitForAll(long ms)<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        throws InterruptedException<a name="line.416"></a>
+<span class="sourceLineNo">417</span>    {<a name="line.417"></a>
+<span class="sourceLineNo">418</span>        long end = System.currentTimeMillis() + ms;<a name="line.418"></a>
+<span class="sourceLineNo">419</span>        boolean first = true;<a name="line.419"></a>
+<span class="sourceLineNo">420</span>        while (true) {<a name="line.420"></a>
+<span class="sourceLineNo">421</span>            int status = statusAll(first, first);<a name="line.421"></a>
+<span class="sourceLineNo">422</span>            if ((status &amp; LOADING) == 0) {<a name="line.422"></a>
+<span class="sourceLineNo">423</span>                return (status == COMPLETE);<a name="line.423"></a>
+<span class="sourceLineNo">424</span>            }<a name="line.424"></a>
+<span class="sourceLineNo">425</span>            first = false;<a name="line.425"></a>
+<span class="sourceLineNo">426</span>            long timeout;<a name="line.426"></a>
+<span class="sourceLineNo">427</span>            if (ms == 0) {<a name="line.427"></a>
+<span class="sourceLineNo">428</span>                timeout = 0;<a name="line.428"></a>
+<span class="sourceLineNo">429</span>            } else {<a name="line.429"></a>
+<span class="sourceLineNo">430</span>                timeout = end - System.currentTimeMillis();<a name="line.430"></a>
+<span class="sourceLineNo">431</span>                if (timeout &lt;= 0) {<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                    return false;<a name="line.432"></a>
+<span class="sourceLineNo">433</span>                }<a name="line.433"></a>
+<span class="sourceLineNo">434</span>            }<a name="line.434"></a>
+<span class="sourceLineNo">435</span>            wait(timeout);<a name="line.435"></a>
+<span class="sourceLineNo">436</span>        }<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    }<a name="line.437"></a>
+<span class="sourceLineNo">438</span><a name="line.438"></a>
+<span class="sourceLineNo">439</span>    /**<a name="line.439"></a>
+<span class="sourceLineNo">440</span>     * Calculates and returns the bitwise inclusive &lt;b&gt;OR&lt;/b&gt; of the<a name="line.440"></a>
+<span class="sourceLineNo">441</span>     * status of all media that are tracked by this media tracker.<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     * &lt;p&gt;<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * Possible flags defined by the<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     * &lt;code&gt;MediaTracker&lt;/code&gt; class are &lt;code&gt;LOADING&lt;/code&gt;,<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     * &lt;code&gt;ABORTED&lt;/code&gt;, &lt;code&gt;ERRORED&lt;/code&gt;, and<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     * &lt;code&gt;COMPLETE&lt;/code&gt;. An image that hasn't started<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     * loading has zero as its status.<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * &lt;p&gt;<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     * If the value of &lt;code&gt;load&lt;/code&gt; is &lt;code&gt;true&lt;/code&gt;, then<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * this method starts loading any images that are not yet being loaded.<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     *<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     * @param        load   if &lt;code&gt;true&lt;/code&gt;, start loading<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     *                            any images that are not yet being loaded<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     * @return       the bitwise inclusive &lt;b&gt;OR&lt;/b&gt; of the status of<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     *                            all of the media being tracked<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     * @see          java.awt.MediaTracker#statusID(int, boolean)<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     * @see          java.awt.MediaTracker#LOADING<a name="line.457"></a>
+<span class="sourceLineNo">458</span>     * @see          java.awt.MediaTracker#ABORTED<a name="line.458"></a>
+<span class="sourceLineNo">459</span>     * @see          java.awt.MediaTracker#ERRORED<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     * @see          java.awt.MediaTracker#COMPLETE<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     */<a name="line.461"></a>
+<span class="sourceLineNo">462</span>    public int statusAll(boolean load) {<a name="line.462"></a>
+<span class="sourceLineNo">463</span>        return statusAll(load, true);<a name="line.463"></a>
+<span class="sourceLineNo">464</span>    }<a name="line.464"></a>
+<span class="sourceLineNo">465</span><a name="line.465"></a>
+<span class="sourceLineNo">466</span>    private synchronized int statusAll(boolean load, boolean verify) {<a name="line.466"></a>
+<span class="sourceLineNo">467</span>        MediaEntry cur = head;<a name="line.467"></a>
+<span class="sourceLineNo">468</span>        int status = 0;<a name="line.468"></a>
+<span class="sourceLineNo">469</span>        while (cur != null) {<a name="line.469"></a>
+<span class="sourceLineNo">470</span>            status = status | cur.getStatus(load, verify);<a name="line.470"></a>
+<span class="sourceLineNo">471</span>            cur = cur.next;<a name="line.471"></a>
+<span class="sourceLineNo">472</span>        }<a name="line.472"></a>
+<span class="sourceLineNo">473</span>        return status;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>    }<a name="line.474"></a>
+<span class="sourceLineNo">475</span><a name="line.475"></a>
+<span class="sourceLineNo">476</span>    /**<a name="line.476"></a>
+<span class="sourceLineNo">477</span>     * Checks to see if all images tracked by this media tracker that<a name="line.477"></a>
+<span class="sourceLineNo">478</span>     * are tagged with the specified identifier have finished loading.<a name="line.478"></a>
+<span class="sourceLineNo">479</span>     * &lt;p&gt;<a name="line.479"></a>
+<span class="sourceLineNo">480</span>     * This method does not start loading the images if they are not<a name="line.480"></a>
+<span class="sourceLineNo">481</span>     * already loading.<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     * &lt;p&gt;<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     * If there is an error while loading or scaling an image, then that<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * image is considered to have finished loading. Use the<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     * &lt;code&gt;isErrorAny&lt;/code&gt; or &lt;code&gt;isErrorID&lt;/code&gt; methods to<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     * check for errors.<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     * @param       id   the identifier of the images to check<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     * @return      &lt;code&gt;true&lt;/code&gt; if all images have finished loading,<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     *                       have been aborted, or have encountered<a name="line.489"></a>
+<span class="sourceLineNo">490</span>     *                       an error; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.490"></a>
+<span class="sourceLineNo">491</span>     * @see         java.awt.MediaTracker#checkID(int, boolean)<a name="line.491"></a>
+<span class="sourceLineNo">492</span>     * @see         java.awt.MediaTracker#checkAll()<a name="line.492"></a>
+<span class="sourceLineNo">493</span>     * @see         java.awt.MediaTracker#isErrorAny()<a name="line.493"></a>
+<span class="sourceLineNo">494</span>     * @see         java.awt.MediaTracker#isErrorID(int)<a name="line.494"></a>
+<span class="sourceLineNo">495</span>     */<a name="line.495"></a>
+<span class="sourceLineNo">496</span>    public boolean checkID(int id) {<a name="line.496"></a>
+<span class="sourceLineNo">497</span>        return checkID(id, false, true);<a name="line.497"></a>
+<span class="sourceLineNo">498</span>    }<a name="line.498"></a>
+<span class="sourceLineNo">499</span><a name="line.499"></a>
+<span class="sourceLineNo">500</span>    /**<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * Checks to see if all images tracked by this media tracker that<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * are tagged with the specified identifier have finished loading.<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * &lt;p&gt;<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * If the value of the &lt;code&gt;load&lt;/code&gt; flag is &lt;code&gt;true&lt;/code&gt;,<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     * then this method starts loading any images that are not yet<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     * being loaded.<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     * &lt;p&gt;<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     * If there is an error while loading or scaling an image, then that<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     * image is considered to have finished loading. Use the<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     * &lt;code&gt;isErrorAny&lt;/code&gt; or &lt;code&gt;isErrorID&lt;/code&gt; methods to<a name="line.510"></a>
+<span class="sourceLineNo">511</span>     * check for errors.<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     * @param       id       the identifier of the images to check<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     * @param       load     if &lt;code&gt;true&lt;/code&gt;, start loading any<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     *                       images that are not yet being loaded<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     * @return      &lt;code&gt;true&lt;/code&gt; if all images have finished loading,<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     *                       have been aborted, or have encountered<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     *                       an error; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     * @see         java.awt.MediaTracker#checkID(int, boolean)<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     * @see         java.awt.MediaTracker#checkAll()<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     * @see         java.awt.MediaTracker#isErrorAny()<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * @see         java.awt.MediaTracker#isErrorID(int)<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     */<a name="line.522"></a>
+<span class="sourceLineNo">523</span>    public boolean checkID(int id, boolean load) {<a name="line.523"></a>
+<span class="sourceLineNo">524</span>        return checkID(id, load, true);<a name="line.524"></a>
+<span class="sourceLineNo">525</span>    }<a name="line.525"></a>
+<span class="sourceLineNo">526</span><a name="line.526"></a>
+<span class="sourceLineNo">527</span>    private synchronized boolean checkID(int id, boolean load, boolean verify)<a name="line.527"></a>
+<span class="sourceLineNo">528</span>    {<a name="line.528"></a>
+<span class="sourceLineNo">529</span>        MediaEntry cur = head;<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        boolean done = true;<a name="line.530"></a>
+<span class="sourceLineNo">531</span>        while (cur != null) {<a name="line.531"></a>
+<span class="sourceLineNo">532</span>            if (cur.getID() == id<a name="line.532"></a>
+<span class="sourceLineNo">533</span>                &amp;&amp; (cur.getStatus(load, verify) &amp; DONE) == 0)<a name="line.533"></a>
+<span class="sourceLineNo">534</span>            {<a name="line.534"></a>
+<span class="sourceLineNo">535</span>                done = false;<a name="line.535"></a>
+<span class="sourceLineNo">536</span>            }<a name="line.536"></a>
+<span class="sourceLineNo">537</span>            cur = cur.next;<a name="line.537"></a>
+<span class="sourceLineNo">538</span>        }<a name="line.538"></a>
+<span class="sourceLineNo">539</span>        return done;<a name="line.539"></a>
+<span class="sourceLineNo">540</span>    }<a name="line.540"></a>
+<span class="sourceLineNo">541</span><a name="line.541"></a>
+<span class="sourceLineNo">542</span>    /**<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * Checks the error status of all of the images tracked by this<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     * media tracker with the specified identifier.<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     * @param        id   the identifier of the images to check<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     * @return       &lt;code&gt;true&lt;/code&gt; if any of the images with the<a name="line.546"></a>
+<span class="sourceLineNo">547</span>     *                          specified identifier had an error during<a name="line.547"></a>
+<span class="sourceLineNo">548</span>     *                          loading; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     * @see          java.awt.MediaTracker#isErrorAny<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     * @see          java.awt.MediaTracker#getErrorsID<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     */<a name="line.551"></a>
+<span class="sourceLineNo">552</span>    public synchronized boolean isErrorID(int id) {<a name="line.552"></a>
+<span class="sourceLineNo">553</span>        MediaEntry cur = head;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>        while (cur != null) {<a name="line.554"></a>
+<span class="sourceLineNo">555</span>            if (cur.getID() == id<a name="line.555"></a>
+<span class="sourceLineNo">556</span>                &amp;&amp; (cur.getStatus(false, true) &amp; ERRORED) != 0)<a name="line.556"></a>
+<span class="sourceLineNo">557</span>            {<a name="line.557"></a>
+<span class="sourceLineNo">558</span>                return true;<a name="line.558"></a>
+<span class="sourceLineNo">559</span>            }<a name="line.559"></a>
+<span class="sourceLineNo">560</span>            cur = cur.next;<a name="line.560"></a>
+<span class="sourceLineNo">561</span>        }<a name="line.561"></a>
+<span class="sourceLineNo">562</span>        return false;<a name="line.562"></a>
+<span class="sourceLineNo">563</span>    }<a name="line.563"></a>
+<span class="sourceLineNo">564</span><a name="line.564"></a>
+<span class="sourceLineNo">565</span>    /**<a name="line.565"></a>
+<span class="sourceLineNo">566</span>     * Returns a list of media with the specified ID that<a name="line.566"></a>
+<span class="sourceLineNo">567</span>     * have encountered an error.<a name="line.567"></a>
+<span class="sourceLineNo">568</span>     * @param       id   the identifier of the images to check<a name="line.568"></a>
+<span class="sourceLineNo">569</span>     * @return      an array of media objects tracked by this media<a name="line.569"></a>
+<span class="sourceLineNo">570</span>     *                       tracker with the specified identifier<a name="line.570"></a>
+<span class="sourceLineNo">571</span>     *                       that have encountered an error, or<a name="line.571"></a>
+<span class="sourceLineNo">572</span>     *                       &lt;code&gt;null&lt;/code&gt; if there are none with errors<a name="line.572"></a>
+<span class="sourceLineNo">573</span>     * @see         java.awt.MediaTracker#isErrorID<a name="line.573"></a>
+<span class="sourceLineNo">574</span>     * @see         java.awt.MediaTracker#isErrorAny<a name="line.574"></a>
+<span class="sourceLineNo">575</span>     * @see         java.awt.MediaTracker#getErrorsAny<a name="line.575"></a>
+<span class="sourceLineNo">576</span>     */<a name="line.576"></a>
+<span class="sourceLineNo">577</span>    public synchronized Object[] getErrorsID(int id) {<a name="line.577"></a>
+<span class="sourceLineNo">578</span>        MediaEntry cur = head;<a name="line.578"></a>
+<span class="sourceLineNo">579</span>        int numerrors = 0;<a name="line.579"></a>
+<span class="sourceLineNo">580</span>        while (cur != null) {<a name="line.580"></a>
+<span class="sourceLineNo">581</span>            if (cur.getID() == id<a name="line.581"></a>
+<span class="sourceLineNo">582</span>                &amp;&amp; (cur.getStatus(false, true) &amp; ERRORED) != 0)<a name="line.582"></a>
+<span class="sourceLineNo">583</span>            {<a name="line.583"></a>
+<span class="sourceLineNo">584</span>                numerrors++;<a name="line.584"></a>
+<span class="sourceLineNo">585</span>            }<a name="line.585"></a>
+<span class="sourceLineNo">586</span>            cur = cur.next;<a name="line.586"></a>
+<span class="sourceLineNo">587</span>        }<a name="line.587"></a>
+<span class="sourceLineNo">588</span>        if (numerrors == 0) {<a name="line.588"></a>
+<span class="sourceLineNo">589</span>            return null;<a name="line.589"></a>
+<span class="sourceLineNo">590</span>        }<a name="line.590"></a>
+<span class="sourceLineNo">591</span>        Object errors[] = new Object[numerrors];<a name="line.591"></a>
+<span class="sourceLineNo">592</span>        cur = head;<a name="line.592"></a>
+<span class="sourceLineNo">593</span>        numerrors = 0;<a name="line.593"></a>
+<span class="sourceLineNo">594</span>        while (cur != null) {<a name="line.594"></a>
+<span class="sourceLineNo">595</span>            if (cur.getID() == id<a name="line.595"></a>
+<span class="sourceLineNo">596</span>                &amp;&amp; (cur.getStatus(false, false) &amp; ERRORED) != 0)<a name="line.596"></a>
+<span class="sourceLineNo">597</span>            {<a name="line.597"></a>
+<span class="sourceLineNo">598</span>                errors[numerrors++] = cur.getMedia();<a name="line.598"></a>
+<span class="sourceLineNo">599</span>            }<a name="line.599"></a>
+<span class="sourceLineNo">600</span>            cur = cur.next;<a name="line.600"></a>
+<span class="sourceLineNo">601</span>        }<a name="line.601"></a>
+<span class="sourceLineNo">602</span>        return errors;<a name="line.602"></a>
+<span class="sourceLineNo">603</span>    }<a name="line.603"></a>
+<span class="sourceLineNo">604</span><a name="line.604"></a>
+<span class="sourceLineNo">605</span>    /**<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * Starts loading all images tracked by this media tracker with the<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     * specified identifier. This method waits until all the images with<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     * the specified identifier have finished loading.<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     * &lt;p&gt;<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     * If there is an error while loading or scaling an image, then that<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     * image is considered to have finished loading. Use the<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     * &lt;code&gt;isErrorAny&lt;/code&gt; and &lt;code&gt;isErrorID&lt;/code&gt; methods to<a name="line.612"></a>
+<span class="sourceLineNo">613</span>     * check for errors.<a name="line.613"></a>
+<span class="sourceLineNo">614</span>     * @param         id   the identifier of the images to check<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     * @see           java.awt.MediaTracker#waitForAll<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     * @see           java.awt.MediaTracker#isErrorAny()<a name="line.616"></a>
+<span class="sourceLineNo">617</span>     * @see           java.awt.MediaTracker#isErrorID(int)<a name="line.617"></a>
+<span class="sourceLineNo">618</span>     * @exception     InterruptedException  if any thread has<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     *                          interrupted this thread.<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     */<a name="line.620"></a>
+<span class="sourceLineNo">621</span>    public void waitForID(int id) throws InterruptedException {<a name="line.621"></a>
+<span class="sourceLineNo">622</span>        waitForID(id, 0);<a name="line.622"></a>
+<span class="sourceLineNo">623</span>    }<a name="line.623"></a>
+<span class="sourceLineNo">624</span><a name="line.624"></a>
+<span class="sourceLineNo">625</span>    /**<a name="line.625"></a>
+<span class="sourceLineNo">626</span>     * Starts loading all images tracked by this media tracker with the<a name="line.626"></a>
+<span class="sourceLineNo">627</span>     * specified identifier. This method waits until all the images with<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     * the specified identifier have finished loading, or until the<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     * length of time specified in milliseconds by the &lt;code&gt;ms&lt;/code&gt;<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     * argument has passed.<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * &lt;p&gt;<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * If there is an error while loading or scaling an image, then that<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     * image is considered to have finished loading. Use the<a name="line.633"></a>
+<span class="sourceLineNo">634</span>     * &lt;code&gt;statusID&lt;/code&gt;, &lt;code&gt;isErrorID&lt;/code&gt;, and<a name="line.634"></a>
+<span class="sourceLineNo">635</span>     * &lt;code&gt;isErrorAny&lt;/code&gt; methods to check for errors.<a name="line.635"></a>
+<span class="sourceLineNo">636</span>     * @param         id   the identifier of the images to check<a name="line.636"></a>
+<span class="sourceLineNo">637</span>     * @param         ms   the length of time, in milliseconds, to wait<a name="line.637"></a>
+<span class="sourceLineNo">638</span>     *                           for the loading to complete<a name="line.638"></a>
+<span class="sourceLineNo">639</span>     * @see           java.awt.MediaTracker#waitForAll<a name="line.639"></a>
+<span class="sourceLineNo">640</span>     * @see           java.awt.MediaTracker#waitForID(int)<a name="line.640"></a>
+<span class="sourceLineNo">641</span>     * @see           java.awt.MediaTracker#statusID<a name="line.641"></a>
+<span class="sourceLineNo">642</span>     * @see           java.awt.MediaTracker#isErrorAny()<a name="line.642"></a>
+<span class="sourceLineNo">643</span>     * @see           java.awt.MediaTracker#isErrorID(int)<a name="line.643"></a>
+<span class="sourceLineNo">644</span>     * @exception     InterruptedException  if any thread has<a name="line.644"></a>
+<span class="sourceLineNo">645</span>     *                          interrupted this thread.<a name="line.645"></a>
+<span class="sourceLineNo">646</span>     */<a name="line.646"></a>
+<span class="sourceLineNo">647</span>    public synchronized boolean waitForID(int id, long ms)<a name="line.647"></a>
+<span class="sourceLineNo">648</span>        throws InterruptedException<a name="line.648"></a>
+<span class="sourceLineNo">649</span>    {<a name="line.649"></a>
+<span class="sourceLineNo">650</span>        long end = System.currentTimeMillis() + ms;<a name="line.650"></a>
+<span class="sourceLineNo">651</span>        boolean first = true;<a name="line.651"></a>
+<span class="sourceLineNo">652</span>        while (true) {<a name="line.652"></a>
+<span class="sourceLineNo">653</span>            int status = statusID(id, first, first);<a name="line.653"></a>
+<span class="sourceLineNo">654</span>            if ((status &amp; LOADING) == 0) {<a name="line.654"></a>
+<span class="sourceLineNo">655</span>                return (status == COMPLETE);<a name="line.655"></a>
+<span class="sourceLineNo">656</span>            }<a name="line.656"></a>
+<span class="sourceLineNo">657</span>            first = false;<a name="line.657"></a>
+<span class="sourceLineNo">658</span>            long timeout;<a name="line.658"></a>
+<span class="sourceLineNo">659</span>            if (ms == 0) {<a name="line.659"></a>
+<span class="sourceLineNo">660</span>                timeout = 0;<a name="line.660"></a>
+<span class="sourceLineNo">661</span>            } else {<a name="line.661"></a>
+<span class="sourceLineNo">662</span>                timeout = end - System.currentTimeMillis();<a name="line.662"></a>
+<span class="sourceLineNo">663</span>                if (timeout &lt;= 0) {<a name="line.663"></a>
+<span class="sourceLineNo">664</span>                    return false;<a name="line.664"></a>
+<span class="sourceLineNo">665</span>                }<a name="line.665"></a>
+<span class="sourceLineNo">666</span>            }<a name="line.666"></a>
+<span class="sourceLineNo">667</span>            wait(timeout);<a name="line.667"></a>
+<span class="sourceLineNo">668</span>        }<a name="line.668"></a>
+<span class="sourceLineNo">669</span>    }<a name="line.669"></a>
+<span class="sourceLineNo">670</span><a name="line.670"></a>
+<span class="sourceLineNo">671</span>    /**<a name="line.671"></a>
+<span class="sourceLineNo">672</span>     * Calculates and returns the bitwise inclusive &lt;b&gt;OR&lt;/b&gt; of the<a name="line.672"></a>
+<span class="sourceLineNo">673</span>     * status of all media with the specified identifier that are<a name="line.673"></a>
+<span class="sourceLineNo">674</span>     * tracked by this media tracker.<a name="line.674"></a>
+<span class="sourceLineNo">675</span>     * &lt;p&gt;<a name="line.675"></a>
+<span class="sourceLineNo">676</span>     * Possible flags defined by the<a name="line.676"></a>
+<span class="sourceLineNo">677</span>     * &lt;code&gt;MediaTracker&lt;/code&gt; class are &lt;code&gt;LOADING&lt;/code&gt;,<a name="line.677"></a>
+<span class="sourceLineNo">678</span>     * &lt;code&gt;ABORTED&lt;/code&gt;, &lt;code&gt;ERRORED&lt;/code&gt;, and<a name="line.678"></a>
+<span class="sourceLineNo">679</span>     * &lt;code&gt;COMPLETE&lt;/code&gt;. An image that hasn't started<a name="line.679"></a>
+<span class="sourceLineNo">680</span>     * loading has zero as its status.<a name="line.680"></a>
+<span class="sourceLineNo">681</span>     * &lt;p&gt;<a name="line.681"></a>
+<span class="sourceLineNo">682</span>     * If the value of &lt;code&gt;load&lt;/code&gt; is &lt;code&gt;true&lt;/code&gt;, then<a name="line.682"></a>
+<span class="sourceLineNo">683</span>     * this method starts loading any images that are not yet being loaded.<a name="line.683"></a>
+<span class="sourceLineNo">684</span>     * @param        id   the identifier of the images to check<a name="line.684"></a>
+<span class="sourceLineNo">685</span>     * @param        load   if &lt;code&gt;true&lt;/code&gt;, start loading<a name="line.685"></a>
+<span class="sourceLineNo">686</span>     *                            any images that are not yet being loaded<a name="line.686"></a>
+<span class="sourceLineNo">687</span>     * @return       the bitwise inclusive &lt;b&gt;OR&lt;/b&gt; of the status of<a name="line.687"></a>
+<span class="sourceLineNo">688</span>     *                            all of the media with the specified<a name="line.688"></a>
+<span class="sourceLineNo">689</span>     *                            identifier that are being tracked<a name="line.689"></a>
+<span class="sourceLineNo">690</span>     * @see          java.awt.MediaTracker#statusAll(boolean)<a name="line.690"></a>
+<span class="sourceLineNo">691</span>     * @see          java.awt.MediaTracker#LOADING<a name="line.691"></a>
+<span class="sourceLineNo">692</span>     * @see          java.awt.MediaTracker#ABORTED<a name="line.692"></a>
+<span class="sourceLineNo">693</span>     * @see          java.awt.MediaTracker#ERRORED<a name="line.693"></a>
+<span class="sourceLineNo">694</span>     * @see          java.awt.MediaTracker#COMPLETE<a name="line.694"></a>
+<span class="sourceLineNo">695</span>     */<a name="line.695"></a>
+<span class="sourceLineNo">696</span>    public int statusID(int id, boolean load) {<a name="line.696"></a>
+<span class="sourceLineNo">697</span>        return statusID(id, load, true);<a name="line.697"></a>
+<span class="sourceLineNo">698</span>    }<a name="line.698"></a>
+<span class="sourceLineNo">699</span><a name="line.699"></a>
+<span class="sourceLineNo">700</span>    private synchronized int statusID(int id, boolean load, boolean verify) {<a name="line.700"></a>
+<span class="sourceLineNo">701</span>        MediaEntry cur = head;<a name="line.701"></a>
+<span class="sourceLineNo">702</span>        int status = 0;<a name="line.702"></a>
+<span class="sourceLineNo">703</span>        while (cur != null) {<a name="line.703"></a>
+<span class="sourceLineNo">704</span>            if (cur.getID() == id) {<a name="line.704"></a>
+<span class="sourceLineNo">705</span>                status = status | cur.getStatus(load, verify);<a name="line.705"></a>
+<span class="sourceLineNo">706</span>            }<a name="line.706"></a>
+<span class="sourceLineNo">707</span>            cur = cur.next;<a name="line.707"></a>
+<span class="sourceLineNo">708</span>        }<a name="line.708"></a>
+<span class="sourceLineNo">709</span>        return status;<a name="line.709"></a>
+<span class="sourceLineNo">710</span>    }<a name="line.710"></a>
+<span class="sourceLineNo">711</span><a name="line.711"></a>
+<span class="sourceLineNo">712</span>    /**<a name="line.712"></a>
+<span class="sourceLineNo">713</span>     * Removes the specified image from this media tracker.<a name="line.713"></a>
+<span class="sourceLineNo">714</span>     * All instances of the specified image are removed,<a name="line.714"></a>
+<span class="sourceLineNo">715</span>     * regardless of scale or ID.<a name="line.715"></a>
+<span class="sourceLineNo">716</span>     * @param   image     the image to be removed<a name="line.716"></a>
+<span class="sourceLineNo">717</span>     * @see     java.awt.MediaTracker#removeImage(java.awt.Image, int)<a name="line.717"></a>
+<span class="sourceLineNo">718</span>     * @see     java.awt.MediaTracker#removeImage(java.awt.Image, int, int, int)<a name="line.718"></a>
+<span class="sourceLineNo">719</span>     * @since   JDK1.1<a name="line.719"></a>
+<span class="sourceLineNo">720</span>     */<a name="line.720"></a>
+<span class="sourceLineNo">721</span>    public synchronized void removeImage(Image image) {<a name="line.721"></a>
+<span class="sourceLineNo">722</span>        MediaEntry cur = head;<a name="line.722"></a>
+<span class="sourceLineNo">723</span>        MediaEntry prev = null;<a name="line.723"></a>
+<span class="sourceLineNo">724</span>        while (cur != null) {<a name="line.724"></a>
+<span class="sourceLineNo">725</span>            MediaEntry next = cur.next;<a name="line.725"></a>
+<span class="sourceLineNo">726</span>            if (cur.getMedia() == image) {<a name="line.726"></a>
+<span class="sourceLineNo">727</span>                if (prev == null) {<a name="line.727"></a>
+<span class="sourceLineNo">728</span>                    head = next;<a name="line.728"></a>
+<span class="sourceLineNo">729</span>                } else {<a name="line.729"></a>
+<span class="sourceLineNo">730</span>                    prev.next = next;<a name="line.730"></a>
+<span class="sourceLineNo">731</span>                }<a name="line.731"></a>
+<span class="sourceLineNo">732</span>                cur.cancel();<a name="line.732"></a>
+<span class="sourceLineNo">733</span>            } else {<a name="line.733"></a>
+<span class="sourceLineNo">734</span>                prev = cur;<a name="line.734"></a>
+<span class="sourceLineNo">735</span>            }<a name="line.735"></a>
+<span class="sourceLineNo">736</span>            cur = next;<a name="line.736"></a>
+<span class="sourceLineNo">737</span>        }<a name="line.737"></a>
+<span class="sourceLineNo">738</span>        notifyAll();    // Notify in case remaining images are "done".<a name="line.738"></a>
+<span class="sourceLineNo">739</span>    }<a name="line.739"></a>
+<span class="sourceLineNo">740</span><a name="line.740"></a>
+<span class="sourceLineNo">741</span>    /**<a name="line.741"></a>
+<span class="sourceLineNo">742</span>     * Removes the specified image from the specified tracking<a name="line.742"></a>
+<span class="sourceLineNo">743</span>     * ID of this media tracker.<a name="line.743"></a>
+<span class="sourceLineNo">744</span>     * All instances of &lt;code&gt;Image&lt;/code&gt; being tracked<a name="line.744"></a>
+<span class="sourceLineNo">745</span>     * under the specified ID are removed regardless of scale.<a name="line.745"></a>
+<span class="sourceLineNo">746</span>     * @param      image the image to be removed<a name="line.746"></a>
+<span class="sourceLineNo">747</span>     * @param      id the tracking ID frrom which to remove the image<a name="line.747"></a>
+<span class="sourceLineNo">748</span>     * @see        java.awt.MediaTracker#removeImage(java.awt.Image)<a name="line.748"></a>
+<span class="sourceLineNo">749</span>     * @see        java.awt.MediaTracker#removeImage(java.awt.Image, int, int, int)<a name="line.749"></a>
+<span class="sourceLineNo">750</span>     * @since      JDK1.1<a name="line.750"></a>
+<span class="sourceLineNo">751</span>     */<a name="line.751"></a>
+<span class="sourceLineNo">752</span>    public synchronized void removeImage(Image image, int id) {<a name="line.752"></a>
+<span class="sourceLineNo">753</span>        MediaEntry cur = head;<a name="line.753"></a>
+<span class="sourceLineNo">754</span>        MediaEntry prev = null;<a name="line.754"></a>
+<span class="sourceLineNo">755</span>        while (cur != null) {<a name="line.755"></a>
+<span class="sourceLineNo">756</span>            MediaEntry next = cur.next;<a name="line.756"></a>
+<span class="sourceLineNo">757</span>            if (cur.getID() == id &amp;&amp; cur.getMedia() == image) {<a name="line.757"></a>
+<span class="sourceLineNo">758</span>                if (prev == null) {<a name="line.758"></a>
+<span class="sourceLineNo">759</span>                    head = next;<a name="line.759"></a>
+<span class="sourceLineNo">760</span>                } else {<a name="line.760"></a>
+<span class="sourceLineNo">761</span>                    prev.next = next;<a name="line.761"></a>
+<span class="sourceLineNo">762</span>                }<a name="line.762"></a>
+<span class="sourceLineNo">763</span>                cur.cancel();<a name="line.763"></a>
+<span class="sourceLineNo">764</span>            } else {<a name="line.764"></a>
+<span class="sourceLineNo">765</span>                prev = cur;<a name="line.765"></a>
+<span class="sourceLineNo">766</span>            }<a name="line.766"></a>
+<span class="sourceLineNo">767</span>            cur = next;<a name="line.767"></a>
+<span class="sourceLineNo">768</span>        }<a name="line.768"></a>
+<span class="sourceLineNo">769</span>        notifyAll();    // Notify in case remaining images are "done".<a name="line.769"></a>
+<span class="sourceLineNo">770</span>    }<a name="line.770"></a>
+<span class="sourceLineNo">771</span><a name="line.771"></a>
+<span class="sourceLineNo">772</span>    /**<a name="line.772"></a>
+<span class="sourceLineNo">773</span>     * Removes the specified image with the specified<a name="line.773"></a>
+<span class="sourceLineNo">774</span>     * width, height, and ID from this media tracker.<a name="line.774"></a>
+<span class="sourceLineNo">775</span>     * Only the specified instance (with any duplicates) is removed.<a name="line.775"></a>
+<span class="sourceLineNo">776</span>     * @param   image the image to be removed<a name="line.776"></a>
+<span class="sourceLineNo">777</span>     * @param   id the tracking ID from which to remove the image<a name="line.777"></a>
+<span class="sourceLineNo">778</span>     * @param   width the width to remove (-1 for unscaled)<a name="line.778"></a>
+<span class="sourceLineNo">779</span>     * @param   height the height to remove (-1 for unscaled)<a name="line.779"></a>
+<span class="sourceLineNo">780</span>     * @see     java.awt.MediaTracker#removeImage(java.awt.Image)<a name="line.780"></a>
+<span class="sourceLineNo">781</span>     * @see     java.awt.MediaTracker#removeImage(java.awt.Image, int)<a name="line.781"></a>
+<span class="sourceLineNo">782</span>     * @since   JDK1.1<a name="line.782"></a>
+<span class="sourceLineNo">783</span>     */<a name="line.783"></a>
+<span class="sourceLineNo">784</span>    public synchronized void removeImage(Image image, int id,<a name="line.784"></a>
+<span class="sourceLineNo">785</span>                                         int width, int height) {<a name="line.785"></a>
+<span class="sourceLineNo">786</span>        MediaEntry cur = head;<a name="line.786"></a>
+<span class="sourceLineNo">787</span>        MediaEntry prev = null;<a name="line.787"></a>
+<span class="sourceLineNo">788</span>        while (cur != null) {<a name="line.788"></a>
+<span class="sourceLineNo">789</span>            MediaEntry next = cur.next;<a name="line.789"></a>
+<span class="sourceLineNo">790</span>            if (cur.getID() == id &amp;&amp; cur instanceof ImageMediaEntry<a name="line.790"></a>
+<span class="sourceLineNo">791</span>                &amp;&amp; ((ImageMediaEntry) cur).matches(image, width, height))<a name="line.791"></a>
+<span class="sourceLineNo">792</span>            {<a name="line.792"></a>
+<span class="sourceLineNo">793</span>                if (prev == null) {<a name="line.793"></a>
+<span class="sourceLineNo">794</span>                    head = next;<a name="line.794"></a>
+<span class="sourceLineNo">795</span>                } else {<a name="line.795"></a>
+<span class="sourceLineNo">796</span>                    prev.next = next;<a name="line.796"></a>
+<span class="sourceLineNo">797</span>                }<a name="line.797"></a>
+<span class="sourceLineNo">798</span>                cur.cancel();<a name="line.798"></a>
+<span class="sourceLineNo">799</span>            } else {<a name="line.799"></a>
+<span class="sourceLineNo">800</span>                prev = cur;<a name="line.800"></a>
+<span class="sourceLineNo">801</span>            }<a name="line.801"></a>
+<span class="sourceLineNo">802</span>            cur = next;<a name="line.802"></a>
+<span class="sourceLineNo">803</span>        }<a name="line.803"></a>
+<span class="sourceLineNo">804</span>        notifyAll();    // Notify in case remaining images are "done".<a name="line.804"></a>
+<span class="sourceLineNo">805</span>    }<a name="line.805"></a>
+<span class="sourceLineNo">806</span><a name="line.806"></a>
+<span class="sourceLineNo">807</span>    synchronized void setDone() {<a name="line.807"></a>
+<span class="sourceLineNo">808</span>        notifyAll();<a name="line.808"></a>
+<span class="sourceLineNo">809</span>    }<a name="line.809"></a>
+<span class="sourceLineNo">810</span>}<a name="line.810"></a>
+<span class="sourceLineNo">811</span><a name="line.811"></a>
+<span class="sourceLineNo">812</span>abstract class MediaEntry {<a name="line.812"></a>
+<span class="sourceLineNo">813</span>    MediaTracker tracker;<a name="line.813"></a>
+<span class="sourceLineNo">814</span>    int ID;<a name="line.814"></a>
+<span class="sourceLineNo">815</span>    MediaEntry next;<a name="line.815"></a>
+<span class="sourceLineNo">816</span><a name="line.816"></a>
+<span class="sourceLineNo">817</span>    int status;<a name="line.817"></a>
+<span class="sourceLineNo">818</span>    boolean cancelled;<a name="line.818"></a>
+<span class="sourceLineNo">819</span><a name="line.819"></a>
+<span class="sourceLineNo">820</span>    MediaEntry(MediaTracker mt, int id) {<a name="line.820"></a>
+<span class="sourceLineNo">821</span>        tracker = mt;<a name="line.821"></a>
+<span class="sourceLineNo">822</span>        ID = id;<a name="line.822"></a>
+<span class="sourceLineNo">823</span>    }<a name="line.823"></a>
+<span class="sourceLineNo">824</span><a name="line.824"></a>
+<span class="sourceLineNo">825</span>    abstract Object getMedia();<a name="line.825"></a>
+<span class="sourceLineNo">826</span><a name="line.826"></a>
+<span class="sourceLineNo">827</span>    static MediaEntry insert(MediaEntry head, MediaEntry me) {<a name="line.827"></a>
+<span class="sourceLineNo">828</span>        MediaEntry cur = head;<a name="line.828"></a>
+<span class="sourceLineNo">829</span>        MediaEntry prev = null;<a name="line.829"></a>
+<span class="sourceLineNo">830</span>        while (cur != null) {<a name="line.830"></a>
+<span class="sourceLineNo">831</span>            if (cur.ID &gt; me.ID) {<a name="line.831"></a>
+<span class="sourceLineNo">832</span>                break;<a name="line.832"></a>
+<span class="sourceLineNo">833</span>            }<a name="line.833"></a>
+<span class="sourceLineNo">834</span>            prev = cur;<a name="line.834"></a>
+<span class="sourceLineNo">835</span>            cur = cur.next;<a name="line.835"></a>
+<span class="sourceLineNo">836</span>        }<a name="line.836"></a>
+<span class="sourceLineNo">837</span>        me.next = cur;<a name="line.837"></a>
+<span class="sourceLineNo">838</span>        if (prev == null) {<a name="line.838"></a>
+<span class="sourceLineNo">839</span>            head = me;<a name="line.839"></a>
+<span class="sourceLineNo">840</span>        } else {<a name="line.840"></a>
+<span class="sourceLineNo">841</span>            prev.next = me;<a name="line.841"></a>
+<span class="sourceLineNo">842</span>        }<a name="line.842"></a>
+<span class="sourceLineNo">843</span>        return head;<a name="line.843"></a>
+<span class="sourceLineNo">844</span>    }<a name="line.844"></a>
+<span class="sourceLineNo">845</span><a name="line.845"></a>
+<span class="sourceLineNo">846</span>    int getID() {<a name="line.846"></a>
+<span class="sourceLineNo">847</span>        return ID;<a name="line.847"></a>
+<span class="sourceLineNo">848</span>    }<a name="line.848"></a>
+<span class="sourceLineNo">849</span><a name="line.849"></a>
+<span class="sourceLineNo">850</span>    abstract void startLoad();<a name="line.850"></a>
+<span class="sourceLineNo">851</span><a name="line.851"></a>
+<span class="sourceLineNo">852</span>    void cancel() {<a name="line.852"></a>
+<span class="sourceLineNo">853</span>        cancelled = true;<a name="line.853"></a>
+<span class="sourceLineNo">854</span>    }<a name="line.854"></a>
+<span class="sourceLineNo">855</span><a name="line.855"></a>
+<span class="sourceLineNo">856</span>    static final int LOADING = MediaTracker.LOADING;<a name="line.856"></a>
+<span class="sourceLineNo">857</span>    static final int ABORTED = MediaTracker.ABORTED;<a name="line.857"></a>
+<span class="sourceLineNo">858</span>    static final int ERRORED = MediaTracker.ERRORED;<a name="line.858"></a>
+<span class="sourceLineNo">859</span>    static final int COMPLETE = MediaTracker.COMPLETE;<a name="line.859"></a>
+<span class="sourceLineNo">860</span><a name="line.860"></a>
+<span class="sourceLineNo">861</span>    static final int LOADSTARTED = (LOADING | ERRORED | COMPLETE);<a name="line.861"></a>
+<span class="sourceLineNo">862</span>    static final int DONE = (ABORTED | ERRORED | COMPLETE);<a name="line.862"></a>
+<span class="sourceLineNo">863</span><a name="line.863"></a>
+<span class="sourceLineNo">864</span>    synchronized int getStatus(boolean doLoad, boolean doVerify) {<a name="line.864"></a>
+<span class="sourceLineNo">865</span>        if (doLoad &amp;&amp; ((status &amp; LOADSTARTED) == 0)) {<a name="line.865"></a>
+<span class="sourceLineNo">866</span>            status = (status &amp; ~ABORTED) | LOADING;<a name="line.866"></a>
+<span class="sourceLineNo">867</span>            startLoad();<a name="line.867"></a>
+<span class="sourceLineNo">868</span>        }<a name="line.868"></a>
+<span class="sourceLineNo">869</span>        return status;<a name="line.869"></a>
+<span class="sourceLineNo">870</span>    }<a name="line.870"></a>
+<span class="sourceLineNo">871</span><a name="line.871"></a>
+<span class="sourceLineNo">872</span>    void setStatus(int flag) {<a name="line.872"></a>
+<span class="sourceLineNo">873</span>        synchronized (this) {<a name="line.873"></a>
+<span class="sourceLineNo">874</span>            status = flag;<a name="line.874"></a>
+<span class="sourceLineNo">875</span>        }<a name="line.875"></a>
+<span class="sourceLineNo">876</span>        tracker.setDone();<a name="line.876"></a>
+<span class="sourceLineNo">877</span>    }<a name="line.877"></a>
+<span class="sourceLineNo">878</span>}<a name="line.878"></a>
+<span class="sourceLineNo">879</span><a name="line.879"></a>
+<span class="sourceLineNo">880</span>class ImageMediaEntry extends MediaEntry implements ImageObserver,<a name="line.880"></a>
+<span class="sourceLineNo">881</span>java.io.Serializable {<a name="line.881"></a>
+<span class="sourceLineNo">882</span>    Image image;<a name="line.882"></a>
+<span class="sourceLineNo">883</span>    int width;<a name="line.883"></a>
+<span class="sourceLineNo">884</span>    int height;<a name="line.884"></a>
+<span class="sourceLineNo">885</span><a name="line.885"></a>
+<span class="sourceLineNo">886</span>    /*<a name="line.886"></a>
+<span class="sourceLineNo">887</span>     * JDK 1.1 serialVersionUID<a name="line.887"></a>
+<span class="sourceLineNo">888</span>     */<a name="line.888"></a>
+<span class="sourceLineNo">889</span>    private static final long serialVersionUID = 4739377000350280650L;<a name="line.889"></a>
+<span class="sourceLineNo">890</span><a name="line.890"></a>
+<span class="sourceLineNo">891</span>    ImageMediaEntry(MediaTracker mt, Image img, int c, int w, int h) {<a name="line.891"></a>
+<span class="sourceLineNo">892</span>        super(mt, c);<a name="line.892"></a>
+<span class="sourceLineNo">893</span>        image = img;<a name="line.893"></a>
+<span class="sourceLineNo">894</span>        width = w;<a name="line.894"></a>
+<span class="sourceLineNo">895</span>        height = h;<a name="line.895"></a>
+<span class="sourceLineNo">896</span>    }<a name="line.896"></a>
+<span class="sourceLineNo">897</span><a name="line.897"></a>
+<span class="sourceLineNo">898</span>    boolean matches(Image img, int w, int h) {<a name="line.898"></a>
+<span class="sourceLineNo">899</span>        return (image == img &amp;&amp; width == w &amp;&amp; height == h);<a name="line.899"></a>
+<span class="sourceLineNo">900</span>    }<a name="line.900"></a>
+<span class="sourceLineNo">901</span><a name="line.901"></a>
+<span class="sourceLineNo">902</span>    Object getMedia() {<a name="line.902"></a>
+<span class="sourceLineNo">903</span>        return image;<a name="line.903"></a>
+<span class="sourceLineNo">904</span>    }<a name="line.904"></a>
+<span class="sourceLineNo">905</span><a name="line.905"></a>
+<span class="sourceLineNo">906</span>    synchronized int getStatus(boolean doLoad, boolean doVerify) {<a name="line.906"></a>
+<span class="sourceLineNo">907</span>        if (doVerify) {<a name="line.907"></a>
+<span class="sourceLineNo">908</span>            int flags = tracker.target.checkImage(image, width, height, null);<a name="line.908"></a>
+<span class="sourceLineNo">909</span>            int s = parseflags(flags);<a name="line.909"></a>
+<span class="sourceLineNo">910</span>            if (s == 0) {<a name="line.910"></a>
+<span class="sourceLineNo">911</span>                if ((status &amp; (ERRORED | COMPLETE)) != 0) {<a name="line.911"></a>
+<span class="sourceLineNo">912</span>                    setStatus(ABORTED);<a name="line.912"></a>
+<span class="sourceLineNo">913</span>                }<a name="line.913"></a>
+<span class="sourceLineNo">914</span>            } else if (s != status) {<a name="line.914"></a>
+<span class="sourceLineNo">915</span>                setStatus(s);<a name="line.915"></a>
+<span class="sourceLineNo">916</span>            }<a name="line.916"></a>
+<span class="sourceLineNo">917</span>        }<a name="line.917"></a>
+<span class="sourceLineNo">918</span>        return super.getStatus(doLoad, doVerify);<a name="line.918"></a>
+<span class="sourceLineNo">919</span>    }<a name="line.919"></a>
+<span class="sourceLineNo">920</span><a name="line.920"></a>
+<span class="sourceLineNo">921</span>    void startLoad() {<a name="line.921"></a>
+<span class="sourceLineNo">922</span>        if (tracker.target.prepareImage(image, width, height, this)) {<a name="line.922"></a>
+<span class="sourceLineNo">923</span>            setStatus(COMPLETE);<a name="line.923"></a>
+<span class="sourceLineNo">924</span>        }<a name="line.924"></a>
+<span class="sourceLineNo">925</span>    }<a name="line.925"></a>
+<span class="sourceLineNo">926</span><a name="line.926"></a>
+<span class="sourceLineNo">927</span>    int parseflags(int infoflags) {<a name="line.927"></a>
+<span class="sourceLineNo">928</span>        if ((infoflags &amp; ERROR) != 0) {<a name="line.928"></a>
+<span class="sourceLineNo">929</span>            return ERRORED;<a name="line.929"></a>
+<span class="sourceLineNo">930</span>        } else if ((infoflags &amp; ABORT) != 0) {<a name="line.930"></a>
+<span class="sourceLineNo">931</span>            return ABORTED;<a name="line.931"></a>
+<span class="sourceLineNo">932</span>        } else if ((infoflags &amp; (ALLBITS | FRAMEBITS)) != 0) {<a name="line.932"></a>
+<span class="sourceLineNo">933</span>            return COMPLETE;<a name="line.933"></a>
+<span class="sourceLineNo">934</span>        }<a name="line.934"></a>
+<span class="sourceLineNo">935</span>        return 0;<a name="line.935"></a>
+<span class="sourceLineNo">936</span>    }<a name="line.936"></a>
+<span class="sourceLineNo">937</span><a name="line.937"></a>
+<span class="sourceLineNo">938</span>    public boolean imageUpdate(Image img, int infoflags,<a name="line.938"></a>
+<span class="sourceLineNo">939</span>                               int x, int y, int w, int h) {<a name="line.939"></a>
+<span class="sourceLineNo">940</span>        if (cancelled) {<a name="line.940"></a>
+<span class="sourceLineNo">941</span>            return false;<a name="line.941"></a>
+<span class="sourceLineNo">942</span>        }<a name="line.942"></a>
+<span class="sourceLineNo">943</span>        int s = parseflags(infoflags);<a name="line.943"></a>
+<span class="sourceLineNo">944</span>        if (s != 0 &amp;&amp; s != status) {<a name="line.944"></a>
+<span class="sourceLineNo">945</span>            setStatus(s);<a name="line.945"></a>
+<span class="sourceLineNo">946</span>        }<a name="line.946"></a>
+<span class="sourceLineNo">947</span>        return ((status &amp; LOADING) != 0);<a name="line.947"></a>
+<span class="sourceLineNo">948</span>    }<a name="line.948"></a>
+<span class="sourceLineNo">949</span>}<a name="line.949"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

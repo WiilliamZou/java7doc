@@ -1,0 +1,1070 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> *<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> */<a name="line.23"></a>
+<span class="sourceLineNo">024</span><a name="line.24"></a>
+<span class="sourceLineNo">025</span>/*<a name="line.25"></a>
+<span class="sourceLineNo">026</span> *<a name="line.26"></a>
+<span class="sourceLineNo">027</span> *<a name="line.27"></a>
+<span class="sourceLineNo">028</span> *<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * Written by Doug Lea with assistance from members of JCP JSR-166<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * Expert Group and released to the public domain, as explained at<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * http://creativecommons.org/publicdomain/zero/1.0/<a name="line.33"></a>
+<span class="sourceLineNo">034</span> */<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>package java.util.concurrent;<a name="line.36"></a>
+<span class="sourceLineNo">037</span><a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.util.Collection;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import java.util.concurrent.RejectedExecutionException;<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>/**<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * A thread managed by a {@link ForkJoinPool}, which executes<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * {@link ForkJoinTask}s.<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * This class is subclassable solely for the sake of adding<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * functionality -- there are no overridable methods dealing with<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * scheduling or execution.  However, you can override initialization<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * and termination methods surrounding the main task processing loop.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * If you do create such a subclass, you will also need to supply a<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * custom {@link ForkJoinPool.ForkJoinWorkerThreadFactory} to use it<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * in a {@code ForkJoinPool}.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * @since 1.7<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * @author Doug Lea<a name="line.53"></a>
+<span class="sourceLineNo">054</span> */<a name="line.54"></a>
+<span class="sourceLineNo">055</span>public class ForkJoinWorkerThread extends Thread {<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    /*<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * Overview:<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     *<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * ForkJoinWorkerThreads are managed by ForkJoinPools and perform<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * ForkJoinTasks. This class includes bookkeeping in support of<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * worker activation, suspension, and lifecycle control described<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * in more detail in the internal documentation of class<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * ForkJoinPool. And as described further below, this class also<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * includes special-cased support for some ForkJoinTask<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * methods. But the main mechanics involve work-stealing:<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     *<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * Work-stealing queues are special forms of Deques that support<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * only three of the four possible end-operations -- push, pop,<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * and deq (aka steal), under the further constraints that push<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * and pop are called only from the owning thread, while deq may<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * be called from other threads.  (If you are unfamiliar with<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * them, you probably want to read Herlihy and Shavit's book "The<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * Art of Multiprocessor programming", chapter 16 describing these<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * in more detail before proceeding.)  The main work-stealing<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * queue design is roughly similar to those in the papers "Dynamic<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * Circular Work-Stealing Deque" by Chase and Lev, SPAA 2005<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * (http://research.sun.com/scalable/pubs/index.html) and<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * "Idempotent work stealing" by Michael, Saraswat, and Vechev,<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * PPoPP 2009 (http://portal.acm.org/citation.cfm?id=1504186).<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * The main differences ultimately stem from gc requirements that<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * we null out taken slots as soon as we can, to maintain as small<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * a footprint as possible even in programs generating huge<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * numbers of tasks. To accomplish this, we shift the CAS<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * arbitrating pop vs deq (steal) from being on the indices<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * ("queueBase" and "queueTop") to the slots themselves (mainly<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * via method "casSlotNull()"). So, both a successful pop and deq<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * mainly entail a CAS of a slot from non-null to null.  Because<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * we rely on CASes of references, we do not need tag bits on<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * queueBase or queueTop.  They are simple ints as used in any<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * circular array-based queue (see for example ArrayDeque).<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * Updates to the indices must still be ordered in a way that<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * guarantees that queueTop == queueBase means the queue is empty,<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * but otherwise may err on the side of possibly making the queue<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * appear nonempty when a push, pop, or deq have not fully<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * committed. Note that this means that the deq operation,<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * considered individually, is not wait-free. One thief cannot<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * successfully continue until another in-progress one (or, if<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * previously empty, a push) completes.  However, in the<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * aggregate, we ensure at least probabilistic non-blockingness.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * If an attempted steal fails, a thief always chooses a different<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * random victim target to try next. So, in order for one thief to<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * progress, it suffices for any in-progress deq or new push on<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * any empty queue to complete.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     *<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * This approach also enables support for "async mode" where local<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * task processing is in FIFO, not LIFO order; simply by using a<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * version of deq rather than pop when locallyFifo is true (as set<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * by the ForkJoinPool).  This allows use in message-passing<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * frameworks in which tasks are never joined.  However neither<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * mode considers affinities, loads, cache localities, etc, so<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * rarely provide the best possible performance on a given<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * machine, but portably provide good throughput by averaging over<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * these factors.  (Further, even if we did try to use such<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * information, we do not usually have a basis for exploiting<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * it. For example, some sets of tasks profit from cache<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * affinities, but others are harmed by cache pollution effects.)<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     *<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * When a worker would otherwise be blocked waiting to join a<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * task, it first tries a form of linear helping: Each worker<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * records (in field currentSteal) the most recent task it stole<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * from some other worker. Plus, it records (in field currentJoin)<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * the task it is currently actively joining. Method joinTask uses<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * these markers to try to find a worker to help (i.e., steal back<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * a task from and execute it) that could hasten completion of the<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * actively joined task. In essence, the joiner executes a task<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * that would be on its own local deque had the to-be-joined task<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * not been stolen. This may be seen as a conservative variant of<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * the approach in Wagner &amp; Calder "Leapfrogging: a portable<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * technique for implementing efficient futures" SIGPLAN Notices,<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * 1993 (http://portal.acm.org/citation.cfm?id=155354). It differs<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * in that: (1) We only maintain dependency links across workers<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * upon steals, rather than use per-task bookkeeping.  This may<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * require a linear scan of workers array to locate stealers, but<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * usually doesn't because stealers leave hints (that may become<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * stale/wrong) of where to locate them. This isolates cost to<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * when it is needed, rather than adding to per-task overhead.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * (2) It is "shallow", ignoring nesting and potentially cyclic<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * mutual steals.  (3) It is intentionally racy: field currentJoin<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * is updated only while actively joining, which means that we<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * miss links in the chain during long-lived tasks, GC stalls etc<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * (which is OK since blocking in such cases is usually a good<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * idea).  (4) We bound the number of attempts to find work (see<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * MAX_HELP) and fall back to suspending the worker and if<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * necessary replacing it with another.<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * Efficient implementation of these algorithms currently relies<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * on an uncomfortable amount of "Unsafe" mechanics. To maintain<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * correct orderings, reads and writes of variable queueBase<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * require volatile ordering.  Variable queueTop need not be<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * volatile because non-local reads always follow those of<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * queueBase.  Similarly, because they are protected by volatile<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * queueBase reads, reads of the queue array and its slots by<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * other threads do not need volatile load semantics, but writes<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * (in push) require store order and CASes (in pop and deq)<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * require (volatile) CAS semantics.  (Michael, Saraswat, and<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * Vechev's algorithm has similar properties, but without support<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * for nulling slots.)  Since these combinations aren't supported<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * using ordinary volatiles, the only way to accomplish these<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * efficiently is to use direct Unsafe calls. (Using external<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * AtomicIntegers and AtomicReferenceArrays for the indices and<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * array is significantly slower because of memory locality and<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * indirection effects.)<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     *<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * Further, performance on most platforms is very sensitive to<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * placement and sizing of the (resizable) queue array.  Even<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * though these queues don't usually become all that big, the<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * initial size must be large enough to counteract cache<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * contention effects across multiple queues (especially in the<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * presence of GC cardmarking). Also, to improve thread-locality,<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * queues are initialized after starting.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     */<a name="line.171"></a>
+<span class="sourceLineNo">172</span><a name="line.172"></a>
+<span class="sourceLineNo">173</span>    /**<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * Mask for pool indices encoded as shorts<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     */<a name="line.175"></a>
+<span class="sourceLineNo">176</span>    private static final int  SMASK  = 0xffff;<a name="line.176"></a>
+<span class="sourceLineNo">177</span><a name="line.177"></a>
+<span class="sourceLineNo">178</span>    /**<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * Capacity of work-stealing queue array upon initialization.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * Must be a power of two. Initial size must be at least 4, but is<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * padded to minimize cache effects.<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     */<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    private static final int INITIAL_QUEUE_CAPACITY = 1 &lt;&lt; 13;<a name="line.183"></a>
+<span class="sourceLineNo">184</span><a name="line.184"></a>
+<span class="sourceLineNo">185</span>    /**<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * Maximum size for queue array. Must be a power of two<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * less than or equal to 1 &lt;&lt; (31 - width of array entry) to<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * ensure lack of index wraparound, but is capped at a lower<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * value to help users trap runaway computations.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    private static final int MAXIMUM_QUEUE_CAPACITY = 1 &lt;&lt; 24; // 16M<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>    /**<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * The work-stealing queue array. Size must be a power of two.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * Initialized when started (as oposed to when constructed), to<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * improve memory locality.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     */<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    ForkJoinTask&lt;?&gt;[] queue;<a name="line.198"></a>
+<span class="sourceLineNo">199</span><a name="line.199"></a>
+<span class="sourceLineNo">200</span>    /**<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * The pool this thread works in. Accessed directly by ForkJoinTask.<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     */<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    final ForkJoinPool pool;<a name="line.203"></a>
+<span class="sourceLineNo">204</span><a name="line.204"></a>
+<span class="sourceLineNo">205</span>    /**<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * Index (mod queue.length) of next queue slot to push to or pop<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * from. It is written only by owner thread, and accessed by other<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * threads only after reading (volatile) queueBase.  Both queueTop<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * and queueBase are allowed to wrap around on overflow, but<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * (queueTop - queueBase) still estimates size.<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     */<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    int queueTop;<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>    /**<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * Index (mod queue.length) of least valid queue slot, which is<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * always the next position to steal from if nonempty.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     */<a name="line.217"></a>
+<span class="sourceLineNo">218</span>    volatile int queueBase;<a name="line.218"></a>
+<span class="sourceLineNo">219</span><a name="line.219"></a>
+<span class="sourceLineNo">220</span>    /**<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * The index of most recent stealer, used as a hint to avoid<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * traversal in method helpJoinTask. This is only a hint because a<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * worker might have had multiple steals and this only holds one<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * of them (usually the most current). Declared non-volatile,<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * relying on other prevailing sync to keep reasonably current.<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     */<a name="line.226"></a>
+<span class="sourceLineNo">227</span>    int stealHint;<a name="line.227"></a>
+<span class="sourceLineNo">228</span><a name="line.228"></a>
+<span class="sourceLineNo">229</span>    /**<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * Index of this worker in pool array. Set once by pool before<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * running, and accessed directly by pool to locate this worker in<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * its workers array.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     */<a name="line.233"></a>
+<span class="sourceLineNo">234</span>    final int poolIndex;<a name="line.234"></a>
+<span class="sourceLineNo">235</span><a name="line.235"></a>
+<span class="sourceLineNo">236</span>    /**<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * Encoded record for pool task waits. Usages are always<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * surrounded by volatile reads/writes<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     */<a name="line.239"></a>
+<span class="sourceLineNo">240</span>    int nextWait;<a name="line.240"></a>
+<span class="sourceLineNo">241</span><a name="line.241"></a>
+<span class="sourceLineNo">242</span>    /**<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * Complement of poolIndex, offset by count of entries of task<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * waits. Accessed by ForkJoinPool to manage event waiters.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     */<a name="line.245"></a>
+<span class="sourceLineNo">246</span>    volatile int eventCount;<a name="line.246"></a>
+<span class="sourceLineNo">247</span><a name="line.247"></a>
+<span class="sourceLineNo">248</span>    /**<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * Seed for random number generator for choosing steal victims.<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * Uses Marsaglia xorshift. Must be initialized as nonzero.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     */<a name="line.251"></a>
+<span class="sourceLineNo">252</span>    int seed;<a name="line.252"></a>
+<span class="sourceLineNo">253</span><a name="line.253"></a>
+<span class="sourceLineNo">254</span>    /**<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * Number of steals. Directly accessed (and reset) by pool when<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * idle.<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     */<a name="line.257"></a>
+<span class="sourceLineNo">258</span>    int stealCount;<a name="line.258"></a>
+<span class="sourceLineNo">259</span><a name="line.259"></a>
+<span class="sourceLineNo">260</span>    /**<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * True if this worker should or did terminate<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     */<a name="line.262"></a>
+<span class="sourceLineNo">263</span>    volatile boolean terminate;<a name="line.263"></a>
+<span class="sourceLineNo">264</span><a name="line.264"></a>
+<span class="sourceLineNo">265</span>    /**<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * Set to true before LockSupport.park; false on return<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     */<a name="line.267"></a>
+<span class="sourceLineNo">268</span>    volatile boolean parked;<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span>    /**<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * True if use local fifo, not default lifo, for local polling.<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * Shadows value from ForkJoinPool.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     */<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    final boolean locallyFifo;<a name="line.274"></a>
+<span class="sourceLineNo">275</span><a name="line.275"></a>
+<span class="sourceLineNo">276</span>    /**<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * The task most recently stolen from another worker (or<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * submission queue).  All uses are surrounded by enough volatile<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * reads/writes to maintain as non-volatile.<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     */<a name="line.280"></a>
+<span class="sourceLineNo">281</span>    ForkJoinTask&lt;?&gt; currentSteal;<a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>    /**<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * The task currently being joined, set only when actively trying<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * to help other stealers in helpJoinTask. All uses are surrounded<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * by enough volatile reads/writes to maintain as non-volatile.<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     */<a name="line.287"></a>
+<span class="sourceLineNo">288</span>    ForkJoinTask&lt;?&gt; currentJoin;<a name="line.288"></a>
+<span class="sourceLineNo">289</span><a name="line.289"></a>
+<span class="sourceLineNo">290</span>    /**<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * Creates a ForkJoinWorkerThread operating in the given pool.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     *<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * @param pool the pool this thread works in<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * @throws NullPointerException if pool is null<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     */<a name="line.295"></a>
+<span class="sourceLineNo">296</span>    protected ForkJoinWorkerThread(ForkJoinPool pool) {<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        super(pool.nextWorkerName());<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        this.pool = pool;<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        int k = pool.registerWorker(this);<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        poolIndex = k;<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        eventCount = ~k &amp; SMASK; // clear wait count<a name="line.301"></a>
+<span class="sourceLineNo">302</span>        locallyFifo = pool.locallyFifo;<a name="line.302"></a>
+<span class="sourceLineNo">303</span>        Thread.UncaughtExceptionHandler ueh = pool.ueh;<a name="line.303"></a>
+<span class="sourceLineNo">304</span>        if (ueh != null)<a name="line.304"></a>
+<span class="sourceLineNo">305</span>            setUncaughtExceptionHandler(ueh);<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        setDaemon(true);<a name="line.306"></a>
+<span class="sourceLineNo">307</span>    }<a name="line.307"></a>
+<span class="sourceLineNo">308</span><a name="line.308"></a>
+<span class="sourceLineNo">309</span>    // Public methods<a name="line.309"></a>
+<span class="sourceLineNo">310</span><a name="line.310"></a>
+<span class="sourceLineNo">311</span>    /**<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * Returns the pool hosting this thread.<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     *<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * @return the pool<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     */<a name="line.315"></a>
+<span class="sourceLineNo">316</span>    public ForkJoinPool getPool() {<a name="line.316"></a>
+<span class="sourceLineNo">317</span>        return pool;<a name="line.317"></a>
+<span class="sourceLineNo">318</span>    }<a name="line.318"></a>
+<span class="sourceLineNo">319</span><a name="line.319"></a>
+<span class="sourceLineNo">320</span>    /**<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * Returns the index number of this thread in its pool.  The<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * returned value ranges from zero to the maximum number of<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * threads (minus one) that have ever been created in the pool.<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * This method may be useful for applications that track status or<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * collect results per-worker rather than per-task.<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     *<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * @return the index number<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     */<a name="line.328"></a>
+<span class="sourceLineNo">329</span>    public int getPoolIndex() {<a name="line.329"></a>
+<span class="sourceLineNo">330</span>        return poolIndex;<a name="line.330"></a>
+<span class="sourceLineNo">331</span>    }<a name="line.331"></a>
+<span class="sourceLineNo">332</span><a name="line.332"></a>
+<span class="sourceLineNo">333</span>    // Randomization<a name="line.333"></a>
+<span class="sourceLineNo">334</span><a name="line.334"></a>
+<span class="sourceLineNo">335</span>    /**<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * Computes next value for random victim probes and backoffs.<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * Scans don't require a very high quality generator, but also not<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * a crummy one.  Marsaglia xor-shift is cheap and works well<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * enough.  Note: This is manually inlined in FJP.scan() to avoid<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * writes inside busy loops.<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     */<a name="line.341"></a>
+<span class="sourceLineNo">342</span>    private int nextSeed() {<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        int r = seed;<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        r ^= r &lt;&lt; 13;<a name="line.344"></a>
+<span class="sourceLineNo">345</span>        r ^= r &gt;&gt;&gt; 17;<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        r ^= r &lt;&lt; 5;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        return seed = r;<a name="line.347"></a>
+<span class="sourceLineNo">348</span>    }<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>    // Run State management<a name="line.350"></a>
+<span class="sourceLineNo">351</span><a name="line.351"></a>
+<span class="sourceLineNo">352</span>    /**<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * Initializes internal state after construction but before<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * processing any tasks. If you override this method, you must<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * invoke {@code super.onStart()} at the beginning of the method.<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * Initialization requires care: Most fields must have legal<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * default values, to ensure that attempted accesses from other<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * threads work correctly even before this thread starts<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * processing tasks.<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     */<a name="line.360"></a>
+<span class="sourceLineNo">361</span>    protected void onStart() {<a name="line.361"></a>
+<span class="sourceLineNo">362</span>        queue = new ForkJoinTask&lt;?&gt;[INITIAL_QUEUE_CAPACITY];<a name="line.362"></a>
+<span class="sourceLineNo">363</span>        int r = pool.workerSeedGenerator.nextInt();<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        seed = (r == 0) ? 1 : r; //  must be nonzero<a name="line.364"></a>
+<span class="sourceLineNo">365</span>    }<a name="line.365"></a>
+<span class="sourceLineNo">366</span><a name="line.366"></a>
+<span class="sourceLineNo">367</span>    /**<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * Performs cleanup associated with termination of this worker<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * thread.  If you override this method, you must invoke<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * {@code super.onTermination} at the end of the overridden method.<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     *<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * @param exception the exception causing this thread to abort due<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * to an unrecoverable error, or {@code null} if completed normally<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     */<a name="line.374"></a>
+<span class="sourceLineNo">375</span>    protected void onTermination(Throwable exception) {<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        try {<a name="line.376"></a>
+<span class="sourceLineNo">377</span>            terminate = true;<a name="line.377"></a>
+<span class="sourceLineNo">378</span>            cancelTasks();<a name="line.378"></a>
+<span class="sourceLineNo">379</span>            pool.deregisterWorker(this, exception);<a name="line.379"></a>
+<span class="sourceLineNo">380</span>        } catch (Throwable ex) {        // Shouldn't ever happen<a name="line.380"></a>
+<span class="sourceLineNo">381</span>            if (exception == null)      // but if so, at least rethrown<a name="line.381"></a>
+<span class="sourceLineNo">382</span>                exception = ex;<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        } finally {<a name="line.383"></a>
+<span class="sourceLineNo">384</span>            if (exception != null)<a name="line.384"></a>
+<span class="sourceLineNo">385</span>                UNSAFE.throwException(exception);<a name="line.385"></a>
+<span class="sourceLineNo">386</span>        }<a name="line.386"></a>
+<span class="sourceLineNo">387</span>    }<a name="line.387"></a>
+<span class="sourceLineNo">388</span><a name="line.388"></a>
+<span class="sourceLineNo">389</span>    /**<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * This method is required to be public, but should never be<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * called explicitly. It performs the main run loop to execute<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * {@link ForkJoinTask}s.<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     */<a name="line.393"></a>
+<span class="sourceLineNo">394</span>    public void run() {<a name="line.394"></a>
+<span class="sourceLineNo">395</span>        Throwable exception = null;<a name="line.395"></a>
+<span class="sourceLineNo">396</span>        try {<a name="line.396"></a>
+<span class="sourceLineNo">397</span>            onStart();<a name="line.397"></a>
+<span class="sourceLineNo">398</span>            pool.work(this);<a name="line.398"></a>
+<span class="sourceLineNo">399</span>        } catch (Throwable ex) {<a name="line.399"></a>
+<span class="sourceLineNo">400</span>            exception = ex;<a name="line.400"></a>
+<span class="sourceLineNo">401</span>        } finally {<a name="line.401"></a>
+<span class="sourceLineNo">402</span>            onTermination(exception);<a name="line.402"></a>
+<span class="sourceLineNo">403</span>        }<a name="line.403"></a>
+<span class="sourceLineNo">404</span>    }<a name="line.404"></a>
+<span class="sourceLineNo">405</span><a name="line.405"></a>
+<span class="sourceLineNo">406</span>    /*<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * Intrinsics-based atomic writes for queue slots. These are<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * basically the same as methods in AtomicReferenceArray, but<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * specialized for (1) ForkJoinTask elements (2) requirement that<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * nullness and bounds checks have already been performed by<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * callers and (3) effective offsets are known not to overflow<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * from int to long (because of MAXIMUM_QUEUE_CAPACITY). We don't<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     * need corresponding version for reads: plain array reads are OK<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     * because they are protected by other volatile reads and are<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     * confirmed by CASes.<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     *<a name="line.416"></a>
+<span class="sourceLineNo">417</span>     * Most uses don't actually call these methods, but instead<a name="line.417"></a>
+<span class="sourceLineNo">418</span>     * contain inlined forms that enable more predictable<a name="line.418"></a>
+<span class="sourceLineNo">419</span>     * optimization.  We don't define the version of write used in<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * pushTask at all, but instead inline there a store-fenced array<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * slot write.<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     *<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     * Also in most methods, as a performance (not correctness) issue,<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * we'd like to encourage compilers not to arbitrarily postpone<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     * setting queueTop after writing slot.  Currently there is no<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     * intrinsic for arranging this, but using Unsafe putOrderedInt<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * may be a preferable strategy on some compilers even though its<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     * main effect is a pre-, not post- fence. To simplify possible<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * changes, the option is left in comments next to the associated<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * assignments.<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     */<a name="line.431"></a>
+<span class="sourceLineNo">432</span><a name="line.432"></a>
+<span class="sourceLineNo">433</span>    /**<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     * CASes slot i of array q from t to null. Caller must ensure q is<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     * non-null and index is in range.<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     */<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    private static final boolean casSlotNull(ForkJoinTask&lt;?&gt;[] q, int i,<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                                             ForkJoinTask&lt;?&gt; t) {<a name="line.438"></a>
+<span class="sourceLineNo">439</span>        return UNSAFE.compareAndSwapObject(q, (i &lt;&lt; ASHIFT) + ABASE, t, null);<a name="line.439"></a>
+<span class="sourceLineNo">440</span>    }<a name="line.440"></a>
+<span class="sourceLineNo">441</span><a name="line.441"></a>
+<span class="sourceLineNo">442</span>    /**<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * Performs a volatile write of the given task at given slot of<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     * array q.  Caller must ensure q is non-null and index is in<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     * range. This method is used only during resets and backouts.<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     */<a name="line.446"></a>
+<span class="sourceLineNo">447</span>    private static final void writeSlot(ForkJoinTask&lt;?&gt;[] q, int i,<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                                        ForkJoinTask&lt;?&gt; t) {<a name="line.448"></a>
+<span class="sourceLineNo">449</span>        UNSAFE.putObjectVolatile(q, (i &lt;&lt; ASHIFT) + ABASE, t);<a name="line.449"></a>
+<span class="sourceLineNo">450</span>    }<a name="line.450"></a>
+<span class="sourceLineNo">451</span><a name="line.451"></a>
+<span class="sourceLineNo">452</span>    // queue methods<a name="line.452"></a>
+<span class="sourceLineNo">453</span><a name="line.453"></a>
+<span class="sourceLineNo">454</span>    /**<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * Pushes a task. Call only from this thread.<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     *<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     * @param t the task. Caller must ensure non-null.<a name="line.457"></a>
+<span class="sourceLineNo">458</span>     */<a name="line.458"></a>
+<span class="sourceLineNo">459</span>    final void pushTask(ForkJoinTask&lt;?&gt; t) {<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        ForkJoinTask&lt;?&gt;[] q; int s, m;<a name="line.460"></a>
+<span class="sourceLineNo">461</span>        if ((q = queue) != null) {    // ignore if queue removed<a name="line.461"></a>
+<span class="sourceLineNo">462</span>            long u = (((s = queueTop) &amp; (m = q.length - 1)) &lt;&lt; ASHIFT) + ABASE;<a name="line.462"></a>
+<span class="sourceLineNo">463</span>            UNSAFE.putOrderedObject(q, u, t);<a name="line.463"></a>
+<span class="sourceLineNo">464</span>            queueTop = s + 1;         // or use putOrderedInt<a name="line.464"></a>
+<span class="sourceLineNo">465</span>            if ((s -= queueBase) &lt;= 2)<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                pool.signalWork();<a name="line.466"></a>
+<span class="sourceLineNo">467</span>            else if (s == m)<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                growQueue();<a name="line.468"></a>
+<span class="sourceLineNo">469</span>        }<a name="line.469"></a>
+<span class="sourceLineNo">470</span>    }<a name="line.470"></a>
+<span class="sourceLineNo">471</span><a name="line.471"></a>
+<span class="sourceLineNo">472</span>    /**<a name="line.472"></a>
+<span class="sourceLineNo">473</span>     * Creates or doubles queue array.  Transfers elements by<a name="line.473"></a>
+<span class="sourceLineNo">474</span>     * emulating steals (deqs) from old array and placing, oldest<a name="line.474"></a>
+<span class="sourceLineNo">475</span>     * first, into new array.<a name="line.475"></a>
+<span class="sourceLineNo">476</span>     */<a name="line.476"></a>
+<span class="sourceLineNo">477</span>    private void growQueue() {<a name="line.477"></a>
+<span class="sourceLineNo">478</span>        ForkJoinTask&lt;?&gt;[] oldQ = queue;<a name="line.478"></a>
+<span class="sourceLineNo">479</span>        int size = oldQ != null ? oldQ.length &lt;&lt; 1 : INITIAL_QUEUE_CAPACITY;<a name="line.479"></a>
+<span class="sourceLineNo">480</span>        if (size &gt; MAXIMUM_QUEUE_CAPACITY)<a name="line.480"></a>
+<span class="sourceLineNo">481</span>            throw new RejectedExecutionException("Queue capacity exceeded");<a name="line.481"></a>
+<span class="sourceLineNo">482</span>        if (size &lt; INITIAL_QUEUE_CAPACITY)<a name="line.482"></a>
+<span class="sourceLineNo">483</span>            size = INITIAL_QUEUE_CAPACITY;<a name="line.483"></a>
+<span class="sourceLineNo">484</span>        ForkJoinTask&lt;?&gt;[] q = queue = new ForkJoinTask&lt;?&gt;[size];<a name="line.484"></a>
+<span class="sourceLineNo">485</span>        int mask = size - 1;<a name="line.485"></a>
+<span class="sourceLineNo">486</span>        int top = queueTop;<a name="line.486"></a>
+<span class="sourceLineNo">487</span>        int oldMask;<a name="line.487"></a>
+<span class="sourceLineNo">488</span>        if (oldQ != null &amp;&amp; (oldMask = oldQ.length - 1) &gt;= 0) {<a name="line.488"></a>
+<span class="sourceLineNo">489</span>            for (int b = queueBase; b != top; ++b) {<a name="line.489"></a>
+<span class="sourceLineNo">490</span>                long u = ((b &amp; oldMask) &lt;&lt; ASHIFT) + ABASE;<a name="line.490"></a>
+<span class="sourceLineNo">491</span>                Object x = UNSAFE.getObjectVolatile(oldQ, u);<a name="line.491"></a>
+<span class="sourceLineNo">492</span>                if (x != null &amp;&amp; UNSAFE.compareAndSwapObject(oldQ, u, x, null))<a name="line.492"></a>
+<span class="sourceLineNo">493</span>                    UNSAFE.putObjectVolatile<a name="line.493"></a>
+<span class="sourceLineNo">494</span>                        (q, ((b &amp; mask) &lt;&lt; ASHIFT) + ABASE, x);<a name="line.494"></a>
+<span class="sourceLineNo">495</span>            }<a name="line.495"></a>
+<span class="sourceLineNo">496</span>        }<a name="line.496"></a>
+<span class="sourceLineNo">497</span>    }<a name="line.497"></a>
+<span class="sourceLineNo">498</span><a name="line.498"></a>
+<span class="sourceLineNo">499</span>    /**<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     * Tries to take a task from the base of the queue, failing if<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * empty or contended. Note: Specializations of this code appear<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * in locallyDeqTask and elsewhere.<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     *<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * @return a task, or null if none or contended<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     */<a name="line.505"></a>
+<span class="sourceLineNo">506</span>    final ForkJoinTask&lt;?&gt; deqTask() {<a name="line.506"></a>
+<span class="sourceLineNo">507</span>        ForkJoinTask&lt;?&gt; t; ForkJoinTask&lt;?&gt;[] q; int b, i;<a name="line.507"></a>
+<span class="sourceLineNo">508</span>        if (queueTop != (b = queueBase) &amp;&amp;<a name="line.508"></a>
+<span class="sourceLineNo">509</span>            (q = queue) != null &amp;&amp; // must read q after b<a name="line.509"></a>
+<span class="sourceLineNo">510</span>            (i = (q.length - 1) &amp; b) &gt;= 0 &amp;&amp;<a name="line.510"></a>
+<span class="sourceLineNo">511</span>            (t = q[i]) != null &amp;&amp; queueBase == b &amp;&amp;<a name="line.511"></a>
+<span class="sourceLineNo">512</span>            UNSAFE.compareAndSwapObject(q, (i &lt;&lt; ASHIFT) + ABASE, t, null)) {<a name="line.512"></a>
+<span class="sourceLineNo">513</span>            queueBase = b + 1;<a name="line.513"></a>
+<span class="sourceLineNo">514</span>            return t;<a name="line.514"></a>
+<span class="sourceLineNo">515</span>        }<a name="line.515"></a>
+<span class="sourceLineNo">516</span>        return null;<a name="line.516"></a>
+<span class="sourceLineNo">517</span>    }<a name="line.517"></a>
+<span class="sourceLineNo">518</span><a name="line.518"></a>
+<span class="sourceLineNo">519</span>    /**<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     * Tries to take a task from the base of own queue.  Called only<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * by this thread.<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     *<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     * @return a task, or null if none<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     */<a name="line.524"></a>
+<span class="sourceLineNo">525</span>    final ForkJoinTask&lt;?&gt; locallyDeqTask() {<a name="line.525"></a>
+<span class="sourceLineNo">526</span>        ForkJoinTask&lt;?&gt; t; int m, b, i;<a name="line.526"></a>
+<span class="sourceLineNo">527</span>        ForkJoinTask&lt;?&gt;[] q = queue;<a name="line.527"></a>
+<span class="sourceLineNo">528</span>        if (q != null &amp;&amp; (m = q.length - 1) &gt;= 0) {<a name="line.528"></a>
+<span class="sourceLineNo">529</span>            while (queueTop != (b = queueBase)) {<a name="line.529"></a>
+<span class="sourceLineNo">530</span>                if ((t = q[i = m &amp; b]) != null &amp;&amp;<a name="line.530"></a>
+<span class="sourceLineNo">531</span>                    queueBase == b &amp;&amp;<a name="line.531"></a>
+<span class="sourceLineNo">532</span>                    UNSAFE.compareAndSwapObject(q, (i &lt;&lt; ASHIFT) + ABASE,<a name="line.532"></a>
+<span class="sourceLineNo">533</span>                                                t, null)) {<a name="line.533"></a>
+<span class="sourceLineNo">534</span>                    queueBase = b + 1;<a name="line.534"></a>
+<span class="sourceLineNo">535</span>                    return t;<a name="line.535"></a>
+<span class="sourceLineNo">536</span>                }<a name="line.536"></a>
+<span class="sourceLineNo">537</span>            }<a name="line.537"></a>
+<span class="sourceLineNo">538</span>        }<a name="line.538"></a>
+<span class="sourceLineNo">539</span>        return null;<a name="line.539"></a>
+<span class="sourceLineNo">540</span>    }<a name="line.540"></a>
+<span class="sourceLineNo">541</span><a name="line.541"></a>
+<span class="sourceLineNo">542</span>    /**<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * Returns a popped task, or null if empty.<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     * Called only by this thread.<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     */<a name="line.545"></a>
+<span class="sourceLineNo">546</span>    private ForkJoinTask&lt;?&gt; popTask() {<a name="line.546"></a>
+<span class="sourceLineNo">547</span>        int m;<a name="line.547"></a>
+<span class="sourceLineNo">548</span>        ForkJoinTask&lt;?&gt;[] q = queue;<a name="line.548"></a>
+<span class="sourceLineNo">549</span>        if (q != null &amp;&amp; (m = q.length - 1) &gt;= 0) {<a name="line.549"></a>
+<span class="sourceLineNo">550</span>            for (int s; (s = queueTop) != queueBase;) {<a name="line.550"></a>
+<span class="sourceLineNo">551</span>                int i = m &amp; --s;<a name="line.551"></a>
+<span class="sourceLineNo">552</span>                long u = (i &lt;&lt; ASHIFT) + ABASE; // raw offset<a name="line.552"></a>
+<span class="sourceLineNo">553</span>                ForkJoinTask&lt;?&gt; t = q[i];<a name="line.553"></a>
+<span class="sourceLineNo">554</span>                if (t == null)   // lost to stealer<a name="line.554"></a>
+<span class="sourceLineNo">555</span>                    break;<a name="line.555"></a>
+<span class="sourceLineNo">556</span>                if (UNSAFE.compareAndSwapObject(q, u, t, null)) {<a name="line.556"></a>
+<span class="sourceLineNo">557</span>                    queueTop = s; // or putOrderedInt<a name="line.557"></a>
+<span class="sourceLineNo">558</span>                    return t;<a name="line.558"></a>
+<span class="sourceLineNo">559</span>                }<a name="line.559"></a>
+<span class="sourceLineNo">560</span>            }<a name="line.560"></a>
+<span class="sourceLineNo">561</span>        }<a name="line.561"></a>
+<span class="sourceLineNo">562</span>        return null;<a name="line.562"></a>
+<span class="sourceLineNo">563</span>    }<a name="line.563"></a>
+<span class="sourceLineNo">564</span><a name="line.564"></a>
+<span class="sourceLineNo">565</span>    /**<a name="line.565"></a>
+<span class="sourceLineNo">566</span>     * Specialized version of popTask to pop only if topmost element<a name="line.566"></a>
+<span class="sourceLineNo">567</span>     * is the given task. Called only by this thread.<a name="line.567"></a>
+<span class="sourceLineNo">568</span>     *<a name="line.568"></a>
+<span class="sourceLineNo">569</span>     * @param t the task. Caller must ensure non-null.<a name="line.569"></a>
+<span class="sourceLineNo">570</span>     */<a name="line.570"></a>
+<span class="sourceLineNo">571</span>    final boolean unpushTask(ForkJoinTask&lt;?&gt; t) {<a name="line.571"></a>
+<span class="sourceLineNo">572</span>        ForkJoinTask&lt;?&gt;[] q;<a name="line.572"></a>
+<span class="sourceLineNo">573</span>        int s;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>        if ((q = queue) != null &amp;&amp; (s = queueTop) != queueBase &amp;&amp;<a name="line.574"></a>
+<span class="sourceLineNo">575</span>            UNSAFE.compareAndSwapObject<a name="line.575"></a>
+<span class="sourceLineNo">576</span>            (q, (((q.length - 1) &amp; --s) &lt;&lt; ASHIFT) + ABASE, t, null)) {<a name="line.576"></a>
+<span class="sourceLineNo">577</span>            queueTop = s; // or putOrderedInt<a name="line.577"></a>
+<span class="sourceLineNo">578</span>            return true;<a name="line.578"></a>
+<span class="sourceLineNo">579</span>        }<a name="line.579"></a>
+<span class="sourceLineNo">580</span>        return false;<a name="line.580"></a>
+<span class="sourceLineNo">581</span>    }<a name="line.581"></a>
+<span class="sourceLineNo">582</span><a name="line.582"></a>
+<span class="sourceLineNo">583</span>    /**<a name="line.583"></a>
+<span class="sourceLineNo">584</span>     * Returns next task, or null if empty or contended.<a name="line.584"></a>
+<span class="sourceLineNo">585</span>     */<a name="line.585"></a>
+<span class="sourceLineNo">586</span>    final ForkJoinTask&lt;?&gt; peekTask() {<a name="line.586"></a>
+<span class="sourceLineNo">587</span>        int m;<a name="line.587"></a>
+<span class="sourceLineNo">588</span>        ForkJoinTask&lt;?&gt;[] q = queue;<a name="line.588"></a>
+<span class="sourceLineNo">589</span>        if (q == null || (m = q.length - 1) &lt; 0)<a name="line.589"></a>
+<span class="sourceLineNo">590</span>            return null;<a name="line.590"></a>
+<span class="sourceLineNo">591</span>        int i = locallyFifo ? queueBase : (queueTop - 1);<a name="line.591"></a>
+<span class="sourceLineNo">592</span>        return q[i &amp; m];<a name="line.592"></a>
+<span class="sourceLineNo">593</span>    }<a name="line.593"></a>
+<span class="sourceLineNo">594</span><a name="line.594"></a>
+<span class="sourceLineNo">595</span>    // Support methods for ForkJoinPool<a name="line.595"></a>
+<span class="sourceLineNo">596</span><a name="line.596"></a>
+<span class="sourceLineNo">597</span>    /**<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * Runs the given task, plus any local tasks until queue is empty<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     */<a name="line.599"></a>
+<span class="sourceLineNo">600</span>    final void execTask(ForkJoinTask&lt;?&gt; t) {<a name="line.600"></a>
+<span class="sourceLineNo">601</span>        currentSteal = t;<a name="line.601"></a>
+<span class="sourceLineNo">602</span>        for (;;) {<a name="line.602"></a>
+<span class="sourceLineNo">603</span>            if (t != null)<a name="line.603"></a>
+<span class="sourceLineNo">604</span>                t.doExec();<a name="line.604"></a>
+<span class="sourceLineNo">605</span>            if (queueTop == queueBase)<a name="line.605"></a>
+<span class="sourceLineNo">606</span>                break;<a name="line.606"></a>
+<span class="sourceLineNo">607</span>            t = locallyFifo ? locallyDeqTask() : popTask();<a name="line.607"></a>
+<span class="sourceLineNo">608</span>        }<a name="line.608"></a>
+<span class="sourceLineNo">609</span>        ++stealCount;<a name="line.609"></a>
+<span class="sourceLineNo">610</span>        currentSteal = null;<a name="line.610"></a>
+<span class="sourceLineNo">611</span>    }<a name="line.611"></a>
+<span class="sourceLineNo">612</span><a name="line.612"></a>
+<span class="sourceLineNo">613</span>    /**<a name="line.613"></a>
+<span class="sourceLineNo">614</span>     * Removes and cancels all tasks in queue.  Can be called from any<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     * thread.<a name="line.615"></a>
+<span class="sourceLineNo">616</span>     */<a name="line.616"></a>
+<span class="sourceLineNo">617</span>    final void cancelTasks() {<a name="line.617"></a>
+<span class="sourceLineNo">618</span>        ForkJoinTask&lt;?&gt; cj = currentJoin; // try to cancel ongoing tasks<a name="line.618"></a>
+<span class="sourceLineNo">619</span>        if (cj != null &amp;&amp; cj.status &gt;= 0)<a name="line.619"></a>
+<span class="sourceLineNo">620</span>            cj.cancelIgnoringExceptions();<a name="line.620"></a>
+<span class="sourceLineNo">621</span>        ForkJoinTask&lt;?&gt; cs = currentSteal;<a name="line.621"></a>
+<span class="sourceLineNo">622</span>        if (cs != null &amp;&amp; cs.status &gt;= 0)<a name="line.622"></a>
+<span class="sourceLineNo">623</span>            cs.cancelIgnoringExceptions();<a name="line.623"></a>
+<span class="sourceLineNo">624</span>        while (queueBase != queueTop) {<a name="line.624"></a>
+<span class="sourceLineNo">625</span>            ForkJoinTask&lt;?&gt; t = deqTask();<a name="line.625"></a>
+<span class="sourceLineNo">626</span>            if (t != null)<a name="line.626"></a>
+<span class="sourceLineNo">627</span>                t.cancelIgnoringExceptions();<a name="line.627"></a>
+<span class="sourceLineNo">628</span>        }<a name="line.628"></a>
+<span class="sourceLineNo">629</span>    }<a name="line.629"></a>
+<span class="sourceLineNo">630</span><a name="line.630"></a>
+<span class="sourceLineNo">631</span>    /**<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * Drains tasks to given collection c.<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     *<a name="line.633"></a>
+<span class="sourceLineNo">634</span>     * @return the number of tasks drained<a name="line.634"></a>
+<span class="sourceLineNo">635</span>     */<a name="line.635"></a>
+<span class="sourceLineNo">636</span>    final int drainTasksTo(Collection&lt;? super ForkJoinTask&lt;?&gt;&gt; c) {<a name="line.636"></a>
+<span class="sourceLineNo">637</span>        int n = 0;<a name="line.637"></a>
+<span class="sourceLineNo">638</span>        while (queueBase != queueTop) {<a name="line.638"></a>
+<span class="sourceLineNo">639</span>            ForkJoinTask&lt;?&gt; t = deqTask();<a name="line.639"></a>
+<span class="sourceLineNo">640</span>            if (t != null) {<a name="line.640"></a>
+<span class="sourceLineNo">641</span>                c.add(t);<a name="line.641"></a>
+<span class="sourceLineNo">642</span>                ++n;<a name="line.642"></a>
+<span class="sourceLineNo">643</span>            }<a name="line.643"></a>
+<span class="sourceLineNo">644</span>        }<a name="line.644"></a>
+<span class="sourceLineNo">645</span>        return n;<a name="line.645"></a>
+<span class="sourceLineNo">646</span>    }<a name="line.646"></a>
+<span class="sourceLineNo">647</span><a name="line.647"></a>
+<span class="sourceLineNo">648</span>    // Support methods for ForkJoinTask<a name="line.648"></a>
+<span class="sourceLineNo">649</span><a name="line.649"></a>
+<span class="sourceLineNo">650</span>    /**<a name="line.650"></a>
+<span class="sourceLineNo">651</span>     * Returns an estimate of the number of tasks in the queue.<a name="line.651"></a>
+<span class="sourceLineNo">652</span>     */<a name="line.652"></a>
+<span class="sourceLineNo">653</span>    final int getQueueSize() {<a name="line.653"></a>
+<span class="sourceLineNo">654</span>        return queueTop - queueBase;<a name="line.654"></a>
+<span class="sourceLineNo">655</span>    }<a name="line.655"></a>
+<span class="sourceLineNo">656</span><a name="line.656"></a>
+<span class="sourceLineNo">657</span>    /**<a name="line.657"></a>
+<span class="sourceLineNo">658</span>     * Gets and removes a local task.<a name="line.658"></a>
+<span class="sourceLineNo">659</span>     *<a name="line.659"></a>
+<span class="sourceLineNo">660</span>     * @return a task, if available<a name="line.660"></a>
+<span class="sourceLineNo">661</span>     */<a name="line.661"></a>
+<span class="sourceLineNo">662</span>    final ForkJoinTask&lt;?&gt; pollLocalTask() {<a name="line.662"></a>
+<span class="sourceLineNo">663</span>        return locallyFifo ? locallyDeqTask() : popTask();<a name="line.663"></a>
+<span class="sourceLineNo">664</span>    }<a name="line.664"></a>
+<span class="sourceLineNo">665</span><a name="line.665"></a>
+<span class="sourceLineNo">666</span>    /**<a name="line.666"></a>
+<span class="sourceLineNo">667</span>     * Gets and removes a local or stolen task.<a name="line.667"></a>
+<span class="sourceLineNo">668</span>     *<a name="line.668"></a>
+<span class="sourceLineNo">669</span>     * @return a task, if available<a name="line.669"></a>
+<span class="sourceLineNo">670</span>     */<a name="line.670"></a>
+<span class="sourceLineNo">671</span>    final ForkJoinTask&lt;?&gt; pollTask() {<a name="line.671"></a>
+<span class="sourceLineNo">672</span>        ForkJoinWorkerThread[] ws;<a name="line.672"></a>
+<span class="sourceLineNo">673</span>        ForkJoinTask&lt;?&gt; t = pollLocalTask();<a name="line.673"></a>
+<span class="sourceLineNo">674</span>        if (t != null || (ws = pool.workers) == null)<a name="line.674"></a>
+<span class="sourceLineNo">675</span>            return t;<a name="line.675"></a>
+<span class="sourceLineNo">676</span>        int n = ws.length; // cheap version of FJP.scan<a name="line.676"></a>
+<span class="sourceLineNo">677</span>        int steps = n &lt;&lt; 1;<a name="line.677"></a>
+<span class="sourceLineNo">678</span>        int r = nextSeed();<a name="line.678"></a>
+<span class="sourceLineNo">679</span>        int i = 0;<a name="line.679"></a>
+<span class="sourceLineNo">680</span>        while (i &lt; steps) {<a name="line.680"></a>
+<span class="sourceLineNo">681</span>            ForkJoinWorkerThread w = ws[(i++ + r) &amp; (n - 1)];<a name="line.681"></a>
+<span class="sourceLineNo">682</span>            if (w != null &amp;&amp; w.queueBase != w.queueTop &amp;&amp; w.queue != null) {<a name="line.682"></a>
+<span class="sourceLineNo">683</span>                if ((t = w.deqTask()) != null)<a name="line.683"></a>
+<span class="sourceLineNo">684</span>                    return t;<a name="line.684"></a>
+<span class="sourceLineNo">685</span>                i = 0;<a name="line.685"></a>
+<span class="sourceLineNo">686</span>            }<a name="line.686"></a>
+<span class="sourceLineNo">687</span>        }<a name="line.687"></a>
+<span class="sourceLineNo">688</span>        return null;<a name="line.688"></a>
+<span class="sourceLineNo">689</span>    }<a name="line.689"></a>
+<span class="sourceLineNo">690</span><a name="line.690"></a>
+<span class="sourceLineNo">691</span>    /**<a name="line.691"></a>
+<span class="sourceLineNo">692</span>     * The maximum stolen-&gt;joining link depth allowed in helpJoinTask,<a name="line.692"></a>
+<span class="sourceLineNo">693</span>     * as well as the maximum number of retries (allowing on average<a name="line.693"></a>
+<span class="sourceLineNo">694</span>     * one staleness retry per level) per attempt to instead try<a name="line.694"></a>
+<span class="sourceLineNo">695</span>     * compensation.  Depths for legitimate chains are unbounded, but<a name="line.695"></a>
+<span class="sourceLineNo">696</span>     * we use a fixed constant to avoid (otherwise unchecked) cycles<a name="line.696"></a>
+<span class="sourceLineNo">697</span>     * and bound staleness of traversal parameters at the expense of<a name="line.697"></a>
+<span class="sourceLineNo">698</span>     * sometimes blocking when we could be helping.<a name="line.698"></a>
+<span class="sourceLineNo">699</span>     */<a name="line.699"></a>
+<span class="sourceLineNo">700</span>    private static final int MAX_HELP = 16;<a name="line.700"></a>
+<span class="sourceLineNo">701</span><a name="line.701"></a>
+<span class="sourceLineNo">702</span>    /**<a name="line.702"></a>
+<span class="sourceLineNo">703</span>     * Possibly runs some tasks and/or blocks, until joinMe is done.<a name="line.703"></a>
+<span class="sourceLineNo">704</span>     *<a name="line.704"></a>
+<span class="sourceLineNo">705</span>     * @param joinMe the task to join<a name="line.705"></a>
+<span class="sourceLineNo">706</span>     * @return completion status on exit<a name="line.706"></a>
+<span class="sourceLineNo">707</span>     */<a name="line.707"></a>
+<span class="sourceLineNo">708</span>    final int joinTask(ForkJoinTask&lt;?&gt; joinMe) {<a name="line.708"></a>
+<span class="sourceLineNo">709</span>        ForkJoinTask&lt;?&gt; prevJoin = currentJoin;<a name="line.709"></a>
+<span class="sourceLineNo">710</span>        currentJoin = joinMe;<a name="line.710"></a>
+<span class="sourceLineNo">711</span>        for (int s, retries = MAX_HELP;;) {<a name="line.711"></a>
+<span class="sourceLineNo">712</span>            if ((s = joinMe.status) &lt; 0) {<a name="line.712"></a>
+<span class="sourceLineNo">713</span>                currentJoin = prevJoin;<a name="line.713"></a>
+<span class="sourceLineNo">714</span>                return s;<a name="line.714"></a>
+<span class="sourceLineNo">715</span>            }<a name="line.715"></a>
+<span class="sourceLineNo">716</span>            if (retries &gt; 0) {<a name="line.716"></a>
+<span class="sourceLineNo">717</span>                if (queueTop != queueBase) {<a name="line.717"></a>
+<span class="sourceLineNo">718</span>                    if (!localHelpJoinTask(joinMe))<a name="line.718"></a>
+<span class="sourceLineNo">719</span>                        retries = 0;           // cannot help<a name="line.719"></a>
+<span class="sourceLineNo">720</span>                }<a name="line.720"></a>
+<span class="sourceLineNo">721</span>                else if (retries == MAX_HELP &gt;&gt;&gt; 1) {<a name="line.721"></a>
+<span class="sourceLineNo">722</span>                    --retries;                 // check uncommon case<a name="line.722"></a>
+<span class="sourceLineNo">723</span>                    if (tryDeqAndExec(joinMe) &gt;= 0)<a name="line.723"></a>
+<span class="sourceLineNo">724</span>                        Thread.yield();        // for politeness<a name="line.724"></a>
+<span class="sourceLineNo">725</span>                }<a name="line.725"></a>
+<span class="sourceLineNo">726</span>                else<a name="line.726"></a>
+<span class="sourceLineNo">727</span>                    retries = helpJoinTask(joinMe) ? MAX_HELP : retries - 1;<a name="line.727"></a>
+<span class="sourceLineNo">728</span>            }<a name="line.728"></a>
+<span class="sourceLineNo">729</span>            else {<a name="line.729"></a>
+<span class="sourceLineNo">730</span>                retries = MAX_HELP;           // restart if not done<a name="line.730"></a>
+<span class="sourceLineNo">731</span>                pool.tryAwaitJoin(joinMe);<a name="line.731"></a>
+<span class="sourceLineNo">732</span>            }<a name="line.732"></a>
+<span class="sourceLineNo">733</span>        }<a name="line.733"></a>
+<span class="sourceLineNo">734</span>    }<a name="line.734"></a>
+<span class="sourceLineNo">735</span><a name="line.735"></a>
+<span class="sourceLineNo">736</span>    /**<a name="line.736"></a>
+<span class="sourceLineNo">737</span>     * If present, pops and executes the given task, or any other<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * cancelled task<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     *<a name="line.739"></a>
+<span class="sourceLineNo">740</span>     * @return false if any other non-cancelled task exists in local queue<a name="line.740"></a>
+<span class="sourceLineNo">741</span>     */<a name="line.741"></a>
+<span class="sourceLineNo">742</span>    private boolean localHelpJoinTask(ForkJoinTask&lt;?&gt; joinMe) {<a name="line.742"></a>
+<span class="sourceLineNo">743</span>        int s, i; ForkJoinTask&lt;?&gt;[] q; ForkJoinTask&lt;?&gt; t;<a name="line.743"></a>
+<span class="sourceLineNo">744</span>        if ((s = queueTop) != queueBase &amp;&amp; (q = queue) != null &amp;&amp;<a name="line.744"></a>
+<span class="sourceLineNo">745</span>            (i = (q.length - 1) &amp; --s) &gt;= 0 &amp;&amp;<a name="line.745"></a>
+<span class="sourceLineNo">746</span>            (t = q[i]) != null) {<a name="line.746"></a>
+<span class="sourceLineNo">747</span>            if (t != joinMe &amp;&amp; t.status &gt;= 0)<a name="line.747"></a>
+<span class="sourceLineNo">748</span>                return false;<a name="line.748"></a>
+<span class="sourceLineNo">749</span>            if (UNSAFE.compareAndSwapObject<a name="line.749"></a>
+<span class="sourceLineNo">750</span>                (q, (i &lt;&lt; ASHIFT) + ABASE, t, null)) {<a name="line.750"></a>
+<span class="sourceLineNo">751</span>                queueTop = s;           // or putOrderedInt<a name="line.751"></a>
+<span class="sourceLineNo">752</span>                t.doExec();<a name="line.752"></a>
+<span class="sourceLineNo">753</span>            }<a name="line.753"></a>
+<span class="sourceLineNo">754</span>        }<a name="line.754"></a>
+<span class="sourceLineNo">755</span>        return true;<a name="line.755"></a>
+<span class="sourceLineNo">756</span>    }<a name="line.756"></a>
+<span class="sourceLineNo">757</span><a name="line.757"></a>
+<span class="sourceLineNo">758</span>    /**<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     * Tries to locate and execute tasks for a stealer of the given<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     * task, or in turn one of its stealers, Traces<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     * currentSteal-&gt;currentJoin links looking for a thread working on<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     * a descendant of the given task and with a non-empty queue to<a name="line.762"></a>
+<span class="sourceLineNo">763</span>     * steal back and execute tasks from.  The implementation is very<a name="line.763"></a>
+<span class="sourceLineNo">764</span>     * branchy to cope with potential inconsistencies or loops<a name="line.764"></a>
+<span class="sourceLineNo">765</span>     * encountering chains that are stale, unknown, or of length<a name="line.765"></a>
+<span class="sourceLineNo">766</span>     * greater than MAX_HELP links.  All of these cases are dealt with<a name="line.766"></a>
+<span class="sourceLineNo">767</span>     * by just retrying by caller.<a name="line.767"></a>
+<span class="sourceLineNo">768</span>     *<a name="line.768"></a>
+<span class="sourceLineNo">769</span>     * @param joinMe the task to join<a name="line.769"></a>
+<span class="sourceLineNo">770</span>     * @param canSteal true if local queue is empty<a name="line.770"></a>
+<span class="sourceLineNo">771</span>     * @return true if ran a task<a name="line.771"></a>
+<span class="sourceLineNo">772</span>     */<a name="line.772"></a>
+<span class="sourceLineNo">773</span>    private boolean helpJoinTask(ForkJoinTask&lt;?&gt; joinMe) {<a name="line.773"></a>
+<span class="sourceLineNo">774</span>        boolean helped = false;<a name="line.774"></a>
+<span class="sourceLineNo">775</span>        int m = pool.scanGuard &amp; SMASK;<a name="line.775"></a>
+<span class="sourceLineNo">776</span>        ForkJoinWorkerThread[] ws = pool.workers;<a name="line.776"></a>
+<span class="sourceLineNo">777</span>        if (ws != null &amp;&amp; ws.length &gt; m &amp;&amp; joinMe.status &gt;= 0) {<a name="line.777"></a>
+<span class="sourceLineNo">778</span>            int levels = MAX_HELP;              // remaining chain length<a name="line.778"></a>
+<span class="sourceLineNo">779</span>            ForkJoinTask&lt;?&gt; task = joinMe;      // base of chain<a name="line.779"></a>
+<span class="sourceLineNo">780</span>            outer:for (ForkJoinWorkerThread thread = this;;) {<a name="line.780"></a>
+<span class="sourceLineNo">781</span>                // Try to find v, the stealer of task, by first using hint<a name="line.781"></a>
+<span class="sourceLineNo">782</span>                ForkJoinWorkerThread v = ws[thread.stealHint &amp; m];<a name="line.782"></a>
+<span class="sourceLineNo">783</span>                if (v == null || v.currentSteal != task) {<a name="line.783"></a>
+<span class="sourceLineNo">784</span>                    for (int j = 0; ;) {        // search array<a name="line.784"></a>
+<span class="sourceLineNo">785</span>                        if ((v = ws[j]) != null &amp;&amp; v.currentSteal == task) {<a name="line.785"></a>
+<span class="sourceLineNo">786</span>                            thread.stealHint = j;<a name="line.786"></a>
+<span class="sourceLineNo">787</span>                            break;              // save hint for next time<a name="line.787"></a>
+<span class="sourceLineNo">788</span>                        }<a name="line.788"></a>
+<span class="sourceLineNo">789</span>                        if (++j &gt; m)<a name="line.789"></a>
+<span class="sourceLineNo">790</span>                            break outer;        // can't find stealer<a name="line.790"></a>
+<span class="sourceLineNo">791</span>                    }<a name="line.791"></a>
+<span class="sourceLineNo">792</span>                }<a name="line.792"></a>
+<span class="sourceLineNo">793</span>                // Try to help v, using specialized form of deqTask<a name="line.793"></a>
+<span class="sourceLineNo">794</span>                for (;;) {<a name="line.794"></a>
+<span class="sourceLineNo">795</span>                    ForkJoinTask&lt;?&gt;[] q; int b, i;<a name="line.795"></a>
+<span class="sourceLineNo">796</span>                    if (joinMe.status &lt; 0)<a name="line.796"></a>
+<span class="sourceLineNo">797</span>                        break outer;<a name="line.797"></a>
+<span class="sourceLineNo">798</span>                    if ((b = v.queueBase) == v.queueTop ||<a name="line.798"></a>
+<span class="sourceLineNo">799</span>                        (q = v.queue) == null ||<a name="line.799"></a>
+<span class="sourceLineNo">800</span>                        (i = (q.length-1) &amp; b) &lt; 0)<a name="line.800"></a>
+<span class="sourceLineNo">801</span>                        break;                  // empty<a name="line.801"></a>
+<span class="sourceLineNo">802</span>                    long u = (i &lt;&lt; ASHIFT) + ABASE;<a name="line.802"></a>
+<span class="sourceLineNo">803</span>                    ForkJoinTask&lt;?&gt; t = q[i];<a name="line.803"></a>
+<span class="sourceLineNo">804</span>                    if (task.status &lt; 0)<a name="line.804"></a>
+<span class="sourceLineNo">805</span>                        break outer;            // stale<a name="line.805"></a>
+<span class="sourceLineNo">806</span>                    if (t != null &amp;&amp; v.queueBase == b &amp;&amp;<a name="line.806"></a>
+<span class="sourceLineNo">807</span>                        UNSAFE.compareAndSwapObject(q, u, t, null)) {<a name="line.807"></a>
+<span class="sourceLineNo">808</span>                        v.queueBase = b + 1;<a name="line.808"></a>
+<span class="sourceLineNo">809</span>                        v.stealHint = poolIndex;<a name="line.809"></a>
+<span class="sourceLineNo">810</span>                        ForkJoinTask&lt;?&gt; ps = currentSteal;<a name="line.810"></a>
+<span class="sourceLineNo">811</span>                        currentSteal = t;<a name="line.811"></a>
+<span class="sourceLineNo">812</span>                        t.doExec();<a name="line.812"></a>
+<span class="sourceLineNo">813</span>                        currentSteal = ps;<a name="line.813"></a>
+<span class="sourceLineNo">814</span>                        helped = true;<a name="line.814"></a>
+<span class="sourceLineNo">815</span>                    }<a name="line.815"></a>
+<span class="sourceLineNo">816</span>                }<a name="line.816"></a>
+<span class="sourceLineNo">817</span>                // Try to descend to find v's stealer<a name="line.817"></a>
+<span class="sourceLineNo">818</span>                ForkJoinTask&lt;?&gt; next = v.currentJoin;<a name="line.818"></a>
+<span class="sourceLineNo">819</span>                if (--levels &gt; 0 &amp;&amp; task.status &gt;= 0 &amp;&amp;<a name="line.819"></a>
+<span class="sourceLineNo">820</span>                    next != null &amp;&amp; next != task) {<a name="line.820"></a>
+<span class="sourceLineNo">821</span>                    task = next;<a name="line.821"></a>
+<span class="sourceLineNo">822</span>                    thread = v;<a name="line.822"></a>
+<span class="sourceLineNo">823</span>                }<a name="line.823"></a>
+<span class="sourceLineNo">824</span>                else<a name="line.824"></a>
+<span class="sourceLineNo">825</span>                    break;  // max levels, stale, dead-end, or cyclic<a name="line.825"></a>
+<span class="sourceLineNo">826</span>            }<a name="line.826"></a>
+<span class="sourceLineNo">827</span>        }<a name="line.827"></a>
+<span class="sourceLineNo">828</span>        return helped;<a name="line.828"></a>
+<span class="sourceLineNo">829</span>    }<a name="line.829"></a>
+<span class="sourceLineNo">830</span><a name="line.830"></a>
+<span class="sourceLineNo">831</span>    /**<a name="line.831"></a>
+<span class="sourceLineNo">832</span>     * Performs an uncommon case for joinTask: If task t is at base of<a name="line.832"></a>
+<span class="sourceLineNo">833</span>     * some workers queue, steals and executes it.<a name="line.833"></a>
+<span class="sourceLineNo">834</span>     *<a name="line.834"></a>
+<span class="sourceLineNo">835</span>     * @param t the task<a name="line.835"></a>
+<span class="sourceLineNo">836</span>     * @return t's status<a name="line.836"></a>
+<span class="sourceLineNo">837</span>     */<a name="line.837"></a>
+<span class="sourceLineNo">838</span>    private int tryDeqAndExec(ForkJoinTask&lt;?&gt; t) {<a name="line.838"></a>
+<span class="sourceLineNo">839</span>        int m = pool.scanGuard &amp; SMASK;<a name="line.839"></a>
+<span class="sourceLineNo">840</span>        ForkJoinWorkerThread[] ws = pool.workers;<a name="line.840"></a>
+<span class="sourceLineNo">841</span>        if (ws != null &amp;&amp; ws.length &gt; m &amp;&amp; t.status &gt;= 0) {<a name="line.841"></a>
+<span class="sourceLineNo">842</span>            for (int j = 0; j &lt;= m; ++j) {<a name="line.842"></a>
+<span class="sourceLineNo">843</span>                ForkJoinTask&lt;?&gt;[] q; int b, i;<a name="line.843"></a>
+<span class="sourceLineNo">844</span>                ForkJoinWorkerThread v = ws[j];<a name="line.844"></a>
+<span class="sourceLineNo">845</span>                if (v != null &amp;&amp;<a name="line.845"></a>
+<span class="sourceLineNo">846</span>                    (b = v.queueBase) != v.queueTop &amp;&amp;<a name="line.846"></a>
+<span class="sourceLineNo">847</span>                    (q = v.queue) != null &amp;&amp;<a name="line.847"></a>
+<span class="sourceLineNo">848</span>                    (i = (q.length - 1) &amp; b) &gt;= 0 &amp;&amp;<a name="line.848"></a>
+<span class="sourceLineNo">849</span>                    q[i] ==  t) {<a name="line.849"></a>
+<span class="sourceLineNo">850</span>                    long u = (i &lt;&lt; ASHIFT) + ABASE;<a name="line.850"></a>
+<span class="sourceLineNo">851</span>                    if (v.queueBase == b &amp;&amp;<a name="line.851"></a>
+<span class="sourceLineNo">852</span>                        UNSAFE.compareAndSwapObject(q, u, t, null)) {<a name="line.852"></a>
+<span class="sourceLineNo">853</span>                        v.queueBase = b + 1;<a name="line.853"></a>
+<span class="sourceLineNo">854</span>                        v.stealHint = poolIndex;<a name="line.854"></a>
+<span class="sourceLineNo">855</span>                        ForkJoinTask&lt;?&gt; ps = currentSteal;<a name="line.855"></a>
+<span class="sourceLineNo">856</span>                        currentSteal = t;<a name="line.856"></a>
+<span class="sourceLineNo">857</span>                        t.doExec();<a name="line.857"></a>
+<span class="sourceLineNo">858</span>                        currentSteal = ps;<a name="line.858"></a>
+<span class="sourceLineNo">859</span>                    }<a name="line.859"></a>
+<span class="sourceLineNo">860</span>                    break;<a name="line.860"></a>
+<span class="sourceLineNo">861</span>                }<a name="line.861"></a>
+<span class="sourceLineNo">862</span>            }<a name="line.862"></a>
+<span class="sourceLineNo">863</span>        }<a name="line.863"></a>
+<span class="sourceLineNo">864</span>        return t.status;<a name="line.864"></a>
+<span class="sourceLineNo">865</span>    }<a name="line.865"></a>
+<span class="sourceLineNo">866</span><a name="line.866"></a>
+<span class="sourceLineNo">867</span>    /**<a name="line.867"></a>
+<span class="sourceLineNo">868</span>     * Implements ForkJoinTask.getSurplusQueuedTaskCount().  Returns<a name="line.868"></a>
+<span class="sourceLineNo">869</span>     * an estimate of the number of tasks, offset by a function of<a name="line.869"></a>
+<span class="sourceLineNo">870</span>     * number of idle workers.<a name="line.870"></a>
+<span class="sourceLineNo">871</span>     *<a name="line.871"></a>
+<span class="sourceLineNo">872</span>     * This method provides a cheap heuristic guide for task<a name="line.872"></a>
+<span class="sourceLineNo">873</span>     * partitioning when programmers, frameworks, tools, or languages<a name="line.873"></a>
+<span class="sourceLineNo">874</span>     * have little or no idea about task granularity.  In essence by<a name="line.874"></a>
+<span class="sourceLineNo">875</span>     * offering this method, we ask users only about tradeoffs in<a name="line.875"></a>
+<span class="sourceLineNo">876</span>     * overhead vs expected throughput and its variance, rather than<a name="line.876"></a>
+<span class="sourceLineNo">877</span>     * how finely to partition tasks.<a name="line.877"></a>
+<span class="sourceLineNo">878</span>     *<a name="line.878"></a>
+<span class="sourceLineNo">879</span>     * In a steady state strict (tree-structured) computation, each<a name="line.879"></a>
+<span class="sourceLineNo">880</span>     * thread makes available for stealing enough tasks for other<a name="line.880"></a>
+<span class="sourceLineNo">881</span>     * threads to remain active. Inductively, if all threads play by<a name="line.881"></a>
+<span class="sourceLineNo">882</span>     * the same rules, each thread should make available only a<a name="line.882"></a>
+<span class="sourceLineNo">883</span>     * constant number of tasks.<a name="line.883"></a>
+<span class="sourceLineNo">884</span>     *<a name="line.884"></a>
+<span class="sourceLineNo">885</span>     * The minimum useful constant is just 1. But using a value of 1<a name="line.885"></a>
+<span class="sourceLineNo">886</span>     * would require immediate replenishment upon each steal to<a name="line.886"></a>
+<span class="sourceLineNo">887</span>     * maintain enough tasks, which is infeasible.  Further,<a name="line.887"></a>
+<span class="sourceLineNo">888</span>     * partitionings/granularities of offered tasks should minimize<a name="line.888"></a>
+<span class="sourceLineNo">889</span>     * steal rates, which in general means that threads nearer the top<a name="line.889"></a>
+<span class="sourceLineNo">890</span>     * of computation tree should generate more than those nearer the<a name="line.890"></a>
+<span class="sourceLineNo">891</span>     * bottom. In perfect steady state, each thread is at<a name="line.891"></a>
+<span class="sourceLineNo">892</span>     * approximately the same level of computation tree. However,<a name="line.892"></a>
+<span class="sourceLineNo">893</span>     * producing extra tasks amortizes the uncertainty of progress and<a name="line.893"></a>
+<span class="sourceLineNo">894</span>     * diffusion assumptions.<a name="line.894"></a>
+<span class="sourceLineNo">895</span>     *<a name="line.895"></a>
+<span class="sourceLineNo">896</span>     * So, users will want to use values larger, but not much larger<a name="line.896"></a>
+<span class="sourceLineNo">897</span>     * than 1 to both smooth over transient shortages and hedge<a name="line.897"></a>
+<span class="sourceLineNo">898</span>     * against uneven progress; as traded off against the cost of<a name="line.898"></a>
+<span class="sourceLineNo">899</span>     * extra task overhead. We leave the user to pick a threshold<a name="line.899"></a>
+<span class="sourceLineNo">900</span>     * value to compare with the results of this call to guide<a name="line.900"></a>
+<span class="sourceLineNo">901</span>     * decisions, but recommend values such as 3.<a name="line.901"></a>
+<span class="sourceLineNo">902</span>     *<a name="line.902"></a>
+<span class="sourceLineNo">903</span>     * When all threads are active, it is on average OK to estimate<a name="line.903"></a>
+<span class="sourceLineNo">904</span>     * surplus strictly locally. In steady-state, if one thread is<a name="line.904"></a>
+<span class="sourceLineNo">905</span>     * maintaining say 2 surplus tasks, then so are others. So we can<a name="line.905"></a>
+<span class="sourceLineNo">906</span>     * just use estimated queue length (although note that (queueTop -<a name="line.906"></a>
+<span class="sourceLineNo">907</span>     * queueBase) can be an overestimate because of stealers lagging<a name="line.907"></a>
+<span class="sourceLineNo">908</span>     * increments of queueBase).  However, this strategy alone leads<a name="line.908"></a>
+<span class="sourceLineNo">909</span>     * to serious mis-estimates in some non-steady-state conditions<a name="line.909"></a>
+<span class="sourceLineNo">910</span>     * (ramp-up, ramp-down, other stalls). We can detect many of these<a name="line.910"></a>
+<span class="sourceLineNo">911</span>     * by further considering the number of "idle" threads, that are<a name="line.911"></a>
+<span class="sourceLineNo">912</span>     * known to have zero queued tasks, so compensate by a factor of<a name="line.912"></a>
+<span class="sourceLineNo">913</span>     * (#idle/#active) threads.<a name="line.913"></a>
+<span class="sourceLineNo">914</span>     */<a name="line.914"></a>
+<span class="sourceLineNo">915</span>    final int getEstimatedSurplusTaskCount() {<a name="line.915"></a>
+<span class="sourceLineNo">916</span>        return queueTop - queueBase - pool.idlePerActive();<a name="line.916"></a>
+<span class="sourceLineNo">917</span>    }<a name="line.917"></a>
+<span class="sourceLineNo">918</span><a name="line.918"></a>
+<span class="sourceLineNo">919</span>    /**<a name="line.919"></a>
+<span class="sourceLineNo">920</span>     * Runs tasks until {@code pool.isQuiescent()}. We piggyback on<a name="line.920"></a>
+<span class="sourceLineNo">921</span>     * pool's active count ctl maintenance, but rather than blocking<a name="line.921"></a>
+<span class="sourceLineNo">922</span>     * when tasks cannot be found, we rescan until all others cannot<a name="line.922"></a>
+<span class="sourceLineNo">923</span>     * find tasks either. The bracketing by pool quiescerCounts<a name="line.923"></a>
+<span class="sourceLineNo">924</span>     * updates suppresses pool auto-shutdown mechanics that could<a name="line.924"></a>
+<span class="sourceLineNo">925</span>     * otherwise prematurely terminate the pool because all threads<a name="line.925"></a>
+<span class="sourceLineNo">926</span>     * appear to be inactive.<a name="line.926"></a>
+<span class="sourceLineNo">927</span>     */<a name="line.927"></a>
+<span class="sourceLineNo">928</span>    final void helpQuiescePool() {<a name="line.928"></a>
+<span class="sourceLineNo">929</span>        boolean active = true;<a name="line.929"></a>
+<span class="sourceLineNo">930</span>        ForkJoinTask&lt;?&gt; ps = currentSteal; // to restore below<a name="line.930"></a>
+<span class="sourceLineNo">931</span>        ForkJoinPool p = pool;<a name="line.931"></a>
+<span class="sourceLineNo">932</span>        p.addQuiescerCount(1);<a name="line.932"></a>
+<span class="sourceLineNo">933</span>        for (;;) {<a name="line.933"></a>
+<span class="sourceLineNo">934</span>            ForkJoinWorkerThread[] ws = p.workers;<a name="line.934"></a>
+<span class="sourceLineNo">935</span>            ForkJoinWorkerThread v = null;<a name="line.935"></a>
+<span class="sourceLineNo">936</span>            int n;<a name="line.936"></a>
+<span class="sourceLineNo">937</span>            if (queueTop != queueBase)<a name="line.937"></a>
+<span class="sourceLineNo">938</span>                v = this;<a name="line.938"></a>
+<span class="sourceLineNo">939</span>            else if (ws != null &amp;&amp; (n = ws.length) &gt; 1) {<a name="line.939"></a>
+<span class="sourceLineNo">940</span>                ForkJoinWorkerThread w;<a name="line.940"></a>
+<span class="sourceLineNo">941</span>                int r = nextSeed(); // cheap version of FJP.scan<a name="line.941"></a>
+<span class="sourceLineNo">942</span>                int steps = n &lt;&lt; 1;<a name="line.942"></a>
+<span class="sourceLineNo">943</span>                for (int i = 0; i &lt; steps; ++i) {<a name="line.943"></a>
+<span class="sourceLineNo">944</span>                    if ((w = ws[(i + r) &amp; (n - 1)]) != null &amp;&amp;<a name="line.944"></a>
+<span class="sourceLineNo">945</span>                        w.queueBase != w.queueTop) {<a name="line.945"></a>
+<span class="sourceLineNo">946</span>                        v = w;<a name="line.946"></a>
+<span class="sourceLineNo">947</span>                        break;<a name="line.947"></a>
+<span class="sourceLineNo">948</span>                    }<a name="line.948"></a>
+<span class="sourceLineNo">949</span>                }<a name="line.949"></a>
+<span class="sourceLineNo">950</span>            }<a name="line.950"></a>
+<span class="sourceLineNo">951</span>            if (v != null) {<a name="line.951"></a>
+<span class="sourceLineNo">952</span>                ForkJoinTask&lt;?&gt; t;<a name="line.952"></a>
+<span class="sourceLineNo">953</span>                if (!active) {<a name="line.953"></a>
+<span class="sourceLineNo">954</span>                    active = true;<a name="line.954"></a>
+<span class="sourceLineNo">955</span>                    p.addActiveCount(1);<a name="line.955"></a>
+<span class="sourceLineNo">956</span>                }<a name="line.956"></a>
+<span class="sourceLineNo">957</span>                if ((t = (v != this) ? v.deqTask() :<a name="line.957"></a>
+<span class="sourceLineNo">958</span>                     locallyFifo ? locallyDeqTask() : popTask()) != null) {<a name="line.958"></a>
+<span class="sourceLineNo">959</span>                    currentSteal = t;<a name="line.959"></a>
+<span class="sourceLineNo">960</span>                    t.doExec();<a name="line.960"></a>
+<span class="sourceLineNo">961</span>                    currentSteal = ps;<a name="line.961"></a>
+<span class="sourceLineNo">962</span>                }<a name="line.962"></a>
+<span class="sourceLineNo">963</span>            }<a name="line.963"></a>
+<span class="sourceLineNo">964</span>            else {<a name="line.964"></a>
+<span class="sourceLineNo">965</span>                if (active) {<a name="line.965"></a>
+<span class="sourceLineNo">966</span>                    active = false;<a name="line.966"></a>
+<span class="sourceLineNo">967</span>                    p.addActiveCount(-1);<a name="line.967"></a>
+<span class="sourceLineNo">968</span>                }<a name="line.968"></a>
+<span class="sourceLineNo">969</span>                if (p.isQuiescent()) {<a name="line.969"></a>
+<span class="sourceLineNo">970</span>                    p.addActiveCount(1);<a name="line.970"></a>
+<span class="sourceLineNo">971</span>                    p.addQuiescerCount(-1);<a name="line.971"></a>
+<span class="sourceLineNo">972</span>                    break;<a name="line.972"></a>
+<span class="sourceLineNo">973</span>                }<a name="line.973"></a>
+<span class="sourceLineNo">974</span>            }<a name="line.974"></a>
+<span class="sourceLineNo">975</span>        }<a name="line.975"></a>
+<span class="sourceLineNo">976</span>    }<a name="line.976"></a>
+<span class="sourceLineNo">977</span><a name="line.977"></a>
+<span class="sourceLineNo">978</span>    // Unsafe mechanics<a name="line.978"></a>
+<span class="sourceLineNo">979</span>    private static final sun.misc.Unsafe UNSAFE;<a name="line.979"></a>
+<span class="sourceLineNo">980</span>    private static final long ABASE;<a name="line.980"></a>
+<span class="sourceLineNo">981</span>    private static final int ASHIFT;<a name="line.981"></a>
+<span class="sourceLineNo">982</span><a name="line.982"></a>
+<span class="sourceLineNo">983</span>    static {<a name="line.983"></a>
+<span class="sourceLineNo">984</span>        int s;<a name="line.984"></a>
+<span class="sourceLineNo">985</span>        try {<a name="line.985"></a>
+<span class="sourceLineNo">986</span>            UNSAFE = sun.misc.Unsafe.getUnsafe();<a name="line.986"></a>
+<span class="sourceLineNo">987</span>            Class a = ForkJoinTask[].class;<a name="line.987"></a>
+<span class="sourceLineNo">988</span>            ABASE = UNSAFE.arrayBaseOffset(a);<a name="line.988"></a>
+<span class="sourceLineNo">989</span>            s = UNSAFE.arrayIndexScale(a);<a name="line.989"></a>
+<span class="sourceLineNo">990</span>        } catch (Exception e) {<a name="line.990"></a>
+<span class="sourceLineNo">991</span>            throw new Error(e);<a name="line.991"></a>
+<span class="sourceLineNo">992</span>        }<a name="line.992"></a>
+<span class="sourceLineNo">993</span>        if ((s &amp; (s-1)) != 0)<a name="line.993"></a>
+<span class="sourceLineNo">994</span>            throw new Error("data type scale not a power of two");<a name="line.994"></a>
+<span class="sourceLineNo">995</span>        ASHIFT = 31 - Integer.numberOfLeadingZeros(s);<a name="line.995"></a>
+<span class="sourceLineNo">996</span>    }<a name="line.996"></a>
+<span class="sourceLineNo">997</span><a name="line.997"></a>
+<span class="sourceLineNo">998</span>}<a name="line.998"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

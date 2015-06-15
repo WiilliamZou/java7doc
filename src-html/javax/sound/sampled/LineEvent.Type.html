@@ -1,0 +1,353 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2003, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.sound.sampled;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * The &lt;code&gt;LineEvent&lt;/code&gt; class encapsulates information that a line<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * sends its listeners whenever the line opens, closes, starts, or stops.<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * Each of these four state changes is represented by a corresponding<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * type of event.  A listener receives the event as a parameter to its<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * {@link LineListener#update update} method.  By querying the event,<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * the listener can learn the type of event, the line responsible for<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * the event, and how much data the line had processed when the event occurred.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;Although this class implements Serializable, attempts to<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * serialize a &lt;code&gt;LineEvent&lt;/code&gt; object will fail.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> *<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * @author Kara Kytle<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * @see Line<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * @see LineListener#update<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * @since 1.3<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * @serial exclude<a name="line.46"></a>
+<span class="sourceLineNo">047</span> */<a name="line.47"></a>
+<span class="sourceLineNo">048</span>public class LineEvent extends java.util.EventObject {<a name="line.48"></a>
+<span class="sourceLineNo">049</span><a name="line.49"></a>
+<span class="sourceLineNo">050</span>    // INSTANCE VARIABLES<a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span>    /**<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     * The kind of line event (&lt;code&gt;OPEN&lt;/code&gt;, &lt;code&gt;CLOSE&lt;/code&gt;,<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * &lt;code&gt;START&lt;/code&gt;, or &lt;code&gt;STOP&lt;/code&gt;).<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * @see #getType<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * @serial<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     */<a name="line.57"></a>
+<span class="sourceLineNo">058</span>    private final Type type;<a name="line.58"></a>
+<span class="sourceLineNo">059</span><a name="line.59"></a>
+<span class="sourceLineNo">060</span>    /**<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * The media position when the event occurred, expressed in sample frames.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * Note that this field is only relevant to certain events generated by<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * data lines, such as &lt;code&gt;START&lt;/code&gt; and &lt;code&gt;STOP&lt;/code&gt;.  For<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * events generated by lines that do not count sample frames, and for any<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * other events for which this value is not known, the position value<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * should be {@link AudioSystem#NOT_SPECIFIED}.<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * @serial<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * @see #getFramePosition<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     */<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    private final long position;<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * Constructs a new event of the specified type, originating from the specified line.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * @param line the source of this event<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * @param type the event type (&lt;code&gt;OPEN&lt;/code&gt;, &lt;code&gt;CLOSE&lt;/code&gt;, &lt;code&gt;START&lt;/code&gt;, or &lt;code&gt;STOP&lt;/code&gt;)<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * @param position the number of sample frames that the line had already processed when the event occurred,<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * or {@link AudioSystem#NOT_SPECIFIED}<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     *<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * @throws IllegalArgumentException if &lt;code&gt;line&lt;/code&gt; is<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * &lt;code&gt;null&lt;/code&gt;.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     */<a name="line.82"></a>
+<span class="sourceLineNo">083</span>    public LineEvent(Line line, Type type, long position) {<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>        super(line);<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        this.type = type;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        this.position = position;<a name="line.87"></a>
+<span class="sourceLineNo">088</span>    }<a name="line.88"></a>
+<span class="sourceLineNo">089</span><a name="line.89"></a>
+<span class="sourceLineNo">090</span>    /**<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * Obtains the audio line that is the source of this event.<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @return the line responsible for this event<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     */<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    public final Line getLine() {<a name="line.94"></a>
+<span class="sourceLineNo">095</span><a name="line.95"></a>
+<span class="sourceLineNo">096</span>        return (Line)getSource();<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    }<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span><a name="line.99"></a>
+<span class="sourceLineNo">100</span>    /**<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * Obtains the event's type.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @return this event's type ({@link Type#OPEN}, {@link Type#CLOSE},<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * {@link Type#START}, or {@link Type#STOP})<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     */<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    public final Type getType() {<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>        return type;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    }<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span>    /**<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * Obtains the position in the line's audio data when the event occurred, expressed in sample frames.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * For example, if a source line had already played back 14 sample frames at the time it was<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * paused, the pause event would report the line's position as 14.  The next frame to be processed<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * would be frame number 14 using zero-based numbering, or 15 using one-based numbering.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * &lt;p&gt;<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * Note that this field is relevant only to certain events generated by<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * data lines, such as &lt;code&gt;START&lt;/code&gt; and &lt;code&gt;STOP&lt;/code&gt;.  For<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * events generated by lines that do not count sample frames, and for any<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * other events for which this value is not known, the position value<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * should be {@link AudioSystem#NOT_SPECIFIED}.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @return the line's position as a sample frame number<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    /*<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * $$kk: 04.20.99: note to myself: should make sure our implementation is consistent with this.<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * which is a reasonable definition....<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     */<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    public final long getFramePosition() {<a name="line.128"></a>
+<span class="sourceLineNo">129</span><a name="line.129"></a>
+<span class="sourceLineNo">130</span>        return position;<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    }<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>    /**<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * Obtains a string representation of the event.  The contents of the string may vary<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * between implementations of Java Sound.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @return a string describing the event.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     */<a name="line.137"></a>
+<span class="sourceLineNo">138</span>    public String toString() {<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        String sType = "";<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        if (type != null) sType = type.toString()+" ";<a name="line.140"></a>
+<span class="sourceLineNo">141</span>        String sLine;<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        if (getLine() == null) {<a name="line.142"></a>
+<span class="sourceLineNo">143</span>            sLine = "null";<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        } else {<a name="line.144"></a>
+<span class="sourceLineNo">145</span>            sLine = getLine().toString();<a name="line.145"></a>
+<span class="sourceLineNo">146</span>        }<a name="line.146"></a>
+<span class="sourceLineNo">147</span>        return new String(sType + "event from line " + sLine);<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    }<a name="line.148"></a>
+<span class="sourceLineNo">149</span><a name="line.149"></a>
+<span class="sourceLineNo">150</span><a name="line.150"></a>
+<span class="sourceLineNo">151</span>    /**<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * The LineEvent.Type inner class identifies what kind of event occurred on a line.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * Static instances are provided for the common types (OPEN, CLOSE, START, and STOP).<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @see LineEvent#getType()<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     */<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    public static class Type {<a name="line.157"></a>
+<span class="sourceLineNo">158</span><a name="line.158"></a>
+<span class="sourceLineNo">159</span><a name="line.159"></a>
+<span class="sourceLineNo">160</span>        /**<a name="line.160"></a>
+<span class="sourceLineNo">161</span>         * Type name.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>         */<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        // $$kk: 03.25.99: why can't this be final??<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        private /*final*/ String name;<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>        /**<a name="line.166"></a>
+<span class="sourceLineNo">167</span>         * Constructs a new event type.<a name="line.167"></a>
+<span class="sourceLineNo">168</span>         * @param name name of the type<a name="line.168"></a>
+<span class="sourceLineNo">169</span>         */<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        protected Type(String name) {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>            this.name = name;<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        }<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span><a name="line.174"></a>
+<span class="sourceLineNo">175</span>        //$$fb 2002-11-26: fix for 4695001: SPEC: description of equals() method contains typo<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        /**<a name="line.176"></a>
+<span class="sourceLineNo">177</span>         * Indicates whether the specified object is equal to this event type,<a name="line.177"></a>
+<span class="sourceLineNo">178</span>         * returning &lt;code&gt;true&lt;/code&gt; if the objects are identical.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>         * @param obj the reference object with which to compare<a name="line.179"></a>
+<span class="sourceLineNo">180</span>         * @return &lt;code&gt;true&lt;/code&gt; if this event type is the same as<a name="line.180"></a>
+<span class="sourceLineNo">181</span>         * &lt;code&gt;obj&lt;/code&gt;; &lt;code&gt;false&lt;/code&gt; otherwise<a name="line.181"></a>
+<span class="sourceLineNo">182</span>         */<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        public final boolean equals(Object obj) {<a name="line.183"></a>
+<span class="sourceLineNo">184</span>            return super.equals(obj);<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        }<a name="line.185"></a>
+<span class="sourceLineNo">186</span><a name="line.186"></a>
+<span class="sourceLineNo">187</span><a name="line.187"></a>
+<span class="sourceLineNo">188</span>        /**<a name="line.188"></a>
+<span class="sourceLineNo">189</span>         * Finalizes the hashcode method.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>         */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        public final int hashCode() {<a name="line.191"></a>
+<span class="sourceLineNo">192</span>            return super.hashCode();<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        }<a name="line.193"></a>
+<span class="sourceLineNo">194</span><a name="line.194"></a>
+<span class="sourceLineNo">195</span><a name="line.195"></a>
+<span class="sourceLineNo">196</span>        /**<a name="line.196"></a>
+<span class="sourceLineNo">197</span>         * Returns the type name as the string representation.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>         */<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        public String toString() {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>            return name;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>        }<a name="line.201"></a>
+<span class="sourceLineNo">202</span><a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>        // LINE EVENT TYPE DEFINES<a name="line.204"></a>
+<span class="sourceLineNo">205</span><a name="line.205"></a>
+<span class="sourceLineNo">206</span>        /**<a name="line.206"></a>
+<span class="sourceLineNo">207</span>         * A type of event that is sent when a line opens, reserving system<a name="line.207"></a>
+<span class="sourceLineNo">208</span>         * resources for itself.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>         * @see #CLOSE<a name="line.209"></a>
+<span class="sourceLineNo">210</span>         * @see Line#open<a name="line.210"></a>
+<span class="sourceLineNo">211</span>         */<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        public static final Type OPEN   = new Type("Open");<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span><a name="line.214"></a>
+<span class="sourceLineNo">215</span>        /**<a name="line.215"></a>
+<span class="sourceLineNo">216</span>         * A type of event that is sent when a line closes, freeing the system<a name="line.216"></a>
+<span class="sourceLineNo">217</span>         * resources it had obtained when it was opened.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>         * @see #OPEN<a name="line.218"></a>
+<span class="sourceLineNo">219</span>         * @see Line#close<a name="line.219"></a>
+<span class="sourceLineNo">220</span>         */<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        public static final Type CLOSE  = new Type("Close");<a name="line.221"></a>
+<span class="sourceLineNo">222</span><a name="line.222"></a>
+<span class="sourceLineNo">223</span><a name="line.223"></a>
+<span class="sourceLineNo">224</span>        /**<a name="line.224"></a>
+<span class="sourceLineNo">225</span>         * A type of event that is sent when a line begins to engage in active<a name="line.225"></a>
+<span class="sourceLineNo">226</span>         * input or output of audio data in response to a<a name="line.226"></a>
+<span class="sourceLineNo">227</span>         * {@link DataLine#start start} request.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>         * @see #STOP<a name="line.228"></a>
+<span class="sourceLineNo">229</span>         * @see DataLine#start<a name="line.229"></a>
+<span class="sourceLineNo">230</span>         */<a name="line.230"></a>
+<span class="sourceLineNo">231</span>        public static final Type START  = new Type("Start");<a name="line.231"></a>
+<span class="sourceLineNo">232</span><a name="line.232"></a>
+<span class="sourceLineNo">233</span><a name="line.233"></a>
+<span class="sourceLineNo">234</span>        /**<a name="line.234"></a>
+<span class="sourceLineNo">235</span>         * A type of event that is sent when a line ceases active input or output<a name="line.235"></a>
+<span class="sourceLineNo">236</span>         * of audio data in response to a {@link DataLine#stop stop} request,<a name="line.236"></a>
+<span class="sourceLineNo">237</span>         * or because the end of media has been reached.<a name="line.237"></a>
+<span class="sourceLineNo">238</span>         * @see #START<a name="line.238"></a>
+<span class="sourceLineNo">239</span>         * @see DataLine#stop<a name="line.239"></a>
+<span class="sourceLineNo">240</span>         */<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        public static final Type STOP   = new Type("Stop");<a name="line.241"></a>
+<span class="sourceLineNo">242</span><a name="line.242"></a>
+<span class="sourceLineNo">243</span><a name="line.243"></a>
+<span class="sourceLineNo">244</span>        /**<a name="line.244"></a>
+<span class="sourceLineNo">245</span>         * A type of event that is sent when a line ceases to engage in active<a name="line.245"></a>
+<span class="sourceLineNo">246</span>         * input or output of audio data because the end of media has been reached.<a name="line.246"></a>
+<span class="sourceLineNo">247</span>         */<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        /*<a name="line.248"></a>
+<span class="sourceLineNo">249</span>         * ISSUE: we may want to get rid of this.  Is JavaSound<a name="line.249"></a>
+<span class="sourceLineNo">250</span>         * responsible for reporting this??<a name="line.250"></a>
+<span class="sourceLineNo">251</span>         *<a name="line.251"></a>
+<span class="sourceLineNo">252</span>         * [If it's decided to keep this API, the docs will need to be updated to include mention<a name="line.252"></a>
+<span class="sourceLineNo">253</span>         * of EOM events elsewhere.]<a name="line.253"></a>
+<span class="sourceLineNo">254</span>         */<a name="line.254"></a>
+<span class="sourceLineNo">255</span>        //public static final Type EOM  = new Type("EOM");<a name="line.255"></a>
+<span class="sourceLineNo">256</span><a name="line.256"></a>
+<span class="sourceLineNo">257</span><a name="line.257"></a>
+<span class="sourceLineNo">258</span>        /**<a name="line.258"></a>
+<span class="sourceLineNo">259</span>         * A type of event that is sent when a line begins to engage in active<a name="line.259"></a>
+<span class="sourceLineNo">260</span>         * input or output of audio data.  Examples of when this happens are<a name="line.260"></a>
+<span class="sourceLineNo">261</span>         * when a source line begins or resumes writing data to its mixer, and<a name="line.261"></a>
+<span class="sourceLineNo">262</span>         * when a target line begins or resumes reading data from its mixer.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>         * @see #STOP<a name="line.263"></a>
+<span class="sourceLineNo">264</span>         * @see SourceDataLine#write<a name="line.264"></a>
+<span class="sourceLineNo">265</span>         * @see TargetDataLine#read<a name="line.265"></a>
+<span class="sourceLineNo">266</span>         * @see DataLine#start<a name="line.266"></a>
+<span class="sourceLineNo">267</span>         */<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        //public static final Type ACTIVE       = new Type("ACTIVE");<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span><a name="line.270"></a>
+<span class="sourceLineNo">271</span>        /**<a name="line.271"></a>
+<span class="sourceLineNo">272</span>         * A type of event that is sent when a line ceases active input or output<a name="line.272"></a>
+<span class="sourceLineNo">273</span>         * of audio data.<a name="line.273"></a>
+<span class="sourceLineNo">274</span>         * @see #START<a name="line.274"></a>
+<span class="sourceLineNo">275</span>         * @see DataLine#stop<a name="line.275"></a>
+<span class="sourceLineNo">276</span>         */<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        //public static final Type INACTIVE     = new Type("INACTIVE");<a name="line.277"></a>
+<span class="sourceLineNo">278</span><a name="line.278"></a>
+<span class="sourceLineNo">279</span>    } // class Type<a name="line.279"></a>
+<span class="sourceLineNo">280</span><a name="line.280"></a>
+<span class="sourceLineNo">281</span>} // class LineEvent<a name="line.281"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

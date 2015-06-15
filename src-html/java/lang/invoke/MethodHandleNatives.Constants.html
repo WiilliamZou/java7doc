@@ -1,0 +1,608 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2008, 2012, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang.invoke;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.lang.invoke.MethodHandles.Lookup;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.lang.reflect.AccessibleObject;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.lang.reflect.Field;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import static java.lang.invoke.MethodHandleNatives.Constants.*;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import static java.lang.invoke.MethodHandleStatics.*;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import static java.lang.invoke.MethodHandles.Lookup.IMPL_LOOKUP;<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>/**<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * The JVM interface for the method handles package is all here.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * This is an interface internal and private to an implemetantion of JSR 292.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;em&gt;This class is not part of the JSR 292 standard.&lt;/em&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * @author jrose<a name="line.39"></a>
+<span class="sourceLineNo">040</span> */<a name="line.40"></a>
+<span class="sourceLineNo">041</span>class MethodHandleNatives {<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>    private MethodHandleNatives() { } // static only<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>    /// MemberName support<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>    static native void init(MemberName self, Object ref);<a name="line.47"></a>
+<span class="sourceLineNo">048</span>    static native void expand(MemberName self);<a name="line.48"></a>
+<span class="sourceLineNo">049</span>    static native MemberName resolve(MemberName self, Class&lt;?&gt; caller) throws LinkageError;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>    static native int getMembers(Class&lt;?&gt; defc, String matchName, String matchSig,<a name="line.50"></a>
+<span class="sourceLineNo">051</span>            int matchFlags, Class&lt;?&gt; caller, int skip, MemberName[] results);<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /// Field layout queries parallel to sun.misc.Unsafe:<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    static native long objectFieldOffset(MemberName self);  // e.g., returns vmindex<a name="line.54"></a>
+<span class="sourceLineNo">055</span>    static native long staticFieldOffset(MemberName self);  // e.g., returns vmindex<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    static native Object staticFieldBase(MemberName self);  // e.g., returns clazz<a name="line.56"></a>
+<span class="sourceLineNo">057</span>    static native Object getMemberVMInfo(MemberName self);  // returns {vmindex,vmtarget}<a name="line.57"></a>
+<span class="sourceLineNo">058</span><a name="line.58"></a>
+<span class="sourceLineNo">059</span>    /// MethodHandle support<a name="line.59"></a>
+<span class="sourceLineNo">060</span><a name="line.60"></a>
+<span class="sourceLineNo">061</span>    /** Fetch MH-related JVM parameter.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     *  which=0 retrieves MethodHandlePushLimit<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     *  which=1 retrieves stack slot push size (in address units)<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     */<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    static native int getConstant(int which);<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>    static final boolean COUNT_GWT;<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>    /// CallSite support<a name="line.69"></a>
+<span class="sourceLineNo">070</span><a name="line.70"></a>
+<span class="sourceLineNo">071</span>    /** Tell the JVM that we need to change the target of a CallSite. */<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    static native void setCallSiteTargetNormal(CallSite site, MethodHandle target);<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    static native void setCallSiteTargetVolatile(CallSite site, MethodHandle target);<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    private static native void registerNatives();<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    static {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        registerNatives();<a name="line.77"></a>
+<span class="sourceLineNo">078</span>        COUNT_GWT                   = getConstant(Constants.GC_COUNT_GWT) != 0;<a name="line.78"></a>
+<span class="sourceLineNo">079</span><a name="line.79"></a>
+<span class="sourceLineNo">080</span>        // The JVM calls MethodHandleNatives.&lt;clinit&gt;.  Cascade the &lt;clinit&gt; calls as needed:<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        MethodHandleImpl.initStatics();<a name="line.81"></a>
+<span class="sourceLineNo">082</span>}<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    // All compile-time constants go here.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    // There is an opportunity to check them against the JVM's idea of them.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    static class Constants {<a name="line.86"></a>
+<span class="sourceLineNo">087</span>        Constants() { } // static only<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        // MethodHandleImpl<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        static final int // for getConstant<a name="line.89"></a>
+<span class="sourceLineNo">090</span>                GC_COUNT_GWT = 4,<a name="line.90"></a>
+<span class="sourceLineNo">091</span>                GC_LAMBDA_SUPPORT = 5;<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>        // MemberName<a name="line.93"></a>
+<span class="sourceLineNo">094</span>        // The JVM uses values of -2 and above for vtable indexes.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>        // Field values are simple positive offsets.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>        // Ref: src/share/vm/oops/methodOop.hpp<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        // This value is negative enough to avoid such numbers,<a name="line.97"></a>
+<span class="sourceLineNo">098</span>        // but not too negative.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        static final int<a name="line.99"></a>
+<span class="sourceLineNo">100</span>                MN_IS_METHOD           = 0x00010000, // method (not constructor)<a name="line.100"></a>
+<span class="sourceLineNo">101</span>                MN_IS_CONSTRUCTOR      = 0x00020000, // constructor<a name="line.101"></a>
+<span class="sourceLineNo">102</span>                MN_IS_FIELD            = 0x00040000, // field<a name="line.102"></a>
+<span class="sourceLineNo">103</span>                MN_IS_TYPE             = 0x00080000, // nested type<a name="line.103"></a>
+<span class="sourceLineNo">104</span>                MN_CALLER_SENSITIVE    = 0x00100000, // @CallerSensitive annotation detected<a name="line.104"></a>
+<span class="sourceLineNo">105</span>                MN_REFERENCE_KIND_SHIFT = 24, // refKind<a name="line.105"></a>
+<span class="sourceLineNo">106</span>                MN_REFERENCE_KIND_MASK = 0x0F000000 &gt;&gt; MN_REFERENCE_KIND_SHIFT,<a name="line.106"></a>
+<span class="sourceLineNo">107</span>                // The SEARCH_* bits are not for MN.flags but for the matchFlags argument of MHN.getMembers:<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                MN_SEARCH_SUPERCLASSES = 0x00100000,<a name="line.108"></a>
+<span class="sourceLineNo">109</span>                MN_SEARCH_INTERFACES   = 0x00200000;<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>        /**<a name="line.111"></a>
+<span class="sourceLineNo">112</span>         * Basic types as encoded in the JVM.  These code values are not<a name="line.112"></a>
+<span class="sourceLineNo">113</span>         * intended for use outside this class.  They are used as part of<a name="line.113"></a>
+<span class="sourceLineNo">114</span>         * a private interface between the JVM and this class.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>         */<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        static final int<a name="line.116"></a>
+<span class="sourceLineNo">117</span>            T_BOOLEAN  =  4,<a name="line.117"></a>
+<span class="sourceLineNo">118</span>            T_CHAR     =  5,<a name="line.118"></a>
+<span class="sourceLineNo">119</span>            T_FLOAT    =  6,<a name="line.119"></a>
+<span class="sourceLineNo">120</span>            T_DOUBLE   =  7,<a name="line.120"></a>
+<span class="sourceLineNo">121</span>            T_BYTE     =  8,<a name="line.121"></a>
+<span class="sourceLineNo">122</span>            T_SHORT    =  9,<a name="line.122"></a>
+<span class="sourceLineNo">123</span>            T_INT      = 10,<a name="line.123"></a>
+<span class="sourceLineNo">124</span>            T_LONG     = 11,<a name="line.124"></a>
+<span class="sourceLineNo">125</span>            T_OBJECT   = 12,<a name="line.125"></a>
+<span class="sourceLineNo">126</span>            //T_ARRAY    = 13<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            T_VOID     = 14,<a name="line.127"></a>
+<span class="sourceLineNo">128</span>            //T_ADDRESS  = 15<a name="line.128"></a>
+<span class="sourceLineNo">129</span>            T_ILLEGAL  = 99;<a name="line.129"></a>
+<span class="sourceLineNo">130</span><a name="line.130"></a>
+<span class="sourceLineNo">131</span>        /**<a name="line.131"></a>
+<span class="sourceLineNo">132</span>         * Constant pool entry types.<a name="line.132"></a>
+<span class="sourceLineNo">133</span>         */<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        static final byte<a name="line.134"></a>
+<span class="sourceLineNo">135</span>            CONSTANT_Utf8                = 1,<a name="line.135"></a>
+<span class="sourceLineNo">136</span>            CONSTANT_Integer             = 3,<a name="line.136"></a>
+<span class="sourceLineNo">137</span>            CONSTANT_Float               = 4,<a name="line.137"></a>
+<span class="sourceLineNo">138</span>            CONSTANT_Long                = 5,<a name="line.138"></a>
+<span class="sourceLineNo">139</span>            CONSTANT_Double              = 6,<a name="line.139"></a>
+<span class="sourceLineNo">140</span>            CONSTANT_Class               = 7,<a name="line.140"></a>
+<span class="sourceLineNo">141</span>            CONSTANT_String              = 8,<a name="line.141"></a>
+<span class="sourceLineNo">142</span>            CONSTANT_Fieldref            = 9,<a name="line.142"></a>
+<span class="sourceLineNo">143</span>            CONSTANT_Methodref           = 10,<a name="line.143"></a>
+<span class="sourceLineNo">144</span>            CONSTANT_InterfaceMethodref  = 11,<a name="line.144"></a>
+<span class="sourceLineNo">145</span>            CONSTANT_NameAndType         = 12,<a name="line.145"></a>
+<span class="sourceLineNo">146</span>            CONSTANT_MethodHandle        = 15,  // JSR 292<a name="line.146"></a>
+<span class="sourceLineNo">147</span>            CONSTANT_MethodType          = 16,  // JSR 292<a name="line.147"></a>
+<span class="sourceLineNo">148</span>            CONSTANT_InvokeDynamic       = 18,<a name="line.148"></a>
+<span class="sourceLineNo">149</span>            CONSTANT_LIMIT               = 19;   // Limit to tags found in classfiles<a name="line.149"></a>
+<span class="sourceLineNo">150</span><a name="line.150"></a>
+<span class="sourceLineNo">151</span>        /**<a name="line.151"></a>
+<span class="sourceLineNo">152</span>         * Access modifier flags.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>         */<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        static final char<a name="line.154"></a>
+<span class="sourceLineNo">155</span>            ACC_PUBLIC                 = 0x0001,<a name="line.155"></a>
+<span class="sourceLineNo">156</span>            ACC_PRIVATE                = 0x0002,<a name="line.156"></a>
+<span class="sourceLineNo">157</span>            ACC_PROTECTED              = 0x0004,<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            ACC_STATIC                 = 0x0008,<a name="line.158"></a>
+<span class="sourceLineNo">159</span>            ACC_FINAL                  = 0x0010,<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            ACC_SYNCHRONIZED           = 0x0020,<a name="line.160"></a>
+<span class="sourceLineNo">161</span>            ACC_VOLATILE               = 0x0040,<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            ACC_TRANSIENT              = 0x0080,<a name="line.162"></a>
+<span class="sourceLineNo">163</span>            ACC_NATIVE                 = 0x0100,<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            ACC_INTERFACE              = 0x0200,<a name="line.164"></a>
+<span class="sourceLineNo">165</span>            ACC_ABSTRACT               = 0x0400,<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            ACC_STRICT                 = 0x0800,<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            ACC_SYNTHETIC              = 0x1000,<a name="line.167"></a>
+<span class="sourceLineNo">168</span>            ACC_ANNOTATION             = 0x2000,<a name="line.168"></a>
+<span class="sourceLineNo">169</span>            ACC_ENUM                   = 0x4000,<a name="line.169"></a>
+<span class="sourceLineNo">170</span>            // aliases:<a name="line.170"></a>
+<span class="sourceLineNo">171</span>            ACC_SUPER                  = ACC_SYNCHRONIZED,<a name="line.171"></a>
+<span class="sourceLineNo">172</span>            ACC_BRIDGE                 = ACC_VOLATILE,<a name="line.172"></a>
+<span class="sourceLineNo">173</span>            ACC_VARARGS                = ACC_TRANSIENT;<a name="line.173"></a>
+<span class="sourceLineNo">174</span><a name="line.174"></a>
+<span class="sourceLineNo">175</span>        /**<a name="line.175"></a>
+<span class="sourceLineNo">176</span>         * Constant pool reference-kind codes, as used by CONSTANT_MethodHandle CP entries.<a name="line.176"></a>
+<span class="sourceLineNo">177</span>         */<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        static final byte<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            REF_NONE                    = 0,  // null value<a name="line.179"></a>
+<span class="sourceLineNo">180</span>            REF_getField                = 1,<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            REF_getStatic               = 2,<a name="line.181"></a>
+<span class="sourceLineNo">182</span>            REF_putField                = 3,<a name="line.182"></a>
+<span class="sourceLineNo">183</span>            REF_putStatic               = 4,<a name="line.183"></a>
+<span class="sourceLineNo">184</span>            REF_invokeVirtual           = 5,<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            REF_invokeStatic            = 6,<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            REF_invokeSpecial           = 7,<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            REF_newInvokeSpecial        = 8,<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            REF_invokeInterface         = 9,<a name="line.188"></a>
+<span class="sourceLineNo">189</span>            REF_LIMIT                  = 10;<a name="line.189"></a>
+<span class="sourceLineNo">190</span>    }<a name="line.190"></a>
+<span class="sourceLineNo">191</span><a name="line.191"></a>
+<span class="sourceLineNo">192</span>    static boolean refKindIsValid(int refKind) {<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        return (refKind &gt; REF_NONE &amp;&amp; refKind &lt; REF_LIMIT);<a name="line.193"></a>
+<span class="sourceLineNo">194</span>    }<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    static boolean refKindIsField(byte refKind) {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        assert(refKindIsValid(refKind));<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        return (refKind &lt;= REF_putStatic);<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    }<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    static boolean refKindIsGetter(byte refKind) {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        assert(refKindIsValid(refKind));<a name="line.200"></a>
+<span class="sourceLineNo">201</span>        return (refKind &lt;= REF_getStatic);<a name="line.201"></a>
+<span class="sourceLineNo">202</span>    }<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    static boolean refKindIsSetter(byte refKind) {<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        return refKindIsField(refKind) &amp;&amp; !refKindIsGetter(refKind);<a name="line.204"></a>
+<span class="sourceLineNo">205</span>    }<a name="line.205"></a>
+<span class="sourceLineNo">206</span>    static boolean refKindIsMethod(byte refKind) {<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        return !refKindIsField(refKind) &amp;&amp; (refKind != REF_newInvokeSpecial);<a name="line.207"></a>
+<span class="sourceLineNo">208</span>    }<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    static boolean refKindHasReceiver(byte refKind) {<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        assert(refKindIsValid(refKind));<a name="line.210"></a>
+<span class="sourceLineNo">211</span>        return (refKind &amp; 1) != 0;<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    }<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    static boolean refKindIsStatic(byte refKind) {<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        return !refKindHasReceiver(refKind) &amp;&amp; (refKind != REF_newInvokeSpecial);<a name="line.214"></a>
+<span class="sourceLineNo">215</span>    }<a name="line.215"></a>
+<span class="sourceLineNo">216</span>    static boolean refKindDoesDispatch(byte refKind) {<a name="line.216"></a>
+<span class="sourceLineNo">217</span>        assert(refKindIsValid(refKind));<a name="line.217"></a>
+<span class="sourceLineNo">218</span>        return (refKind == REF_invokeVirtual ||<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                refKind == REF_invokeInterface);<a name="line.219"></a>
+<span class="sourceLineNo">220</span>    }<a name="line.220"></a>
+<span class="sourceLineNo">221</span>    static {<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        final int HR_MASK = ((1 &lt;&lt; REF_getField) |<a name="line.222"></a>
+<span class="sourceLineNo">223</span>                             (1 &lt;&lt; REF_putField) |<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                             (1 &lt;&lt; REF_invokeVirtual) |<a name="line.224"></a>
+<span class="sourceLineNo">225</span>                             (1 &lt;&lt; REF_invokeSpecial) |<a name="line.225"></a>
+<span class="sourceLineNo">226</span>                             (1 &lt;&lt; REF_invokeInterface)<a name="line.226"></a>
+<span class="sourceLineNo">227</span>                            );<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        for (byte refKind = REF_NONE+1; refKind &lt; REF_LIMIT; refKind++) {<a name="line.228"></a>
+<span class="sourceLineNo">229</span>            assert(refKindHasReceiver(refKind) == (((1&lt;&lt;refKind) &amp; HR_MASK) != 0)) : refKind;<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        }<a name="line.230"></a>
+<span class="sourceLineNo">231</span>    }<a name="line.231"></a>
+<span class="sourceLineNo">232</span>    static String refKindName(byte refKind) {<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        assert(refKindIsValid(refKind));<a name="line.233"></a>
+<span class="sourceLineNo">234</span>        return REFERENCE_KIND_NAME[refKind];<a name="line.234"></a>
+<span class="sourceLineNo">235</span>    }<a name="line.235"></a>
+<span class="sourceLineNo">236</span>    private static String[] REFERENCE_KIND_NAME = {<a name="line.236"></a>
+<span class="sourceLineNo">237</span>            null,<a name="line.237"></a>
+<span class="sourceLineNo">238</span>            "getField",<a name="line.238"></a>
+<span class="sourceLineNo">239</span>            "getStatic",<a name="line.239"></a>
+<span class="sourceLineNo">240</span>            "putField",<a name="line.240"></a>
+<span class="sourceLineNo">241</span>            "putStatic",<a name="line.241"></a>
+<span class="sourceLineNo">242</span>            "invokeVirtual",<a name="line.242"></a>
+<span class="sourceLineNo">243</span>            "invokeStatic",<a name="line.243"></a>
+<span class="sourceLineNo">244</span>            "invokeSpecial",<a name="line.244"></a>
+<span class="sourceLineNo">245</span>            "newInvokeSpecial",<a name="line.245"></a>
+<span class="sourceLineNo">246</span>            "invokeInterface"<a name="line.246"></a>
+<span class="sourceLineNo">247</span>    };<a name="line.247"></a>
+<span class="sourceLineNo">248</span><a name="line.248"></a>
+<span class="sourceLineNo">249</span>    private static native int getNamedCon(int which, Object[] name);<a name="line.249"></a>
+<span class="sourceLineNo">250</span>    static boolean verifyConstants() {<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        Object[] box = { null };<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        for (int i = 0; ; i++) {<a name="line.252"></a>
+<span class="sourceLineNo">253</span>            box[0] = null;<a name="line.253"></a>
+<span class="sourceLineNo">254</span>            int vmval = getNamedCon(i, box);<a name="line.254"></a>
+<span class="sourceLineNo">255</span>            if (box[0] == null)  break;<a name="line.255"></a>
+<span class="sourceLineNo">256</span>            String name = (String) box[0];<a name="line.256"></a>
+<span class="sourceLineNo">257</span>            try {<a name="line.257"></a>
+<span class="sourceLineNo">258</span>                Field con = Constants.class.getDeclaredField(name);<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                int jval = con.getInt(null);<a name="line.259"></a>
+<span class="sourceLineNo">260</span>                if (jval == vmval)  continue;<a name="line.260"></a>
+<span class="sourceLineNo">261</span>                String err = (name+": JVM has "+vmval+" while Java has "+jval);<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                if (name.equals("CONV_OP_LIMIT")) {<a name="line.262"></a>
+<span class="sourceLineNo">263</span>                    System.err.println("warning: "+err);<a name="line.263"></a>
+<span class="sourceLineNo">264</span>                    continue;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>                }<a name="line.265"></a>
+<span class="sourceLineNo">266</span>                throw new InternalError(err);<a name="line.266"></a>
+<span class="sourceLineNo">267</span>            } catch (NoSuchFieldException | IllegalAccessException ex) {<a name="line.267"></a>
+<span class="sourceLineNo">268</span>                String err = (name+": JVM has "+vmval+" which Java does not define");<a name="line.268"></a>
+<span class="sourceLineNo">269</span>                // ignore exotic ops the JVM cares about; we just wont issue them<a name="line.269"></a>
+<span class="sourceLineNo">270</span>                //System.err.println("warning: "+err);<a name="line.270"></a>
+<span class="sourceLineNo">271</span>                continue;<a name="line.271"></a>
+<span class="sourceLineNo">272</span>            }<a name="line.272"></a>
+<span class="sourceLineNo">273</span>        }<a name="line.273"></a>
+<span class="sourceLineNo">274</span>        return true;<a name="line.274"></a>
+<span class="sourceLineNo">275</span>    }<a name="line.275"></a>
+<span class="sourceLineNo">276</span>    static {<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        assert(verifyConstants());<a name="line.277"></a>
+<span class="sourceLineNo">278</span>    }<a name="line.278"></a>
+<span class="sourceLineNo">279</span><a name="line.279"></a>
+<span class="sourceLineNo">280</span>    // Up-calls from the JVM.<a name="line.280"></a>
+<span class="sourceLineNo">281</span>    // These must NOT be public.<a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>    /**<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * The JVM is linking an invokedynamic instruction.  Create a reified call site for it.<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     */<a name="line.285"></a>
+<span class="sourceLineNo">286</span>    static MemberName linkCallSite(Object callerObj,<a name="line.286"></a>
+<span class="sourceLineNo">287</span>                                   Object bootstrapMethodObj,<a name="line.287"></a>
+<span class="sourceLineNo">288</span>                                   Object nameObj, Object typeObj,<a name="line.288"></a>
+<span class="sourceLineNo">289</span>                                   Object staticArguments,<a name="line.289"></a>
+<span class="sourceLineNo">290</span>                                   Object[] appendixResult) {<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        MethodHandle bootstrapMethod = (MethodHandle)bootstrapMethodObj;<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        Class&lt;?&gt; caller = (Class&lt;?&gt;)callerObj;<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        String name = nameObj.toString().intern();<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        MethodType type = (MethodType)typeObj;<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        appendixResult[0] = CallSite.makeSite(bootstrapMethod,<a name="line.295"></a>
+<span class="sourceLineNo">296</span>                                              name,<a name="line.296"></a>
+<span class="sourceLineNo">297</span>                                              type,<a name="line.297"></a>
+<span class="sourceLineNo">298</span>                                              staticArguments,<a name="line.298"></a>
+<span class="sourceLineNo">299</span>                                              caller);<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        return Invokers.linkToCallSiteMethod(type);<a name="line.300"></a>
+<span class="sourceLineNo">301</span>    }<a name="line.301"></a>
+<span class="sourceLineNo">302</span><a name="line.302"></a>
+<span class="sourceLineNo">303</span>    /**<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * The JVM wants a pointer to a MethodType.  Oblige it by finding or creating one.<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     */<a name="line.305"></a>
+<span class="sourceLineNo">306</span>    static MethodType findMethodHandleType(Class&lt;?&gt; rtype, Class&lt;?&gt;[] ptypes) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>        return MethodType.makeImpl(rtype, ptypes, true);<a name="line.307"></a>
+<span class="sourceLineNo">308</span>    }<a name="line.308"></a>
+<span class="sourceLineNo">309</span><a name="line.309"></a>
+<span class="sourceLineNo">310</span>    /**<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * The JVM wants to link a call site that requires a dynamic type check.<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * Name is a type-checking invoker, invokeExact or invoke.<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * Return a JVM method (MemberName) to handle the invoking.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * The method assumes the following arguments on the stack:<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * 0: the method handle being invoked<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * 1-N: the arguments to the method handle invocation<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * N+1: an implicitly added type argument (the given MethodType)<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     */<a name="line.318"></a>
+<span class="sourceLineNo">319</span>    static MemberName linkMethod(Class&lt;?&gt; callerClass, int refKind,<a name="line.319"></a>
+<span class="sourceLineNo">320</span>                                 Class&lt;?&gt; defc, String name, Object type,<a name="line.320"></a>
+<span class="sourceLineNo">321</span>                                 Object[] appendixResult) {<a name="line.321"></a>
+<span class="sourceLineNo">322</span>        if (!TRACE_METHOD_LINKAGE)<a name="line.322"></a>
+<span class="sourceLineNo">323</span>            return linkMethodImpl(callerClass, refKind, defc, name, type, appendixResult);<a name="line.323"></a>
+<span class="sourceLineNo">324</span>        return linkMethodTracing(callerClass, refKind, defc, name, type, appendixResult);<a name="line.324"></a>
+<span class="sourceLineNo">325</span>    }<a name="line.325"></a>
+<span class="sourceLineNo">326</span>    static MemberName linkMethodImpl(Class&lt;?&gt; callerClass, int refKind,<a name="line.326"></a>
+<span class="sourceLineNo">327</span>                                     Class&lt;?&gt; defc, String name, Object type,<a name="line.327"></a>
+<span class="sourceLineNo">328</span>                                     Object[] appendixResult) {<a name="line.328"></a>
+<span class="sourceLineNo">329</span>        try {<a name="line.329"></a>
+<span class="sourceLineNo">330</span>            if (defc == MethodHandle.class &amp;&amp; refKind == REF_invokeVirtual) {<a name="line.330"></a>
+<span class="sourceLineNo">331</span>                switch (name) {<a name="line.331"></a>
+<span class="sourceLineNo">332</span>                case "invoke":<a name="line.332"></a>
+<span class="sourceLineNo">333</span>                    return Invokers.genericInvokerMethod(fixMethodType(callerClass, type), appendixResult);<a name="line.333"></a>
+<span class="sourceLineNo">334</span>                case "invokeExact":<a name="line.334"></a>
+<span class="sourceLineNo">335</span>                    return Invokers.exactInvokerMethod(fixMethodType(callerClass, type), appendixResult);<a name="line.335"></a>
+<span class="sourceLineNo">336</span>                }<a name="line.336"></a>
+<span class="sourceLineNo">337</span>            }<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        } catch (Throwable ex) {<a name="line.338"></a>
+<span class="sourceLineNo">339</span>            if (ex instanceof LinkageError)<a name="line.339"></a>
+<span class="sourceLineNo">340</span>                throw (LinkageError) ex;<a name="line.340"></a>
+<span class="sourceLineNo">341</span>            else<a name="line.341"></a>
+<span class="sourceLineNo">342</span>                throw new LinkageError(ex.getMessage(), ex);<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        }<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        throw new LinkageError("no such method "+defc.getName()+"."+name+type);<a name="line.344"></a>
+<span class="sourceLineNo">345</span>    }<a name="line.345"></a>
+<span class="sourceLineNo">346</span>    private static MethodType fixMethodType(Class&lt;?&gt; callerClass, Object type) {<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        if (type instanceof MethodType)<a name="line.347"></a>
+<span class="sourceLineNo">348</span>            return (MethodType) type;<a name="line.348"></a>
+<span class="sourceLineNo">349</span>        else<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            return MethodType.fromMethodDescriptorString((String)type, callerClass.getClassLoader());<a name="line.350"></a>
+<span class="sourceLineNo">351</span>    }<a name="line.351"></a>
+<span class="sourceLineNo">352</span>    // Tracing logic:<a name="line.352"></a>
+<span class="sourceLineNo">353</span>    static MemberName linkMethodTracing(Class&lt;?&gt; callerClass, int refKind,<a name="line.353"></a>
+<span class="sourceLineNo">354</span>                                        Class&lt;?&gt; defc, String name, Object type,<a name="line.354"></a>
+<span class="sourceLineNo">355</span>                                        Object[] appendixResult) {<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        System.out.println("linkMethod "+defc.getName()+"."+<a name="line.356"></a>
+<span class="sourceLineNo">357</span>                           name+type+"/"+Integer.toHexString(refKind));<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        try {<a name="line.358"></a>
+<span class="sourceLineNo">359</span>            MemberName res = linkMethodImpl(callerClass, refKind, defc, name, type, appendixResult);<a name="line.359"></a>
+<span class="sourceLineNo">360</span>            System.out.println("linkMethod =&gt; "+res+" + "+appendixResult[0]);<a name="line.360"></a>
+<span class="sourceLineNo">361</span>            return res;<a name="line.361"></a>
+<span class="sourceLineNo">362</span>        } catch (Throwable ex) {<a name="line.362"></a>
+<span class="sourceLineNo">363</span>            System.out.println("linkMethod =&gt; throw "+ex);<a name="line.363"></a>
+<span class="sourceLineNo">364</span>            throw ex;<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        }<a name="line.365"></a>
+<span class="sourceLineNo">366</span>    }<a name="line.366"></a>
+<span class="sourceLineNo">367</span><a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>    /**<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * The JVM is resolving a CONSTANT_MethodHandle CP entry.  And it wants our help.<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * It will make an up-call to this method.  (Do not change the name or signature.)<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * The type argument is a Class for field requests and a MethodType for non-fields.<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     * &lt;p&gt;<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     * Recent versions of the JVM may also pass a resolved MemberName for the type.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     * In that case, the name is ignored and may be null.<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     */<a name="line.376"></a>
+<span class="sourceLineNo">377</span>    static MethodHandle linkMethodHandleConstant(Class&lt;?&gt; callerClass, int refKind,<a name="line.377"></a>
+<span class="sourceLineNo">378</span>                                                 Class&lt;?&gt; defc, String name, Object type) {<a name="line.378"></a>
+<span class="sourceLineNo">379</span>        try {<a name="line.379"></a>
+<span class="sourceLineNo">380</span>            Lookup lookup = IMPL_LOOKUP.in(callerClass);<a name="line.380"></a>
+<span class="sourceLineNo">381</span>            assert(refKindIsValid(refKind));<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            return lookup.linkMethodHandleConstant((byte) refKind, defc, name, type);<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        } catch (ReflectiveOperationException ex) {<a name="line.383"></a>
+<span class="sourceLineNo">384</span>            Error err = new IncompatibleClassChangeError();<a name="line.384"></a>
+<span class="sourceLineNo">385</span>            err.initCause(ex);<a name="line.385"></a>
+<span class="sourceLineNo">386</span>            throw err;<a name="line.386"></a>
+<span class="sourceLineNo">387</span>        }<a name="line.387"></a>
+<span class="sourceLineNo">388</span>    }<a name="line.388"></a>
+<span class="sourceLineNo">389</span><a name="line.389"></a>
+<span class="sourceLineNo">390</span>    /**<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     * Is this method a caller-sensitive method?<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * I.e., does it call Reflection.getCallerClass or a similer method<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * to ask about the identity of its caller?<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     */<a name="line.394"></a>
+<span class="sourceLineNo">395</span>    static boolean isCallerSensitive(MemberName mem) {<a name="line.395"></a>
+<span class="sourceLineNo">396</span>        if (!mem.isMethod())  return false;  // only methods are caller sensitive<a name="line.396"></a>
+<span class="sourceLineNo">397</span><a name="line.397"></a>
+<span class="sourceLineNo">398</span>        // when the VM support is available, call mem.isCallerSensitive() instead<a name="line.398"></a>
+<span class="sourceLineNo">399</span>        return isCallerSensitiveMethod(mem.getDeclaringClass(), mem.getName()) ||<a name="line.399"></a>
+<span class="sourceLineNo">400</span>                  canBeCalledVirtual(mem);<a name="line.400"></a>
+<span class="sourceLineNo">401</span>    }<a name="line.401"></a>
+<span class="sourceLineNo">402</span><a name="line.402"></a>
+<span class="sourceLineNo">403</span>    // this method is also called by test/sun/reflect/CallerSensitiveFinder<a name="line.403"></a>
+<span class="sourceLineNo">404</span>    // to validate the hand-maintained list<a name="line.404"></a>
+<span class="sourceLineNo">405</span>    private static boolean isCallerSensitiveMethod(Class&lt;?&gt; defc, String method) {<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        switch (method) {<a name="line.406"></a>
+<span class="sourceLineNo">407</span>        case "doPrivileged":<a name="line.407"></a>
+<span class="sourceLineNo">408</span>        case "doPrivilegedWithCombiner":<a name="line.408"></a>
+<span class="sourceLineNo">409</span>            return defc == java.security.AccessController.class;<a name="line.409"></a>
+<span class="sourceLineNo">410</span>        case "checkMemberAccess":<a name="line.410"></a>
+<span class="sourceLineNo">411</span>            return defc == java.lang.SecurityManager.class;<a name="line.411"></a>
+<span class="sourceLineNo">412</span>        case "getUnsafe":<a name="line.412"></a>
+<span class="sourceLineNo">413</span>            return defc == sun.misc.Unsafe.class;<a name="line.413"></a>
+<span class="sourceLineNo">414</span>        case "lookup":<a name="line.414"></a>
+<span class="sourceLineNo">415</span>            return defc == java.lang.invoke.MethodHandles.class;<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        case "invoke":<a name="line.416"></a>
+<span class="sourceLineNo">417</span>            return defc == java.lang.reflect.Method.class;<a name="line.417"></a>
+<span class="sourceLineNo">418</span>        case "get":<a name="line.418"></a>
+<span class="sourceLineNo">419</span>        case "getBoolean":<a name="line.419"></a>
+<span class="sourceLineNo">420</span>        case "getByte":<a name="line.420"></a>
+<span class="sourceLineNo">421</span>        case "getChar":<a name="line.421"></a>
+<span class="sourceLineNo">422</span>        case "getShort":<a name="line.422"></a>
+<span class="sourceLineNo">423</span>        case "getInt":<a name="line.423"></a>
+<span class="sourceLineNo">424</span>        case "getLong":<a name="line.424"></a>
+<span class="sourceLineNo">425</span>        case "getFloat":<a name="line.425"></a>
+<span class="sourceLineNo">426</span>        case "getDouble":<a name="line.426"></a>
+<span class="sourceLineNo">427</span>        case "set":<a name="line.427"></a>
+<span class="sourceLineNo">428</span>        case "setBoolean":<a name="line.428"></a>
+<span class="sourceLineNo">429</span>        case "setByte":<a name="line.429"></a>
+<span class="sourceLineNo">430</span>        case "setChar":<a name="line.430"></a>
+<span class="sourceLineNo">431</span>        case "setShort":<a name="line.431"></a>
+<span class="sourceLineNo">432</span>        case "setInt":<a name="line.432"></a>
+<span class="sourceLineNo">433</span>        case "setLong":<a name="line.433"></a>
+<span class="sourceLineNo">434</span>        case "setFloat":<a name="line.434"></a>
+<span class="sourceLineNo">435</span>        case "setDouble":<a name="line.435"></a>
+<span class="sourceLineNo">436</span>            return defc == java.lang.reflect.Field.class;<a name="line.436"></a>
+<span class="sourceLineNo">437</span>        case "newInstance":<a name="line.437"></a>
+<span class="sourceLineNo">438</span>            if (defc == java.lang.reflect.Constructor.class)  return true;<a name="line.438"></a>
+<span class="sourceLineNo">439</span>            if (defc == java.lang.Class.class)  return true;<a name="line.439"></a>
+<span class="sourceLineNo">440</span>            break;<a name="line.440"></a>
+<span class="sourceLineNo">441</span>        case "getFields":<a name="line.441"></a>
+<span class="sourceLineNo">442</span>            return defc == java.lang.Class.class ||<a name="line.442"></a>
+<span class="sourceLineNo">443</span>                   defc == javax.sql.rowset.serial.SerialJavaObject.class;<a name="line.443"></a>
+<span class="sourceLineNo">444</span>        case "forName":<a name="line.444"></a>
+<span class="sourceLineNo">445</span>        case "getClassLoader":<a name="line.445"></a>
+<span class="sourceLineNo">446</span>        case "getClasses":<a name="line.446"></a>
+<span class="sourceLineNo">447</span>        case "getMethods":<a name="line.447"></a>
+<span class="sourceLineNo">448</span>        case "getConstructors":<a name="line.448"></a>
+<span class="sourceLineNo">449</span>        case "getDeclaredClasses":<a name="line.449"></a>
+<span class="sourceLineNo">450</span>        case "getDeclaredFields":<a name="line.450"></a>
+<span class="sourceLineNo">451</span>        case "getDeclaredMethods":<a name="line.451"></a>
+<span class="sourceLineNo">452</span>        case "getDeclaredConstructors":<a name="line.452"></a>
+<span class="sourceLineNo">453</span>        case "getField":<a name="line.453"></a>
+<span class="sourceLineNo">454</span>        case "getMethod":<a name="line.454"></a>
+<span class="sourceLineNo">455</span>        case "getConstructor":<a name="line.455"></a>
+<span class="sourceLineNo">456</span>        case "getDeclaredField":<a name="line.456"></a>
+<span class="sourceLineNo">457</span>        case "getDeclaredMethod":<a name="line.457"></a>
+<span class="sourceLineNo">458</span>        case "getDeclaredConstructor":<a name="line.458"></a>
+<span class="sourceLineNo">459</span>        case "getDeclaringClass":<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        case "getEnclosingClass":<a name="line.460"></a>
+<span class="sourceLineNo">461</span>        case "getEnclosingMethod":<a name="line.461"></a>
+<span class="sourceLineNo">462</span>        case "getEnclosingConstructor":<a name="line.462"></a>
+<span class="sourceLineNo">463</span>            return defc == java.lang.Class.class;<a name="line.463"></a>
+<span class="sourceLineNo">464</span>        case "getConnection":<a name="line.464"></a>
+<span class="sourceLineNo">465</span>        case "getDriver":<a name="line.465"></a>
+<span class="sourceLineNo">466</span>        case "getDrivers":<a name="line.466"></a>
+<span class="sourceLineNo">467</span>        case "deregisterDriver":<a name="line.467"></a>
+<span class="sourceLineNo">468</span>            return defc == java.sql.DriverManager.class;<a name="line.468"></a>
+<span class="sourceLineNo">469</span>        case "newUpdater":<a name="line.469"></a>
+<span class="sourceLineNo">470</span>            if (defc == java.util.concurrent.atomic.AtomicIntegerFieldUpdater.class)  return true;<a name="line.470"></a>
+<span class="sourceLineNo">471</span>            if (defc == java.util.concurrent.atomic.AtomicLongFieldUpdater.class)  return true;<a name="line.471"></a>
+<span class="sourceLineNo">472</span>            if (defc == java.util.concurrent.atomic.AtomicReferenceFieldUpdater.class)  return true;<a name="line.472"></a>
+<span class="sourceLineNo">473</span>            break;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        case "getContextClassLoader":<a name="line.474"></a>
+<span class="sourceLineNo">475</span>            return defc == java.lang.Thread.class;<a name="line.475"></a>
+<span class="sourceLineNo">476</span>        case "getPackage":<a name="line.476"></a>
+<span class="sourceLineNo">477</span>        case "getPackages":<a name="line.477"></a>
+<span class="sourceLineNo">478</span>            return defc == java.lang.Package.class;<a name="line.478"></a>
+<span class="sourceLineNo">479</span>        case "getParent":<a name="line.479"></a>
+<span class="sourceLineNo">480</span>        case "getSystemClassLoader":<a name="line.480"></a>
+<span class="sourceLineNo">481</span>            return defc == java.lang.ClassLoader.class;<a name="line.481"></a>
+<span class="sourceLineNo">482</span>        case "load":<a name="line.482"></a>
+<span class="sourceLineNo">483</span>        case "loadLibrary":<a name="line.483"></a>
+<span class="sourceLineNo">484</span>            if (defc == java.lang.Runtime.class)  return true;<a name="line.484"></a>
+<span class="sourceLineNo">485</span>            if (defc == java.lang.System.class)  return true;<a name="line.485"></a>
+<span class="sourceLineNo">486</span>            break;<a name="line.486"></a>
+<span class="sourceLineNo">487</span>        case "getCallerClass":<a name="line.487"></a>
+<span class="sourceLineNo">488</span>            if (defc == sun.reflect.Reflection.class)  return true;<a name="line.488"></a>
+<span class="sourceLineNo">489</span>            if (defc == java.lang.System.class)  return true;<a name="line.489"></a>
+<span class="sourceLineNo">490</span>            break;<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        case "getCallerClassLoader":<a name="line.491"></a>
+<span class="sourceLineNo">492</span>            return defc == java.lang.ClassLoader.class;<a name="line.492"></a>
+<span class="sourceLineNo">493</span>        case "registerAsParallelCapable":<a name="line.493"></a>
+<span class="sourceLineNo">494</span>            return defc == java.lang.ClassLoader.class;<a name="line.494"></a>
+<span class="sourceLineNo">495</span>        case "getInvocationHandler":<a name="line.495"></a>
+<span class="sourceLineNo">496</span>        case "getProxyClass":<a name="line.496"></a>
+<span class="sourceLineNo">497</span>        case "newProxyInstance":<a name="line.497"></a>
+<span class="sourceLineNo">498</span>            return defc == java.lang.reflect.Proxy.class;<a name="line.498"></a>
+<span class="sourceLineNo">499</span>        case "asInterfaceInstance":<a name="line.499"></a>
+<span class="sourceLineNo">500</span>            return defc == java.lang.invoke.MethodHandleProxies.class;<a name="line.500"></a>
+<span class="sourceLineNo">501</span>        case "getBundle":<a name="line.501"></a>
+<span class="sourceLineNo">502</span>        case "clearCache":<a name="line.502"></a>
+<span class="sourceLineNo">503</span>            return defc == java.util.ResourceBundle.class;<a name="line.503"></a>
+<span class="sourceLineNo">504</span>        case "getType":<a name="line.504"></a>
+<span class="sourceLineNo">505</span>            return defc == java.io.ObjectStreamField.class;<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        case "forClass":<a name="line.506"></a>
+<span class="sourceLineNo">507</span>            return defc == java.io.ObjectStreamClass.class;<a name="line.507"></a>
+<span class="sourceLineNo">508</span>        case "getLogger":<a name="line.508"></a>
+<span class="sourceLineNo">509</span>            return defc == java.util.logging.Logger.class;<a name="line.509"></a>
+<span class="sourceLineNo">510</span>        case "getAnonymousLogger":<a name="line.510"></a>
+<span class="sourceLineNo">511</span>            return defc == java.util.logging.Logger.class;<a name="line.511"></a>
+<span class="sourceLineNo">512</span>        }<a name="line.512"></a>
+<span class="sourceLineNo">513</span>        return false;<a name="line.513"></a>
+<span class="sourceLineNo">514</span>    }<a name="line.514"></a>
+<span class="sourceLineNo">515</span><a name="line.515"></a>
+<span class="sourceLineNo">516</span><a name="line.516"></a>
+<span class="sourceLineNo">517</span>    private static boolean canBeCalledVirtual(MemberName mem) {<a name="line.517"></a>
+<span class="sourceLineNo">518</span>        assert(mem.isInvocable());<a name="line.518"></a>
+<span class="sourceLineNo">519</span>        Class&lt;?&gt; defc = mem.getDeclaringClass();<a name="line.519"></a>
+<span class="sourceLineNo">520</span>        switch (mem.getName()) {<a name="line.520"></a>
+<span class="sourceLineNo">521</span>        case "checkMemberAccess":<a name="line.521"></a>
+<span class="sourceLineNo">522</span>            return canBeCalledVirtual(mem, java.lang.SecurityManager.class);<a name="line.522"></a>
+<span class="sourceLineNo">523</span>        case "getContextClassLoader":<a name="line.523"></a>
+<span class="sourceLineNo">524</span>            return canBeCalledVirtual(mem, java.lang.Thread.class);<a name="line.524"></a>
+<span class="sourceLineNo">525</span>        }<a name="line.525"></a>
+<span class="sourceLineNo">526</span>        return false;<a name="line.526"></a>
+<span class="sourceLineNo">527</span>    }<a name="line.527"></a>
+<span class="sourceLineNo">528</span><a name="line.528"></a>
+<span class="sourceLineNo">529</span>    static boolean canBeCalledVirtual(MemberName symbolicRef, Class&lt;?&gt; definingClass) {<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        Class&lt;?&gt; symbolicRefClass = symbolicRef.getDeclaringClass();<a name="line.530"></a>
+<span class="sourceLineNo">531</span>        if (symbolicRefClass == definingClass)  return true;<a name="line.531"></a>
+<span class="sourceLineNo">532</span>        if (symbolicRef.isStatic() || symbolicRef.isPrivate())  return false;<a name="line.532"></a>
+<span class="sourceLineNo">533</span>        return (definingClass.isAssignableFrom(symbolicRefClass) ||  // Msym overrides Mdef<a name="line.533"></a>
+<span class="sourceLineNo">534</span>                symbolicRefClass.isInterface());                     // Mdef implements Msym<a name="line.534"></a>
+<span class="sourceLineNo">535</span>    }<a name="line.535"></a>
+<span class="sourceLineNo">536</span>}<a name="line.536"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

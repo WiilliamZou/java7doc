@@ -1,0 +1,435 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.nio.file.attribute;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.Calendar;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.GregorianCalendar;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.Date;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Formatter;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.Locale;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.TimeZone;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.util.concurrent.TimeUnit;<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>/**<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * Represents the value of a file's time stamp attribute. For example, it may<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * represent the time that the file was last<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * {@link BasicFileAttributes#lastModifiedTime() modified},<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * {@link BasicFileAttributes#lastAccessTime() accessed},<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * or {@link BasicFileAttributes#creationTime() created}.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;p&gt; Instances of this class are immutable.<a name="line.43"></a>
+<span class="sourceLineNo">044</span> *<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * @since 1.7<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * @see java.nio.file.Files#setLastModifiedTime<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * @see java.nio.file.Files#getLastModifiedTime<a name="line.47"></a>
+<span class="sourceLineNo">048</span> */<a name="line.48"></a>
+<span class="sourceLineNo">049</span><a name="line.49"></a>
+<span class="sourceLineNo">050</span>public final class FileTime<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    implements Comparable&lt;FileTime&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span>{<a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /**<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * The value since the epoch; can be negative.<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     */<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    private final long value;<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    /**<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * The unit of granularity to interpret the value.<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     */<a name="line.60"></a>
+<span class="sourceLineNo">061</span>    private final TimeUnit unit;<a name="line.61"></a>
+<span class="sourceLineNo">062</span><a name="line.62"></a>
+<span class="sourceLineNo">063</span>    /**<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * The value return by toString (created lazily)<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     */<a name="line.65"></a>
+<span class="sourceLineNo">066</span>    private String valueAsString;<a name="line.66"></a>
+<span class="sourceLineNo">067</span><a name="line.67"></a>
+<span class="sourceLineNo">068</span>    /**<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * The value in days and excess nanos (created lazily)<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    private DaysAndNanos daysAndNanos;<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * Returns a DaysAndNanos object representing the value.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     */<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    private DaysAndNanos asDaysAndNanos() {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>        if (daysAndNanos == null)<a name="line.77"></a>
+<span class="sourceLineNo">078</span>            daysAndNanos = new DaysAndNanos(value, unit);<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        return daysAndNanos;<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    }<a name="line.80"></a>
+<span class="sourceLineNo">081</span><a name="line.81"></a>
+<span class="sourceLineNo">082</span>    /**<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * Initializes a new instance of this class.<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     */<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    private FileTime(long value, TimeUnit unit) {<a name="line.85"></a>
+<span class="sourceLineNo">086</span>        if (unit == null)<a name="line.86"></a>
+<span class="sourceLineNo">087</span>            throw new NullPointerException();<a name="line.87"></a>
+<span class="sourceLineNo">088</span>        this.value = value;<a name="line.88"></a>
+<span class="sourceLineNo">089</span>        this.unit = unit;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>    }<a name="line.90"></a>
+<span class="sourceLineNo">091</span><a name="line.91"></a>
+<span class="sourceLineNo">092</span>    /**<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * Returns a {@code FileTime} representing a value at the given unit of<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * granularity.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @param   value<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     *          the value since the epoch (1970-01-01T00:00:00Z); can be<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *          negative<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @param   unit<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     *          the unit of granularity to interpret the value<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @return  a {@code FileTime} representing the given value<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    public static FileTime from(long value, TimeUnit unit) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        return new FileTime(value, unit);<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    }<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    /**<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * Returns a {@code FileTime} representing the given value in milliseconds.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     *<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * @param   value<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     *          the value, in milliseconds, since the epoch<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *          (1970-01-01T00:00:00Z); can be negative<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @return  a {@code FileTime} representing the given value<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    public static FileTime fromMillis(long value) {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        return new FileTime(value, TimeUnit.MILLISECONDS);<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    }<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>    /**<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * Returns the value at the given unit of granularity.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * &lt;p&gt; Conversion from a coarser granularity that would numerically overflow<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * saturate to {@code Long.MIN_VALUE} if negative or {@code Long.MAX_VALUE}<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * if positive.<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     *<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @param   unit<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     *          the unit of granularity for the return value<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * @return  value in the given unit of granularity, since the epoch<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *          since the epoch (1970-01-01T00:00:00Z); can be negative<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     */<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    public long to(TimeUnit unit) {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        return unit.convert(this.value, this.unit);<a name="line.135"></a>
+<span class="sourceLineNo">136</span>    }<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>    /**<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * Returns the value in milliseconds.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * &lt;p&gt; Conversion from a coarser granularity that would numerically overflow<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * saturate to {@code Long.MIN_VALUE} if negative or {@code Long.MAX_VALUE}<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * if positive.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * @return  the value in milliseconds, since the epoch (1970-01-01T00:00:00Z)<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     */<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    public long toMillis() {<a name="line.147"></a>
+<span class="sourceLineNo">148</span>        return unit.toMillis(value);<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    }<a name="line.149"></a>
+<span class="sourceLineNo">150</span><a name="line.150"></a>
+<span class="sourceLineNo">151</span>    /**<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * Tests this {@code FileTime} for equality with the given object.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     *<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * &lt;p&gt; The result is {@code true} if and only if the argument is not {@code<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * null} and is a {@code FileTime} that represents the same time. This<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * method satisfies the general contract of the {@code Object.equals} method.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * @param   obj<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *          the object to compare with<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @return  {@code true} if, and only if, the given object is a {@code<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *          FileTime} that represents the same time<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     */<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    @Override<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    public boolean equals(Object obj) {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        return (obj instanceof FileTime) ? compareTo((FileTime)obj) == 0 : false;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    }<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>    /**<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * Computes a hash code for this file time.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * &lt;p&gt; The hash code is based upon the value represented, and satisfies the<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * general contract of the {@link Object#hashCode} method.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     *<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @return  the hash-code value<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     */<a name="line.176"></a>
+<span class="sourceLineNo">177</span>    @Override<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    public int hashCode() {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        // hashcode of days/nanos representation to satisfy contract with equals<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        return asDaysAndNanos().hashCode();<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    }<a name="line.181"></a>
+<span class="sourceLineNo">182</span><a name="line.182"></a>
+<span class="sourceLineNo">183</span>    /**<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * Compares the value of two {@code FileTime} objects for order.<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     *<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * @param   other<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     *          the other {@code FileTime} to be compared<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     *<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * @return  {@code 0} if this {@code FileTime} is equal to {@code other}, a<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     *          value less than 0 if this {@code FileTime} represents a time<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     *          that is before {@code other}, and a value greater than 0 if this<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     *          {@code FileTime} represents a time that is after {@code other}<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     */<a name="line.193"></a>
+<span class="sourceLineNo">194</span>    @Override<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    public int compareTo(FileTime other) {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        // same granularity<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        if (unit == other.unit) {<a name="line.197"></a>
+<span class="sourceLineNo">198</span>            return (value &lt; other.value) ? -1 : (value == other.value ? 0 : 1);<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        } else {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>            // compare using days/nanos representation when unit differs<a name="line.200"></a>
+<span class="sourceLineNo">201</span>            return asDaysAndNanos().compareTo(other.asDaysAndNanos());<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        }<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    }<a name="line.203"></a>
+<span class="sourceLineNo">204</span><a name="line.204"></a>
+<span class="sourceLineNo">205</span>    /**<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * Returns the string representation of this {@code FileTime}. The string<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * is returned in the &lt;a<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * href="http://www.w3.org/TR/NOTE-datetime"&gt;ISO&amp;nbsp;8601&lt;/a&gt; format:<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * &lt;pre&gt;<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *     YYYY-MM-DDThh:mm:ss[.s+]Z<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * &lt;/pre&gt;<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * where "{@code [.s+]}" represents a dot followed by one of more digits<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * for the decimal fraction of a second. It is only present when the decimal<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * fraction of a second is not zero. For example, {@code<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * FileTime.fromMillis(1234567890000L).toString()} yields {@code<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * "2009-02-13T23:31:30Z"}, and {@code FileTime.fromMillis(1234567890123L).toString()}<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * yields {@code "2009-02-13T23:31:30.123Z"}.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * &lt;p&gt; A {@code FileTime} is primarily intended to represent the value of a<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * file's time stamp. Where used to represent &lt;i&gt;extreme values&lt;/i&gt;, where<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * the year is less than "{@code 0001}" or greater than "{@code 9999}" then<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * this method deviates from ISO 8601 in the same manner as the<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * &lt;a href="http://www.w3.org/TR/xmlschema-2/#deviantformats"&gt;XML Schema<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * language&lt;/a&gt;. That is, the year may be expanded to more than four digits<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * and may be negative-signed. If more than four digits then leading zeros<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * are not present. The year before "{@code 0001}" is "{@code -0001}".<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     *<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * @return  the string representation of this file time<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     */<a name="line.229"></a>
+<span class="sourceLineNo">230</span>    @Override<a name="line.230"></a>
+<span class="sourceLineNo">231</span>    public String toString() {<a name="line.231"></a>
+<span class="sourceLineNo">232</span>        String v = valueAsString;<a name="line.232"></a>
+<span class="sourceLineNo">233</span>        if (v == null) {<a name="line.233"></a>
+<span class="sourceLineNo">234</span>            // overflow saturates to Long.MIN_VALUE or Long.MAX_VALUE so this<a name="line.234"></a>
+<span class="sourceLineNo">235</span>            // limits the range:<a name="line.235"></a>
+<span class="sourceLineNo">236</span>            // [-292275056-05-16T16:47:04.192Z,292278994-08-17T07:12:55.807Z]<a name="line.236"></a>
+<span class="sourceLineNo">237</span>            long ms = toMillis();<a name="line.237"></a>
+<span class="sourceLineNo">238</span><a name="line.238"></a>
+<span class="sourceLineNo">239</span>            // nothing to do when seconds/minutes/hours/days<a name="line.239"></a>
+<span class="sourceLineNo">240</span>            String fractionAsString = "";<a name="line.240"></a>
+<span class="sourceLineNo">241</span>            if (unit.compareTo(TimeUnit.SECONDS) &lt; 0) {<a name="line.241"></a>
+<span class="sourceLineNo">242</span>                long fraction = asDaysAndNanos().fractionOfSecondInNanos();<a name="line.242"></a>
+<span class="sourceLineNo">243</span>                if (fraction != 0L) {<a name="line.243"></a>
+<span class="sourceLineNo">244</span>                    // fraction must be positive<a name="line.244"></a>
+<span class="sourceLineNo">245</span>                    if (fraction &lt; 0L) {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                        final long MAX_FRACTION_PLUS_1 = 1000L * 1000L * 1000L;<a name="line.246"></a>
+<span class="sourceLineNo">247</span>                        fraction += MAX_FRACTION_PLUS_1;<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                        if (ms != Long.MIN_VALUE) ms--;<a name="line.248"></a>
+<span class="sourceLineNo">249</span>                    }<a name="line.249"></a>
+<span class="sourceLineNo">250</span><a name="line.250"></a>
+<span class="sourceLineNo">251</span>                    // convert to String, adding leading zeros as required and<a name="line.251"></a>
+<span class="sourceLineNo">252</span>                    // stripping any trailing zeros<a name="line.252"></a>
+<span class="sourceLineNo">253</span>                    String s = Long.toString(fraction);<a name="line.253"></a>
+<span class="sourceLineNo">254</span>                    int len = s.length();<a name="line.254"></a>
+<span class="sourceLineNo">255</span>                    int width = 9 - len;<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                    StringBuilder sb = new StringBuilder(".");<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                    while (width-- &gt; 0) {<a name="line.257"></a>
+<span class="sourceLineNo">258</span>                        sb.append('0');<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                    }<a name="line.259"></a>
+<span class="sourceLineNo">260</span>                    if (s.charAt(len-1) == '0') {<a name="line.260"></a>
+<span class="sourceLineNo">261</span>                        // drop trailing zeros<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                        len--;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>                        while (s.charAt(len-1) == '0')<a name="line.263"></a>
+<span class="sourceLineNo">264</span>                            len--;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>                        sb.append(s.substring(0, len));<a name="line.265"></a>
+<span class="sourceLineNo">266</span>                    } else {<a name="line.266"></a>
+<span class="sourceLineNo">267</span>                        sb.append(s);<a name="line.267"></a>
+<span class="sourceLineNo">268</span>                    }<a name="line.268"></a>
+<span class="sourceLineNo">269</span>                    fractionAsString = sb.toString();<a name="line.269"></a>
+<span class="sourceLineNo">270</span>                }<a name="line.270"></a>
+<span class="sourceLineNo">271</span>            }<a name="line.271"></a>
+<span class="sourceLineNo">272</span><a name="line.272"></a>
+<span class="sourceLineNo">273</span>            // create calendar to use with formatter.<a name="line.273"></a>
+<span class="sourceLineNo">274</span>            GregorianCalendar cal =<a name="line.274"></a>
+<span class="sourceLineNo">275</span>                new GregorianCalendar(TimeZone.getTimeZone("UTC"), Locale.ROOT);<a name="line.275"></a>
+<span class="sourceLineNo">276</span>            if (value &lt; 0L)<a name="line.276"></a>
+<span class="sourceLineNo">277</span>                cal.setGregorianChange(new Date(Long.MIN_VALUE));<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            cal.setTimeInMillis(ms);<a name="line.278"></a>
+<span class="sourceLineNo">279</span><a name="line.279"></a>
+<span class="sourceLineNo">280</span>            // years are negative before common era<a name="line.280"></a>
+<span class="sourceLineNo">281</span>            String sign = (cal.get(Calendar.ERA) == GregorianCalendar.BC) ? "-" : "";<a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>            // [-]YYYY-MM-DDThh:mm:ss[.s]Z<a name="line.283"></a>
+<span class="sourceLineNo">284</span>            v = new Formatter(Locale.ROOT)<a name="line.284"></a>
+<span class="sourceLineNo">285</span>                .format("%s%tFT%tR:%tS%sZ", sign, cal, cal, cal, fractionAsString)<a name="line.285"></a>
+<span class="sourceLineNo">286</span>                .toString();<a name="line.286"></a>
+<span class="sourceLineNo">287</span>            valueAsString = v;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>        }<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        return v;<a name="line.289"></a>
+<span class="sourceLineNo">290</span>    }<a name="line.290"></a>
+<span class="sourceLineNo">291</span><a name="line.291"></a>
+<span class="sourceLineNo">292</span>    /**<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * Represents a FileTime's value as two longs: the number of days since<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * the epoch, and the excess (in nanoseconds). This is used for comparing<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * values with different units of granularity.<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     */<a name="line.296"></a>
+<span class="sourceLineNo">297</span>    private static class DaysAndNanos implements Comparable&lt;DaysAndNanos&gt; {<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        // constants for conversion<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        private static final long C0 = 1L;<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        private static final long C1 = C0 * 24L;<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        private static final long C2 = C1 * 60L;<a name="line.301"></a>
+<span class="sourceLineNo">302</span>        private static final long C3 = C2 * 60L;<a name="line.302"></a>
+<span class="sourceLineNo">303</span>        private static final long C4 = C3 * 1000L;<a name="line.303"></a>
+<span class="sourceLineNo">304</span>        private static final long C5 = C4 * 1000L;<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        private static final long C6 = C5 * 1000L;<a name="line.305"></a>
+<span class="sourceLineNo">306</span><a name="line.306"></a>
+<span class="sourceLineNo">307</span>        /**<a name="line.307"></a>
+<span class="sourceLineNo">308</span>         * The value (in days) since the epoch; can be negative.<a name="line.308"></a>
+<span class="sourceLineNo">309</span>         */<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        private final long days;<a name="line.310"></a>
+<span class="sourceLineNo">311</span><a name="line.311"></a>
+<span class="sourceLineNo">312</span>        /**<a name="line.312"></a>
+<span class="sourceLineNo">313</span>         * The excess (in nanoseconds); can be negative if days &lt;= 0.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>         */<a name="line.314"></a>
+<span class="sourceLineNo">315</span>        private final long excessNanos;<a name="line.315"></a>
+<span class="sourceLineNo">316</span><a name="line.316"></a>
+<span class="sourceLineNo">317</span>        /**<a name="line.317"></a>
+<span class="sourceLineNo">318</span>         * Initializes a new instance of this class.<a name="line.318"></a>
+<span class="sourceLineNo">319</span>         */<a name="line.319"></a>
+<span class="sourceLineNo">320</span>        DaysAndNanos(long value, TimeUnit unit) {<a name="line.320"></a>
+<span class="sourceLineNo">321</span>            long scale;<a name="line.321"></a>
+<span class="sourceLineNo">322</span>            switch (unit) {<a name="line.322"></a>
+<span class="sourceLineNo">323</span>                case DAYS         : scale = C0; break;<a name="line.323"></a>
+<span class="sourceLineNo">324</span>                case HOURS        : scale = C1; break;<a name="line.324"></a>
+<span class="sourceLineNo">325</span>                case MINUTES      : scale = C2; break;<a name="line.325"></a>
+<span class="sourceLineNo">326</span>                case SECONDS      : scale = C3; break;<a name="line.326"></a>
+<span class="sourceLineNo">327</span>                case MILLISECONDS : scale = C4; break;<a name="line.327"></a>
+<span class="sourceLineNo">328</span>                case MICROSECONDS : scale = C5; break;<a name="line.328"></a>
+<span class="sourceLineNo">329</span>                case NANOSECONDS  : scale = C6; break;<a name="line.329"></a>
+<span class="sourceLineNo">330</span>                default : throw new AssertionError("Unit not handled");<a name="line.330"></a>
+<span class="sourceLineNo">331</span>            }<a name="line.331"></a>
+<span class="sourceLineNo">332</span>            this.days = unit.toDays(value);<a name="line.332"></a>
+<span class="sourceLineNo">333</span>            this.excessNanos = unit.toNanos(value - (this.days * scale));<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        }<a name="line.334"></a>
+<span class="sourceLineNo">335</span><a name="line.335"></a>
+<span class="sourceLineNo">336</span>        /**<a name="line.336"></a>
+<span class="sourceLineNo">337</span>         * Returns the fraction of a second, in nanoseconds.<a name="line.337"></a>
+<span class="sourceLineNo">338</span>         */<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        long fractionOfSecondInNanos() {<a name="line.339"></a>
+<span class="sourceLineNo">340</span>            return excessNanos % (1000L * 1000L * 1000L);<a name="line.340"></a>
+<span class="sourceLineNo">341</span>        }<a name="line.341"></a>
+<span class="sourceLineNo">342</span><a name="line.342"></a>
+<span class="sourceLineNo">343</span>        @Override<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        public boolean equals(Object obj) {<a name="line.344"></a>
+<span class="sourceLineNo">345</span>            return (obj instanceof DaysAndNanos) ?<a name="line.345"></a>
+<span class="sourceLineNo">346</span>                compareTo((DaysAndNanos)obj) == 0 : false;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        }<a name="line.347"></a>
+<span class="sourceLineNo">348</span><a name="line.348"></a>
+<span class="sourceLineNo">349</span>        @Override<a name="line.349"></a>
+<span class="sourceLineNo">350</span>        public int hashCode() {<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            return (int)(days ^ (days &gt;&gt;&gt; 32) ^<a name="line.351"></a>
+<span class="sourceLineNo">352</span>                         excessNanos ^ (excessNanos &gt;&gt;&gt; 32));<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        }<a name="line.353"></a>
+<span class="sourceLineNo">354</span><a name="line.354"></a>
+<span class="sourceLineNo">355</span>        @Override<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        public int compareTo(DaysAndNanos other) {<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            if (this.days != other.days)<a name="line.357"></a>
+<span class="sourceLineNo">358</span>                return (this.days &lt; other.days) ? -1 : 1;<a name="line.358"></a>
+<span class="sourceLineNo">359</span>            return (this.excessNanos &lt; other.excessNanos) ? -1 :<a name="line.359"></a>
+<span class="sourceLineNo">360</span>                   (this.excessNanos == other.excessNanos) ? 0 : 1;<a name="line.360"></a>
+<span class="sourceLineNo">361</span>        }<a name="line.361"></a>
+<span class="sourceLineNo">362</span>    }<a name="line.362"></a>
+<span class="sourceLineNo">363</span>}<a name="line.363"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

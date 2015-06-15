@@ -1,0 +1,550 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.util;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * An object that maps keys to values.  A map cannot contain duplicate keys;<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * each key can map to at most one value.<a name="line.30"></a>
+<span class="sourceLineNo">031</span> *<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * &lt;p&gt;This interface takes the place of the &lt;tt&gt;Dictionary&lt;/tt&gt; class, which<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * was a totally abstract class rather than an interface.<a name="line.33"></a>
+<span class="sourceLineNo">034</span> *<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;p&gt;The &lt;tt&gt;Map&lt;/tt&gt; interface provides three &lt;i&gt;collection views&lt;/i&gt;, which<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * allow a map's contents to be viewed as a set of keys, collection of values,<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * or set of key-value mappings.  The &lt;i&gt;order&lt;/i&gt; of a map is defined as<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * the order in which the iterators on the map's collection views return their<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * elements.  Some map implementations, like the &lt;tt&gt;TreeMap&lt;/tt&gt; class, make<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * specific guarantees as to their order; others, like the &lt;tt&gt;HashMap&lt;/tt&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * class, do not.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;p&gt;Note: great care must be exercised if mutable objects are used as map<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * keys.  The behavior of a map is not specified if the value of an object is<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * changed in a manner that affects &lt;tt&gt;equals&lt;/tt&gt; comparisons while the<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * object is a key in the map.  A special case of this prohibition is that it<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * is not permissible for a map to contain itself as a key.  While it is<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * permissible for a map to contain itself as a value, extreme caution is<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * advised: the &lt;tt&gt;equals&lt;/tt&gt; and &lt;tt&gt;hashCode&lt;/tt&gt; methods are no longer<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * well defined on such a map.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;p&gt;All general-purpose map implementation classes should provide two<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * "standard" constructors: a void (no arguments) constructor which creates an<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * empty map, and a constructor with a single argument of type &lt;tt&gt;Map&lt;/tt&gt;,<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * which creates a new map with the same key-value mappings as its argument.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * In effect, the latter constructor allows the user to copy any map,<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * producing an equivalent map of the desired class.  There is no way to<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * enforce this recommendation (as interfaces cannot contain constructors) but<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * all of the general-purpose map implementations in the JDK comply.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;p&gt;The "destructive" methods contained in this interface, that is, the<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * methods that modify the map on which they operate, are specified to throw<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;tt&gt;UnsupportedOperationException&lt;/tt&gt; if this map does not support the<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * operation.  If this is the case, these methods may, but are not required<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * to, throw an &lt;tt&gt;UnsupportedOperationException&lt;/tt&gt; if the invocation would<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * have no effect on the map.  For example, invoking the {@link #putAll(Map)}<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * method on an unmodifiable map may, but is not required to, throw the<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * exception if the map whose mappings are to be "superimposed" is empty.<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * &lt;p&gt;Some map implementations have restrictions on the keys and values they<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * may contain.  For example, some implementations prohibit null keys and<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * values, and some have restrictions on the types of their keys.  Attempting<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * to insert an ineligible key or value throws an unchecked exception,<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * typically &lt;tt&gt;NullPointerException&lt;/tt&gt; or &lt;tt&gt;ClassCastException&lt;/tt&gt;.<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * Attempting to query the presence of an ineligible key or value may throw an<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * exception, or it may simply return false; some implementations will exhibit<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * the former behavior and some will exhibit the latter.  More generally,<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * attempting an operation on an ineligible key or value whose completion<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * would not result in the insertion of an ineligible element into the map may<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * throw an exception or it may succeed, at the option of the implementation.<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * Such exceptions are marked as "optional" in the specification for this<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * interface.<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * &lt;p&gt;This interface is a member of the<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;a href="{@docRoot}/../technotes/guides/collections/index.html"&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * Java Collections Framework&lt;/a&gt;.<a name="line.86"></a>
+<span class="sourceLineNo">087</span> *<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * &lt;p&gt;Many methods in Collections Framework interfaces are defined<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * in terms of the {@link Object#equals(Object) equals} method.  For<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * example, the specification for the {@link #containsKey(Object)<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * containsKey(Object key)} method says: "returns &lt;tt&gt;true&lt;/tt&gt; if and<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * only if this map contains a mapping for a key &lt;tt&gt;k&lt;/tt&gt; such that<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;tt&gt;(key==null ? k==null : key.equals(k))&lt;/tt&gt;." This specification should<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;i&gt;not&lt;/i&gt; be construed to imply that invoking &lt;tt&gt;Map.containsKey&lt;/tt&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * with a non-null argument &lt;tt&gt;key&lt;/tt&gt; will cause &lt;tt&gt;key.equals(k)&lt;/tt&gt; to<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * be invoked for any key &lt;tt&gt;k&lt;/tt&gt;.  Implementations are free to<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * implement optimizations whereby the &lt;tt&gt;equals&lt;/tt&gt; invocation is avoided,<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * for example, by first comparing the hash codes of the two keys.  (The<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * {@link Object#hashCode()} specification guarantees that two objects with<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * unequal hash codes cannot be equal.)  More generally, implementations of<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * the various Collections Framework interfaces are free to take advantage of<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * the specified behavior of underlying {@link Object} methods wherever the<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * implementor deems it appropriate.<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * @param &lt;K&gt; the type of keys maintained by this map<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * @param &lt;V&gt; the type of mapped values<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * @author  Josh Bloch<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * @see HashMap<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * @see TreeMap<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * @see Hashtable<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * @see SortedMap<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * @see Collection<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * @see Set<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * @since 1.2<a name="line.115"></a>
+<span class="sourceLineNo">116</span> */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>public interface Map&lt;K,V&gt; {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    // Query Operations<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    /**<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * Returns the number of key-value mappings in this map.  If the<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * map contains more than &lt;tt&gt;Integer.MAX_VALUE&lt;/tt&gt; elements, returns<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * &lt;tt&gt;Integer.MAX_VALUE&lt;/tt&gt;.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     *<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @return the number of key-value mappings in this map<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     */<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    int size();<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>    /**<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * Returns &lt;tt&gt;true&lt;/tt&gt; if this map contains no key-value mappings.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     *<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this map contains no key-value mappings<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     */<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    boolean isEmpty();<a name="line.134"></a>
+<span class="sourceLineNo">135</span><a name="line.135"></a>
+<span class="sourceLineNo">136</span>    /**<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * Returns &lt;tt&gt;true&lt;/tt&gt; if this map contains a mapping for the specified<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * key.  More formally, returns &lt;tt&gt;true&lt;/tt&gt; if and only if<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * this map contains a mapping for a key &lt;tt&gt;k&lt;/tt&gt; such that<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * &lt;tt&gt;(key==null ? k==null : key.equals(k))&lt;/tt&gt;.  (There can be<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * at most one such mapping.)<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * @param key key whose presence in this map is to be tested<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this map contains a mapping for the specified<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *         key<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @throws ClassCastException if the key is of an inappropriate type for<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *         this map<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * (&lt;a href="Collection.html#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * @throws NullPointerException if the specified key is null and this map<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *         does not permit null keys<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * (&lt;a href="Collection.html#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    boolean containsKey(Object key);<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    /**<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * Returns &lt;tt&gt;true&lt;/tt&gt; if this map maps one or more keys to the<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * specified value.  More formally, returns &lt;tt&gt;true&lt;/tt&gt; if and only if<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * this map contains at least one mapping to a value &lt;tt&gt;v&lt;/tt&gt; such that<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * &lt;tt&gt;(value==null ? v==null : value.equals(v))&lt;/tt&gt;.  This operation<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * will probably require time linear in the map size for most<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * implementations of the &lt;tt&gt;Map&lt;/tt&gt; interface.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @param value value whose presence in this map is to be tested<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if this map maps one or more keys to the<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     *         specified value<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @throws ClassCastException if the value is of an inappropriate type for<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *         this map<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * (&lt;a href="Collection.html#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * @throws NullPointerException if the specified value is null and this<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *         map does not permit null values<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * (&lt;a href="Collection.html#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    boolean containsValue(Object value);<a name="line.173"></a>
+<span class="sourceLineNo">174</span><a name="line.174"></a>
+<span class="sourceLineNo">175</span>    /**<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * Returns the value to which the specified key is mapped,<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * or {@code null} if this map contains no mapping for the key.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * &lt;p&gt;More formally, if this map contains a mapping from a key<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * {@code k} to a value {@code v} such that {@code (key==null ? k==null :<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * key.equals(k))}, then this method returns {@code v}; otherwise<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * it returns {@code null}.  (There can be at most one such mapping.)<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     *<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * &lt;p&gt;If this map permits null values, then a return value of<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * {@code null} does not &lt;i&gt;necessarily&lt;/i&gt; indicate that the map<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * contains no mapping for the key; it's also possible that the map<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * explicitly maps the key to {@code null}.  The {@link #containsKey<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * containsKey} operation may be used to distinguish these two cases.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * @param key the key whose associated value is to be returned<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * @return the value to which the specified key is mapped, or<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     *         {@code null} if this map contains no mapping for the key<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * @throws ClassCastException if the key is of an inappropriate type for<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     *         this map<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * (&lt;a href="Collection.html#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @throws NullPointerException if the specified key is null and this map<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     *         does not permit null keys<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * (&lt;a href="Collection.html#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     */<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    V get(Object key);<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>    // Modification Operations<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>    /**<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * Associates the specified value with the specified key in this map<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * (optional operation).  If the map previously contained a mapping for<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * the key, the old value is replaced by the specified value.  (A map<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * &lt;tt&gt;m&lt;/tt&gt; is said to contain a mapping for a key &lt;tt&gt;k&lt;/tt&gt; if and only<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * if {@link #containsKey(Object) m.containsKey(k)} would return<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * &lt;tt&gt;true&lt;/tt&gt;.)<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     *<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * @param key key with which the specified value is to be associated<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * @param value value to be associated with the specified key<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * @return the previous value associated with &lt;tt&gt;key&lt;/tt&gt;, or<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *         &lt;tt&gt;null&lt;/tt&gt; if there was no mapping for &lt;tt&gt;key&lt;/tt&gt;.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *         (A &lt;tt&gt;null&lt;/tt&gt; return can also indicate that the map<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     *         previously associated &lt;tt&gt;null&lt;/tt&gt; with &lt;tt&gt;key&lt;/tt&gt;,<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *         if the implementation supports &lt;tt&gt;null&lt;/tt&gt; values.)<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;put&lt;/tt&gt; operation<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     *         is not supported by this map<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * @throws ClassCastException if the class of the specified key or value<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     *         prevents it from being stored in this map<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * @throws NullPointerException if the specified key or value is null<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     *         and this map does not permit null keys or values<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * @throws IllegalArgumentException if some property of the specified key<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     *         or value prevents it from being stored in this map<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     */<a name="line.227"></a>
+<span class="sourceLineNo">228</span>    V put(K key, V value);<a name="line.228"></a>
+<span class="sourceLineNo">229</span><a name="line.229"></a>
+<span class="sourceLineNo">230</span>    /**<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * Removes the mapping for a key from this map if it is present<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * (optional operation).   More formally, if this map contains a mapping<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * from key &lt;tt&gt;k&lt;/tt&gt; to value &lt;tt&gt;v&lt;/tt&gt; such that<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * &lt;code&gt;(key==null ?  k==null : key.equals(k))&lt;/code&gt;, that mapping<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * is removed.  (The map can contain at most one such mapping.)<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     *<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * &lt;p&gt;Returns the value to which this map previously associated the key,<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * or &lt;tt&gt;null&lt;/tt&gt; if the map contained no mapping for the key.<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     *<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * &lt;p&gt;If this map permits null values, then a return value of<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * &lt;tt&gt;null&lt;/tt&gt; does not &lt;i&gt;necessarily&lt;/i&gt; indicate that the map<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * contained no mapping for the key; it's also possible that the map<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * explicitly mapped the key to &lt;tt&gt;null&lt;/tt&gt;.<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     *<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * &lt;p&gt;The map will not contain a mapping for the specified key once the<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * call returns.<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     *<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * @param key key whose mapping is to be removed from the map<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * @return the previous value associated with &lt;tt&gt;key&lt;/tt&gt;, or<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     *         &lt;tt&gt;null&lt;/tt&gt; if there was no mapping for &lt;tt&gt;key&lt;/tt&gt;.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;remove&lt;/tt&gt; operation<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     *         is not supported by this map<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * @throws ClassCastException if the key is of an inappropriate type for<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     *         this map<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * (&lt;a href="Collection.html#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * @throws NullPointerException if the specified key is null and this<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     *         map does not permit null keys<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * (&lt;a href="Collection.html#optional-restrictions"&gt;optional&lt;/a&gt;)<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     */<a name="line.259"></a>
+<span class="sourceLineNo">260</span>    V remove(Object key);<a name="line.260"></a>
+<span class="sourceLineNo">261</span><a name="line.261"></a>
+<span class="sourceLineNo">262</span><a name="line.262"></a>
+<span class="sourceLineNo">263</span>    // Bulk Operations<a name="line.263"></a>
+<span class="sourceLineNo">264</span><a name="line.264"></a>
+<span class="sourceLineNo">265</span>    /**<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * Copies all of the mappings from the specified map to this map<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * (optional operation).  The effect of this call is equivalent to that<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * of calling {@link #put(Object,Object) put(k, v)} on this map once<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * for each mapping from key &lt;tt&gt;k&lt;/tt&gt; to value &lt;tt&gt;v&lt;/tt&gt; in the<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * specified map.  The behavior of this operation is undefined if the<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * specified map is modified while the operation is in progress.<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     *<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * @param m mappings to be stored in this map<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;putAll&lt;/tt&gt; operation<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     *         is not supported by this map<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * @throws ClassCastException if the class of a key or value in the<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     *         specified map prevents it from being stored in this map<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * @throws NullPointerException if the specified map is null, or if<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     *         this map does not permit null keys or values, and the<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     *         specified map contains null keys or values<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * @throws IllegalArgumentException if some property of a key or value in<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     *         the specified map prevents it from being stored in this map<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     */<a name="line.283"></a>
+<span class="sourceLineNo">284</span>    void putAll(Map&lt;? extends K, ? extends V&gt; m);<a name="line.284"></a>
+<span class="sourceLineNo">285</span><a name="line.285"></a>
+<span class="sourceLineNo">286</span>    /**<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * Removes all of the mappings from this map (optional operation).<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * The map will be empty after this call returns.<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     *<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * @throws UnsupportedOperationException if the &lt;tt&gt;clear&lt;/tt&gt; operation<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     *         is not supported by this map<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     */<a name="line.292"></a>
+<span class="sourceLineNo">293</span>    void clear();<a name="line.293"></a>
+<span class="sourceLineNo">294</span><a name="line.294"></a>
+<span class="sourceLineNo">295</span><a name="line.295"></a>
+<span class="sourceLineNo">296</span>    // Views<a name="line.296"></a>
+<span class="sourceLineNo">297</span><a name="line.297"></a>
+<span class="sourceLineNo">298</span>    /**<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * Returns a {@link Set} view of the keys contained in this map.<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * The set is backed by the map, so changes to the map are<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * reflected in the set, and vice-versa.  If the map is modified<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * while an iteration over the set is in progress (except through<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * the iterator's own &lt;tt&gt;remove&lt;/tt&gt; operation), the results of<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * the iteration are undefined.  The set supports element removal,<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * which removes the corresponding mapping from the map, via the<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * &lt;tt&gt;Iterator.remove&lt;/tt&gt;, &lt;tt&gt;Set.remove&lt;/tt&gt;,<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * &lt;tt&gt;removeAll&lt;/tt&gt;, &lt;tt&gt;retainAll&lt;/tt&gt;, and &lt;tt&gt;clear&lt;/tt&gt;<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * operations.  It does not support the &lt;tt&gt;add&lt;/tt&gt; or &lt;tt&gt;addAll&lt;/tt&gt;<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * operations.<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     *<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @return a set view of the keys contained in this map<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     */<a name="line.312"></a>
+<span class="sourceLineNo">313</span>    Set&lt;K&gt; keySet();<a name="line.313"></a>
+<span class="sourceLineNo">314</span><a name="line.314"></a>
+<span class="sourceLineNo">315</span>    /**<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * Returns a {@link Collection} view of the values contained in this map.<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * The collection is backed by the map, so changes to the map are<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * reflected in the collection, and vice-versa.  If the map is<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * modified while an iteration over the collection is in progress<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * (except through the iterator's own &lt;tt&gt;remove&lt;/tt&gt; operation),<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     * the results of the iteration are undefined.  The collection<a name="line.321"></a>
+<span class="sourceLineNo">322</span>     * supports element removal, which removes the corresponding<a name="line.322"></a>
+<span class="sourceLineNo">323</span>     * mapping from the map, via the &lt;tt&gt;Iterator.remove&lt;/tt&gt;,<a name="line.323"></a>
+<span class="sourceLineNo">324</span>     * &lt;tt&gt;Collection.remove&lt;/tt&gt;, &lt;tt&gt;removeAll&lt;/tt&gt;,<a name="line.324"></a>
+<span class="sourceLineNo">325</span>     * &lt;tt&gt;retainAll&lt;/tt&gt; and &lt;tt&gt;clear&lt;/tt&gt; operations.  It does not<a name="line.325"></a>
+<span class="sourceLineNo">326</span>     * support the &lt;tt&gt;add&lt;/tt&gt; or &lt;tt&gt;addAll&lt;/tt&gt; operations.<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     *<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * @return a collection view of the values contained in this map<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     */<a name="line.329"></a>
+<span class="sourceLineNo">330</span>    Collection&lt;V&gt; values();<a name="line.330"></a>
+<span class="sourceLineNo">331</span><a name="line.331"></a>
+<span class="sourceLineNo">332</span>    /**<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * Returns a {@link Set} view of the mappings contained in this map.<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * The set is backed by the map, so changes to the map are<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * reflected in the set, and vice-versa.  If the map is modified<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * while an iteration over the set is in progress (except through<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * the iterator's own &lt;tt&gt;remove&lt;/tt&gt; operation, or through the<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * &lt;tt&gt;setValue&lt;/tt&gt; operation on a map entry returned by the<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * iterator) the results of the iteration are undefined.  The set<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * supports element removal, which removes the corresponding<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * mapping from the map, via the &lt;tt&gt;Iterator.remove&lt;/tt&gt;,<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * &lt;tt&gt;Set.remove&lt;/tt&gt;, &lt;tt&gt;removeAll&lt;/tt&gt;, &lt;tt&gt;retainAll&lt;/tt&gt; and<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * &lt;tt&gt;clear&lt;/tt&gt; operations.  It does not support the<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * &lt;tt&gt;add&lt;/tt&gt; or &lt;tt&gt;addAll&lt;/tt&gt; operations.<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     *<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * @return a set view of the mappings contained in this map<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     */<a name="line.347"></a>
+<span class="sourceLineNo">348</span>    Set&lt;Map.Entry&lt;K, V&gt;&gt; entrySet();<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>    /**<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * A map entry (key-value pair).  The &lt;tt&gt;Map.entrySet&lt;/tt&gt; method returns<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     * a collection-view of the map, whose elements are of this class.  The<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * &lt;i&gt;only&lt;/i&gt; way to obtain a reference to a map entry is from the<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * iterator of this collection-view.  These &lt;tt&gt;Map.Entry&lt;/tt&gt; objects are<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * valid &lt;i&gt;only&lt;/i&gt; for the duration of the iteration; more formally,<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * the behavior of a map entry is undefined if the backing map has been<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * modified after the entry was returned by the iterator, except through<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * the &lt;tt&gt;setValue&lt;/tt&gt; operation on the map entry.<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     *<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * @see Map#entrySet()<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * @since 1.2<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     */<a name="line.362"></a>
+<span class="sourceLineNo">363</span>    interface Entry&lt;K,V&gt; {<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        /**<a name="line.364"></a>
+<span class="sourceLineNo">365</span>         * Returns the key corresponding to this entry.<a name="line.365"></a>
+<span class="sourceLineNo">366</span>         *<a name="line.366"></a>
+<span class="sourceLineNo">367</span>         * @return the key corresponding to this entry<a name="line.367"></a>
+<span class="sourceLineNo">368</span>         * @throws IllegalStateException implementations may, but are not<a name="line.368"></a>
+<span class="sourceLineNo">369</span>         *         required to, throw this exception if the entry has been<a name="line.369"></a>
+<span class="sourceLineNo">370</span>         *         removed from the backing map.<a name="line.370"></a>
+<span class="sourceLineNo">371</span>         */<a name="line.371"></a>
+<span class="sourceLineNo">372</span>        K getKey();<a name="line.372"></a>
+<span class="sourceLineNo">373</span><a name="line.373"></a>
+<span class="sourceLineNo">374</span>        /**<a name="line.374"></a>
+<span class="sourceLineNo">375</span>         * Returns the value corresponding to this entry.  If the mapping<a name="line.375"></a>
+<span class="sourceLineNo">376</span>         * has been removed from the backing map (by the iterator's<a name="line.376"></a>
+<span class="sourceLineNo">377</span>         * &lt;tt&gt;remove&lt;/tt&gt; operation), the results of this call are undefined.<a name="line.377"></a>
+<span class="sourceLineNo">378</span>         *<a name="line.378"></a>
+<span class="sourceLineNo">379</span>         * @return the value corresponding to this entry<a name="line.379"></a>
+<span class="sourceLineNo">380</span>         * @throws IllegalStateException implementations may, but are not<a name="line.380"></a>
+<span class="sourceLineNo">381</span>         *         required to, throw this exception if the entry has been<a name="line.381"></a>
+<span class="sourceLineNo">382</span>         *         removed from the backing map.<a name="line.382"></a>
+<span class="sourceLineNo">383</span>         */<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        V getValue();<a name="line.384"></a>
+<span class="sourceLineNo">385</span><a name="line.385"></a>
+<span class="sourceLineNo">386</span>        /**<a name="line.386"></a>
+<span class="sourceLineNo">387</span>         * Replaces the value corresponding to this entry with the specified<a name="line.387"></a>
+<span class="sourceLineNo">388</span>         * value (optional operation).  (Writes through to the map.)  The<a name="line.388"></a>
+<span class="sourceLineNo">389</span>         * behavior of this call is undefined if the mapping has already been<a name="line.389"></a>
+<span class="sourceLineNo">390</span>         * removed from the map (by the iterator's &lt;tt&gt;remove&lt;/tt&gt; operation).<a name="line.390"></a>
+<span class="sourceLineNo">391</span>         *<a name="line.391"></a>
+<span class="sourceLineNo">392</span>         * @param value new value to be stored in this entry<a name="line.392"></a>
+<span class="sourceLineNo">393</span>         * @return old value corresponding to the entry<a name="line.393"></a>
+<span class="sourceLineNo">394</span>         * @throws UnsupportedOperationException if the &lt;tt&gt;put&lt;/tt&gt; operation<a name="line.394"></a>
+<span class="sourceLineNo">395</span>         *         is not supported by the backing map<a name="line.395"></a>
+<span class="sourceLineNo">396</span>         * @throws ClassCastException if the class of the specified value<a name="line.396"></a>
+<span class="sourceLineNo">397</span>         *         prevents it from being stored in the backing map<a name="line.397"></a>
+<span class="sourceLineNo">398</span>         * @throws NullPointerException if the backing map does not permit<a name="line.398"></a>
+<span class="sourceLineNo">399</span>         *         null values, and the specified value is null<a name="line.399"></a>
+<span class="sourceLineNo">400</span>         * @throws IllegalArgumentException if some property of this value<a name="line.400"></a>
+<span class="sourceLineNo">401</span>         *         prevents it from being stored in the backing map<a name="line.401"></a>
+<span class="sourceLineNo">402</span>         * @throws IllegalStateException implementations may, but are not<a name="line.402"></a>
+<span class="sourceLineNo">403</span>         *         required to, throw this exception if the entry has been<a name="line.403"></a>
+<span class="sourceLineNo">404</span>         *         removed from the backing map.<a name="line.404"></a>
+<span class="sourceLineNo">405</span>         */<a name="line.405"></a>
+<span class="sourceLineNo">406</span>        V setValue(V value);<a name="line.406"></a>
+<span class="sourceLineNo">407</span><a name="line.407"></a>
+<span class="sourceLineNo">408</span>        /**<a name="line.408"></a>
+<span class="sourceLineNo">409</span>         * Compares the specified object with this entry for equality.<a name="line.409"></a>
+<span class="sourceLineNo">410</span>         * Returns &lt;tt&gt;true&lt;/tt&gt; if the given object is also a map entry and<a name="line.410"></a>
+<span class="sourceLineNo">411</span>         * the two entries represent the same mapping.  More formally, two<a name="line.411"></a>
+<span class="sourceLineNo">412</span>         * entries &lt;tt&gt;e1&lt;/tt&gt; and &lt;tt&gt;e2&lt;/tt&gt; represent the same mapping<a name="line.412"></a>
+<span class="sourceLineNo">413</span>         * if&lt;pre&gt;<a name="line.413"></a>
+<span class="sourceLineNo">414</span>         *     (e1.getKey()==null ?<a name="line.414"></a>
+<span class="sourceLineNo">415</span>         *      e2.getKey()==null : e1.getKey().equals(e2.getKey()))  &amp;amp;&amp;amp;<a name="line.415"></a>
+<span class="sourceLineNo">416</span>         *     (e1.getValue()==null ?<a name="line.416"></a>
+<span class="sourceLineNo">417</span>         *      e2.getValue()==null : e1.getValue().equals(e2.getValue()))<a name="line.417"></a>
+<span class="sourceLineNo">418</span>         * &lt;/pre&gt;<a name="line.418"></a>
+<span class="sourceLineNo">419</span>         * This ensures that the &lt;tt&gt;equals&lt;/tt&gt; method works properly across<a name="line.419"></a>
+<span class="sourceLineNo">420</span>         * different implementations of the &lt;tt&gt;Map.Entry&lt;/tt&gt; interface.<a name="line.420"></a>
+<span class="sourceLineNo">421</span>         *<a name="line.421"></a>
+<span class="sourceLineNo">422</span>         * @param o object to be compared for equality with this map entry<a name="line.422"></a>
+<span class="sourceLineNo">423</span>         * @return &lt;tt&gt;true&lt;/tt&gt; if the specified object is equal to this map<a name="line.423"></a>
+<span class="sourceLineNo">424</span>         *         entry<a name="line.424"></a>
+<span class="sourceLineNo">425</span>         */<a name="line.425"></a>
+<span class="sourceLineNo">426</span>        boolean equals(Object o);<a name="line.426"></a>
+<span class="sourceLineNo">427</span><a name="line.427"></a>
+<span class="sourceLineNo">428</span>        /**<a name="line.428"></a>
+<span class="sourceLineNo">429</span>         * Returns the hash code value for this map entry.  The hash code<a name="line.429"></a>
+<span class="sourceLineNo">430</span>         * of a map entry &lt;tt&gt;e&lt;/tt&gt; is defined to be: &lt;pre&gt;<a name="line.430"></a>
+<span class="sourceLineNo">431</span>         *     (e.getKey()==null   ? 0 : e.getKey().hashCode()) ^<a name="line.431"></a>
+<span class="sourceLineNo">432</span>         *     (e.getValue()==null ? 0 : e.getValue().hashCode())<a name="line.432"></a>
+<span class="sourceLineNo">433</span>         * &lt;/pre&gt;<a name="line.433"></a>
+<span class="sourceLineNo">434</span>         * This ensures that &lt;tt&gt;e1.equals(e2)&lt;/tt&gt; implies that<a name="line.434"></a>
+<span class="sourceLineNo">435</span>         * &lt;tt&gt;e1.hashCode()==e2.hashCode()&lt;/tt&gt; for any two Entries<a name="line.435"></a>
+<span class="sourceLineNo">436</span>         * &lt;tt&gt;e1&lt;/tt&gt; and &lt;tt&gt;e2&lt;/tt&gt;, as required by the general<a name="line.436"></a>
+<span class="sourceLineNo">437</span>         * contract of &lt;tt&gt;Object.hashCode&lt;/tt&gt;.<a name="line.437"></a>
+<span class="sourceLineNo">438</span>         *<a name="line.438"></a>
+<span class="sourceLineNo">439</span>         * @return the hash code value for this map entry<a name="line.439"></a>
+<span class="sourceLineNo">440</span>         * @see Object#hashCode()<a name="line.440"></a>
+<span class="sourceLineNo">441</span>         * @see Object#equals(Object)<a name="line.441"></a>
+<span class="sourceLineNo">442</span>         * @see #equals(Object)<a name="line.442"></a>
+<span class="sourceLineNo">443</span>         */<a name="line.443"></a>
+<span class="sourceLineNo">444</span>        int hashCode();<a name="line.444"></a>
+<span class="sourceLineNo">445</span>    }<a name="line.445"></a>
+<span class="sourceLineNo">446</span><a name="line.446"></a>
+<span class="sourceLineNo">447</span>    // Comparison and hashing<a name="line.447"></a>
+<span class="sourceLineNo">448</span><a name="line.448"></a>
+<span class="sourceLineNo">449</span>    /**<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * Compares the specified object with this map for equality.  Returns<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     * &lt;tt&gt;true&lt;/tt&gt; if the given object is also a map and the two maps<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     * represent the same mappings.  More formally, two maps &lt;tt&gt;m1&lt;/tt&gt; and<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     * &lt;tt&gt;m2&lt;/tt&gt; represent the same mappings if<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     * &lt;tt&gt;m1.entrySet().equals(m2.entrySet())&lt;/tt&gt;.  This ensures that the<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * &lt;tt&gt;equals&lt;/tt&gt; method works properly across different implementations<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     * of the &lt;tt&gt;Map&lt;/tt&gt; interface.<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     *<a name="line.457"></a>
+<span class="sourceLineNo">458</span>     * @param o object to be compared for equality with this map<a name="line.458"></a>
+<span class="sourceLineNo">459</span>     * @return &lt;tt&gt;true&lt;/tt&gt; if the specified object is equal to this map<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     */<a name="line.460"></a>
+<span class="sourceLineNo">461</span>    boolean equals(Object o);<a name="line.461"></a>
+<span class="sourceLineNo">462</span><a name="line.462"></a>
+<span class="sourceLineNo">463</span>    /**<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     * Returns the hash code value for this map.  The hash code of a map is<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     * defined to be the sum of the hash codes of each entry in the map's<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     * &lt;tt&gt;entrySet()&lt;/tt&gt; view.  This ensures that &lt;tt&gt;m1.equals(m2)&lt;/tt&gt;<a name="line.466"></a>
+<span class="sourceLineNo">467</span>     * implies that &lt;tt&gt;m1.hashCode()==m2.hashCode()&lt;/tt&gt; for any two maps<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     * &lt;tt&gt;m1&lt;/tt&gt; and &lt;tt&gt;m2&lt;/tt&gt;, as required by the general contract of<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     * {@link Object#hashCode}.<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     *<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     * @return the hash code value for this map<a name="line.471"></a>
+<span class="sourceLineNo">472</span>     * @see Map.Entry#hashCode()<a name="line.472"></a>
+<span class="sourceLineNo">473</span>     * @see Object#equals(Object)<a name="line.473"></a>
+<span class="sourceLineNo">474</span>     * @see #equals(Object)<a name="line.474"></a>
+<span class="sourceLineNo">475</span>     */<a name="line.475"></a>
+<span class="sourceLineNo">476</span>    int hashCode();<a name="line.476"></a>
+<span class="sourceLineNo">477</span><a name="line.477"></a>
+<span class="sourceLineNo">478</span>}<a name="line.478"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

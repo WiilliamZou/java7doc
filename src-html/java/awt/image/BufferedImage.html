@@ -1,0 +1,1711 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt.image;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.Transparency;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.color.ColorSpace;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.Graphics2D;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.GraphicsConfiguration;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.GraphicsEnvironment;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.awt.ImageCapabilities;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.awt.geom.Rectangle2D;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.awt.geom.Point2D;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.awt.Point;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.awt.Rectangle;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.security.AccessController;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import java.security.PrivilegedAction;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import java.util.Hashtable;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import java.util.Vector;<a name="line.41"></a>
+<span class="sourceLineNo">042</span><a name="line.42"></a>
+<span class="sourceLineNo">043</span>import sun.awt.image.BytePackedRaster;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import sun.awt.image.ShortComponentRaster;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import sun.awt.image.ByteComponentRaster;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import sun.awt.image.IntegerComponentRaster;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import sun.awt.image.OffScreenImageSource;<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>/**<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * The &lt;code&gt;BufferedImage&lt;/code&gt; subclass describes an {@link<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * java.awt.Image Image} with an accessible buffer of image data.<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * A &lt;code&gt;BufferedImage&lt;/code&gt; is comprised of a {@link ColorModel} and a<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * {@link Raster} of image data.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * The number and types of bands in the {@link SampleModel} of the<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;code&gt;Raster&lt;/code&gt; must match the number and types required by the<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;code&gt;ColorModel&lt;/code&gt; to represent its color and alpha components.<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * All &lt;code&gt;BufferedImage&lt;/code&gt; objects have an upper left corner<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * coordinate of (0,&amp;nbsp;0).  Any &lt;code&gt;Raster&lt;/code&gt; used to construct a<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;code&gt;BufferedImage&lt;/code&gt; must therefore have minX=0 and minY=0.<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * &lt;p&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * This class relies on the data fetching and setting methods<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * of &lt;code&gt;Raster&lt;/code&gt;,<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * and on the color characterization methods of &lt;code&gt;ColorModel&lt;/code&gt;.<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * @see ColorModel<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * @see Raster<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * @see WritableRaster<a name="line.69"></a>
+<span class="sourceLineNo">070</span> */<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>public class BufferedImage extends java.awt.Image<a name="line.72"></a>
+<span class="sourceLineNo">073</span>                           implements WritableRenderedImage, Transparency<a name="line.73"></a>
+<span class="sourceLineNo">074</span>{<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    int        imageType = TYPE_CUSTOM;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    ColorModel colorModel;<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    WritableRaster raster;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    OffScreenImageSource osis;<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    Hashtable properties;<a name="line.79"></a>
+<span class="sourceLineNo">080</span><a name="line.80"></a>
+<span class="sourceLineNo">081</span>    boolean    isAlphaPremultiplied;// If true, alpha has been premultiplied in<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    // color channels<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    /**<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * Image Type Constants<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     */<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>    /**<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * Image type is not recognized so it must be a customized<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * image.  This type is only used as a return value for the getType()<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * method.<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     */<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    public static final int TYPE_CUSTOM = 0;<a name="line.93"></a>
+<span class="sourceLineNo">094</span><a name="line.94"></a>
+<span class="sourceLineNo">095</span>    /**<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * Represents an image with 8-bit RGB color components packed into<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * integer pixels.  The image has a {@link DirectColorModel} without<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * alpha.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * When data with non-opaque alpha is stored<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * in an image of this type,<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * the color data must be adjusted to a non-premultiplied form<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * and the alpha discarded,<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * as described in the<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * {@link java.awt.AlphaComposite} documentation.<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     */<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    public static final int TYPE_INT_RGB = 1;<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    /**<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * Represents an image with 8-bit RGBA color components packed into<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * integer pixels.  The image has a &lt;code&gt;DirectColorModel&lt;/code&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * with alpha. The color data in this image is considered not to be<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * premultiplied with alpha.  When this type is used as the<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * &lt;code&gt;imageType&lt;/code&gt; argument to a &lt;code&gt;BufferedImage&lt;/code&gt;<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * constructor, the created image is consistent with images<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * created in the JDK1.1 and earlier releases.<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    public static final int TYPE_INT_ARGB = 2;<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>    /**<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * Represents an image with 8-bit RGBA color components packed into<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * integer pixels.  The image has a &lt;code&gt;DirectColorModel&lt;/code&gt;<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * with alpha.  The color data in this image is considered to be<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * premultiplied with alpha.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     */<a name="line.124"></a>
+<span class="sourceLineNo">125</span>    public static final int TYPE_INT_ARGB_PRE = 3;<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>    /**<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * Represents an image with 8-bit RGB color components, corresponding<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * to a Windows- or Solaris- style BGR color model, with the colors<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * Blue, Green, and Red packed into integer pixels.  There is no alpha.<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * The image has a {@link DirectColorModel}.<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * When data with non-opaque alpha is stored<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * in an image of this type,<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * the color data must be adjusted to a non-premultiplied form<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * and the alpha discarded,<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * as described in the<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * {@link java.awt.AlphaComposite} documentation.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     */<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    public static final int TYPE_INT_BGR = 4;<a name="line.139"></a>
+<span class="sourceLineNo">140</span><a name="line.140"></a>
+<span class="sourceLineNo">141</span>    /**<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * Represents an image with 8-bit RGB color components, corresponding<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * to a Windows-style BGR color model) with the colors Blue, Green,<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * and Red stored in 3 bytes.  There is no alpha.  The image has a<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * &lt;code&gt;ComponentColorModel&lt;/code&gt;.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * When data with non-opaque alpha is stored<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * in an image of this type,<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * the color data must be adjusted to a non-premultiplied form<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * and the alpha discarded,<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * as described in the<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * {@link java.awt.AlphaComposite} documentation.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    public static final int TYPE_3BYTE_BGR = 5;<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    /**<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * Represents an image with 8-bit RGBA color components with the colors<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * Blue, Green, and Red stored in 3 bytes and 1 byte of alpha.  The<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * image has a &lt;code&gt;ComponentColorModel&lt;/code&gt; with alpha.  The<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * color data in this image is considered not to be premultiplied with<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * alpha.  The byte data is interleaved in a single<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * byte array in the order A, B, G, R<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * from lower to higher byte addresses within each pixel.<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     */<a name="line.163"></a>
+<span class="sourceLineNo">164</span>    public static final int TYPE_4BYTE_ABGR = 6;<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>    /**<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * Represents an image with 8-bit RGBA color components with the colors<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * Blue, Green, and Red stored in 3 bytes and 1 byte of alpha.  The<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * image has a &lt;code&gt;ComponentColorModel&lt;/code&gt; with alpha. The color<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * data in this image is considered to be premultiplied with alpha.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * The byte data is interleaved in a single byte array in the order<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * A, B, G, R from lower to higher byte addresses within each pixel.<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     */<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    public static final int TYPE_4BYTE_ABGR_PRE = 7;<a name="line.174"></a>
+<span class="sourceLineNo">175</span><a name="line.175"></a>
+<span class="sourceLineNo">176</span>    /**<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * Represents an image with 5-6-5 RGB color components (5-bits red,<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * 6-bits green, 5-bits blue) with no alpha.  This image has<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * a &lt;code&gt;DirectColorModel&lt;/code&gt;.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * When data with non-opaque alpha is stored<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * in an image of this type,<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * the color data must be adjusted to a non-premultiplied form<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * and the alpha discarded,<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * as described in the<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * {@link java.awt.AlphaComposite} documentation.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     */<a name="line.186"></a>
+<span class="sourceLineNo">187</span>    public static final int TYPE_USHORT_565_RGB = 8;<a name="line.187"></a>
+<span class="sourceLineNo">188</span><a name="line.188"></a>
+<span class="sourceLineNo">189</span>    /**<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * Represents an image with 5-5-5 RGB color components (5-bits red,<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * 5-bits green, 5-bits blue) with no alpha.  This image has<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * a &lt;code&gt;DirectColorModel&lt;/code&gt;.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * When data with non-opaque alpha is stored<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * in an image of this type,<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * the color data must be adjusted to a non-premultiplied form<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * and the alpha discarded,<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * as described in the<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * {@link java.awt.AlphaComposite} documentation.<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     */<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    public static final int TYPE_USHORT_555_RGB = 9;<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>    /**<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * Represents a unsigned byte grayscale image, non-indexed.  This<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * image has a &lt;code&gt;ComponentColorModel&lt;/code&gt; with a CS_GRAY<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * {@link ColorSpace}.<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * When data with non-opaque alpha is stored<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * in an image of this type,<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * the color data must be adjusted to a non-premultiplied form<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * and the alpha discarded,<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * as described in the<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * {@link java.awt.AlphaComposite} documentation.<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     */<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    public static final int TYPE_BYTE_GRAY = 10;<a name="line.213"></a>
+<span class="sourceLineNo">214</span><a name="line.214"></a>
+<span class="sourceLineNo">215</span>    /**<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * Represents an unsigned short grayscale image, non-indexed).  This<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * image has a &lt;code&gt;ComponentColorModel&lt;/code&gt; with a CS_GRAY<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * &lt;code&gt;ColorSpace&lt;/code&gt;.<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * When data with non-opaque alpha is stored<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * in an image of this type,<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * the color data must be adjusted to a non-premultiplied form<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * and the alpha discarded,<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * as described in the<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * {@link java.awt.AlphaComposite} documentation.<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     */<a name="line.225"></a>
+<span class="sourceLineNo">226</span>    public static final int TYPE_USHORT_GRAY = 11;<a name="line.226"></a>
+<span class="sourceLineNo">227</span><a name="line.227"></a>
+<span class="sourceLineNo">228</span>    /**<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * Represents an opaque byte-packed 1, 2, or 4 bit image.  The<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * image has an {@link IndexColorModel} without alpha.  When this<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * type is used as the &lt;code&gt;imageType&lt;/code&gt; argument to the<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * &lt;code&gt;BufferedImage&lt;/code&gt; constructor that takes an<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * &lt;code&gt;imageType&lt;/code&gt; argument but no &lt;code&gt;ColorModel&lt;/code&gt;<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * argument, a 1-bit image is created with an<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * &lt;code&gt;IndexColorModel&lt;/code&gt; with two colors in the default<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * sRGB &lt;code&gt;ColorSpace&lt;/code&gt;: {0,&amp;nbsp;0,&amp;nbsp;0} and<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * {255,&amp;nbsp;255,&amp;nbsp;255}.<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     *<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * &lt;p&gt; Images with 2 or 4 bits per pixel may be constructed via<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * the &lt;code&gt;BufferedImage&lt;/code&gt; constructor that takes a<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * &lt;code&gt;ColorModel&lt;/code&gt; argument by supplying a<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * &lt;code&gt;ColorModel&lt;/code&gt; with an appropriate map size.<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     *<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * &lt;p&gt; Images with 8 bits per pixel should use the image types<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * &lt;code&gt;TYPE_BYTE_INDEXED&lt;/code&gt; or &lt;code&gt;TYPE_BYTE_GRAY&lt;/code&gt;<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * depending on their &lt;code&gt;ColorModel&lt;/code&gt;.<a name="line.246"></a>
+<span class="sourceLineNo">247</span><a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * &lt;p&gt; When color data is stored in an image of this type,<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * the closest color in the colormap is determined<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * by the &lt;code&gt;IndexColorModel&lt;/code&gt; and the resulting index is stored.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * Approximation and loss of alpha or color components<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * can result, depending on the colors in the<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * &lt;code&gt;IndexColorModel&lt;/code&gt; colormap.<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     */<a name="line.254"></a>
+<span class="sourceLineNo">255</span>    public static final int TYPE_BYTE_BINARY = 12;<a name="line.255"></a>
+<span class="sourceLineNo">256</span><a name="line.256"></a>
+<span class="sourceLineNo">257</span>    /**<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * Represents an indexed byte image.  When this type is used as the<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * &lt;code&gt;imageType&lt;/code&gt; argument to the &lt;code&gt;BufferedImage&lt;/code&gt;<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * constructor that takes an &lt;code&gt;imageType&lt;/code&gt; argument<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * but no &lt;code&gt;ColorModel&lt;/code&gt; argument, an<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * &lt;code&gt;IndexColorModel&lt;/code&gt; is created with<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * a 256-color 6/6/6 color cube palette with the rest of the colors<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * from 216-255 populated by grayscale values in the<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * default sRGB ColorSpace.<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     *<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * &lt;p&gt; When color data is stored in an image of this type,<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * the closest color in the colormap is determined<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * by the &lt;code&gt;IndexColorModel&lt;/code&gt; and the resulting index is stored.<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * Approximation and loss of alpha or color components<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * can result, depending on the colors in the<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * &lt;code&gt;IndexColorModel&lt;/code&gt; colormap.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     */<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    public static final int TYPE_BYTE_INDEXED = 13;<a name="line.274"></a>
+<span class="sourceLineNo">275</span><a name="line.275"></a>
+<span class="sourceLineNo">276</span>    private static final int DCM_RED_MASK   = 0x00ff0000;<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    private static final int DCM_GREEN_MASK = 0x0000ff00;<a name="line.277"></a>
+<span class="sourceLineNo">278</span>    private static final int DCM_BLUE_MASK  = 0x000000ff;<a name="line.278"></a>
+<span class="sourceLineNo">279</span>    private static final int DCM_ALPHA_MASK = 0xff000000;<a name="line.279"></a>
+<span class="sourceLineNo">280</span>    private static final int DCM_565_RED_MASK = 0xf800;<a name="line.280"></a>
+<span class="sourceLineNo">281</span>    private static final int DCM_565_GRN_MASK = 0x07E0;<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    private static final int DCM_565_BLU_MASK = 0x001F;<a name="line.282"></a>
+<span class="sourceLineNo">283</span>    private static final int DCM_555_RED_MASK = 0x7C00;<a name="line.283"></a>
+<span class="sourceLineNo">284</span>    private static final int DCM_555_GRN_MASK = 0x03E0;<a name="line.284"></a>
+<span class="sourceLineNo">285</span>    private static final int DCM_555_BLU_MASK = 0x001F;<a name="line.285"></a>
+<span class="sourceLineNo">286</span>    private static final int DCM_BGR_RED_MASK = 0x0000ff;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>    private static final int DCM_BGR_GRN_MASK = 0x00ff00;<a name="line.287"></a>
+<span class="sourceLineNo">288</span>    private static final int DCM_BGR_BLU_MASK = 0xff0000;<a name="line.288"></a>
+<span class="sourceLineNo">289</span><a name="line.289"></a>
+<span class="sourceLineNo">290</span><a name="line.290"></a>
+<span class="sourceLineNo">291</span>    static private native void initIDs();<a name="line.291"></a>
+<span class="sourceLineNo">292</span>    static {<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        ColorModel.loadLibraries();<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        initIDs();<a name="line.294"></a>
+<span class="sourceLineNo">295</span>    }<a name="line.295"></a>
+<span class="sourceLineNo">296</span><a name="line.296"></a>
+<span class="sourceLineNo">297</span>    /**<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * Constructs a &lt;code&gt;BufferedImage&lt;/code&gt; of one of the predefined<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * image types.  The &lt;code&gt;ColorSpace&lt;/code&gt; for the image is the<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * default sRGB space.<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * @param width     width of the created image<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * @param height    height of the created image<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * @param imageType type of the created image<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * @see ColorSpace<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * @see #TYPE_INT_RGB<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * @see #TYPE_INT_ARGB<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * @see #TYPE_INT_ARGB_PRE<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * @see #TYPE_INT_BGR<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * @see #TYPE_3BYTE_BGR<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * @see #TYPE_4BYTE_ABGR<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @see #TYPE_4BYTE_ABGR_PRE<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * @see #TYPE_BYTE_GRAY<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * @see #TYPE_USHORT_GRAY<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * @see #TYPE_BYTE_BINARY<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * @see #TYPE_BYTE_INDEXED<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * @see #TYPE_USHORT_565_RGB<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * @see #TYPE_USHORT_555_RGB<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     */<a name="line.318"></a>
+<span class="sourceLineNo">319</span>    public BufferedImage(int width,<a name="line.319"></a>
+<span class="sourceLineNo">320</span>                         int height,<a name="line.320"></a>
+<span class="sourceLineNo">321</span>                         int imageType) {<a name="line.321"></a>
+<span class="sourceLineNo">322</span>        switch (imageType) {<a name="line.322"></a>
+<span class="sourceLineNo">323</span>        case TYPE_INT_RGB:<a name="line.323"></a>
+<span class="sourceLineNo">324</span>            {<a name="line.324"></a>
+<span class="sourceLineNo">325</span>                colorModel = new DirectColorModel(24,<a name="line.325"></a>
+<span class="sourceLineNo">326</span>                                                  0x00ff0000,   // Red<a name="line.326"></a>
+<span class="sourceLineNo">327</span>                                                  0x0000ff00,   // Green<a name="line.327"></a>
+<span class="sourceLineNo">328</span>                                                  0x000000ff,   // Blue<a name="line.328"></a>
+<span class="sourceLineNo">329</span>                                                  0x0           // Alpha<a name="line.329"></a>
+<span class="sourceLineNo">330</span>                                                  );<a name="line.330"></a>
+<span class="sourceLineNo">331</span>                  raster = colorModel.createCompatibleWritableRaster(width,<a name="line.331"></a>
+<span class="sourceLineNo">332</span>                                                                      height);<a name="line.332"></a>
+<span class="sourceLineNo">333</span>            }<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        break;<a name="line.334"></a>
+<span class="sourceLineNo">335</span><a name="line.335"></a>
+<span class="sourceLineNo">336</span>        case TYPE_INT_ARGB:<a name="line.336"></a>
+<span class="sourceLineNo">337</span>            {<a name="line.337"></a>
+<span class="sourceLineNo">338</span>                colorModel = ColorModel.getRGBdefault();<a name="line.338"></a>
+<span class="sourceLineNo">339</span><a name="line.339"></a>
+<span class="sourceLineNo">340</span>                raster = colorModel.createCompatibleWritableRaster(width,<a name="line.340"></a>
+<span class="sourceLineNo">341</span>                                                                   height);<a name="line.341"></a>
+<span class="sourceLineNo">342</span>            }<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        break;<a name="line.343"></a>
+<span class="sourceLineNo">344</span><a name="line.344"></a>
+<span class="sourceLineNo">345</span>        case TYPE_INT_ARGB_PRE:<a name="line.345"></a>
+<span class="sourceLineNo">346</span>            {<a name="line.346"></a>
+<span class="sourceLineNo">347</span>                colorModel = new<a name="line.347"></a>
+<span class="sourceLineNo">348</span>                    DirectColorModel(<a name="line.348"></a>
+<span class="sourceLineNo">349</span>                                     ColorSpace.getInstance(ColorSpace.CS_sRGB),<a name="line.349"></a>
+<span class="sourceLineNo">350</span>                                     32,<a name="line.350"></a>
+<span class="sourceLineNo">351</span>                                     0x00ff0000,// Red<a name="line.351"></a>
+<span class="sourceLineNo">352</span>                                     0x0000ff00,// Green<a name="line.352"></a>
+<span class="sourceLineNo">353</span>                                     0x000000ff,// Blue<a name="line.353"></a>
+<span class="sourceLineNo">354</span>                                     0xff000000,// Alpha<a name="line.354"></a>
+<span class="sourceLineNo">355</span>                                     true,       // Alpha Premultiplied<a name="line.355"></a>
+<span class="sourceLineNo">356</span>                                     DataBuffer.TYPE_INT<a name="line.356"></a>
+<span class="sourceLineNo">357</span>                                     );<a name="line.357"></a>
+<span class="sourceLineNo">358</span><a name="line.358"></a>
+<span class="sourceLineNo">359</span>                  raster = colorModel.createCompatibleWritableRaster(width,<a name="line.359"></a>
+<span class="sourceLineNo">360</span>                                                                      height);<a name="line.360"></a>
+<span class="sourceLineNo">361</span>            }<a name="line.361"></a>
+<span class="sourceLineNo">362</span>        break;<a name="line.362"></a>
+<span class="sourceLineNo">363</span><a name="line.363"></a>
+<span class="sourceLineNo">364</span>        case TYPE_INT_BGR:<a name="line.364"></a>
+<span class="sourceLineNo">365</span>            {<a name="line.365"></a>
+<span class="sourceLineNo">366</span>                colorModel = new DirectColorModel(24,<a name="line.366"></a>
+<span class="sourceLineNo">367</span>                                                  0x000000ff,   // Red<a name="line.367"></a>
+<span class="sourceLineNo">368</span>                                                  0x0000ff00,   // Green<a name="line.368"></a>
+<span class="sourceLineNo">369</span>                                                  0x00ff0000    // Blue<a name="line.369"></a>
+<span class="sourceLineNo">370</span>                                                  );<a name="line.370"></a>
+<span class="sourceLineNo">371</span>                  raster = colorModel.createCompatibleWritableRaster(width,<a name="line.371"></a>
+<span class="sourceLineNo">372</span>                                                                      height);<a name="line.372"></a>
+<span class="sourceLineNo">373</span>            }<a name="line.373"></a>
+<span class="sourceLineNo">374</span>        break;<a name="line.374"></a>
+<span class="sourceLineNo">375</span><a name="line.375"></a>
+<span class="sourceLineNo">376</span>        case TYPE_3BYTE_BGR:<a name="line.376"></a>
+<span class="sourceLineNo">377</span>            {<a name="line.377"></a>
+<span class="sourceLineNo">378</span>                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);<a name="line.378"></a>
+<span class="sourceLineNo">379</span>                int[] nBits = {8, 8, 8};<a name="line.379"></a>
+<span class="sourceLineNo">380</span>                int[] bOffs = {2, 1, 0};<a name="line.380"></a>
+<span class="sourceLineNo">381</span>                colorModel = new ComponentColorModel(cs, nBits, false, false,<a name="line.381"></a>
+<span class="sourceLineNo">382</span>                                                     Transparency.OPAQUE,<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                                                     DataBuffer.TYPE_BYTE);<a name="line.383"></a>
+<span class="sourceLineNo">384</span>                raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE,<a name="line.384"></a>
+<span class="sourceLineNo">385</span>                                                        width, height,<a name="line.385"></a>
+<span class="sourceLineNo">386</span>                                                        width*3, 3,<a name="line.386"></a>
+<span class="sourceLineNo">387</span>                                                        bOffs, null);<a name="line.387"></a>
+<span class="sourceLineNo">388</span>            }<a name="line.388"></a>
+<span class="sourceLineNo">389</span>        break;<a name="line.389"></a>
+<span class="sourceLineNo">390</span><a name="line.390"></a>
+<span class="sourceLineNo">391</span>        case TYPE_4BYTE_ABGR:<a name="line.391"></a>
+<span class="sourceLineNo">392</span>            {<a name="line.392"></a>
+<span class="sourceLineNo">393</span>                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);<a name="line.393"></a>
+<span class="sourceLineNo">394</span>                int[] nBits = {8, 8, 8, 8};<a name="line.394"></a>
+<span class="sourceLineNo">395</span>                int[] bOffs = {3, 2, 1, 0};<a name="line.395"></a>
+<span class="sourceLineNo">396</span>                colorModel = new ComponentColorModel(cs, nBits, true, false,<a name="line.396"></a>
+<span class="sourceLineNo">397</span>                                                     Transparency.TRANSLUCENT,<a name="line.397"></a>
+<span class="sourceLineNo">398</span>                                                     DataBuffer.TYPE_BYTE);<a name="line.398"></a>
+<span class="sourceLineNo">399</span>                raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE,<a name="line.399"></a>
+<span class="sourceLineNo">400</span>                                                        width, height,<a name="line.400"></a>
+<span class="sourceLineNo">401</span>                                                        width*4, 4,<a name="line.401"></a>
+<span class="sourceLineNo">402</span>                                                        bOffs, null);<a name="line.402"></a>
+<span class="sourceLineNo">403</span>            }<a name="line.403"></a>
+<span class="sourceLineNo">404</span>        break;<a name="line.404"></a>
+<span class="sourceLineNo">405</span><a name="line.405"></a>
+<span class="sourceLineNo">406</span>        case TYPE_4BYTE_ABGR_PRE:<a name="line.406"></a>
+<span class="sourceLineNo">407</span>            {<a name="line.407"></a>
+<span class="sourceLineNo">408</span>                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);<a name="line.408"></a>
+<span class="sourceLineNo">409</span>                int[] nBits = {8, 8, 8, 8};<a name="line.409"></a>
+<span class="sourceLineNo">410</span>                int[] bOffs = {3, 2, 1, 0};<a name="line.410"></a>
+<span class="sourceLineNo">411</span>                colorModel = new ComponentColorModel(cs, nBits, true, true,<a name="line.411"></a>
+<span class="sourceLineNo">412</span>                                                     Transparency.TRANSLUCENT,<a name="line.412"></a>
+<span class="sourceLineNo">413</span>                                                     DataBuffer.TYPE_BYTE);<a name="line.413"></a>
+<span class="sourceLineNo">414</span>                raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE,<a name="line.414"></a>
+<span class="sourceLineNo">415</span>                                                        width, height,<a name="line.415"></a>
+<span class="sourceLineNo">416</span>                                                        width*4, 4,<a name="line.416"></a>
+<span class="sourceLineNo">417</span>                                                        bOffs, null);<a name="line.417"></a>
+<span class="sourceLineNo">418</span>            }<a name="line.418"></a>
+<span class="sourceLineNo">419</span>        break;<a name="line.419"></a>
+<span class="sourceLineNo">420</span><a name="line.420"></a>
+<span class="sourceLineNo">421</span>        case TYPE_BYTE_GRAY:<a name="line.421"></a>
+<span class="sourceLineNo">422</span>            {<a name="line.422"></a>
+<span class="sourceLineNo">423</span>                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);<a name="line.423"></a>
+<span class="sourceLineNo">424</span>                int[] nBits = {8};<a name="line.424"></a>
+<span class="sourceLineNo">425</span>                colorModel = new ComponentColorModel(cs, nBits, false, true,<a name="line.425"></a>
+<span class="sourceLineNo">426</span>                                                     Transparency.OPAQUE,<a name="line.426"></a>
+<span class="sourceLineNo">427</span>                                                     DataBuffer.TYPE_BYTE);<a name="line.427"></a>
+<span class="sourceLineNo">428</span>                raster = colorModel.createCompatibleWritableRaster(width,<a name="line.428"></a>
+<span class="sourceLineNo">429</span>                                                                   height);<a name="line.429"></a>
+<span class="sourceLineNo">430</span>            }<a name="line.430"></a>
+<span class="sourceLineNo">431</span>        break;<a name="line.431"></a>
+<span class="sourceLineNo">432</span><a name="line.432"></a>
+<span class="sourceLineNo">433</span>        case TYPE_USHORT_GRAY:<a name="line.433"></a>
+<span class="sourceLineNo">434</span>            {<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                int[] nBits = {16};<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                colorModel = new ComponentColorModel(cs, nBits, false, true,<a name="line.437"></a>
+<span class="sourceLineNo">438</span>                                                     Transparency.OPAQUE,<a name="line.438"></a>
+<span class="sourceLineNo">439</span>                                                     DataBuffer.TYPE_USHORT);<a name="line.439"></a>
+<span class="sourceLineNo">440</span>                raster = colorModel.createCompatibleWritableRaster(width,<a name="line.440"></a>
+<span class="sourceLineNo">441</span>                                                                   height);<a name="line.441"></a>
+<span class="sourceLineNo">442</span>            }<a name="line.442"></a>
+<span class="sourceLineNo">443</span>        break;<a name="line.443"></a>
+<span class="sourceLineNo">444</span><a name="line.444"></a>
+<span class="sourceLineNo">445</span>        case TYPE_BYTE_BINARY:<a name="line.445"></a>
+<span class="sourceLineNo">446</span>            {<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                byte[] arr = {(byte)0, (byte)0xff};<a name="line.447"></a>
+<span class="sourceLineNo">448</span><a name="line.448"></a>
+<span class="sourceLineNo">449</span>                colorModel = new IndexColorModel(1, 2, arr, arr, arr);<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                raster = Raster.createPackedRaster(DataBuffer.TYPE_BYTE,<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                                                   width, height, 1, 1, null);<a name="line.451"></a>
+<span class="sourceLineNo">452</span>            }<a name="line.452"></a>
+<span class="sourceLineNo">453</span>        break;<a name="line.453"></a>
+<span class="sourceLineNo">454</span><a name="line.454"></a>
+<span class="sourceLineNo">455</span>        case TYPE_BYTE_INDEXED:<a name="line.455"></a>
+<span class="sourceLineNo">456</span>            {<a name="line.456"></a>
+<span class="sourceLineNo">457</span>                // Create a 6x6x6 color cube<a name="line.457"></a>
+<span class="sourceLineNo">458</span>                int[] cmap = new int[256];<a name="line.458"></a>
+<span class="sourceLineNo">459</span>                int i=0;<a name="line.459"></a>
+<span class="sourceLineNo">460</span>                for (int r=0; r &lt; 256; r += 51) {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>                    for (int g=0; g &lt; 256; g += 51) {<a name="line.461"></a>
+<span class="sourceLineNo">462</span>                        for (int b=0; b &lt; 256; b += 51) {<a name="line.462"></a>
+<span class="sourceLineNo">463</span>                            cmap[i++] = (r&lt;&lt;16)|(g&lt;&lt;8)|b;<a name="line.463"></a>
+<span class="sourceLineNo">464</span>                        }<a name="line.464"></a>
+<span class="sourceLineNo">465</span>                    }<a name="line.465"></a>
+<span class="sourceLineNo">466</span>                }<a name="line.466"></a>
+<span class="sourceLineNo">467</span>                // And populate the rest of the cmap with gray values<a name="line.467"></a>
+<span class="sourceLineNo">468</span>                int grayIncr = 256/(256-i);<a name="line.468"></a>
+<span class="sourceLineNo">469</span><a name="line.469"></a>
+<span class="sourceLineNo">470</span>                // The gray ramp will be between 18 and 252<a name="line.470"></a>
+<span class="sourceLineNo">471</span>                int gray = grayIncr*3;<a name="line.471"></a>
+<span class="sourceLineNo">472</span>                for (; i &lt; 256; i++) {<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                    cmap[i] = (gray&lt;&lt;16)|(gray&lt;&lt;8)|gray;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>                    gray += grayIncr;<a name="line.474"></a>
+<span class="sourceLineNo">475</span>                }<a name="line.475"></a>
+<span class="sourceLineNo">476</span><a name="line.476"></a>
+<span class="sourceLineNo">477</span>                colorModel = new IndexColorModel(8, 256, cmap, 0, false, -1,<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                                                 DataBuffer.TYPE_BYTE);<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE,<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                                                      width, height, 1, null);<a name="line.480"></a>
+<span class="sourceLineNo">481</span>            }<a name="line.481"></a>
+<span class="sourceLineNo">482</span>        break;<a name="line.482"></a>
+<span class="sourceLineNo">483</span><a name="line.483"></a>
+<span class="sourceLineNo">484</span>        case TYPE_USHORT_565_RGB:<a name="line.484"></a>
+<span class="sourceLineNo">485</span>            {<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                colorModel = new DirectColorModel(16,<a name="line.486"></a>
+<span class="sourceLineNo">487</span>                                                  DCM_565_RED_MASK,<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                                                  DCM_565_GRN_MASK,<a name="line.488"></a>
+<span class="sourceLineNo">489</span>                                                  DCM_565_BLU_MASK<a name="line.489"></a>
+<span class="sourceLineNo">490</span>                                                  );<a name="line.490"></a>
+<span class="sourceLineNo">491</span>                raster = colorModel.createCompatibleWritableRaster(width,<a name="line.491"></a>
+<span class="sourceLineNo">492</span>                                                                   height);<a name="line.492"></a>
+<span class="sourceLineNo">493</span>            }<a name="line.493"></a>
+<span class="sourceLineNo">494</span>            break;<a name="line.494"></a>
+<span class="sourceLineNo">495</span><a name="line.495"></a>
+<span class="sourceLineNo">496</span>        case TYPE_USHORT_555_RGB:<a name="line.496"></a>
+<span class="sourceLineNo">497</span>            {<a name="line.497"></a>
+<span class="sourceLineNo">498</span>                colorModel = new DirectColorModel(15,<a name="line.498"></a>
+<span class="sourceLineNo">499</span>                                                  DCM_555_RED_MASK,<a name="line.499"></a>
+<span class="sourceLineNo">500</span>                                                  DCM_555_GRN_MASK,<a name="line.500"></a>
+<span class="sourceLineNo">501</span>                                                  DCM_555_BLU_MASK<a name="line.501"></a>
+<span class="sourceLineNo">502</span>                                                  );<a name="line.502"></a>
+<span class="sourceLineNo">503</span>                raster = colorModel.createCompatibleWritableRaster(width,<a name="line.503"></a>
+<span class="sourceLineNo">504</span>                                                                   height);<a name="line.504"></a>
+<span class="sourceLineNo">505</span>            }<a name="line.505"></a>
+<span class="sourceLineNo">506</span>            break;<a name="line.506"></a>
+<span class="sourceLineNo">507</span><a name="line.507"></a>
+<span class="sourceLineNo">508</span>        default:<a name="line.508"></a>
+<span class="sourceLineNo">509</span>            throw new IllegalArgumentException ("Unknown image type " +<a name="line.509"></a>
+<span class="sourceLineNo">510</span>                                                imageType);<a name="line.510"></a>
+<span class="sourceLineNo">511</span>        }<a name="line.511"></a>
+<span class="sourceLineNo">512</span><a name="line.512"></a>
+<span class="sourceLineNo">513</span>        this.imageType = imageType;<a name="line.513"></a>
+<span class="sourceLineNo">514</span>    }<a name="line.514"></a>
+<span class="sourceLineNo">515</span><a name="line.515"></a>
+<span class="sourceLineNo">516</span>    /**<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * Constructs a &lt;code&gt;BufferedImage&lt;/code&gt; of one of the predefined<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     * image types:<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     * TYPE_BYTE_BINARY or TYPE_BYTE_INDEXED.<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     *<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * &lt;p&gt; If the image type is TYPE_BYTE_BINARY, the number of<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     * entries in the color model is used to determine whether the<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     * image should have 1, 2, or 4 bits per pixel.  If the color model<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     * has 1 or 2 entries, the image will have 1 bit per pixel.  If it<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     * has 3 or 4 entries, the image with have 2 bits per pixel.  If<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     * it has between 5 and 16 entries, the image will have 4 bits per<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     * pixel.  Otherwise, an IllegalArgumentException will be thrown.<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     *<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     * @param width     width of the created image<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     * @param height    height of the created image<a name="line.530"></a>
+<span class="sourceLineNo">531</span>     * @param imageType type of the created image<a name="line.531"></a>
+<span class="sourceLineNo">532</span>     * @param cm        &lt;code&gt;IndexColorModel&lt;/code&gt; of the created image<a name="line.532"></a>
+<span class="sourceLineNo">533</span>     * @throws IllegalArgumentException   if the imageType is not<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * TYPE_BYTE_BINARY or TYPE_BYTE_INDEXED or if the imageType is<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     * TYPE_BYTE_BINARY and the color map has more than 16 entries.<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * @see #TYPE_BYTE_BINARY<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * @see #TYPE_BYTE_INDEXED<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     */<a name="line.538"></a>
+<span class="sourceLineNo">539</span>    public BufferedImage (int width,<a name="line.539"></a>
+<span class="sourceLineNo">540</span>                          int height,<a name="line.540"></a>
+<span class="sourceLineNo">541</span>                          int imageType,<a name="line.541"></a>
+<span class="sourceLineNo">542</span>                          IndexColorModel cm) {<a name="line.542"></a>
+<span class="sourceLineNo">543</span>        if (cm.hasAlpha() &amp;&amp; cm.isAlphaPremultiplied()) {<a name="line.543"></a>
+<span class="sourceLineNo">544</span>            throw new IllegalArgumentException("This image types do not have "+<a name="line.544"></a>
+<span class="sourceLineNo">545</span>                                               "premultiplied alpha.");<a name="line.545"></a>
+<span class="sourceLineNo">546</span>        }<a name="line.546"></a>
+<span class="sourceLineNo">547</span><a name="line.547"></a>
+<span class="sourceLineNo">548</span>        switch(imageType) {<a name="line.548"></a>
+<span class="sourceLineNo">549</span>        case TYPE_BYTE_BINARY:<a name="line.549"></a>
+<span class="sourceLineNo">550</span>            int bits; // Will be set below<a name="line.550"></a>
+<span class="sourceLineNo">551</span>            int mapSize = cm.getMapSize();<a name="line.551"></a>
+<span class="sourceLineNo">552</span>            if (mapSize &lt;= 2) {<a name="line.552"></a>
+<span class="sourceLineNo">553</span>                bits = 1;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>            } else if (mapSize &lt;= 4) {<a name="line.554"></a>
+<span class="sourceLineNo">555</span>                bits = 2;<a name="line.555"></a>
+<span class="sourceLineNo">556</span>            } else if (mapSize &lt;= 16) {<a name="line.556"></a>
+<span class="sourceLineNo">557</span>                bits = 4;<a name="line.557"></a>
+<span class="sourceLineNo">558</span>            } else {<a name="line.558"></a>
+<span class="sourceLineNo">559</span>                throw new IllegalArgumentException<a name="line.559"></a>
+<span class="sourceLineNo">560</span>                    ("Color map for TYPE_BYTE_BINARY " +<a name="line.560"></a>
+<span class="sourceLineNo">561</span>                     "must have no more than 16 entries");<a name="line.561"></a>
+<span class="sourceLineNo">562</span>            }<a name="line.562"></a>
+<span class="sourceLineNo">563</span>            raster = Raster.createPackedRaster(DataBuffer.TYPE_BYTE,<a name="line.563"></a>
+<span class="sourceLineNo">564</span>                                                width, height, 1, bits, null);<a name="line.564"></a>
+<span class="sourceLineNo">565</span>            break;<a name="line.565"></a>
+<span class="sourceLineNo">566</span><a name="line.566"></a>
+<span class="sourceLineNo">567</span>        case TYPE_BYTE_INDEXED:<a name="line.567"></a>
+<span class="sourceLineNo">568</span>            raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE,<a name="line.568"></a>
+<span class="sourceLineNo">569</span>                                                    width, height, 1, null);<a name="line.569"></a>
+<span class="sourceLineNo">570</span>            break;<a name="line.570"></a>
+<span class="sourceLineNo">571</span>        default:<a name="line.571"></a>
+<span class="sourceLineNo">572</span>            throw new IllegalArgumentException("Invalid image type (" +<a name="line.572"></a>
+<span class="sourceLineNo">573</span>                                               imageType+").  Image type must"+<a name="line.573"></a>
+<span class="sourceLineNo">574</span>                                               " be either TYPE_BYTE_BINARY or "+<a name="line.574"></a>
+<span class="sourceLineNo">575</span>                                               " TYPE_BYTE_INDEXED");<a name="line.575"></a>
+<span class="sourceLineNo">576</span>        }<a name="line.576"></a>
+<span class="sourceLineNo">577</span><a name="line.577"></a>
+<span class="sourceLineNo">578</span>        if (!cm.isCompatibleRaster(raster)) {<a name="line.578"></a>
+<span class="sourceLineNo">579</span>            throw new IllegalArgumentException("Incompatible image type and IndexColorModel");<a name="line.579"></a>
+<span class="sourceLineNo">580</span>        }<a name="line.580"></a>
+<span class="sourceLineNo">581</span><a name="line.581"></a>
+<span class="sourceLineNo">582</span>        colorModel = cm;<a name="line.582"></a>
+<span class="sourceLineNo">583</span>        this.imageType = imageType;<a name="line.583"></a>
+<span class="sourceLineNo">584</span>    }<a name="line.584"></a>
+<span class="sourceLineNo">585</span><a name="line.585"></a>
+<span class="sourceLineNo">586</span>    /**<a name="line.586"></a>
+<span class="sourceLineNo">587</span>     * Constructs a new &lt;code&gt;BufferedImage&lt;/code&gt; with a specified<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * &lt;code&gt;ColorModel&lt;/code&gt; and &lt;code&gt;Raster&lt;/code&gt;.  If the number and<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     * types of bands in the &lt;code&gt;SampleModel&lt;/code&gt; of the<a name="line.589"></a>
+<span class="sourceLineNo">590</span>     * &lt;code&gt;Raster&lt;/code&gt; do not match the number and types required by<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * the &lt;code&gt;ColorModel&lt;/code&gt; to represent its color and alpha<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * components, a {@link RasterFormatException} is thrown.  This<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     * method can multiply or divide the color &lt;code&gt;Raster&lt;/code&gt; data by<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * alpha to match the &lt;code&gt;alphaPremultiplied&lt;/code&gt; state<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     * in the &lt;code&gt;ColorModel&lt;/code&gt;.  Properties for this<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     * &lt;code&gt;BufferedImage&lt;/code&gt; can be established by passing<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     * in a {@link Hashtable} of &lt;code&gt;String&lt;/code&gt;/&lt;code&gt;Object&lt;/code&gt;<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * pairs.<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * @param cm &lt;code&gt;ColorModel&lt;/code&gt; for the new image<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     * @param raster     &lt;code&gt;Raster&lt;/code&gt; for the image data<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     * @param isRasterPremultiplied   if &lt;code&gt;true&lt;/code&gt;, the data in<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     *                  the raster has been premultiplied with alpha.<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * @param properties &lt;code&gt;Hashtable&lt;/code&gt; of<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     *                  &lt;code&gt;String&lt;/code&gt;/&lt;code&gt;Object&lt;/code&gt; pairs.<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * @exception &lt;code&gt;RasterFormatException&lt;/code&gt; if the number and<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * types of bands in the &lt;code&gt;SampleModel&lt;/code&gt; of the<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     * &lt;code&gt;Raster&lt;/code&gt; do not match the number and types required by<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     * the &lt;code&gt;ColorModel&lt;/code&gt; to represent its color and alpha<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     * components.<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     * @exception &lt;code&gt;IllegalArgumentException&lt;/code&gt; if<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     *          &lt;code&gt;raster&lt;/code&gt; is incompatible with &lt;code&gt;cm&lt;/code&gt;<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     * @see ColorModel<a name="line.612"></a>
+<span class="sourceLineNo">613</span>     * @see Raster<a name="line.613"></a>
+<span class="sourceLineNo">614</span>     * @see WritableRaster<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     */<a name="line.615"></a>
+<span class="sourceLineNo">616</span><a name="line.616"></a>
+<span class="sourceLineNo">617</span><a name="line.617"></a>
+<span class="sourceLineNo">618</span>/*<a name="line.618"></a>
+<span class="sourceLineNo">619</span> *<a name="line.619"></a>
+<span class="sourceLineNo">620</span> *  FOR NOW THE CODE WHICH DEFINES THE RASTER TYPE IS DUPLICATED BY DVF<a name="line.620"></a>
+<span class="sourceLineNo">621</span> *  SEE THE METHOD DEFINERASTERTYPE @ RASTEROUTPUTMANAGER<a name="line.621"></a>
+<span class="sourceLineNo">622</span> *<a name="line.622"></a>
+<span class="sourceLineNo">623</span> */<a name="line.623"></a>
+<span class="sourceLineNo">624</span>    public BufferedImage (ColorModel cm,<a name="line.624"></a>
+<span class="sourceLineNo">625</span>                          WritableRaster raster,<a name="line.625"></a>
+<span class="sourceLineNo">626</span>                          boolean isRasterPremultiplied,<a name="line.626"></a>
+<span class="sourceLineNo">627</span>                          Hashtable&lt;?,?&gt; properties) {<a name="line.627"></a>
+<span class="sourceLineNo">628</span><a name="line.628"></a>
+<span class="sourceLineNo">629</span>        if (!cm.isCompatibleRaster(raster)) {<a name="line.629"></a>
+<span class="sourceLineNo">630</span>            throw new<a name="line.630"></a>
+<span class="sourceLineNo">631</span>                IllegalArgumentException("Raster "+raster+<a name="line.631"></a>
+<span class="sourceLineNo">632</span>                                         " is incompatible with ColorModel "+<a name="line.632"></a>
+<span class="sourceLineNo">633</span>                                         cm);<a name="line.633"></a>
+<span class="sourceLineNo">634</span>        }<a name="line.634"></a>
+<span class="sourceLineNo">635</span><a name="line.635"></a>
+<span class="sourceLineNo">636</span>        if ((raster.minX != 0) || (raster.minY != 0)) {<a name="line.636"></a>
+<span class="sourceLineNo">637</span>            throw new<a name="line.637"></a>
+<span class="sourceLineNo">638</span>                IllegalArgumentException("Raster "+raster+<a name="line.638"></a>
+<span class="sourceLineNo">639</span>                                         " has minX or minY not equal to zero: "<a name="line.639"></a>
+<span class="sourceLineNo">640</span>                                         + raster.minX + " " + raster.minY);<a name="line.640"></a>
+<span class="sourceLineNo">641</span>        }<a name="line.641"></a>
+<span class="sourceLineNo">642</span><a name="line.642"></a>
+<span class="sourceLineNo">643</span>        colorModel = cm;<a name="line.643"></a>
+<span class="sourceLineNo">644</span>        this.raster  = raster;<a name="line.644"></a>
+<span class="sourceLineNo">645</span>        this.properties = properties;<a name="line.645"></a>
+<span class="sourceLineNo">646</span>        int numBands = raster.getNumBands();<a name="line.646"></a>
+<span class="sourceLineNo">647</span>        boolean isAlphaPre = cm.isAlphaPremultiplied();<a name="line.647"></a>
+<span class="sourceLineNo">648</span>        final boolean isStandard = isStandard(cm, raster);<a name="line.648"></a>
+<span class="sourceLineNo">649</span>        ColorSpace cs;<a name="line.649"></a>
+<span class="sourceLineNo">650</span><a name="line.650"></a>
+<span class="sourceLineNo">651</span>        // Force the raster data alpha state to match the premultiplied<a name="line.651"></a>
+<span class="sourceLineNo">652</span>        // state in the color model<a name="line.652"></a>
+<span class="sourceLineNo">653</span>        coerceData(isRasterPremultiplied);<a name="line.653"></a>
+<span class="sourceLineNo">654</span><a name="line.654"></a>
+<span class="sourceLineNo">655</span>        SampleModel sm = raster.getSampleModel();<a name="line.655"></a>
+<span class="sourceLineNo">656</span>        cs = cm.getColorSpace();<a name="line.656"></a>
+<span class="sourceLineNo">657</span>        int csType = cs.getType();<a name="line.657"></a>
+<span class="sourceLineNo">658</span>        if (csType != ColorSpace.TYPE_RGB) {<a name="line.658"></a>
+<span class="sourceLineNo">659</span>            if (csType == ColorSpace.TYPE_GRAY &amp;&amp;<a name="line.659"></a>
+<span class="sourceLineNo">660</span>                isStandard &amp;&amp;<a name="line.660"></a>
+<span class="sourceLineNo">661</span>                cm instanceof ComponentColorModel) {<a name="line.661"></a>
+<span class="sourceLineNo">662</span>                // Check if this might be a child raster (fix for bug 4240596)<a name="line.662"></a>
+<span class="sourceLineNo">663</span>                if (sm instanceof ComponentSampleModel &amp;&amp;<a name="line.663"></a>
+<span class="sourceLineNo">664</span>                    ((ComponentSampleModel)sm).getPixelStride() != numBands) {<a name="line.664"></a>
+<span class="sourceLineNo">665</span>                    imageType = TYPE_CUSTOM;<a name="line.665"></a>
+<span class="sourceLineNo">666</span>                } else if (raster instanceof ByteComponentRaster &amp;&amp;<a name="line.666"></a>
+<span class="sourceLineNo">667</span>                       raster.getNumBands() == 1 &amp;&amp;<a name="line.667"></a>
+<span class="sourceLineNo">668</span>                       cm.getComponentSize(0) == 8 &amp;&amp;<a name="line.668"></a>
+<span class="sourceLineNo">669</span>                       ((ByteComponentRaster)raster).getPixelStride() == 1) {<a name="line.669"></a>
+<span class="sourceLineNo">670</span>                    imageType = TYPE_BYTE_GRAY;<a name="line.670"></a>
+<span class="sourceLineNo">671</span>                } else if (raster instanceof ShortComponentRaster &amp;&amp;<a name="line.671"></a>
+<span class="sourceLineNo">672</span>                       raster.getNumBands() == 1 &amp;&amp;<a name="line.672"></a>
+<span class="sourceLineNo">673</span>                       cm.getComponentSize(0) == 16 &amp;&amp;<a name="line.673"></a>
+<span class="sourceLineNo">674</span>                       ((ShortComponentRaster)raster).getPixelStride() == 1) {<a name="line.674"></a>
+<span class="sourceLineNo">675</span>                    imageType = TYPE_USHORT_GRAY;<a name="line.675"></a>
+<span class="sourceLineNo">676</span>                }<a name="line.676"></a>
+<span class="sourceLineNo">677</span>            } else {<a name="line.677"></a>
+<span class="sourceLineNo">678</span>                imageType = TYPE_CUSTOM;<a name="line.678"></a>
+<span class="sourceLineNo">679</span>            }<a name="line.679"></a>
+<span class="sourceLineNo">680</span>            return;<a name="line.680"></a>
+<span class="sourceLineNo">681</span>        }<a name="line.681"></a>
+<span class="sourceLineNo">682</span><a name="line.682"></a>
+<span class="sourceLineNo">683</span>        if ((raster instanceof IntegerComponentRaster) &amp;&amp;<a name="line.683"></a>
+<span class="sourceLineNo">684</span>            (numBands == 3 || numBands == 4)) {<a name="line.684"></a>
+<span class="sourceLineNo">685</span>            IntegerComponentRaster iraster =<a name="line.685"></a>
+<span class="sourceLineNo">686</span>                (IntegerComponentRaster) raster;<a name="line.686"></a>
+<span class="sourceLineNo">687</span>            // Check if the raster params and the color model<a name="line.687"></a>
+<span class="sourceLineNo">688</span>            // are correct<a name="line.688"></a>
+<span class="sourceLineNo">689</span>            int pixSize = cm.getPixelSize();<a name="line.689"></a>
+<span class="sourceLineNo">690</span>            if (iraster.getPixelStride() == 1 &amp;&amp;<a name="line.690"></a>
+<span class="sourceLineNo">691</span>                isStandard &amp;&amp;<a name="line.691"></a>
+<span class="sourceLineNo">692</span>                cm instanceof DirectColorModel  &amp;&amp;<a name="line.692"></a>
+<span class="sourceLineNo">693</span>                (pixSize == 32 || pixSize == 24))<a name="line.693"></a>
+<span class="sourceLineNo">694</span>            {<a name="line.694"></a>
+<span class="sourceLineNo">695</span>                // Now check on the DirectColorModel params<a name="line.695"></a>
+<span class="sourceLineNo">696</span>                DirectColorModel dcm = (DirectColorModel) cm;<a name="line.696"></a>
+<span class="sourceLineNo">697</span>                int rmask = dcm.getRedMask();<a name="line.697"></a>
+<span class="sourceLineNo">698</span>                int gmask = dcm.getGreenMask();<a name="line.698"></a>
+<span class="sourceLineNo">699</span>                int bmask = dcm.getBlueMask();<a name="line.699"></a>
+<span class="sourceLineNo">700</span>                if (rmask == DCM_RED_MASK &amp;&amp; gmask == DCM_GREEN_MASK &amp;&amp;<a name="line.700"></a>
+<span class="sourceLineNo">701</span>                    bmask == DCM_BLUE_MASK)<a name="line.701"></a>
+<span class="sourceLineNo">702</span>                {<a name="line.702"></a>
+<span class="sourceLineNo">703</span>                    if (dcm.getAlphaMask() == DCM_ALPHA_MASK) {<a name="line.703"></a>
+<span class="sourceLineNo">704</span>                        imageType = (isAlphaPre<a name="line.704"></a>
+<span class="sourceLineNo">705</span>                                     ? TYPE_INT_ARGB_PRE<a name="line.705"></a>
+<span class="sourceLineNo">706</span>                                     : TYPE_INT_ARGB);<a name="line.706"></a>
+<span class="sourceLineNo">707</span>                    }<a name="line.707"></a>
+<span class="sourceLineNo">708</span>                    else {<a name="line.708"></a>
+<span class="sourceLineNo">709</span>                        // No Alpha<a name="line.709"></a>
+<span class="sourceLineNo">710</span>                        if (!dcm.hasAlpha()) {<a name="line.710"></a>
+<span class="sourceLineNo">711</span>                            imageType = TYPE_INT_RGB;<a name="line.711"></a>
+<span class="sourceLineNo">712</span>                        }<a name="line.712"></a>
+<span class="sourceLineNo">713</span>                    }<a name="line.713"></a>
+<span class="sourceLineNo">714</span>                }   // if (dcm.getRedMask() == DCM_RED_MASK &amp;&amp;<a name="line.714"></a>
+<span class="sourceLineNo">715</span>                else if (rmask == DCM_BGR_RED_MASK &amp;&amp; gmask == DCM_BGR_GRN_MASK<a name="line.715"></a>
+<span class="sourceLineNo">716</span>                         &amp;&amp; bmask == DCM_BGR_BLU_MASK) {<a name="line.716"></a>
+<span class="sourceLineNo">717</span>                    if (!dcm.hasAlpha()) {<a name="line.717"></a>
+<span class="sourceLineNo">718</span>                        imageType = TYPE_INT_BGR;<a name="line.718"></a>
+<span class="sourceLineNo">719</span>                    }<a name="line.719"></a>
+<span class="sourceLineNo">720</span>                }  // if (rmask == DCM_BGR_RED_MASK &amp;&amp;<a name="line.720"></a>
+<span class="sourceLineNo">721</span>            }   // if (iraster.getPixelStride() == 1<a name="line.721"></a>
+<span class="sourceLineNo">722</span>        }   // ((raster instanceof IntegerComponentRaster) &amp;&amp;<a name="line.722"></a>
+<span class="sourceLineNo">723</span>        else if ((cm instanceof IndexColorModel) &amp;&amp; (numBands == 1) &amp;&amp;<a name="line.723"></a>
+<span class="sourceLineNo">724</span>                 isStandard &amp;&amp;<a name="line.724"></a>
+<span class="sourceLineNo">725</span>                 (!cm.hasAlpha() || !isAlphaPre))<a name="line.725"></a>
+<span class="sourceLineNo">726</span>        {<a name="line.726"></a>
+<span class="sourceLineNo">727</span>            IndexColorModel icm = (IndexColorModel) cm;<a name="line.727"></a>
+<span class="sourceLineNo">728</span>            int pixSize = icm.getPixelSize();<a name="line.728"></a>
+<span class="sourceLineNo">729</span><a name="line.729"></a>
+<span class="sourceLineNo">730</span>            if (raster instanceof BytePackedRaster) {<a name="line.730"></a>
+<span class="sourceLineNo">731</span>                imageType = TYPE_BYTE_BINARY;<a name="line.731"></a>
+<span class="sourceLineNo">732</span>            }   // if (raster instanceof BytePackedRaster)<a name="line.732"></a>
+<span class="sourceLineNo">733</span>            else if (raster instanceof ByteComponentRaster) {<a name="line.733"></a>
+<span class="sourceLineNo">734</span>                ByteComponentRaster braster = (ByteComponentRaster) raster;<a name="line.734"></a>
+<span class="sourceLineNo">735</span>                if (braster.getPixelStride() == 1 &amp;&amp; pixSize &lt;= 8) {<a name="line.735"></a>
+<span class="sourceLineNo">736</span>                    imageType = TYPE_BYTE_INDEXED;<a name="line.736"></a>
+<span class="sourceLineNo">737</span>                }<a name="line.737"></a>
+<span class="sourceLineNo">738</span>            }<a name="line.738"></a>
+<span class="sourceLineNo">739</span>        }   // else if (cm instanceof IndexColorModel) &amp;&amp; (numBands == 1))<a name="line.739"></a>
+<span class="sourceLineNo">740</span>        else if ((raster instanceof ShortComponentRaster)<a name="line.740"></a>
+<span class="sourceLineNo">741</span>                 &amp;&amp; (cm instanceof DirectColorModel)<a name="line.741"></a>
+<span class="sourceLineNo">742</span>                 &amp;&amp; isStandard<a name="line.742"></a>
+<span class="sourceLineNo">743</span>                 &amp;&amp; (numBands == 3)<a name="line.743"></a>
+<span class="sourceLineNo">744</span>                 &amp;&amp; !cm.hasAlpha())<a name="line.744"></a>
+<span class="sourceLineNo">745</span>        {<a name="line.745"></a>
+<span class="sourceLineNo">746</span>            DirectColorModel dcm = (DirectColorModel) cm;<a name="line.746"></a>
+<span class="sourceLineNo">747</span>            if (dcm.getRedMask() == DCM_565_RED_MASK) {<a name="line.747"></a>
+<span class="sourceLineNo">748</span>                if (dcm.getGreenMask() == DCM_565_GRN_MASK &amp;&amp;<a name="line.748"></a>
+<span class="sourceLineNo">749</span>                    dcm.getBlueMask()  == DCM_565_BLU_MASK) {<a name="line.749"></a>
+<span class="sourceLineNo">750</span>                    imageType = TYPE_USHORT_565_RGB;<a name="line.750"></a>
+<span class="sourceLineNo">751</span>                }<a name="line.751"></a>
+<span class="sourceLineNo">752</span>            }<a name="line.752"></a>
+<span class="sourceLineNo">753</span>            else if (dcm.getRedMask() == DCM_555_RED_MASK) {<a name="line.753"></a>
+<span class="sourceLineNo">754</span>                if (dcm.getGreenMask() == DCM_555_GRN_MASK &amp;&amp;<a name="line.754"></a>
+<span class="sourceLineNo">755</span>                    dcm.getBlueMask() == DCM_555_BLU_MASK) {<a name="line.755"></a>
+<span class="sourceLineNo">756</span>                    imageType = TYPE_USHORT_555_RGB;<a name="line.756"></a>
+<span class="sourceLineNo">757</span>                }<a name="line.757"></a>
+<span class="sourceLineNo">758</span>            }<a name="line.758"></a>
+<span class="sourceLineNo">759</span>        }   // else if ((cm instanceof IndexColorModel) &amp;&amp; (numBands == 1))<a name="line.759"></a>
+<span class="sourceLineNo">760</span>        else if ((raster instanceof ByteComponentRaster)<a name="line.760"></a>
+<span class="sourceLineNo">761</span>                 &amp;&amp; (cm instanceof ComponentColorModel)<a name="line.761"></a>
+<span class="sourceLineNo">762</span>                 &amp;&amp; isStandard<a name="line.762"></a>
+<span class="sourceLineNo">763</span>                 &amp;&amp; (raster.getSampleModel() instanceof PixelInterleavedSampleModel)<a name="line.763"></a>
+<span class="sourceLineNo">764</span>                 &amp;&amp; (numBands == 3 || numBands == 4))<a name="line.764"></a>
+<span class="sourceLineNo">765</span>        {<a name="line.765"></a>
+<span class="sourceLineNo">766</span>            ComponentColorModel ccm = (ComponentColorModel) cm;<a name="line.766"></a>
+<span class="sourceLineNo">767</span>            PixelInterleavedSampleModel csm =<a name="line.767"></a>
+<span class="sourceLineNo">768</span>                (PixelInterleavedSampleModel)raster.getSampleModel();<a name="line.768"></a>
+<span class="sourceLineNo">769</span>            ByteComponentRaster braster = (ByteComponentRaster) raster;<a name="line.769"></a>
+<span class="sourceLineNo">770</span>            int[] offs = csm.getBandOffsets();<a name="line.770"></a>
+<span class="sourceLineNo">771</span>            if (ccm.getNumComponents() != numBands) {<a name="line.771"></a>
+<span class="sourceLineNo">772</span>                throw new RasterFormatException("Number of components in "+<a name="line.772"></a>
+<span class="sourceLineNo">773</span>                                                "ColorModel ("+<a name="line.773"></a>
+<span class="sourceLineNo">774</span>                                                ccm.getNumComponents()+<a name="line.774"></a>
+<span class="sourceLineNo">775</span>                                                ") does not match # in "+<a name="line.775"></a>
+<span class="sourceLineNo">776</span>                                                " Raster ("+numBands+")");<a name="line.776"></a>
+<span class="sourceLineNo">777</span>            }<a name="line.777"></a>
+<span class="sourceLineNo">778</span>            int[] nBits = ccm.getComponentSize();<a name="line.778"></a>
+<span class="sourceLineNo">779</span>            boolean is8bit = true;<a name="line.779"></a>
+<span class="sourceLineNo">780</span>            for (int i=0; i &lt; numBands; i++) {<a name="line.780"></a>
+<span class="sourceLineNo">781</span>                if (nBits[i] != 8) {<a name="line.781"></a>
+<span class="sourceLineNo">782</span>                    is8bit = false;<a name="line.782"></a>
+<span class="sourceLineNo">783</span>                    break;<a name="line.783"></a>
+<span class="sourceLineNo">784</span>                }<a name="line.784"></a>
+<span class="sourceLineNo">785</span>            }<a name="line.785"></a>
+<span class="sourceLineNo">786</span>            if (is8bit &amp;&amp;<a name="line.786"></a>
+<span class="sourceLineNo">787</span>                braster.getPixelStride() == numBands &amp;&amp;<a name="line.787"></a>
+<span class="sourceLineNo">788</span>                offs[0] == numBands-1 &amp;&amp;<a name="line.788"></a>
+<span class="sourceLineNo">789</span>                offs[1] == numBands-2 &amp;&amp;<a name="line.789"></a>
+<span class="sourceLineNo">790</span>                offs[2] == numBands-3)<a name="line.790"></a>
+<span class="sourceLineNo">791</span>            {<a name="line.791"></a>
+<span class="sourceLineNo">792</span>                if (numBands == 3 &amp;&amp; !ccm.hasAlpha()) {<a name="line.792"></a>
+<span class="sourceLineNo">793</span>                    imageType = TYPE_3BYTE_BGR;<a name="line.793"></a>
+<span class="sourceLineNo">794</span>                }<a name="line.794"></a>
+<span class="sourceLineNo">795</span>                else if (offs[3] == 0 &amp;&amp; ccm.hasAlpha()) {<a name="line.795"></a>
+<span class="sourceLineNo">796</span>                    imageType = (isAlphaPre<a name="line.796"></a>
+<span class="sourceLineNo">797</span>                                 ? TYPE_4BYTE_ABGR_PRE<a name="line.797"></a>
+<span class="sourceLineNo">798</span>                                 : TYPE_4BYTE_ABGR);<a name="line.798"></a>
+<span class="sourceLineNo">799</span>                }<a name="line.799"></a>
+<span class="sourceLineNo">800</span>            }<a name="line.800"></a>
+<span class="sourceLineNo">801</span>        }   // else if ((raster instanceof ByteComponentRaster) &amp;&amp;<a name="line.801"></a>
+<span class="sourceLineNo">802</span>    }<a name="line.802"></a>
+<span class="sourceLineNo">803</span><a name="line.803"></a>
+<span class="sourceLineNo">804</span>    private static boolean isStandard(ColorModel cm, WritableRaster wr) {<a name="line.804"></a>
+<span class="sourceLineNo">805</span>        final Class&lt;? extends ColorModel&gt; cmClass = cm.getClass();<a name="line.805"></a>
+<span class="sourceLineNo">806</span>        final Class&lt;? extends WritableRaster&gt; wrClass = wr.getClass();<a name="line.806"></a>
+<span class="sourceLineNo">807</span>        final Class&lt;? extends SampleModel&gt; smClass = wr.getSampleModel().getClass();<a name="line.807"></a>
+<span class="sourceLineNo">808</span><a name="line.808"></a>
+<span class="sourceLineNo">809</span>        final PrivilegedAction&lt;Boolean&gt; checkClassLoadersAction =<a name="line.809"></a>
+<span class="sourceLineNo">810</span>                new PrivilegedAction&lt;Boolean&gt;()<a name="line.810"></a>
+<span class="sourceLineNo">811</span>        {<a name="line.811"></a>
+<span class="sourceLineNo">812</span><a name="line.812"></a>
+<span class="sourceLineNo">813</span>            @Override<a name="line.813"></a>
+<span class="sourceLineNo">814</span>            public Boolean run() {<a name="line.814"></a>
+<span class="sourceLineNo">815</span>                final ClassLoader std = System.class.getClassLoader();<a name="line.815"></a>
+<span class="sourceLineNo">816</span><a name="line.816"></a>
+<span class="sourceLineNo">817</span>                return (cmClass.getClassLoader() == std) &amp;&amp;<a name="line.817"></a>
+<span class="sourceLineNo">818</span>                        (smClass.getClassLoader() == std) &amp;&amp;<a name="line.818"></a>
+<span class="sourceLineNo">819</span>                        (wrClass.getClassLoader() == std);<a name="line.819"></a>
+<span class="sourceLineNo">820</span>            }<a name="line.820"></a>
+<span class="sourceLineNo">821</span>        };<a name="line.821"></a>
+<span class="sourceLineNo">822</span>        return AccessController.doPrivileged(checkClassLoadersAction);<a name="line.822"></a>
+<span class="sourceLineNo">823</span>    }<a name="line.823"></a>
+<span class="sourceLineNo">824</span><a name="line.824"></a>
+<span class="sourceLineNo">825</span>    /**<a name="line.825"></a>
+<span class="sourceLineNo">826</span>     * Returns the image type.  If it is not one of the known types,<a name="line.826"></a>
+<span class="sourceLineNo">827</span>     * TYPE_CUSTOM is returned.<a name="line.827"></a>
+<span class="sourceLineNo">828</span>     * @return the image type of this &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.828"></a>
+<span class="sourceLineNo">829</span>     * @see #TYPE_INT_RGB<a name="line.829"></a>
+<span class="sourceLineNo">830</span>     * @see #TYPE_INT_ARGB<a name="line.830"></a>
+<span class="sourceLineNo">831</span>     * @see #TYPE_INT_ARGB_PRE<a name="line.831"></a>
+<span class="sourceLineNo">832</span>     * @see #TYPE_INT_BGR<a name="line.832"></a>
+<span class="sourceLineNo">833</span>     * @see #TYPE_3BYTE_BGR<a name="line.833"></a>
+<span class="sourceLineNo">834</span>     * @see #TYPE_4BYTE_ABGR<a name="line.834"></a>
+<span class="sourceLineNo">835</span>     * @see #TYPE_4BYTE_ABGR_PRE<a name="line.835"></a>
+<span class="sourceLineNo">836</span>     * @see #TYPE_BYTE_GRAY<a name="line.836"></a>
+<span class="sourceLineNo">837</span>     * @see #TYPE_BYTE_BINARY<a name="line.837"></a>
+<span class="sourceLineNo">838</span>     * @see #TYPE_BYTE_INDEXED<a name="line.838"></a>
+<span class="sourceLineNo">839</span>     * @see #TYPE_USHORT_GRAY<a name="line.839"></a>
+<span class="sourceLineNo">840</span>     * @see #TYPE_USHORT_565_RGB<a name="line.840"></a>
+<span class="sourceLineNo">841</span>     * @see #TYPE_USHORT_555_RGB<a name="line.841"></a>
+<span class="sourceLineNo">842</span>     * @see #TYPE_CUSTOM<a name="line.842"></a>
+<span class="sourceLineNo">843</span>     */<a name="line.843"></a>
+<span class="sourceLineNo">844</span>    public int getType() {<a name="line.844"></a>
+<span class="sourceLineNo">845</span>        return imageType;<a name="line.845"></a>
+<span class="sourceLineNo">846</span>    }<a name="line.846"></a>
+<span class="sourceLineNo">847</span><a name="line.847"></a>
+<span class="sourceLineNo">848</span>    /**<a name="line.848"></a>
+<span class="sourceLineNo">849</span>     * Returns the &lt;code&gt;ColorModel&lt;/code&gt;.<a name="line.849"></a>
+<span class="sourceLineNo">850</span>     * @return the &lt;code&gt;ColorModel&lt;/code&gt; of this<a name="line.850"></a>
+<span class="sourceLineNo">851</span>     *  &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.851"></a>
+<span class="sourceLineNo">852</span>     */<a name="line.852"></a>
+<span class="sourceLineNo">853</span>    public ColorModel getColorModel() {<a name="line.853"></a>
+<span class="sourceLineNo">854</span>        return colorModel;<a name="line.854"></a>
+<span class="sourceLineNo">855</span>    }<a name="line.855"></a>
+<span class="sourceLineNo">856</span><a name="line.856"></a>
+<span class="sourceLineNo">857</span>    /**<a name="line.857"></a>
+<span class="sourceLineNo">858</span>     * Returns the {@link WritableRaster}.<a name="line.858"></a>
+<span class="sourceLineNo">859</span>     * @return the &lt;code&gt;WriteableRaster&lt;/code&gt; of this<a name="line.859"></a>
+<span class="sourceLineNo">860</span>     *  &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.860"></a>
+<span class="sourceLineNo">861</span>     */<a name="line.861"></a>
+<span class="sourceLineNo">862</span>    public WritableRaster getRaster() {<a name="line.862"></a>
+<span class="sourceLineNo">863</span>        return raster;<a name="line.863"></a>
+<span class="sourceLineNo">864</span>    }<a name="line.864"></a>
+<span class="sourceLineNo">865</span><a name="line.865"></a>
+<span class="sourceLineNo">866</span><a name="line.866"></a>
+<span class="sourceLineNo">867</span>    /**<a name="line.867"></a>
+<span class="sourceLineNo">868</span>     * Returns a &lt;code&gt;WritableRaster&lt;/code&gt; representing the alpha<a name="line.868"></a>
+<span class="sourceLineNo">869</span>     * channel for &lt;code&gt;BufferedImage&lt;/code&gt; objects<a name="line.869"></a>
+<span class="sourceLineNo">870</span>     * with &lt;code&gt;ColorModel&lt;/code&gt; objects that support a separate<a name="line.870"></a>
+<span class="sourceLineNo">871</span>     * spatial alpha channel, such as &lt;code&gt;ComponentColorModel&lt;/code&gt; and<a name="line.871"></a>
+<span class="sourceLineNo">872</span>     * &lt;code&gt;DirectColorModel&lt;/code&gt;.  Returns &lt;code&gt;null&lt;/code&gt; if there<a name="line.872"></a>
+<span class="sourceLineNo">873</span>     * is no alpha channel associated with the &lt;code&gt;ColorModel&lt;/code&gt; in<a name="line.873"></a>
+<span class="sourceLineNo">874</span>     * this image.  This method assumes that for all<a name="line.874"></a>
+<span class="sourceLineNo">875</span>     * &lt;code&gt;ColorModel&lt;/code&gt; objects other than<a name="line.875"></a>
+<span class="sourceLineNo">876</span>     * &lt;code&gt;IndexColorModel&lt;/code&gt;, if the &lt;code&gt;ColorModel&lt;/code&gt;<a name="line.876"></a>
+<span class="sourceLineNo">877</span>     * supports alpha, there is a separate alpha channel<a name="line.877"></a>
+<span class="sourceLineNo">878</span>     * which is stored as the last band of image data.<a name="line.878"></a>
+<span class="sourceLineNo">879</span>     * If the image uses an &lt;code&gt;IndexColorModel&lt;/code&gt; that<a name="line.879"></a>
+<span class="sourceLineNo">880</span>     * has alpha in the lookup table, this method returns<a name="line.880"></a>
+<span class="sourceLineNo">881</span>     * &lt;code&gt;null&lt;/code&gt; since there is no spatially discrete alpha<a name="line.881"></a>
+<span class="sourceLineNo">882</span>     * channel.  This method creates a new<a name="line.882"></a>
+<span class="sourceLineNo">883</span>     * &lt;code&gt;WritableRaster&lt;/code&gt;, but shares the data array.<a name="line.883"></a>
+<span class="sourceLineNo">884</span>     * @return a &lt;code&gt;WritableRaster&lt;/code&gt; or &lt;code&gt;null&lt;/code&gt; if this<a name="line.884"></a>
+<span class="sourceLineNo">885</span>     *          &lt;code&gt;BufferedImage&lt;/code&gt; has no alpha channel associated<a name="line.885"></a>
+<span class="sourceLineNo">886</span>     *          with its &lt;code&gt;ColorModel&lt;/code&gt;.<a name="line.886"></a>
+<span class="sourceLineNo">887</span>     */<a name="line.887"></a>
+<span class="sourceLineNo">888</span>    public WritableRaster getAlphaRaster() {<a name="line.888"></a>
+<span class="sourceLineNo">889</span>        return colorModel.getAlphaRaster(raster);<a name="line.889"></a>
+<span class="sourceLineNo">890</span>    }<a name="line.890"></a>
+<span class="sourceLineNo">891</span><a name="line.891"></a>
+<span class="sourceLineNo">892</span>    /**<a name="line.892"></a>
+<span class="sourceLineNo">893</span>     * Returns an integer pixel in the default RGB color model<a name="line.893"></a>
+<span class="sourceLineNo">894</span>     * (TYPE_INT_ARGB) and default sRGB colorspace.  Color<a name="line.894"></a>
+<span class="sourceLineNo">895</span>     * conversion takes place if this default model does not match<a name="line.895"></a>
+<span class="sourceLineNo">896</span>     * the image &lt;code&gt;ColorModel&lt;/code&gt;.  There are only 8-bits of<a name="line.896"></a>
+<span class="sourceLineNo">897</span>     * precision for each color component in the returned data when using<a name="line.897"></a>
+<span class="sourceLineNo">898</span>     * this method.<a name="line.898"></a>
+<span class="sourceLineNo">899</span>     *<a name="line.899"></a>
+<span class="sourceLineNo">900</span>     * &lt;p&gt;<a name="line.900"></a>
+<span class="sourceLineNo">901</span>     *<a name="line.901"></a>
+<span class="sourceLineNo">902</span>     * An &lt;code&gt;ArrayOutOfBoundsException&lt;/code&gt; may be thrown<a name="line.902"></a>
+<span class="sourceLineNo">903</span>     * if the coordinates are not in bounds.<a name="line.903"></a>
+<span class="sourceLineNo">904</span>     * However, explicit bounds checking is not guaranteed.<a name="line.904"></a>
+<span class="sourceLineNo">905</span>     *<a name="line.905"></a>
+<span class="sourceLineNo">906</span>     * @param x the X coordinate of the pixel from which to get<a name="line.906"></a>
+<span class="sourceLineNo">907</span>     *          the pixel in the default RGB color model and sRGB<a name="line.907"></a>
+<span class="sourceLineNo">908</span>     *          color space<a name="line.908"></a>
+<span class="sourceLineNo">909</span>     * @param y the Y coordinate of the pixel from which to get<a name="line.909"></a>
+<span class="sourceLineNo">910</span>     *          the pixel in the default RGB color model and sRGB<a name="line.910"></a>
+<span class="sourceLineNo">911</span>     *          color space<a name="line.911"></a>
+<span class="sourceLineNo">912</span>     * @return an integer pixel in the default RGB color model and<a name="line.912"></a>
+<span class="sourceLineNo">913</span>     *          default sRGB colorspace.<a name="line.913"></a>
+<span class="sourceLineNo">914</span>     * @see #setRGB(int, int, int)<a name="line.914"></a>
+<span class="sourceLineNo">915</span>     * @see #setRGB(int, int, int, int, int[], int, int)<a name="line.915"></a>
+<span class="sourceLineNo">916</span>     */<a name="line.916"></a>
+<span class="sourceLineNo">917</span>    public int getRGB(int x, int y) {<a name="line.917"></a>
+<span class="sourceLineNo">918</span>        return colorModel.getRGB(raster.getDataElements(x, y, null));<a name="line.918"></a>
+<span class="sourceLineNo">919</span>    }<a name="line.919"></a>
+<span class="sourceLineNo">920</span><a name="line.920"></a>
+<span class="sourceLineNo">921</span>    /**<a name="line.921"></a>
+<span class="sourceLineNo">922</span>     * Returns an array of integer pixels in the default RGB color model<a name="line.922"></a>
+<span class="sourceLineNo">923</span>     * (TYPE_INT_ARGB) and default sRGB color space,<a name="line.923"></a>
+<span class="sourceLineNo">924</span>     * from a portion of the image data.  Color conversion takes<a name="line.924"></a>
+<span class="sourceLineNo">925</span>     * place if the default model does not match the image<a name="line.925"></a>
+<span class="sourceLineNo">926</span>     * &lt;code&gt;ColorModel&lt;/code&gt;.  There are only 8-bits of precision for<a name="line.926"></a>
+<span class="sourceLineNo">927</span>     * each color component in the returned data when<a name="line.927"></a>
+<span class="sourceLineNo">928</span>     * using this method.  With a specified coordinate (x,&amp;nbsp;y) in the<a name="line.928"></a>
+<span class="sourceLineNo">929</span>     * image, the ARGB pixel can be accessed in this way:<a name="line.929"></a>
+<span class="sourceLineNo">930</span>     * &lt;/p&gt;<a name="line.930"></a>
+<span class="sourceLineNo">931</span>     *<a name="line.931"></a>
+<span class="sourceLineNo">932</span>     * &lt;pre&gt;<a name="line.932"></a>
+<span class="sourceLineNo">933</span>     *    pixel   = rgbArray[offset + (y-startY)*scansize + (x-startX)]; &lt;/pre&gt;<a name="line.933"></a>
+<span class="sourceLineNo">934</span>     *<a name="line.934"></a>
+<span class="sourceLineNo">935</span>     * &lt;p&gt;<a name="line.935"></a>
+<span class="sourceLineNo">936</span>     *<a name="line.936"></a>
+<span class="sourceLineNo">937</span>     * An &lt;code&gt;ArrayOutOfBoundsException&lt;/code&gt; may be thrown<a name="line.937"></a>
+<span class="sourceLineNo">938</span>     * if the region is not in bounds.<a name="line.938"></a>
+<span class="sourceLineNo">939</span>     * However, explicit bounds checking is not guaranteed.<a name="line.939"></a>
+<span class="sourceLineNo">940</span>     *<a name="line.940"></a>
+<span class="sourceLineNo">941</span>     * @param startX      the starting X coordinate<a name="line.941"></a>
+<span class="sourceLineNo">942</span>     * @param startY      the starting Y coordinate<a name="line.942"></a>
+<span class="sourceLineNo">943</span>     * @param w           width of region<a name="line.943"></a>
+<span class="sourceLineNo">944</span>     * @param h           height of region<a name="line.944"></a>
+<span class="sourceLineNo">945</span>     * @param rgbArray    if not &lt;code&gt;null&lt;/code&gt;, the rgb pixels are<a name="line.945"></a>
+<span class="sourceLineNo">946</span>     *          written here<a name="line.946"></a>
+<span class="sourceLineNo">947</span>     * @param offset      offset into the &lt;code&gt;rgbArray&lt;/code&gt;<a name="line.947"></a>
+<span class="sourceLineNo">948</span>     * @param scansize    scanline stride for the &lt;code&gt;rgbArray&lt;/code&gt;<a name="line.948"></a>
+<span class="sourceLineNo">949</span>     * @return            array of RGB pixels.<a name="line.949"></a>
+<span class="sourceLineNo">950</span>     * @see #setRGB(int, int, int)<a name="line.950"></a>
+<span class="sourceLineNo">951</span>     * @see #setRGB(int, int, int, int, int[], int, int)<a name="line.951"></a>
+<span class="sourceLineNo">952</span>     */<a name="line.952"></a>
+<span class="sourceLineNo">953</span>    public int[] getRGB(int startX, int startY, int w, int h,<a name="line.953"></a>
+<span class="sourceLineNo">954</span>                        int[] rgbArray, int offset, int scansize) {<a name="line.954"></a>
+<span class="sourceLineNo">955</span>        int yoff  = offset;<a name="line.955"></a>
+<span class="sourceLineNo">956</span>        int off;<a name="line.956"></a>
+<span class="sourceLineNo">957</span>        Object data;<a name="line.957"></a>
+<span class="sourceLineNo">958</span>        int nbands = raster.getNumBands();<a name="line.958"></a>
+<span class="sourceLineNo">959</span>        int dataType = raster.getDataBuffer().getDataType();<a name="line.959"></a>
+<span class="sourceLineNo">960</span>        switch (dataType) {<a name="line.960"></a>
+<span class="sourceLineNo">961</span>        case DataBuffer.TYPE_BYTE:<a name="line.961"></a>
+<span class="sourceLineNo">962</span>            data = new byte[nbands];<a name="line.962"></a>
+<span class="sourceLineNo">963</span>            break;<a name="line.963"></a>
+<span class="sourceLineNo">964</span>        case DataBuffer.TYPE_USHORT:<a name="line.964"></a>
+<span class="sourceLineNo">965</span>            data = new short[nbands];<a name="line.965"></a>
+<span class="sourceLineNo">966</span>            break;<a name="line.966"></a>
+<span class="sourceLineNo">967</span>        case DataBuffer.TYPE_INT:<a name="line.967"></a>
+<span class="sourceLineNo">968</span>            data = new int[nbands];<a name="line.968"></a>
+<span class="sourceLineNo">969</span>            break;<a name="line.969"></a>
+<span class="sourceLineNo">970</span>        case DataBuffer.TYPE_FLOAT:<a name="line.970"></a>
+<span class="sourceLineNo">971</span>            data = new float[nbands];<a name="line.971"></a>
+<span class="sourceLineNo">972</span>            break;<a name="line.972"></a>
+<span class="sourceLineNo">973</span>        case DataBuffer.TYPE_DOUBLE:<a name="line.973"></a>
+<span class="sourceLineNo">974</span>            data = new double[nbands];<a name="line.974"></a>
+<span class="sourceLineNo">975</span>            break;<a name="line.975"></a>
+<span class="sourceLineNo">976</span>        default:<a name="line.976"></a>
+<span class="sourceLineNo">977</span>            throw new IllegalArgumentException("Unknown data buffer type: "+<a name="line.977"></a>
+<span class="sourceLineNo">978</span>                                               dataType);<a name="line.978"></a>
+<span class="sourceLineNo">979</span>        }<a name="line.979"></a>
+<span class="sourceLineNo">980</span><a name="line.980"></a>
+<span class="sourceLineNo">981</span>        if (rgbArray == null) {<a name="line.981"></a>
+<span class="sourceLineNo">982</span>            rgbArray = new int[offset+h*scansize];<a name="line.982"></a>
+<span class="sourceLineNo">983</span>        }<a name="line.983"></a>
+<span class="sourceLineNo">984</span><a name="line.984"></a>
+<span class="sourceLineNo">985</span>        for (int y = startY; y &lt; startY+h; y++, yoff+=scansize) {<a name="line.985"></a>
+<span class="sourceLineNo">986</span>            off = yoff;<a name="line.986"></a>
+<span class="sourceLineNo">987</span>            for (int x = startX; x &lt; startX+w; x++) {<a name="line.987"></a>
+<span class="sourceLineNo">988</span>                rgbArray[off++] = colorModel.getRGB(raster.getDataElements(x,<a name="line.988"></a>
+<span class="sourceLineNo">989</span>                                                                        y,<a name="line.989"></a>
+<span class="sourceLineNo">990</span>                                                                        data));<a name="line.990"></a>
+<span class="sourceLineNo">991</span>            }<a name="line.991"></a>
+<span class="sourceLineNo">992</span>        }<a name="line.992"></a>
+<span class="sourceLineNo">993</span><a name="line.993"></a>
+<span class="sourceLineNo">994</span>        return rgbArray;<a name="line.994"></a>
+<span class="sourceLineNo">995</span>    }<a name="line.995"></a>
+<span class="sourceLineNo">996</span><a name="line.996"></a>
+<span class="sourceLineNo">997</span><a name="line.997"></a>
+<span class="sourceLineNo">998</span>    /**<a name="line.998"></a>
+<span class="sourceLineNo">999</span>     * Sets a pixel in this &lt;code&gt;BufferedImage&lt;/code&gt; to the specified<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>     * RGB value. The pixel is assumed to be in the default RGB color<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>     * model, TYPE_INT_ARGB, and default sRGB color space.  For images<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>     * with an &lt;code&gt;IndexColorModel&lt;/code&gt;, the index with the nearest<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>     * color is chosen.<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>     *<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>     * &lt;p&gt;<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>     *<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>     * An &lt;code&gt;ArrayOutOfBoundsException&lt;/code&gt; may be thrown<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>     * if the coordinates are not in bounds.<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>     * However, explicit bounds checking is not guaranteed.<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>     *<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>     * @param x the X coordinate of the pixel to set<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>     * @param y the Y coordinate of the pixel to set<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>     * @param rgb the RGB value<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>     * @see #getRGB(int, int)<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>     * @see #getRGB(int, int, int, int, int[], int, int)<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>     */<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>    public synchronized void setRGB(int x, int y, int rgb) {<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>        raster.setDataElements(x, y, colorModel.getDataElements(rgb, null));<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>    }<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span><a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>    /**<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>     * Sets an array of integer pixels in the default RGB color model<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>     * (TYPE_INT_ARGB) and default sRGB color space,<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>     * into a portion of the image data.  Color conversion takes place<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>     * if the default model does not match the image<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>     * &lt;code&gt;ColorModel&lt;/code&gt;.  There are only 8-bits of precision for<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>     * each color component in the returned data when<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>     * using this method.  With a specified coordinate (x,&amp;nbsp;y) in the<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>     * this image, the ARGB pixel can be accessed in this way:<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>     * &lt;pre&gt;<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>     *    pixel   = rgbArray[offset + (y-startY)*scansize + (x-startX)];<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>     * &lt;/pre&gt;<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>     * WARNING: No dithering takes place.<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>     *<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>     * &lt;p&gt;<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>     *<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>     * An &lt;code&gt;ArrayOutOfBoundsException&lt;/code&gt; may be thrown<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>     * if the region is not in bounds.<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>     * However, explicit bounds checking is not guaranteed.<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>     *<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>     * @param startX      the starting X coordinate<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>     * @param startY      the starting Y coordinate<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>     * @param w           width of the region<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>     * @param h           height of the region<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>     * @param rgbArray    the rgb pixels<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>     * @param offset      offset into the &lt;code&gt;rgbArray&lt;/code&gt;<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>     * @param scansize    scanline stride for the &lt;code&gt;rgbArray&lt;/code&gt;<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>     * @see #getRGB(int, int)<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>     * @see #getRGB(int, int, int, int, int[], int, int)<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>     */<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>    public void setRGB(int startX, int startY, int w, int h,<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>                        int[] rgbArray, int offset, int scansize) {<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>        int yoff  = offset;<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>        int off;<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>        Object pixel = null;<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span><a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>        for (int y = startY; y &lt; startY+h; y++, yoff+=scansize) {<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>            off = yoff;<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>            for (int x = startX; x &lt; startX+w; x++) {<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>                pixel = colorModel.getDataElements(rgbArray[off++], pixel);<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>                raster.setDataElements(x, y, pixel);<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>            }<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>        }<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>    }<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span><a name="line.1065"></a>
+<span class="sourceLineNo">1066</span><a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>    /**<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>     * Returns the width of the &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>     * @return the width of this &lt;code&gt;BufferedImage&lt;/code&gt;<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>     */<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>    public int getWidth() {<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>        return raster.getWidth();<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>    }<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span><a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>    /**<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>     * Returns the height of the &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>     * @return the height of this &lt;code&gt;BufferedImage&lt;/code&gt;<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>     */<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>    public int getHeight() {<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>        return raster.getHeight();<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>    }<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span><a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>    /**<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>     * Returns the width of the &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>     * @param observer ignored<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>     * @return the width of this &lt;code&gt;BufferedImage&lt;/code&gt;<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>     */<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>    public int getWidth(ImageObserver observer) {<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>        return raster.getWidth();<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>    }<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span><a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>    /**<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>     * Returns the height of the &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>     * @param observer ignored<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>     * @return the height of this &lt;code&gt;BufferedImage&lt;/code&gt;<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>     */<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>    public int getHeight(ImageObserver observer) {<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>        return raster.getHeight();<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>    }<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span><a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>    /**<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>     * Returns the object that produces the pixels for the image.<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>     * @return the {@link ImageProducer} that is used to produce the<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>     * pixels for this image.<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>     * @see ImageProducer<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>     */<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>    public ImageProducer getSource() {<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>        if (osis == null) {<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>            if (properties == null) {<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>                properties = new Hashtable();<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>            }<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>            osis = new OffScreenImageSource(this, properties);<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>        }<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>        return osis;<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>    }<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span><a name="line.1116"></a>
+<span class="sourceLineNo">1117</span><a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>    /**<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>     * Returns a property of the image by name.  Individual property names<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>     * are defined by the various image formats.  If a property is not<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>     * defined for a particular image, this method returns the<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>     * &lt;code&gt;UndefinedProperty&lt;/code&gt; field.  If the properties<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>     * for this image are not yet known, then this method returns<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>     * &lt;code&gt;null&lt;/code&gt; and the &lt;code&gt;ImageObserver&lt;/code&gt; object is<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>     * notified later.  The property name "comment" should be used to<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>     * store an optional comment that can be presented to the user as a<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>     * description of the image, its source, or its author.<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>     * @param name the property name<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>     * @param observer the &lt;code&gt;ImageObserver&lt;/code&gt; that receives<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>     *  notification regarding image information<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>     * @return an {@link Object} that is the property referred to by the<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>     *          specified &lt;code&gt;name&lt;/code&gt; or &lt;code&gt;null&lt;/code&gt; if the<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>     *          properties of this image are not yet known.<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>     * @throws &lt;code&gt;NullPointerException&lt;/code&gt; if the property name is null.<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>     * @see ImageObserver<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>     * @see java.awt.Image#UndefinedProperty<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>     */<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>    public Object getProperty(String name, ImageObserver observer) {<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>        return getProperty(name);<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>    }<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span><a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>    /**<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>     * Returns a property of the image by name.<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>     * @param name the property name<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>     * @return an &lt;code&gt;Object&lt;/code&gt; that is the property referred to by<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>     *          the specified &lt;code&gt;name&lt;/code&gt;.<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>     * @throws &lt;code&gt;NullPointerException&lt;/code&gt; if the property name is null.<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>     */<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>    public Object getProperty(String name) {<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>        if (name == null) {<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>            throw new NullPointerException("null property name is not allowed");<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>        }<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>        if (properties == null) {<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>            return java.awt.Image.UndefinedProperty;<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>        }<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>        Object o = properties.get(name);<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span>        if (o == null) {<a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>            o = java.awt.Image.UndefinedProperty;<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>        }<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>        return o;<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>    }<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span><a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>    /**<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>     * This method returns a {@link Graphics2D}, but is here<a name="line.1164"></a>
+<span class="sourceLineNo">1165</span>     * for backwards compatibility.  {@link #createGraphics() createGraphics} is more<a name="line.1165"></a>
+<span class="sourceLineNo">1166</span>     * convenient, since it is declared to return a<a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>     * &lt;code&gt;Graphics2D&lt;/code&gt;.<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>     * @return a &lt;code&gt;Graphics2D&lt;/code&gt;, which can be used to draw into<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>     *          this image.<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>     */<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>    public java.awt.Graphics getGraphics() {<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>        return createGraphics();<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span>    }<a name="line.1173"></a>
+<span class="sourceLineNo">1174</span><a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>    /**<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>     * Creates a &lt;code&gt;Graphics2D&lt;/code&gt;, which can be used to draw into<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>     * this &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>     * @return a &lt;code&gt;Graphics2D&lt;/code&gt;, used for drawing into this<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span>     *          image.<a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>     */<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>    public Graphics2D createGraphics() {<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span>        GraphicsEnvironment env =<a name="line.1182"></a>
+<span class="sourceLineNo">1183</span>            GraphicsEnvironment.getLocalGraphicsEnvironment();<a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>        return env.createGraphics(this);<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>    }<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span><a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>    /**<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>     * Returns a subimage defined by a specified rectangular region.<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span>     * The returned &lt;code&gt;BufferedImage&lt;/code&gt; shares the same<a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>     * data array as the original image.<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>     * @param x the X coordinate of the upper-left corner of the<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>     *          specified rectangular region<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span>     * @param y the Y coordinate of the upper-left corner of the<a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>     *          specified rectangular region<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>     * @param w the width of the specified rectangular region<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>     * @param h the height of the specified rectangular region<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>     * @return a &lt;code&gt;BufferedImage&lt;/code&gt; that is the subimage of this<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>     *          &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>     * @exception &lt;code&gt;RasterFormatException&lt;/code&gt; if the specified<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>     * area is not contained within this &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>     */<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span>    public BufferedImage getSubimage (int x, int y, int w, int h) {<a name="line.1202"></a>
+<span class="sourceLineNo">1203</span>        return new BufferedImage (colorModel,<a name="line.1203"></a>
+<span class="sourceLineNo">1204</span>                                  raster.createWritableChild(x, y, w, h,<a name="line.1204"></a>
+<span class="sourceLineNo">1205</span>                                                             0, 0, null),<a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>                                  colorModel.isAlphaPremultiplied(),<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span>                                  properties);<a name="line.1207"></a>
+<span class="sourceLineNo">1208</span>    }<a name="line.1208"></a>
+<span class="sourceLineNo">1209</span><a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>    /**<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span>     * Returns whether or not the alpha has been premultiplied.  It<a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>     * returns &lt;code&gt;false&lt;/code&gt; if there is no alpha.<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span>     * @return &lt;code&gt;true&lt;/code&gt; if the alpha has been premultiplied;<a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>     *          &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>     */<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>    public boolean isAlphaPremultiplied() {<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>        return colorModel.isAlphaPremultiplied();<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span>    }<a name="line.1218"></a>
+<span class="sourceLineNo">1219</span><a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>    /**<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span>     * Forces the data to match the state specified in the<a name="line.1221"></a>
+<span class="sourceLineNo">1222</span>     * &lt;code&gt;isAlphaPremultiplied&lt;/code&gt; variable.  It may multiply or<a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>     * divide the color raster data by alpha, or do nothing if the data is<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>     * in the correct state.<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span>     * @param isAlphaPremultiplied &lt;code&gt;true&lt;/code&gt; if the alpha has been<a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>     *          premultiplied; &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span>     */<a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>    public void coerceData (boolean isAlphaPremultiplied) {<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span>        if (colorModel.hasAlpha() &amp;&amp;<a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>            colorModel.isAlphaPremultiplied() != isAlphaPremultiplied) {<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span>            // Make the color model do the conversion<a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>            colorModel = colorModel.coerceData (raster, isAlphaPremultiplied);<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>        }<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>    }<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span><a name="line.1235"></a>
+<span class="sourceLineNo">1236</span>    /**<a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>     * Returns a &lt;code&gt;String&lt;/code&gt; representation of this<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span>     * &lt;code&gt;BufferedImage&lt;/code&gt; object and its values.<a name="line.1238"></a>
+<span class="sourceLineNo">1239</span>     * @return a &lt;code&gt;String&lt;/code&gt; representing this<a name="line.1239"></a>
+<span class="sourceLineNo">1240</span>     *          &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1240"></a>
+<span class="sourceLineNo">1241</span>     */<a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>    public String toString() {<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>        return "BufferedImage@"+Integer.toHexString(hashCode())<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span>            +": type = "+imageType<a name="line.1244"></a>
+<span class="sourceLineNo">1245</span>            +" "+colorModel+" "+raster;<a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>    }<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span><a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>    /**<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>     * Returns a {@link Vector} of {@link RenderedImage} objects that are<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>     * the immediate sources, not the sources of these immediate sources,<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span>     * of image data for this &lt;code&gt;BufferedImage&lt;/code&gt;.  This<a name="line.1251"></a>
+<span class="sourceLineNo">1252</span>     * method returns &lt;code&gt;null&lt;/code&gt; if the &lt;code&gt;BufferedImage&lt;/code&gt;<a name="line.1252"></a>
+<span class="sourceLineNo">1253</span>     * has no information about its immediate sources.  It returns an<a name="line.1253"></a>
+<span class="sourceLineNo">1254</span>     * empty &lt;code&gt;Vector&lt;/code&gt; if the &lt;code&gt;BufferedImage&lt;/code&gt; has no<a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>     * immediate sources.<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span>     * @return a &lt;code&gt;Vector&lt;/code&gt; containing immediate sources of<a name="line.1256"></a>
+<span class="sourceLineNo">1257</span>     *          this &lt;code&gt;BufferedImage&lt;/code&gt; object's image date, or<a name="line.1257"></a>
+<span class="sourceLineNo">1258</span>     *          &lt;code&gt;null&lt;/code&gt; if this &lt;code&gt;BufferedImage&lt;/code&gt; has<a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>     *          no information about its immediate sources, or an empty<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span>     *          &lt;code&gt;Vector&lt;/code&gt; if this &lt;code&gt;BufferedImage&lt;/code&gt;<a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>     *          has no immediate sources.<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>     */<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>    public Vector&lt;RenderedImage&gt; getSources() {<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>        return null;<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span>    }<a name="line.1265"></a>
+<span class="sourceLineNo">1266</span><a name="line.1266"></a>
+<span class="sourceLineNo">1267</span>    /**<a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>     * Returns an array of names recognized by<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span>     * {@link #getProperty(String) getProperty(String)}<a name="line.1269"></a>
+<span class="sourceLineNo">1270</span>     * or &lt;code&gt;null&lt;/code&gt;, if no property names are recognized.<a name="line.1270"></a>
+<span class="sourceLineNo">1271</span>     * @return a &lt;code&gt;String&lt;/code&gt; array containing all of the property<a name="line.1271"></a>
+<span class="sourceLineNo">1272</span>     *          names that &lt;code&gt;getProperty(String)&lt;/code&gt; recognizes;<a name="line.1272"></a>
+<span class="sourceLineNo">1273</span>     *          or &lt;code&gt;null&lt;/code&gt; if no property names are recognized.<a name="line.1273"></a>
+<span class="sourceLineNo">1274</span>     */<a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>    public String[] getPropertyNames() {<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span>         return null;<a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>    }<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span><a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>    /**<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span>     * Returns the minimum x coordinate of this<a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>     * &lt;code&gt;BufferedImage&lt;/code&gt;.  This is always zero.<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span>     * @return the minimum x coordinate of this<a name="line.1282"></a>
+<span class="sourceLineNo">1283</span>     *          &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>     */<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span>    public int getMinX() {<a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>        return raster.getMinX();<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span>    }<a name="line.1287"></a>
+<span class="sourceLineNo">1288</span><a name="line.1288"></a>
+<span class="sourceLineNo">1289</span>    /**<a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>     * Returns the minimum y coordinate of this<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span>     * &lt;code&gt;BufferedImage&lt;/code&gt;.  This is always zero.<a name="line.1291"></a>
+<span class="sourceLineNo">1292</span>     * @return the minimum y coordinate of this<a name="line.1292"></a>
+<span class="sourceLineNo">1293</span>     *          &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1293"></a>
+<span class="sourceLineNo">1294</span>     */<a name="line.1294"></a>
+<span class="sourceLineNo">1295</span>    public int getMinY() {<a name="line.1295"></a>
+<span class="sourceLineNo">1296</span>        return raster.getMinY();<a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>    }<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span><a name="line.1298"></a>
+<span class="sourceLineNo">1299</span>    /**<a name="line.1299"></a>
+<span class="sourceLineNo">1300</span>     * Returns the &lt;code&gt;SampleModel&lt;/code&gt; associated with this<a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>     * &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>     * @return the &lt;code&gt;SampleModel&lt;/code&gt; of this<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>     *          &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span>     */<a name="line.1304"></a>
+<span class="sourceLineNo">1305</span>    public SampleModel getSampleModel() {<a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>        return raster.getSampleModel();<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span>    }<a name="line.1307"></a>
+<span class="sourceLineNo">1308</span><a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>    /**<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span>     * Returns the number of tiles in the x direction.<a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>     * This is always one.<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>     * @return the number of tiles in the x direction.<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span>     */<a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>    public int getNumXTiles() {<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span>        return 1;<a name="line.1315"></a>
+<span class="sourceLineNo">1316</span>    }<a name="line.1316"></a>
+<span class="sourceLineNo">1317</span><a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>    /**<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span>     * Returns the number of tiles in the y direction.<a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>     * This is always one.<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span>     * @return the number of tiles in the y direction.<a name="line.1321"></a>
+<span class="sourceLineNo">1322</span>     */<a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>    public int getNumYTiles() {<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>        return 1;<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>    }<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span><a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>    /**<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span>     * Returns the minimum tile index in the x direction.<a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>     * This is always zero.<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>     * @return the minimum tile index in the x direction.<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>     */<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span>    public int getMinTileX() {<a name="line.1332"></a>
+<span class="sourceLineNo">1333</span>        return 0;<a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>    }<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span><a name="line.1335"></a>
+<span class="sourceLineNo">1336</span>    /**<a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>     * Returns the minimum tile index in the y direction.<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span>     * This is always zero.<a name="line.1338"></a>
+<span class="sourceLineNo">1339</span>     * @return the mininum tile index in the y direction.<a name="line.1339"></a>
+<span class="sourceLineNo">1340</span>     */<a name="line.1340"></a>
+<span class="sourceLineNo">1341</span>    public int getMinTileY() {<a name="line.1341"></a>
+<span class="sourceLineNo">1342</span>        return 0;<a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>    }<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span><a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>    /**<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>     * Returns the tile width in pixels.<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>     * @return the tile width in pixels.<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span>     */<a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>    public int getTileWidth() {<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>       return raster.getWidth();<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span>    }<a name="line.1351"></a>
+<span class="sourceLineNo">1352</span><a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>    /**<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span>     * Returns the tile height in pixels.<a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>     * @return the tile height in pixels.<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span>     */<a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>    public int getTileHeight() {<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span>       return raster.getHeight();<a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>    }<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span><a name="line.1360"></a>
+<span class="sourceLineNo">1361</span>    /**<a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>     * Returns the x offset of the tile grid relative to the origin,<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span>     * For example, the x coordinate of the location of tile<a name="line.1363"></a>
+<span class="sourceLineNo">1364</span>     * (0,&amp;nbsp;0).  This is always zero.<a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>     * @return the x offset of the tile grid.<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span>     */<a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>    public int getTileGridXOffset() {<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span>        return raster.getSampleModelTranslateX();<a name="line.1368"></a>
+<span class="sourceLineNo">1369</span>    }<a name="line.1369"></a>
+<span class="sourceLineNo">1370</span><a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>    /**<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span>     * Returns the y offset of the tile grid relative to the origin,<a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>     * For example, the y coordinate of the location of tile<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>     * (0,&amp;nbsp;0).  This is always zero.<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span>     * @return the y offset of the tile grid.<a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>     */<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>    public int getTileGridYOffset() {<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>        return raster.getSampleModelTranslateY();<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span>    }<a name="line.1379"></a>
+<span class="sourceLineNo">1380</span><a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>    /**<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span>     * Returns tile (&lt;code&gt;tileX&lt;/code&gt;,&amp;nbsp;&lt;code&gt;tileY&lt;/code&gt;).  Note<a name="line.1382"></a>
+<span class="sourceLineNo">1383</span>     * that &lt;code&gt;tileX&lt;/code&gt; and &lt;code&gt;tileY&lt;/code&gt; are indices<a name="line.1383"></a>
+<span class="sourceLineNo">1384</span>     * into the tile array, not pixel locations.  The &lt;code&gt;Raster&lt;/code&gt;<a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>     * that is returned is live, which means that it is updated if the<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span>     * image is changed.<a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>     * @param tileX the x index of the requested tile in the tile array<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span>     * @param tileY the y index of the requested tile in the tile array<a name="line.1388"></a>
+<span class="sourceLineNo">1389</span>     * @return a &lt;code&gt;Raster&lt;/code&gt; that is the tile defined by the<a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>     *          arguments &lt;code&gt;tileX&lt;/code&gt; and &lt;code&gt;tileY&lt;/code&gt;.<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>     * @exception &lt;code&gt;ArrayIndexOutOfBoundsException&lt;/code&gt; if both<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span>     *          &lt;code&gt;tileX&lt;/code&gt; and &lt;code&gt;tileY&lt;/code&gt; are not<a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>     *          equal to 0<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span>     */<a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>    public Raster getTile(int tileX, int tileY) {<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span>        if (tileX == 0 &amp;&amp; tileY == 0) {<a name="line.1396"></a>
+<span class="sourceLineNo">1397</span>            return raster;<a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>        }<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span>        throw new ArrayIndexOutOfBoundsException("BufferedImages only have"+<a name="line.1399"></a>
+<span class="sourceLineNo">1400</span>             " one tile with index 0,0");<a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>    }<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span><a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>    /**<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span>     * Returns the image as one large tile.  The &lt;code&gt;Raster&lt;/code&gt;<a name="line.1404"></a>
+<span class="sourceLineNo">1405</span>     * returned is a copy of the image data is not updated if the<a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>     * image is changed.<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>     * @return a &lt;code&gt;Raster&lt;/code&gt; that is a copy of the image data.<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span>     * @see #setData(Raster)<a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>     */<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span>    public Raster getData() {<a name="line.1410"></a>
+<span class="sourceLineNo">1411</span><a name="line.1411"></a>
+<span class="sourceLineNo">1412</span>        // REMIND : this allocates a whole new tile if raster is a<a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>        // subtile.  (It only copies in the requested area)<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span>        // We should do something smarter.<a name="line.1414"></a>
+<span class="sourceLineNo">1415</span>        int width = raster.getWidth();<a name="line.1415"></a>
+<span class="sourceLineNo">1416</span>        int height = raster.getHeight();<a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>        int startX = raster.getMinX();<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span>        int startY = raster.getMinY();<a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>        WritableRaster wr =<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span>           Raster.createWritableRaster(raster.getSampleModel(),<a name="line.1420"></a>
+<span class="sourceLineNo">1421</span>                         new Point(raster.getSampleModelTranslateX(),<a name="line.1421"></a>
+<span class="sourceLineNo">1422</span>                                   raster.getSampleModelTranslateY()));<a name="line.1422"></a>
+<span class="sourceLineNo">1423</span><a name="line.1423"></a>
+<span class="sourceLineNo">1424</span>        Object tdata = null;<a name="line.1424"></a>
+<span class="sourceLineNo">1425</span><a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>        for (int i = startY; i &lt; startY+height; i++)  {<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span>            tdata = raster.getDataElements(startX,i,width,1,tdata);<a name="line.1427"></a>
+<span class="sourceLineNo">1428</span>            wr.setDataElements(startX,i,width,1, tdata);<a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>        }<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span>        return wr;<a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>    }<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span><a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>    /**<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span>     * Computes and returns an arbitrary region of the<a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>     * &lt;code&gt;BufferedImage&lt;/code&gt;.  The &lt;code&gt;Raster&lt;/code&gt; returned is a<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span>     * copy of the image data and is not updated if the image is<a name="line.1436"></a>
+<span class="sourceLineNo">1437</span>     * changed.<a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>     * @param rect the region of the &lt;code&gt;BufferedImage&lt;/code&gt; to be<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>     * returned.<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>     * @return a &lt;code&gt;Raster&lt;/code&gt; that is a copy of the image data of<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>     *          the specified region of the &lt;code&gt;BufferedImage&lt;/code&gt;<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span>     * @see #setData(Raster)<a name="line.1442"></a>
+<span class="sourceLineNo">1443</span>     */<a name="line.1443"></a>
+<span class="sourceLineNo">1444</span>    public Raster getData(Rectangle rect) {<a name="line.1444"></a>
+<span class="sourceLineNo">1445</span>        SampleModel sm = raster.getSampleModel();<a name="line.1445"></a>
+<span class="sourceLineNo">1446</span>        SampleModel nsm = sm.createCompatibleSampleModel(rect.width,<a name="line.1446"></a>
+<span class="sourceLineNo">1447</span>                                                         rect.height);<a name="line.1447"></a>
+<span class="sourceLineNo">1448</span>        WritableRaster wr = Raster.createWritableRaster(nsm,<a name="line.1448"></a>
+<span class="sourceLineNo">1449</span>                                                  rect.getLocation());<a name="line.1449"></a>
+<span class="sourceLineNo">1450</span>        int width = rect.width;<a name="line.1450"></a>
+<span class="sourceLineNo">1451</span>        int height = rect.height;<a name="line.1451"></a>
+<span class="sourceLineNo">1452</span>        int startX = rect.x;<a name="line.1452"></a>
+<span class="sourceLineNo">1453</span>        int startY = rect.y;<a name="line.1453"></a>
+<span class="sourceLineNo">1454</span><a name="line.1454"></a>
+<span class="sourceLineNo">1455</span>        Object tdata = null;<a name="line.1455"></a>
+<span class="sourceLineNo">1456</span><a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>        for (int i = startY; i &lt; startY+height; i++)  {<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span>            tdata = raster.getDataElements(startX,i,width,1,tdata);<a name="line.1458"></a>
+<span class="sourceLineNo">1459</span>            wr.setDataElements(startX,i,width,1, tdata);<a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>        }<a name="line.1460"></a>
+<span class="sourceLineNo">1461</span>        return wr;<a name="line.1461"></a>
+<span class="sourceLineNo">1462</span>    }<a name="line.1462"></a>
+<span class="sourceLineNo">1463</span><a name="line.1463"></a>
+<span class="sourceLineNo">1464</span>    /**<a name="line.1464"></a>
+<span class="sourceLineNo">1465</span>     * Computes an arbitrary rectangular region of the<a name="line.1465"></a>
+<span class="sourceLineNo">1466</span>     * &lt;code&gt;BufferedImage&lt;/code&gt; and copies it into a specified<a name="line.1466"></a>
+<span class="sourceLineNo">1467</span>     * &lt;code&gt;WritableRaster&lt;/code&gt;.  The region to be computed is<a name="line.1467"></a>
+<span class="sourceLineNo">1468</span>     * determined from the bounds of the specified<a name="line.1468"></a>
+<span class="sourceLineNo">1469</span>     * &lt;code&gt;WritableRaster&lt;/code&gt;.  The specified<a name="line.1469"></a>
+<span class="sourceLineNo">1470</span>     * &lt;code&gt;WritableRaster&lt;/code&gt; must have a<a name="line.1470"></a>
+<span class="sourceLineNo">1471</span>     * &lt;code&gt;SampleModel&lt;/code&gt; that is compatible with this image.  If<a name="line.1471"></a>
+<span class="sourceLineNo">1472</span>     * &lt;code&gt;outRaster&lt;/code&gt; is &lt;code&gt;null&lt;/code&gt;,<a name="line.1472"></a>
+<span class="sourceLineNo">1473</span>     * an appropriate &lt;code&gt;WritableRaster&lt;/code&gt; is created.<a name="line.1473"></a>
+<span class="sourceLineNo">1474</span>     * @param outRaster a &lt;code&gt;WritableRaster&lt;/code&gt; to hold the returned<a name="line.1474"></a>
+<span class="sourceLineNo">1475</span>     *          part of the image, or &lt;code&gt;null&lt;/code&gt;<a name="line.1475"></a>
+<span class="sourceLineNo">1476</span>     * @return a reference to the supplied or created<a name="line.1476"></a>
+<span class="sourceLineNo">1477</span>     *          &lt;code&gt;WritableRaster&lt;/code&gt;.<a name="line.1477"></a>
+<span class="sourceLineNo">1478</span>     */<a name="line.1478"></a>
+<span class="sourceLineNo">1479</span>    public WritableRaster copyData(WritableRaster outRaster) {<a name="line.1479"></a>
+<span class="sourceLineNo">1480</span>        if (outRaster == null) {<a name="line.1480"></a>
+<span class="sourceLineNo">1481</span>            return (WritableRaster) getData();<a name="line.1481"></a>
+<span class="sourceLineNo">1482</span>        }<a name="line.1482"></a>
+<span class="sourceLineNo">1483</span>        int width = outRaster.getWidth();<a name="line.1483"></a>
+<span class="sourceLineNo">1484</span>        int height = outRaster.getHeight();<a name="line.1484"></a>
+<span class="sourceLineNo">1485</span>        int startX = outRaster.getMinX();<a name="line.1485"></a>
+<span class="sourceLineNo">1486</span>        int startY = outRaster.getMinY();<a name="line.1486"></a>
+<span class="sourceLineNo">1487</span><a name="line.1487"></a>
+<span class="sourceLineNo">1488</span>        Object tdata = null;<a name="line.1488"></a>
+<span class="sourceLineNo">1489</span><a name="line.1489"></a>
+<span class="sourceLineNo">1490</span>        for (int i = startY; i &lt; startY+height; i++)  {<a name="line.1490"></a>
+<span class="sourceLineNo">1491</span>            tdata = raster.getDataElements(startX,i,width,1,tdata);<a name="line.1491"></a>
+<span class="sourceLineNo">1492</span>            outRaster.setDataElements(startX,i,width,1, tdata);<a name="line.1492"></a>
+<span class="sourceLineNo">1493</span>        }<a name="line.1493"></a>
+<span class="sourceLineNo">1494</span><a name="line.1494"></a>
+<span class="sourceLineNo">1495</span>        return outRaster;<a name="line.1495"></a>
+<span class="sourceLineNo">1496</span>    }<a name="line.1496"></a>
+<span class="sourceLineNo">1497</span><a name="line.1497"></a>
+<span class="sourceLineNo">1498</span>  /**<a name="line.1498"></a>
+<span class="sourceLineNo">1499</span>     * Sets a rectangular region of the image to the contents of the<a name="line.1499"></a>
+<span class="sourceLineNo">1500</span>     * specified &lt;code&gt;Raster&lt;/code&gt; &lt;code&gt;r&lt;/code&gt;, which is<a name="line.1500"></a>
+<span class="sourceLineNo">1501</span>     * assumed to be in the same coordinate space as the<a name="line.1501"></a>
+<span class="sourceLineNo">1502</span>     * &lt;code&gt;BufferedImage&lt;/code&gt;. The operation is clipped to the bounds<a name="line.1502"></a>
+<span class="sourceLineNo">1503</span>     * of the &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1503"></a>
+<span class="sourceLineNo">1504</span>     * @param r the specified &lt;code&gt;Raster&lt;/code&gt;<a name="line.1504"></a>
+<span class="sourceLineNo">1505</span>     * @see #getData<a name="line.1505"></a>
+<span class="sourceLineNo">1506</span>     * @see #getData(Rectangle)<a name="line.1506"></a>
+<span class="sourceLineNo">1507</span>    */<a name="line.1507"></a>
+<span class="sourceLineNo">1508</span>    public void setData(Raster r) {<a name="line.1508"></a>
+<span class="sourceLineNo">1509</span>        int width = r.getWidth();<a name="line.1509"></a>
+<span class="sourceLineNo">1510</span>        int height = r.getHeight();<a name="line.1510"></a>
+<span class="sourceLineNo">1511</span>        int startX = r.getMinX();<a name="line.1511"></a>
+<span class="sourceLineNo">1512</span>        int startY = r.getMinY();<a name="line.1512"></a>
+<span class="sourceLineNo">1513</span><a name="line.1513"></a>
+<span class="sourceLineNo">1514</span>        int[] tdata = null;<a name="line.1514"></a>
+<span class="sourceLineNo">1515</span><a name="line.1515"></a>
+<span class="sourceLineNo">1516</span>        // Clip to the current Raster<a name="line.1516"></a>
+<span class="sourceLineNo">1517</span>        Rectangle rclip = new Rectangle(startX, startY, width, height);<a name="line.1517"></a>
+<span class="sourceLineNo">1518</span>        Rectangle bclip = new Rectangle(0, 0, raster.width, raster.height);<a name="line.1518"></a>
+<span class="sourceLineNo">1519</span>        Rectangle intersect = rclip.intersection(bclip);<a name="line.1519"></a>
+<span class="sourceLineNo">1520</span>        if (intersect.isEmpty()) {<a name="line.1520"></a>
+<span class="sourceLineNo">1521</span>            return;<a name="line.1521"></a>
+<span class="sourceLineNo">1522</span>        }<a name="line.1522"></a>
+<span class="sourceLineNo">1523</span>        width = intersect.width;<a name="line.1523"></a>
+<span class="sourceLineNo">1524</span>        height = intersect.height;<a name="line.1524"></a>
+<span class="sourceLineNo">1525</span>        startX = intersect.x;<a name="line.1525"></a>
+<span class="sourceLineNo">1526</span>        startY = intersect.y;<a name="line.1526"></a>
+<span class="sourceLineNo">1527</span><a name="line.1527"></a>
+<span class="sourceLineNo">1528</span>        // remind use get/setDataElements for speed if Rasters are<a name="line.1528"></a>
+<span class="sourceLineNo">1529</span>        // compatible<a name="line.1529"></a>
+<span class="sourceLineNo">1530</span>        for (int i = startY; i &lt; startY+height; i++)  {<a name="line.1530"></a>
+<span class="sourceLineNo">1531</span>            tdata = r.getPixels(startX,i,width,1,tdata);<a name="line.1531"></a>
+<span class="sourceLineNo">1532</span>            raster.setPixels(startX,i,width,1, tdata);<a name="line.1532"></a>
+<span class="sourceLineNo">1533</span>        }<a name="line.1533"></a>
+<span class="sourceLineNo">1534</span>    }<a name="line.1534"></a>
+<span class="sourceLineNo">1535</span><a name="line.1535"></a>
+<span class="sourceLineNo">1536</span><a name="line.1536"></a>
+<span class="sourceLineNo">1537</span>  /**<a name="line.1537"></a>
+<span class="sourceLineNo">1538</span>   * Adds a tile observer.  If the observer is already present,<a name="line.1538"></a>
+<span class="sourceLineNo">1539</span>   * it receives multiple notifications.<a name="line.1539"></a>
+<span class="sourceLineNo">1540</span>   * @param to the specified {@link TileObserver}<a name="line.1540"></a>
+<span class="sourceLineNo">1541</span>   */<a name="line.1541"></a>
+<span class="sourceLineNo">1542</span>    public void addTileObserver (TileObserver to) {<a name="line.1542"></a>
+<span class="sourceLineNo">1543</span>    }<a name="line.1543"></a>
+<span class="sourceLineNo">1544</span><a name="line.1544"></a>
+<span class="sourceLineNo">1545</span>  /**<a name="line.1545"></a>
+<span class="sourceLineNo">1546</span>   * Removes a tile observer.  If the observer was not registered,<a name="line.1546"></a>
+<span class="sourceLineNo">1547</span>   * nothing happens.  If the observer was registered for multiple<a name="line.1547"></a>
+<span class="sourceLineNo">1548</span>   * notifications, it is now registered for one fewer notification.<a name="line.1548"></a>
+<span class="sourceLineNo">1549</span>   * @param to the specified &lt;code&gt;TileObserver&lt;/code&gt;.<a name="line.1549"></a>
+<span class="sourceLineNo">1550</span>   */<a name="line.1550"></a>
+<span class="sourceLineNo">1551</span>    public void removeTileObserver (TileObserver to) {<a name="line.1551"></a>
+<span class="sourceLineNo">1552</span>    }<a name="line.1552"></a>
+<span class="sourceLineNo">1553</span><a name="line.1553"></a>
+<span class="sourceLineNo">1554</span>    /**<a name="line.1554"></a>
+<span class="sourceLineNo">1555</span>     * Returns whether or not a tile is currently checked out for writing.<a name="line.1555"></a>
+<span class="sourceLineNo">1556</span>     * @param tileX the x index of the tile.<a name="line.1556"></a>
+<span class="sourceLineNo">1557</span>     * @param tileY the y index of the tile.<a name="line.1557"></a>
+<span class="sourceLineNo">1558</span>     * @return &lt;code&gt;true&lt;/code&gt; if the tile specified by the specified<a name="line.1558"></a>
+<span class="sourceLineNo">1559</span>     *          indices is checked out for writing; &lt;code&gt;false&lt;/code&gt;<a name="line.1559"></a>
+<span class="sourceLineNo">1560</span>     *          otherwise.<a name="line.1560"></a>
+<span class="sourceLineNo">1561</span>     * @exception &lt;code&gt;ArrayIndexOutOfBoundsException&lt;/code&gt; if both<a name="line.1561"></a>
+<span class="sourceLineNo">1562</span>     *          &lt;code&gt;tileX&lt;/code&gt; and &lt;code&gt;tileY&lt;/code&gt; are not equal<a name="line.1562"></a>
+<span class="sourceLineNo">1563</span>     *          to 0<a name="line.1563"></a>
+<span class="sourceLineNo">1564</span>     */<a name="line.1564"></a>
+<span class="sourceLineNo">1565</span>    public boolean isTileWritable (int tileX, int tileY) {<a name="line.1565"></a>
+<span class="sourceLineNo">1566</span>        if (tileX == 0 &amp;&amp; tileY == 0) {<a name="line.1566"></a>
+<span class="sourceLineNo">1567</span>            return true;<a name="line.1567"></a>
+<span class="sourceLineNo">1568</span>        }<a name="line.1568"></a>
+<span class="sourceLineNo">1569</span>        throw new IllegalArgumentException("Only 1 tile in image");<a name="line.1569"></a>
+<span class="sourceLineNo">1570</span>    }<a name="line.1570"></a>
+<span class="sourceLineNo">1571</span><a name="line.1571"></a>
+<span class="sourceLineNo">1572</span>    /**<a name="line.1572"></a>
+<span class="sourceLineNo">1573</span>     * Returns an array of {@link Point} objects indicating which tiles<a name="line.1573"></a>
+<span class="sourceLineNo">1574</span>     * are checked out for writing.  Returns &lt;code&gt;null&lt;/code&gt; if none are<a name="line.1574"></a>
+<span class="sourceLineNo">1575</span>     * checked out.<a name="line.1575"></a>
+<span class="sourceLineNo">1576</span>     * @return a &lt;code&gt;Point&lt;/code&gt; array that indicates the tiles that<a name="line.1576"></a>
+<span class="sourceLineNo">1577</span>     *          are checked out for writing, or &lt;code&gt;null&lt;/code&gt; if no<a name="line.1577"></a>
+<span class="sourceLineNo">1578</span>     *          tiles are checked out for writing.<a name="line.1578"></a>
+<span class="sourceLineNo">1579</span>     */<a name="line.1579"></a>
+<span class="sourceLineNo">1580</span>    public Point[] getWritableTileIndices() {<a name="line.1580"></a>
+<span class="sourceLineNo">1581</span>        Point[] p = new Point[1];<a name="line.1581"></a>
+<span class="sourceLineNo">1582</span>        p[0] = new Point(0, 0);<a name="line.1582"></a>
+<span class="sourceLineNo">1583</span><a name="line.1583"></a>
+<span class="sourceLineNo">1584</span>        return p;<a name="line.1584"></a>
+<span class="sourceLineNo">1585</span>    }<a name="line.1585"></a>
+<span class="sourceLineNo">1586</span><a name="line.1586"></a>
+<span class="sourceLineNo">1587</span>    /**<a name="line.1587"></a>
+<span class="sourceLineNo">1588</span>     * Returns whether or not any tile is checked out for writing.<a name="line.1588"></a>
+<span class="sourceLineNo">1589</span>     * Semantically equivalent to<a name="line.1589"></a>
+<span class="sourceLineNo">1590</span>     * &lt;pre&gt;<a name="line.1590"></a>
+<span class="sourceLineNo">1591</span>     * (getWritableTileIndices() != null).<a name="line.1591"></a>
+<span class="sourceLineNo">1592</span>     * &lt;/pre&gt;<a name="line.1592"></a>
+<span class="sourceLineNo">1593</span>     * @return &lt;code&gt;true&lt;/code&gt; if any tile is checked out for writing;<a name="line.1593"></a>
+<span class="sourceLineNo">1594</span>     *          &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.1594"></a>
+<span class="sourceLineNo">1595</span>     */<a name="line.1595"></a>
+<span class="sourceLineNo">1596</span>    public boolean hasTileWriters () {<a name="line.1596"></a>
+<span class="sourceLineNo">1597</span>        return true;<a name="line.1597"></a>
+<span class="sourceLineNo">1598</span>    }<a name="line.1598"></a>
+<span class="sourceLineNo">1599</span><a name="line.1599"></a>
+<span class="sourceLineNo">1600</span>  /**<a name="line.1600"></a>
+<span class="sourceLineNo">1601</span>   * Checks out a tile for writing.  All registered<a name="line.1601"></a>
+<span class="sourceLineNo">1602</span>   * &lt;code&gt;TileObservers&lt;/code&gt; are notified when a tile goes from having<a name="line.1602"></a>
+<span class="sourceLineNo">1603</span>   * no writers to having one writer.<a name="line.1603"></a>
+<span class="sourceLineNo">1604</span>   * @param tileX the x index of the tile<a name="line.1604"></a>
+<span class="sourceLineNo">1605</span>   * @param tileY the y index of the tile<a name="line.1605"></a>
+<span class="sourceLineNo">1606</span>   * @return a &lt;code&gt;WritableRaster&lt;/code&gt; that is the tile, indicated by<a name="line.1606"></a>
+<span class="sourceLineNo">1607</span>   *            the specified indices, to be checked out for writing.<a name="line.1607"></a>
+<span class="sourceLineNo">1608</span>   */<a name="line.1608"></a>
+<span class="sourceLineNo">1609</span>    public WritableRaster getWritableTile (int tileX, int tileY) {<a name="line.1609"></a>
+<span class="sourceLineNo">1610</span>        return raster;<a name="line.1610"></a>
+<span class="sourceLineNo">1611</span>    }<a name="line.1611"></a>
+<span class="sourceLineNo">1612</span><a name="line.1612"></a>
+<span class="sourceLineNo">1613</span>  /**<a name="line.1613"></a>
+<span class="sourceLineNo">1614</span>   * Relinquishes permission to write to a tile.  If the caller<a name="line.1614"></a>
+<span class="sourceLineNo">1615</span>   * continues to write to the tile, the results are undefined.<a name="line.1615"></a>
+<span class="sourceLineNo">1616</span>   * Calls to this method should only appear in matching pairs<a name="line.1616"></a>
+<span class="sourceLineNo">1617</span>   * with calls to {@link #getWritableTile(int, int) getWritableTile(int, int)}.  Any other leads<a name="line.1617"></a>
+<span class="sourceLineNo">1618</span>   * to undefined results.  All registered &lt;code&gt;TileObservers&lt;/code&gt;<a name="line.1618"></a>
+<span class="sourceLineNo">1619</span>   * are notified when a tile goes from having one writer to having no<a name="line.1619"></a>
+<span class="sourceLineNo">1620</span>   * writers.<a name="line.1620"></a>
+<span class="sourceLineNo">1621</span>   * @param tileX the x index of the tile<a name="line.1621"></a>
+<span class="sourceLineNo">1622</span>   * @param tileY the y index of the tile<a name="line.1622"></a>
+<span class="sourceLineNo">1623</span>   */<a name="line.1623"></a>
+<span class="sourceLineNo">1624</span>    public void releaseWritableTile (int tileX, int tileY) {<a name="line.1624"></a>
+<span class="sourceLineNo">1625</span>    }<a name="line.1625"></a>
+<span class="sourceLineNo">1626</span><a name="line.1626"></a>
+<span class="sourceLineNo">1627</span>    /**<a name="line.1627"></a>
+<span class="sourceLineNo">1628</span>     * Returns the transparency.  Returns either OPAQUE, BITMASK,<a name="line.1628"></a>
+<span class="sourceLineNo">1629</span>     * or TRANSLUCENT.<a name="line.1629"></a>
+<span class="sourceLineNo">1630</span>     * @return the transparency of this &lt;code&gt;BufferedImage&lt;/code&gt;.<a name="line.1630"></a>
+<span class="sourceLineNo">1631</span>     * @see Transparency#OPAQUE<a name="line.1631"></a>
+<span class="sourceLineNo">1632</span>     * @see Transparency#BITMASK<a name="line.1632"></a>
+<span class="sourceLineNo">1633</span>     * @see Transparency#TRANSLUCENT<a name="line.1633"></a>
+<span class="sourceLineNo">1634</span>     * @since 1.5<a name="line.1634"></a>
+<span class="sourceLineNo">1635</span>     */<a name="line.1635"></a>
+<span class="sourceLineNo">1636</span>    public int getTransparency() {<a name="line.1636"></a>
+<span class="sourceLineNo">1637</span>        return colorModel.getTransparency();<a name="line.1637"></a>
+<span class="sourceLineNo">1638</span>    }<a name="line.1638"></a>
+<span class="sourceLineNo">1639</span>}<a name="line.1639"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

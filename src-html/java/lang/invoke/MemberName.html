@@ -1,0 +1,1034 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang.invoke;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import sun.invoke.util.BytecodeDescriptor;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import sun.invoke.util.VerifyAccess;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.lang.reflect.Constructor;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.lang.reflect.Field;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.lang.reflect.Method;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.lang.reflect.Member;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.lang.reflect.Modifier;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.util.ArrayList;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.util.Arrays;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.util.Collections;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import java.util.Iterator;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import java.util.List;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import static java.lang.invoke.MethodHandleNatives.Constants.*;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import static java.lang.invoke.MethodHandleStatics.*;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import java.util.Objects;<a name="line.43"></a>
+<span class="sourceLineNo">044</span><a name="line.44"></a>
+<span class="sourceLineNo">045</span>/**<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * A {@code MemberName} is a compact symbolic datum which fully characterizes<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * a method or field reference.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * A member name refers to a field, method, constructor, or member type.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * Every member name has a simple name (a string) and a type (either a Class or MethodType).<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * A member name may also have a non-null declaring class, or it may be simply<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * a naked name/type pair.<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * A member name may also have non-zero modifier flags.<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * Finally, a member name may be either resolved or unresolved.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * If it is resolved, the existence of the named<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;p&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * Whether resolved or not, a member name provides no access rights or<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * invocation capability to its possessor.  It is merely a compact<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * representation of all symbolic information necessary to link to<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * and properly use the named member.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;p&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * When resolved, a member name's internal implementation may include references to JVM metadata.<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * This representation is stateless and only decriptive.<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * It provides no private information and no capability to use the member.<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;p&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * By contrast, a {@linkplain java.lang.reflect.Method} contains fuller information<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * about the internals of a method (except its bytecodes) and also<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * allows invocation.  A MemberName is much lighter than a Method,<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * since it contains about 7 fields to the 16 of Method (plus its sub-arrays),<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * and those seven fields omit much of the information in Method.<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * @author jrose<a name="line.70"></a>
+<span class="sourceLineNo">071</span> */<a name="line.71"></a>
+<span class="sourceLineNo">072</span>/*non-public*/ final class MemberName implements Member, Cloneable {<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    private Class&lt;?&gt;   clazz;       // class in which the method is defined<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    private String     name;        // may be null if not yet materialized<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    private Object     type;        // may be null if not yet materialized<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    private int        flags;       // modifier bits; see reflect.Modifier<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    //@Injected JVM_Method* vmtarget;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    //@Injected int         vmindex;<a name="line.78"></a>
+<span class="sourceLineNo">079</span>    private Object     resolution;  // if null, this guy is resolved<a name="line.79"></a>
+<span class="sourceLineNo">080</span><a name="line.80"></a>
+<span class="sourceLineNo">081</span>    /** Return the declaring class of this member.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     *  In the case of a bare name and type, the declaring class will be null.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     */<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    public Class&lt;?&gt; getDeclaringClass() {<a name="line.84"></a>
+<span class="sourceLineNo">085</span>        return clazz;<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    }<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>    /** Utility method producing the class loader of the declaring class. */<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    public ClassLoader getClassLoader() {<a name="line.89"></a>
+<span class="sourceLineNo">090</span>        return clazz.getClassLoader();<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    }<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>    /** Return the simple name of this member.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     *  For a type, it is the same as {@link Class#getSimpleName}.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *  For a method or field, it is the simple name of the member.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *  For a constructor, it is always {@code "&amp;lt;init&amp;gt;"}.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     */<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    public String getName() {<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        if (name == null) {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>            expandFromVM();<a name="line.100"></a>
+<span class="sourceLineNo">101</span>            if (name == null)  return null;<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        }<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        return name;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    }<a name="line.104"></a>
+<span class="sourceLineNo">105</span><a name="line.105"></a>
+<span class="sourceLineNo">106</span>    public MethodType getMethodOrFieldType() {<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        if (isInvocable())<a name="line.107"></a>
+<span class="sourceLineNo">108</span>            return getMethodType();<a name="line.108"></a>
+<span class="sourceLineNo">109</span>        if (isGetter())<a name="line.109"></a>
+<span class="sourceLineNo">110</span>            return MethodType.methodType(getFieldType());<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        if (isSetter())<a name="line.111"></a>
+<span class="sourceLineNo">112</span>            return MethodType.methodType(void.class, getFieldType());<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        throw new InternalError("not a method or field: "+this);<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    }<a name="line.114"></a>
+<span class="sourceLineNo">115</span><a name="line.115"></a>
+<span class="sourceLineNo">116</span>    /** Return the declared type of this member, which<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     *  must be a method or constructor.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     */<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    public MethodType getMethodType() {<a name="line.119"></a>
+<span class="sourceLineNo">120</span>        if (type == null) {<a name="line.120"></a>
+<span class="sourceLineNo">121</span>            expandFromVM();<a name="line.121"></a>
+<span class="sourceLineNo">122</span>            if (type == null)  return null;<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        }<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        if (!isInvocable())<a name="line.124"></a>
+<span class="sourceLineNo">125</span>            throw newIllegalArgumentException("not invocable, no method type");<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        if (type instanceof MethodType) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>            return (MethodType) type;<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        }<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        if (type instanceof String) {<a name="line.129"></a>
+<span class="sourceLineNo">130</span>            String sig = (String) type;<a name="line.130"></a>
+<span class="sourceLineNo">131</span>            MethodType res = MethodType.fromMethodDescriptorString(sig, getClassLoader());<a name="line.131"></a>
+<span class="sourceLineNo">132</span>            this.type = res;<a name="line.132"></a>
+<span class="sourceLineNo">133</span>            return res;<a name="line.133"></a>
+<span class="sourceLineNo">134</span>        }<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        if (type instanceof Object[]) {<a name="line.135"></a>
+<span class="sourceLineNo">136</span>            Object[] typeInfo = (Object[]) type;<a name="line.136"></a>
+<span class="sourceLineNo">137</span>            Class&lt;?&gt;[] ptypes = (Class&lt;?&gt;[]) typeInfo[1];<a name="line.137"></a>
+<span class="sourceLineNo">138</span>            Class&lt;?&gt; rtype = (Class&lt;?&gt;) typeInfo[0];<a name="line.138"></a>
+<span class="sourceLineNo">139</span>            MethodType res = MethodType.methodType(rtype, ptypes);<a name="line.139"></a>
+<span class="sourceLineNo">140</span>            this.type = res;<a name="line.140"></a>
+<span class="sourceLineNo">141</span>            return res;<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        }<a name="line.142"></a>
+<span class="sourceLineNo">143</span>        throw new InternalError("bad method type "+type);<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    }<a name="line.144"></a>
+<span class="sourceLineNo">145</span><a name="line.145"></a>
+<span class="sourceLineNo">146</span>    /** Return the actual type under which this method or constructor must be invoked.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *  For non-static methods or constructors, this is the type with a leading parameter,<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     *  a reference to declaring class.  For static methods, it is the same as the declared type.<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     */<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    public MethodType getInvocationType() {<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        MethodType itype = getMethodOrFieldType();<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        if (isConstructor() &amp;&amp; getReferenceKind() == REF_newInvokeSpecial)<a name="line.152"></a>
+<span class="sourceLineNo">153</span>            return itype.changeReturnType(clazz);<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        if (!isStatic())<a name="line.154"></a>
+<span class="sourceLineNo">155</span>            return itype.insertParameterTypes(0, clazz);<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        return itype;<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    }<a name="line.157"></a>
+<span class="sourceLineNo">158</span><a name="line.158"></a>
+<span class="sourceLineNo">159</span>    /** Utility method producing the parameter types of the method type. */<a name="line.159"></a>
+<span class="sourceLineNo">160</span>    public Class&lt;?&gt;[] getParameterTypes() {<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        return getMethodType().parameterArray();<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    }<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>    /** Utility method producing the return type of the method type. */<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    public Class&lt;?&gt; getReturnType() {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        return getMethodType().returnType();<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    }<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>    /** Return the declared type of this member, which<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *  must be a field or type.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *  If it is a type member, that type itself is returned.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    public Class&lt;?&gt; getFieldType() {<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        if (type == null) {<a name="line.174"></a>
+<span class="sourceLineNo">175</span>            expandFromVM();<a name="line.175"></a>
+<span class="sourceLineNo">176</span>            if (type == null)  return null;<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        }<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        if (isInvocable())<a name="line.178"></a>
+<span class="sourceLineNo">179</span>            throw newIllegalArgumentException("not a field or nested class, no simple type");<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        if (type instanceof Class&lt;?&gt;) {<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            return (Class&lt;?&gt;) type;<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        }<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        if (type instanceof String) {<a name="line.183"></a>
+<span class="sourceLineNo">184</span>            String sig = (String) type;<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            MethodType mtype = MethodType.fromMethodDescriptorString("()"+sig, getClassLoader());<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            Class&lt;?&gt; res = mtype.returnType();<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            this.type = res;<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            return res;<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        }<a name="line.189"></a>
+<span class="sourceLineNo">190</span>        throw new InternalError("bad field type "+type);<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    }<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>    /** Utility method to produce either the method type or field type of this member. */<a name="line.193"></a>
+<span class="sourceLineNo">194</span>    public Object getType() {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        return (isInvocable() ? getMethodType() : getFieldType());<a name="line.195"></a>
+<span class="sourceLineNo">196</span>    }<a name="line.196"></a>
+<span class="sourceLineNo">197</span><a name="line.197"></a>
+<span class="sourceLineNo">198</span>    /** Utility method to produce the signature of this member,<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     *  used within the class file format to describe its type.<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     */<a name="line.200"></a>
+<span class="sourceLineNo">201</span>    public String getSignature() {<a name="line.201"></a>
+<span class="sourceLineNo">202</span>        if (type == null) {<a name="line.202"></a>
+<span class="sourceLineNo">203</span>            expandFromVM();<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            if (type == null)  return null;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        }<a name="line.205"></a>
+<span class="sourceLineNo">206</span>        if (type instanceof String)<a name="line.206"></a>
+<span class="sourceLineNo">207</span>            return (String) type;<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        if (isInvocable())<a name="line.208"></a>
+<span class="sourceLineNo">209</span>            return BytecodeDescriptor.unparse(getMethodType());<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        else<a name="line.210"></a>
+<span class="sourceLineNo">211</span>            return BytecodeDescriptor.unparse(getFieldType());<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    }<a name="line.212"></a>
+<span class="sourceLineNo">213</span><a name="line.213"></a>
+<span class="sourceLineNo">214</span>    /** Return the modifier flags of this member.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *  @see java.lang.reflect.Modifier<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     */<a name="line.216"></a>
+<span class="sourceLineNo">217</span>    public int getModifiers() {<a name="line.217"></a>
+<span class="sourceLineNo">218</span>        return (flags &amp; RECOGNIZED_MODIFIERS);<a name="line.218"></a>
+<span class="sourceLineNo">219</span>    }<a name="line.219"></a>
+<span class="sourceLineNo">220</span><a name="line.220"></a>
+<span class="sourceLineNo">221</span>    /** Return the reference kind of this member, or zero if none.<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     */<a name="line.222"></a>
+<span class="sourceLineNo">223</span>    public byte getReferenceKind() {<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        return (byte) ((flags &gt;&gt;&gt; MN_REFERENCE_KIND_SHIFT) &amp; MN_REFERENCE_KIND_MASK);<a name="line.224"></a>
+<span class="sourceLineNo">225</span>    }<a name="line.225"></a>
+<span class="sourceLineNo">226</span>    private boolean referenceKindIsConsistent() {<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        byte refKind = getReferenceKind();<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        if (refKind == REF_NONE)  return isType();<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        if (isField()) {<a name="line.229"></a>
+<span class="sourceLineNo">230</span>            assert(staticIsConsistent());<a name="line.230"></a>
+<span class="sourceLineNo">231</span>            assert(MethodHandleNatives.refKindIsField(refKind));<a name="line.231"></a>
+<span class="sourceLineNo">232</span>        } else if (isConstructor()) {<a name="line.232"></a>
+<span class="sourceLineNo">233</span>            assert(refKind == REF_newInvokeSpecial || refKind == REF_invokeSpecial);<a name="line.233"></a>
+<span class="sourceLineNo">234</span>        } else if (isMethod()) {<a name="line.234"></a>
+<span class="sourceLineNo">235</span>            assert(staticIsConsistent());<a name="line.235"></a>
+<span class="sourceLineNo">236</span>            assert(MethodHandleNatives.refKindIsMethod(refKind));<a name="line.236"></a>
+<span class="sourceLineNo">237</span>            if (clazz.isInterface())<a name="line.237"></a>
+<span class="sourceLineNo">238</span>                assert(refKind == REF_invokeInterface ||<a name="line.238"></a>
+<span class="sourceLineNo">239</span>                       refKind == REF_invokeVirtual &amp;&amp; isObjectPublicMethod());<a name="line.239"></a>
+<span class="sourceLineNo">240</span>        } else {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>            assert(false);<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        }<a name="line.242"></a>
+<span class="sourceLineNo">243</span>        return true;<a name="line.243"></a>
+<span class="sourceLineNo">244</span>    }<a name="line.244"></a>
+<span class="sourceLineNo">245</span>    private boolean isObjectPublicMethod() {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>        if (clazz == Object.class)  return true;<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        MethodType mtype = getMethodType();<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        if (name.equals("toString") &amp;&amp; mtype.returnType() == String.class &amp;&amp; mtype.parameterCount() == 0)<a name="line.248"></a>
+<span class="sourceLineNo">249</span>            return true;<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        if (name.equals("hashCode") &amp;&amp; mtype.returnType() == int.class &amp;&amp; mtype.parameterCount() == 0)<a name="line.250"></a>
+<span class="sourceLineNo">251</span>            return true;<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        if (name.equals("equals") &amp;&amp; mtype.returnType() == boolean.class &amp;&amp; mtype.parameterCount() == 1 &amp;&amp; mtype.parameterType(0) == Object.class)<a name="line.252"></a>
+<span class="sourceLineNo">253</span>            return true;<a name="line.253"></a>
+<span class="sourceLineNo">254</span>        return false;<a name="line.254"></a>
+<span class="sourceLineNo">255</span>    }<a name="line.255"></a>
+<span class="sourceLineNo">256</span>    /*non-public*/ boolean referenceKindIsConsistentWith(int originalRefKind) {<a name="line.256"></a>
+<span class="sourceLineNo">257</span>        int refKind = getReferenceKind();<a name="line.257"></a>
+<span class="sourceLineNo">258</span>        if (refKind == originalRefKind)  return true;<a name="line.258"></a>
+<span class="sourceLineNo">259</span>        switch (originalRefKind) {<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        case REF_invokeInterface:<a name="line.260"></a>
+<span class="sourceLineNo">261</span>            // Looking up an interface method, can get (e.g.) Object.hashCode<a name="line.261"></a>
+<span class="sourceLineNo">262</span>            assert(refKind == REF_invokeVirtual ||<a name="line.262"></a>
+<span class="sourceLineNo">263</span>                   refKind == REF_invokeSpecial) : this;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>            return true;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>        case REF_invokeVirtual:<a name="line.265"></a>
+<span class="sourceLineNo">266</span>        case REF_newInvokeSpecial:<a name="line.266"></a>
+<span class="sourceLineNo">267</span>            // Looked up a virtual, can get (e.g.) final String.hashCode.<a name="line.267"></a>
+<span class="sourceLineNo">268</span>            assert(refKind == REF_invokeSpecial) : this;<a name="line.268"></a>
+<span class="sourceLineNo">269</span>            return true;<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        }<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        assert(false) : this;<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        return true;<a name="line.272"></a>
+<span class="sourceLineNo">273</span>    }<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    private boolean staticIsConsistent() {<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        byte refKind = getReferenceKind();<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        return MethodHandleNatives.refKindIsStatic(refKind) == isStatic() || getModifiers() == 0;<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    }<a name="line.277"></a>
+<span class="sourceLineNo">278</span>    private boolean vminfoIsConsistent() {<a name="line.278"></a>
+<span class="sourceLineNo">279</span>        byte refKind = getReferenceKind();<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        assert(isResolved());  // else don't call<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        Object vminfo = MethodHandleNatives.getMemberVMInfo(this);<a name="line.281"></a>
+<span class="sourceLineNo">282</span>        assert(vminfo instanceof Object[]);<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        long vmindex = (Long) ((Object[])vminfo)[0];<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        Object vmtarget = ((Object[])vminfo)[1];<a name="line.284"></a>
+<span class="sourceLineNo">285</span>        if (MethodHandleNatives.refKindIsField(refKind)) {<a name="line.285"></a>
+<span class="sourceLineNo">286</span>            assert(vmindex &gt;= 0) : vmindex + ":" + this;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>            assert(vmtarget instanceof Class);<a name="line.287"></a>
+<span class="sourceLineNo">288</span>        } else {<a name="line.288"></a>
+<span class="sourceLineNo">289</span>            if (MethodHandleNatives.refKindDoesDispatch(refKind))<a name="line.289"></a>
+<span class="sourceLineNo">290</span>                assert(vmindex &gt;= 0) : vmindex + ":" + this;<a name="line.290"></a>
+<span class="sourceLineNo">291</span>            else<a name="line.291"></a>
+<span class="sourceLineNo">292</span>                assert(vmindex &lt; 0) : vmindex;<a name="line.292"></a>
+<span class="sourceLineNo">293</span>            assert(vmtarget instanceof MemberName) : vmtarget + " in " + this;<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        }<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        return true;<a name="line.295"></a>
+<span class="sourceLineNo">296</span>    }<a name="line.296"></a>
+<span class="sourceLineNo">297</span><a name="line.297"></a>
+<span class="sourceLineNo">298</span>    private MemberName changeReferenceKind(byte refKind, byte oldKind) {<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        assert(getReferenceKind() == oldKind);<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        assert(MethodHandleNatives.refKindIsValid(refKind));<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        flags += (((int)refKind - oldKind) &lt;&lt; MN_REFERENCE_KIND_SHIFT);<a name="line.301"></a>
+<span class="sourceLineNo">302</span>//        if (isConstructor() &amp;&amp; refKind != REF_newInvokeSpecial)<a name="line.302"></a>
+<span class="sourceLineNo">303</span>//            flags += (IS_METHOD - IS_CONSTRUCTOR);<a name="line.303"></a>
+<span class="sourceLineNo">304</span>//        else if (refKind == REF_newInvokeSpecial &amp;&amp; isMethod())<a name="line.304"></a>
+<span class="sourceLineNo">305</span>//            flags += (IS_CONSTRUCTOR - IS_METHOD);<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        return this;<a name="line.306"></a>
+<span class="sourceLineNo">307</span>    }<a name="line.307"></a>
+<span class="sourceLineNo">308</span><a name="line.308"></a>
+<span class="sourceLineNo">309</span>    private boolean testFlags(int mask, int value) {<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        return (flags &amp; mask) == value;<a name="line.310"></a>
+<span class="sourceLineNo">311</span>    }<a name="line.311"></a>
+<span class="sourceLineNo">312</span>    private boolean testAllFlags(int mask) {<a name="line.312"></a>
+<span class="sourceLineNo">313</span>        return testFlags(mask, mask);<a name="line.313"></a>
+<span class="sourceLineNo">314</span>    }<a name="line.314"></a>
+<span class="sourceLineNo">315</span>    private boolean testAnyFlags(int mask) {<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        return !testFlags(mask, 0);<a name="line.316"></a>
+<span class="sourceLineNo">317</span>    }<a name="line.317"></a>
+<span class="sourceLineNo">318</span><a name="line.318"></a>
+<span class="sourceLineNo">319</span>    /** Utility method to query if this member is a method handle invocation (invoke or invokeExact). */<a name="line.319"></a>
+<span class="sourceLineNo">320</span>    public boolean isMethodHandleInvoke() {<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        final int bits = Modifier.NATIVE | Modifier.FINAL;<a name="line.321"></a>
+<span class="sourceLineNo">322</span>        final int negs = Modifier.STATIC;<a name="line.322"></a>
+<span class="sourceLineNo">323</span>        if (testFlags(bits | negs, bits) &amp;&amp;<a name="line.323"></a>
+<span class="sourceLineNo">324</span>            clazz == MethodHandle.class) {<a name="line.324"></a>
+<span class="sourceLineNo">325</span>            return name.equals("invoke") || name.equals("invokeExact");<a name="line.325"></a>
+<span class="sourceLineNo">326</span>        }<a name="line.326"></a>
+<span class="sourceLineNo">327</span>        return false;<a name="line.327"></a>
+<span class="sourceLineNo">328</span>    }<a name="line.328"></a>
+<span class="sourceLineNo">329</span><a name="line.329"></a>
+<span class="sourceLineNo">330</span>    /** Utility method to query the modifier flags of this member. */<a name="line.330"></a>
+<span class="sourceLineNo">331</span>    public boolean isStatic() {<a name="line.331"></a>
+<span class="sourceLineNo">332</span>        return Modifier.isStatic(flags);<a name="line.332"></a>
+<span class="sourceLineNo">333</span>    }<a name="line.333"></a>
+<span class="sourceLineNo">334</span>    /** Utility method to query the modifier flags of this member. */<a name="line.334"></a>
+<span class="sourceLineNo">335</span>    public boolean isPublic() {<a name="line.335"></a>
+<span class="sourceLineNo">336</span>        return Modifier.isPublic(flags);<a name="line.336"></a>
+<span class="sourceLineNo">337</span>    }<a name="line.337"></a>
+<span class="sourceLineNo">338</span>    /** Utility method to query the modifier flags of this member. */<a name="line.338"></a>
+<span class="sourceLineNo">339</span>    public boolean isPrivate() {<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        return Modifier.isPrivate(flags);<a name="line.340"></a>
+<span class="sourceLineNo">341</span>    }<a name="line.341"></a>
+<span class="sourceLineNo">342</span>    /** Utility method to query the modifier flags of this member. */<a name="line.342"></a>
+<span class="sourceLineNo">343</span>    public boolean isProtected() {<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        return Modifier.isProtected(flags);<a name="line.344"></a>
+<span class="sourceLineNo">345</span>    }<a name="line.345"></a>
+<span class="sourceLineNo">346</span>    /** Utility method to query the modifier flags of this member. */<a name="line.346"></a>
+<span class="sourceLineNo">347</span>    public boolean isFinal() {<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        return Modifier.isFinal(flags);<a name="line.348"></a>
+<span class="sourceLineNo">349</span>    }<a name="line.349"></a>
+<span class="sourceLineNo">350</span>    /** Utility method to query whether this member or its defining class is final. */<a name="line.350"></a>
+<span class="sourceLineNo">351</span>    public boolean canBeStaticallyBound() {<a name="line.351"></a>
+<span class="sourceLineNo">352</span>        return Modifier.isFinal(flags | clazz.getModifiers());<a name="line.352"></a>
+<span class="sourceLineNo">353</span>    }<a name="line.353"></a>
+<span class="sourceLineNo">354</span>    /** Utility method to query the modifier flags of this member. */<a name="line.354"></a>
+<span class="sourceLineNo">355</span>    public boolean isVolatile() {<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        return Modifier.isVolatile(flags);<a name="line.356"></a>
+<span class="sourceLineNo">357</span>    }<a name="line.357"></a>
+<span class="sourceLineNo">358</span>    /** Utility method to query the modifier flags of this member. */<a name="line.358"></a>
+<span class="sourceLineNo">359</span>    public boolean isAbstract() {<a name="line.359"></a>
+<span class="sourceLineNo">360</span>        return Modifier.isAbstract(flags);<a name="line.360"></a>
+<span class="sourceLineNo">361</span>    }<a name="line.361"></a>
+<span class="sourceLineNo">362</span>    /** Utility method to query the modifier flags of this member. */<a name="line.362"></a>
+<span class="sourceLineNo">363</span>    public boolean isNative() {<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        return Modifier.isNative(flags);<a name="line.364"></a>
+<span class="sourceLineNo">365</span>    }<a name="line.365"></a>
+<span class="sourceLineNo">366</span>    // let the rest (native, volatile, transient, etc.) be tested via Modifier.isFoo<a name="line.366"></a>
+<span class="sourceLineNo">367</span><a name="line.367"></a>
+<span class="sourceLineNo">368</span>    // unofficial modifier flags, used by HotSpot:<a name="line.368"></a>
+<span class="sourceLineNo">369</span>    static final int BRIDGE    = 0x00000040;<a name="line.369"></a>
+<span class="sourceLineNo">370</span>    static final int VARARGS   = 0x00000080;<a name="line.370"></a>
+<span class="sourceLineNo">371</span>    static final int SYNTHETIC = 0x00001000;<a name="line.371"></a>
+<span class="sourceLineNo">372</span>    static final int ANNOTATION= 0x00002000;<a name="line.372"></a>
+<span class="sourceLineNo">373</span>    static final int ENUM      = 0x00004000;<a name="line.373"></a>
+<span class="sourceLineNo">374</span>    /** Utility method to query the modifier flags of this member; returns false if the member is not a method. */<a name="line.374"></a>
+<span class="sourceLineNo">375</span>    public boolean isBridge() {<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        return testAllFlags(IS_METHOD | BRIDGE);<a name="line.376"></a>
+<span class="sourceLineNo">377</span>    }<a name="line.377"></a>
+<span class="sourceLineNo">378</span>    /** Utility method to query the modifier flags of this member; returns false if the member is not a method. */<a name="line.378"></a>
+<span class="sourceLineNo">379</span>    public boolean isVarargs() {<a name="line.379"></a>
+<span class="sourceLineNo">380</span>        return testAllFlags(VARARGS) &amp;&amp; isInvocable();<a name="line.380"></a>
+<span class="sourceLineNo">381</span>    }<a name="line.381"></a>
+<span class="sourceLineNo">382</span>    /** Utility method to query the modifier flags of this member; returns false if the member is not a method. */<a name="line.382"></a>
+<span class="sourceLineNo">383</span>    public boolean isSynthetic() {<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        return testAllFlags(SYNTHETIC);<a name="line.384"></a>
+<span class="sourceLineNo">385</span>    }<a name="line.385"></a>
+<span class="sourceLineNo">386</span><a name="line.386"></a>
+<span class="sourceLineNo">387</span>    static final String CONSTRUCTOR_NAME = "&lt;init&gt;";  // the ever-popular<a name="line.387"></a>
+<span class="sourceLineNo">388</span><a name="line.388"></a>
+<span class="sourceLineNo">389</span>    // modifiers exported by the JVM:<a name="line.389"></a>
+<span class="sourceLineNo">390</span>    static final int RECOGNIZED_MODIFIERS = 0xFFFF;<a name="line.390"></a>
+<span class="sourceLineNo">391</span><a name="line.391"></a>
+<span class="sourceLineNo">392</span>    // private flags, not part of RECOGNIZED_MODIFIERS:<a name="line.392"></a>
+<span class="sourceLineNo">393</span>    static final int<a name="line.393"></a>
+<span class="sourceLineNo">394</span>            IS_METHOD           = MN_IS_METHOD,        // method (not constructor)<a name="line.394"></a>
+<span class="sourceLineNo">395</span>            IS_CONSTRUCTOR      = MN_IS_CONSTRUCTOR,   // constructor<a name="line.395"></a>
+<span class="sourceLineNo">396</span>            IS_FIELD            = MN_IS_FIELD,         // field<a name="line.396"></a>
+<span class="sourceLineNo">397</span>            IS_TYPE             = MN_IS_TYPE,          // nested type<a name="line.397"></a>
+<span class="sourceLineNo">398</span>            IS_CALLER_SENSITIVE = MN_CALLER_SENSITIVE; // @CallerSensitive annotation<a name="line.398"></a>
+<span class="sourceLineNo">399</span><a name="line.399"></a>
+<span class="sourceLineNo">400</span>    static final int ALL_ACCESS = Modifier.PUBLIC | Modifier.PRIVATE | Modifier.PROTECTED;<a name="line.400"></a>
+<span class="sourceLineNo">401</span>    static final int ALL_KINDS = IS_METHOD | IS_CONSTRUCTOR | IS_FIELD | IS_TYPE;<a name="line.401"></a>
+<span class="sourceLineNo">402</span>    static final int IS_INVOCABLE = IS_METHOD | IS_CONSTRUCTOR;<a name="line.402"></a>
+<span class="sourceLineNo">403</span>    static final int IS_FIELD_OR_METHOD = IS_METHOD | IS_FIELD;<a name="line.403"></a>
+<span class="sourceLineNo">404</span>    static final int SEARCH_ALL_SUPERS = MN_SEARCH_SUPERCLASSES | MN_SEARCH_INTERFACES;<a name="line.404"></a>
+<span class="sourceLineNo">405</span><a name="line.405"></a>
+<span class="sourceLineNo">406</span>    /** Utility method to query whether this member is a method or constructor. */<a name="line.406"></a>
+<span class="sourceLineNo">407</span>    public boolean isInvocable() {<a name="line.407"></a>
+<span class="sourceLineNo">408</span>        return testAnyFlags(IS_INVOCABLE);<a name="line.408"></a>
+<span class="sourceLineNo">409</span>    }<a name="line.409"></a>
+<span class="sourceLineNo">410</span>    /** Utility method to query whether this member is a method, constructor, or field. */<a name="line.410"></a>
+<span class="sourceLineNo">411</span>    public boolean isFieldOrMethod() {<a name="line.411"></a>
+<span class="sourceLineNo">412</span>        return testAnyFlags(IS_FIELD_OR_METHOD);<a name="line.412"></a>
+<span class="sourceLineNo">413</span>    }<a name="line.413"></a>
+<span class="sourceLineNo">414</span>    /** Query whether this member is a method. */<a name="line.414"></a>
+<span class="sourceLineNo">415</span>    public boolean isMethod() {<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        return testAllFlags(IS_METHOD);<a name="line.416"></a>
+<span class="sourceLineNo">417</span>    }<a name="line.417"></a>
+<span class="sourceLineNo">418</span>    /** Query whether this member is a constructor. */<a name="line.418"></a>
+<span class="sourceLineNo">419</span>    public boolean isConstructor() {<a name="line.419"></a>
+<span class="sourceLineNo">420</span>        return testAllFlags(IS_CONSTRUCTOR);<a name="line.420"></a>
+<span class="sourceLineNo">421</span>    }<a name="line.421"></a>
+<span class="sourceLineNo">422</span>    /** Query whether this member is a field. */<a name="line.422"></a>
+<span class="sourceLineNo">423</span>    public boolean isField() {<a name="line.423"></a>
+<span class="sourceLineNo">424</span>        return testAllFlags(IS_FIELD);<a name="line.424"></a>
+<span class="sourceLineNo">425</span>    }<a name="line.425"></a>
+<span class="sourceLineNo">426</span>    /** Query whether this member is a type. */<a name="line.426"></a>
+<span class="sourceLineNo">427</span>    public boolean isType() {<a name="line.427"></a>
+<span class="sourceLineNo">428</span>        return testAllFlags(IS_TYPE);<a name="line.428"></a>
+<span class="sourceLineNo">429</span>    }<a name="line.429"></a>
+<span class="sourceLineNo">430</span>    /** Utility method to query whether this member is neither public, private, nor protected. */<a name="line.430"></a>
+<span class="sourceLineNo">431</span>    public boolean isPackage() {<a name="line.431"></a>
+<span class="sourceLineNo">432</span>        return !testAnyFlags(ALL_ACCESS);<a name="line.432"></a>
+<span class="sourceLineNo">433</span>    }<a name="line.433"></a>
+<span class="sourceLineNo">434</span>    /** Utility method to query whether this member is annotated with @CallerSensitive. */<a name="line.434"></a>
+<span class="sourceLineNo">435</span>    public boolean isCallerSensitive() {<a name="line.435"></a>
+<span class="sourceLineNo">436</span>        return testAllFlags(IS_CALLER_SENSITIVE);<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    }<a name="line.437"></a>
+<span class="sourceLineNo">438</span><a name="line.438"></a>
+<span class="sourceLineNo">439</span>    /** Utility method to query whether this member is accessible from a given lookup class. */<a name="line.439"></a>
+<span class="sourceLineNo">440</span>    public boolean isAccessibleFrom(Class&lt;?&gt; lookupClass) {<a name="line.440"></a>
+<span class="sourceLineNo">441</span>        return VerifyAccess.isMemberAccessible(this.getDeclaringClass(), this.getDeclaringClass(), flags,<a name="line.441"></a>
+<span class="sourceLineNo">442</span>                                               lookupClass, ALL_ACCESS|MethodHandles.Lookup.PACKAGE);<a name="line.442"></a>
+<span class="sourceLineNo">443</span>    }<a name="line.443"></a>
+<span class="sourceLineNo">444</span><a name="line.444"></a>
+<span class="sourceLineNo">445</span>    /** Initialize a query.   It is not resolved. */<a name="line.445"></a>
+<span class="sourceLineNo">446</span>    private void init(Class&lt;?&gt; defClass, String name, Object type, int flags) {<a name="line.446"></a>
+<span class="sourceLineNo">447</span>        // defining class is allowed to be null (for a naked name/type pair)<a name="line.447"></a>
+<span class="sourceLineNo">448</span>        //name.toString();  // null check<a name="line.448"></a>
+<span class="sourceLineNo">449</span>        //type.equals(type);  // null check<a name="line.449"></a>
+<span class="sourceLineNo">450</span>        // fill in fields:<a name="line.450"></a>
+<span class="sourceLineNo">451</span>        this.clazz = defClass;<a name="line.451"></a>
+<span class="sourceLineNo">452</span>        this.name = name;<a name="line.452"></a>
+<span class="sourceLineNo">453</span>        this.type = type;<a name="line.453"></a>
+<span class="sourceLineNo">454</span>        this.flags = flags;<a name="line.454"></a>
+<span class="sourceLineNo">455</span>        assert(testAnyFlags(ALL_KINDS));<a name="line.455"></a>
+<span class="sourceLineNo">456</span>        assert(this.resolution == null);  // nobody should have touched this yet<a name="line.456"></a>
+<span class="sourceLineNo">457</span>        //assert(referenceKindIsConsistent());  // do this after resolution<a name="line.457"></a>
+<span class="sourceLineNo">458</span>    }<a name="line.458"></a>
+<span class="sourceLineNo">459</span><a name="line.459"></a>
+<span class="sourceLineNo">460</span>    private void expandFromVM() {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>        if (!isResolved())  return;<a name="line.461"></a>
+<span class="sourceLineNo">462</span>        if (type instanceof Object[])<a name="line.462"></a>
+<span class="sourceLineNo">463</span>            type = null;  // don't saddle JVM w/ typeInfo<a name="line.463"></a>
+<span class="sourceLineNo">464</span>        MethodHandleNatives.expand(this);<a name="line.464"></a>
+<span class="sourceLineNo">465</span>    }<a name="line.465"></a>
+<span class="sourceLineNo">466</span><a name="line.466"></a>
+<span class="sourceLineNo">467</span>    // Capturing information from the Core Reflection API:<a name="line.467"></a>
+<span class="sourceLineNo">468</span>    private static int flagsMods(int flags, int mods, byte refKind) {<a name="line.468"></a>
+<span class="sourceLineNo">469</span>        assert((flags &amp; RECOGNIZED_MODIFIERS) == 0);<a name="line.469"></a>
+<span class="sourceLineNo">470</span>        assert((mods &amp; ~RECOGNIZED_MODIFIERS) == 0);<a name="line.470"></a>
+<span class="sourceLineNo">471</span>        assert((refKind &amp; ~MN_REFERENCE_KIND_MASK) == 0);<a name="line.471"></a>
+<span class="sourceLineNo">472</span>        return flags | mods | (refKind &lt;&lt; MN_REFERENCE_KIND_SHIFT);<a name="line.472"></a>
+<span class="sourceLineNo">473</span>    }<a name="line.473"></a>
+<span class="sourceLineNo">474</span>    /** Create a name for the given reflected method.  The resulting name will be in a resolved state. */<a name="line.474"></a>
+<span class="sourceLineNo">475</span>    public MemberName(Method m) {<a name="line.475"></a>
+<span class="sourceLineNo">476</span>        this(m, false);<a name="line.476"></a>
+<span class="sourceLineNo">477</span>    }<a name="line.477"></a>
+<span class="sourceLineNo">478</span>    @SuppressWarnings("LeakingThisInConstructor")<a name="line.478"></a>
+<span class="sourceLineNo">479</span>    public MemberName(Method m, boolean wantSpecial) {<a name="line.479"></a>
+<span class="sourceLineNo">480</span>        m.getClass();  // NPE check<a name="line.480"></a>
+<span class="sourceLineNo">481</span>        // fill in vmtarget, vmindex while we have m in hand:<a name="line.481"></a>
+<span class="sourceLineNo">482</span>        MethodHandleNatives.init(this, m);<a name="line.482"></a>
+<span class="sourceLineNo">483</span>        assert(isResolved() &amp;&amp; this.clazz != null);<a name="line.483"></a>
+<span class="sourceLineNo">484</span>        this.name = m.getName();<a name="line.484"></a>
+<span class="sourceLineNo">485</span>        if (this.type == null)<a name="line.485"></a>
+<span class="sourceLineNo">486</span>            this.type = new Object[] { m.getReturnType(), m.getParameterTypes() };<a name="line.486"></a>
+<span class="sourceLineNo">487</span>        if (wantSpecial) {<a name="line.487"></a>
+<span class="sourceLineNo">488</span>            if (getReferenceKind() == REF_invokeVirtual)<a name="line.488"></a>
+<span class="sourceLineNo">489</span>                changeReferenceKind(REF_invokeSpecial, REF_invokeVirtual);<a name="line.489"></a>
+<span class="sourceLineNo">490</span>        }<a name="line.490"></a>
+<span class="sourceLineNo">491</span>    }<a name="line.491"></a>
+<span class="sourceLineNo">492</span>    public MemberName asSpecial() {<a name="line.492"></a>
+<span class="sourceLineNo">493</span>        switch (getReferenceKind()) {<a name="line.493"></a>
+<span class="sourceLineNo">494</span>        case REF_invokeSpecial:     return this;<a name="line.494"></a>
+<span class="sourceLineNo">495</span>        case REF_invokeVirtual:     return clone().changeReferenceKind(REF_invokeSpecial, REF_invokeVirtual);<a name="line.495"></a>
+<span class="sourceLineNo">496</span>        case REF_newInvokeSpecial:  return clone().changeReferenceKind(REF_invokeSpecial, REF_newInvokeSpecial);<a name="line.496"></a>
+<span class="sourceLineNo">497</span>        }<a name="line.497"></a>
+<span class="sourceLineNo">498</span>        throw new IllegalArgumentException(this.toString());<a name="line.498"></a>
+<span class="sourceLineNo">499</span>    }<a name="line.499"></a>
+<span class="sourceLineNo">500</span>    public MemberName asConstructor() {<a name="line.500"></a>
+<span class="sourceLineNo">501</span>        switch (getReferenceKind()) {<a name="line.501"></a>
+<span class="sourceLineNo">502</span>        case REF_invokeSpecial:     return clone().changeReferenceKind(REF_newInvokeSpecial, REF_invokeSpecial);<a name="line.502"></a>
+<span class="sourceLineNo">503</span>        case REF_newInvokeSpecial:  return this;<a name="line.503"></a>
+<span class="sourceLineNo">504</span>        }<a name="line.504"></a>
+<span class="sourceLineNo">505</span>        throw new IllegalArgumentException(this.toString());<a name="line.505"></a>
+<span class="sourceLineNo">506</span>    }<a name="line.506"></a>
+<span class="sourceLineNo">507</span>    /** Create a name for the given reflected constructor.  The resulting name will be in a resolved state. */<a name="line.507"></a>
+<span class="sourceLineNo">508</span>    @SuppressWarnings("LeakingThisInConstructor")<a name="line.508"></a>
+<span class="sourceLineNo">509</span>    public MemberName(Constructor&lt;?&gt; ctor) {<a name="line.509"></a>
+<span class="sourceLineNo">510</span>        ctor.getClass();  // NPE check<a name="line.510"></a>
+<span class="sourceLineNo">511</span>        // fill in vmtarget, vmindex while we have ctor in hand:<a name="line.511"></a>
+<span class="sourceLineNo">512</span>        MethodHandleNatives.init(this, ctor);<a name="line.512"></a>
+<span class="sourceLineNo">513</span>        assert(isResolved() &amp;&amp; this.clazz != null);<a name="line.513"></a>
+<span class="sourceLineNo">514</span>        this.name = CONSTRUCTOR_NAME;<a name="line.514"></a>
+<span class="sourceLineNo">515</span>        if (this.type == null)<a name="line.515"></a>
+<span class="sourceLineNo">516</span>            this.type = new Object[] { void.class, ctor.getParameterTypes() };<a name="line.516"></a>
+<span class="sourceLineNo">517</span>    }<a name="line.517"></a>
+<span class="sourceLineNo">518</span>    /** Create a name for the given reflected field.  The resulting name will be in a resolved state.<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     */<a name="line.519"></a>
+<span class="sourceLineNo">520</span>    public MemberName(Field fld) {<a name="line.520"></a>
+<span class="sourceLineNo">521</span>        this(fld, false);<a name="line.521"></a>
+<span class="sourceLineNo">522</span>    }<a name="line.522"></a>
+<span class="sourceLineNo">523</span>    @SuppressWarnings("LeakingThisInConstructor")<a name="line.523"></a>
+<span class="sourceLineNo">524</span>    public MemberName(Field fld, boolean makeSetter) {<a name="line.524"></a>
+<span class="sourceLineNo">525</span>        fld.getClass();  // NPE check<a name="line.525"></a>
+<span class="sourceLineNo">526</span>        // fill in vmtarget, vmindex while we have fld in hand:<a name="line.526"></a>
+<span class="sourceLineNo">527</span>        MethodHandleNatives.init(this, fld);<a name="line.527"></a>
+<span class="sourceLineNo">528</span>        assert(isResolved() &amp;&amp; this.clazz != null);<a name="line.528"></a>
+<span class="sourceLineNo">529</span>        this.name = fld.getName();<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        this.type = fld.getType();<a name="line.530"></a>
+<span class="sourceLineNo">531</span>        assert((REF_putStatic - REF_getStatic) == (REF_putField - REF_getField));<a name="line.531"></a>
+<span class="sourceLineNo">532</span>        byte refKind = this.getReferenceKind();<a name="line.532"></a>
+<span class="sourceLineNo">533</span>        assert(refKind == (isStatic() ? REF_getStatic : REF_getField));<a name="line.533"></a>
+<span class="sourceLineNo">534</span>        if (makeSetter) {<a name="line.534"></a>
+<span class="sourceLineNo">535</span>            changeReferenceKind((byte)(refKind + (REF_putStatic - REF_getStatic)), refKind);<a name="line.535"></a>
+<span class="sourceLineNo">536</span>        }<a name="line.536"></a>
+<span class="sourceLineNo">537</span>    }<a name="line.537"></a>
+<span class="sourceLineNo">538</span>    public boolean isGetter() {<a name="line.538"></a>
+<span class="sourceLineNo">539</span>        return MethodHandleNatives.refKindIsGetter(getReferenceKind());<a name="line.539"></a>
+<span class="sourceLineNo">540</span>    }<a name="line.540"></a>
+<span class="sourceLineNo">541</span>    public boolean isSetter() {<a name="line.541"></a>
+<span class="sourceLineNo">542</span>        return MethodHandleNatives.refKindIsSetter(getReferenceKind());<a name="line.542"></a>
+<span class="sourceLineNo">543</span>    }<a name="line.543"></a>
+<span class="sourceLineNo">544</span>    public MemberName asSetter() {<a name="line.544"></a>
+<span class="sourceLineNo">545</span>        byte refKind = getReferenceKind();<a name="line.545"></a>
+<span class="sourceLineNo">546</span>        assert(MethodHandleNatives.refKindIsGetter(refKind));<a name="line.546"></a>
+<span class="sourceLineNo">547</span>        assert((REF_putStatic - REF_getStatic) == (REF_putField - REF_getField));<a name="line.547"></a>
+<span class="sourceLineNo">548</span>        byte setterRefKind = (byte)(refKind + (REF_putField - REF_getField));<a name="line.548"></a>
+<span class="sourceLineNo">549</span>        return clone().changeReferenceKind(setterRefKind, refKind);<a name="line.549"></a>
+<span class="sourceLineNo">550</span>    }<a name="line.550"></a>
+<span class="sourceLineNo">551</span>    /** Create a name for the given class.  The resulting name will be in a resolved state. */<a name="line.551"></a>
+<span class="sourceLineNo">552</span>    public MemberName(Class&lt;?&gt; type) {<a name="line.552"></a>
+<span class="sourceLineNo">553</span>        init(type.getDeclaringClass(), type.getSimpleName(), type,<a name="line.553"></a>
+<span class="sourceLineNo">554</span>                flagsMods(IS_TYPE, type.getModifiers(), REF_NONE));<a name="line.554"></a>
+<span class="sourceLineNo">555</span>        initResolved(true);<a name="line.555"></a>
+<span class="sourceLineNo">556</span>    }<a name="line.556"></a>
+<span class="sourceLineNo">557</span><a name="line.557"></a>
+<span class="sourceLineNo">558</span>    // bare-bones constructor; the JVM will fill it in<a name="line.558"></a>
+<span class="sourceLineNo">559</span>    MemberName() { }<a name="line.559"></a>
+<span class="sourceLineNo">560</span><a name="line.560"></a>
+<span class="sourceLineNo">561</span>    // locally useful cloner<a name="line.561"></a>
+<span class="sourceLineNo">562</span>    @Override protected MemberName clone() {<a name="line.562"></a>
+<span class="sourceLineNo">563</span>        try {<a name="line.563"></a>
+<span class="sourceLineNo">564</span>            return (MemberName) super.clone();<a name="line.564"></a>
+<span class="sourceLineNo">565</span>        } catch (CloneNotSupportedException ex) {<a name="line.565"></a>
+<span class="sourceLineNo">566</span>            throw newInternalError(ex);<a name="line.566"></a>
+<span class="sourceLineNo">567</span>        }<a name="line.567"></a>
+<span class="sourceLineNo">568</span>     }<a name="line.568"></a>
+<span class="sourceLineNo">569</span><a name="line.569"></a>
+<span class="sourceLineNo">570</span>    /** Get the definition of this member name.<a name="line.570"></a>
+<span class="sourceLineNo">571</span>     *  This may be in a super-class of the declaring class of this member.<a name="line.571"></a>
+<span class="sourceLineNo">572</span>     */<a name="line.572"></a>
+<span class="sourceLineNo">573</span>    public MemberName getDefinition() {<a name="line.573"></a>
+<span class="sourceLineNo">574</span>        if (!isResolved())  throw new IllegalStateException("must be resolved: "+this);<a name="line.574"></a>
+<span class="sourceLineNo">575</span>        if (isType())  return this;<a name="line.575"></a>
+<span class="sourceLineNo">576</span>        MemberName res = this.clone();<a name="line.576"></a>
+<span class="sourceLineNo">577</span>        res.clazz = null;<a name="line.577"></a>
+<span class="sourceLineNo">578</span>        res.type = null;<a name="line.578"></a>
+<span class="sourceLineNo">579</span>        res.name = null;<a name="line.579"></a>
+<span class="sourceLineNo">580</span>        res.resolution = res;<a name="line.580"></a>
+<span class="sourceLineNo">581</span>        res.expandFromVM();<a name="line.581"></a>
+<span class="sourceLineNo">582</span>        assert(res.getName().equals(this.getName()));<a name="line.582"></a>
+<span class="sourceLineNo">583</span>        return res;<a name="line.583"></a>
+<span class="sourceLineNo">584</span>    }<a name="line.584"></a>
+<span class="sourceLineNo">585</span><a name="line.585"></a>
+<span class="sourceLineNo">586</span>    @Override<a name="line.586"></a>
+<span class="sourceLineNo">587</span>    public int hashCode() {<a name="line.587"></a>
+<span class="sourceLineNo">588</span>        return Objects.hash(clazz, flags, name, getType());<a name="line.588"></a>
+<span class="sourceLineNo">589</span>    }<a name="line.589"></a>
+<span class="sourceLineNo">590</span>    @Override<a name="line.590"></a>
+<span class="sourceLineNo">591</span>    public boolean equals(Object that) {<a name="line.591"></a>
+<span class="sourceLineNo">592</span>        return (that instanceof MemberName &amp;&amp; this.equals((MemberName)that));<a name="line.592"></a>
+<span class="sourceLineNo">593</span>    }<a name="line.593"></a>
+<span class="sourceLineNo">594</span><a name="line.594"></a>
+<span class="sourceLineNo">595</span>    /** Decide if two member names have exactly the same symbolic content.<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     *  Does not take into account any actual class members, so even if<a name="line.596"></a>
+<span class="sourceLineNo">597</span>     *  two member names resolve to the same actual member, they may<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     *  be distinct references.<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     */<a name="line.599"></a>
+<span class="sourceLineNo">600</span>    public boolean equals(MemberName that) {<a name="line.600"></a>
+<span class="sourceLineNo">601</span>        if (this == that)  return true;<a name="line.601"></a>
+<span class="sourceLineNo">602</span>        if (that == null)  return false;<a name="line.602"></a>
+<span class="sourceLineNo">603</span>        return this.clazz == that.clazz<a name="line.603"></a>
+<span class="sourceLineNo">604</span>                &amp;&amp; this.flags == that.flags<a name="line.604"></a>
+<span class="sourceLineNo">605</span>                &amp;&amp; Objects.equals(this.name, that.name)<a name="line.605"></a>
+<span class="sourceLineNo">606</span>                &amp;&amp; Objects.equals(this.getType(), that.getType());<a name="line.606"></a>
+<span class="sourceLineNo">607</span>    }<a name="line.607"></a>
+<span class="sourceLineNo">608</span><a name="line.608"></a>
+<span class="sourceLineNo">609</span>    // Construction from symbolic parts, for queries:<a name="line.609"></a>
+<span class="sourceLineNo">610</span>    /** Create a field or type name from the given components:  Declaring class, name, type, reference kind.<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     *  The declaring class may be supplied as null if this is to be a bare name and type.<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     *  The resulting name will in an unresolved state.<a name="line.612"></a>
+<span class="sourceLineNo">613</span>     */<a name="line.613"></a>
+<span class="sourceLineNo">614</span>    public MemberName(Class&lt;?&gt; defClass, String name, Class&lt;?&gt; type, byte refKind) {<a name="line.614"></a>
+<span class="sourceLineNo">615</span>        init(defClass, name, type, flagsMods(IS_FIELD, 0, refKind));<a name="line.615"></a>
+<span class="sourceLineNo">616</span>        initResolved(false);<a name="line.616"></a>
+<span class="sourceLineNo">617</span>    }<a name="line.617"></a>
+<span class="sourceLineNo">618</span>    /** Create a field or type name from the given components:  Declaring class, name, type.<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     *  The declaring class may be supplied as null if this is to be a bare name and type.<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     *  The modifier flags default to zero.<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     *  The resulting name will in an unresolved state.<a name="line.621"></a>
+<span class="sourceLineNo">622</span>     */<a name="line.622"></a>
+<span class="sourceLineNo">623</span>    public MemberName(Class&lt;?&gt; defClass, String name, Class&lt;?&gt; type, Void unused) {<a name="line.623"></a>
+<span class="sourceLineNo">624</span>        this(defClass, name, type, REF_NONE);<a name="line.624"></a>
+<span class="sourceLineNo">625</span>        initResolved(false);<a name="line.625"></a>
+<span class="sourceLineNo">626</span>    }<a name="line.626"></a>
+<span class="sourceLineNo">627</span>    /** Create a method or constructor name from the given components:  Declaring class, name, type, modifiers.<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     *  It will be a constructor if and only if the name is {@code "&amp;lt;init&amp;gt;"}.<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     *  The declaring class may be supplied as null if this is to be a bare name and type.<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     *  The last argument is optional, a boolean which requests REF_invokeSpecial.<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     *  The resulting name will in an unresolved state.<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     */<a name="line.632"></a>
+<span class="sourceLineNo">633</span>    public MemberName(Class&lt;?&gt; defClass, String name, MethodType type, byte refKind) {<a name="line.633"></a>
+<span class="sourceLineNo">634</span>        @SuppressWarnings("LocalVariableHidesMemberVariable")<a name="line.634"></a>
+<span class="sourceLineNo">635</span>        int flags = (name != null &amp;&amp; name.equals(CONSTRUCTOR_NAME) ? IS_CONSTRUCTOR : IS_METHOD);<a name="line.635"></a>
+<span class="sourceLineNo">636</span>        init(defClass, name, type, flagsMods(flags, 0, refKind));<a name="line.636"></a>
+<span class="sourceLineNo">637</span>        initResolved(false);<a name="line.637"></a>
+<span class="sourceLineNo">638</span>    }<a name="line.638"></a>
+<span class="sourceLineNo">639</span>//    /** Create a method or constructor name from the given components:  Declaring class, name, type, modifiers.<a name="line.639"></a>
+<span class="sourceLineNo">640</span>//     *  It will be a constructor if and only if the name is {@code "&amp;lt;init&amp;gt;"}.<a name="line.640"></a>
+<span class="sourceLineNo">641</span>//     *  The declaring class may be supplied as null if this is to be a bare name and type.<a name="line.641"></a>
+<span class="sourceLineNo">642</span>//     *  The modifier flags default to zero.<a name="line.642"></a>
+<span class="sourceLineNo">643</span>//     *  The resulting name will in an unresolved state.<a name="line.643"></a>
+<span class="sourceLineNo">644</span>//     */<a name="line.644"></a>
+<span class="sourceLineNo">645</span>//    public MemberName(Class&lt;?&gt; defClass, String name, MethodType type, Void unused) {<a name="line.645"></a>
+<span class="sourceLineNo">646</span>//        this(defClass, name, type, REF_NONE);<a name="line.646"></a>
+<span class="sourceLineNo">647</span>//    }<a name="line.647"></a>
+<span class="sourceLineNo">648</span><a name="line.648"></a>
+<span class="sourceLineNo">649</span>    /** Query whether this member name is resolved to a non-static, non-final method.<a name="line.649"></a>
+<span class="sourceLineNo">650</span>     */<a name="line.650"></a>
+<span class="sourceLineNo">651</span>    public boolean hasReceiverTypeDispatch() {<a name="line.651"></a>
+<span class="sourceLineNo">652</span>        return MethodHandleNatives.refKindDoesDispatch(getReferenceKind());<a name="line.652"></a>
+<span class="sourceLineNo">653</span>    }<a name="line.653"></a>
+<span class="sourceLineNo">654</span><a name="line.654"></a>
+<span class="sourceLineNo">655</span>    /** Query whether this member name is resolved.<a name="line.655"></a>
+<span class="sourceLineNo">656</span>     *  A resolved member name is one for which the JVM has found<a name="line.656"></a>
+<span class="sourceLineNo">657</span>     *  a method, constructor, field, or type binding corresponding exactly to the name.<a name="line.657"></a>
+<span class="sourceLineNo">658</span>     *  (Document?)<a name="line.658"></a>
+<span class="sourceLineNo">659</span>     */<a name="line.659"></a>
+<span class="sourceLineNo">660</span>    public boolean isResolved() {<a name="line.660"></a>
+<span class="sourceLineNo">661</span>        return resolution == null;<a name="line.661"></a>
+<span class="sourceLineNo">662</span>    }<a name="line.662"></a>
+<span class="sourceLineNo">663</span><a name="line.663"></a>
+<span class="sourceLineNo">664</span>    private void initResolved(boolean isResolved) {<a name="line.664"></a>
+<span class="sourceLineNo">665</span>        assert(this.resolution == null);  // not initialized yet!<a name="line.665"></a>
+<span class="sourceLineNo">666</span>        if (!isResolved)<a name="line.666"></a>
+<span class="sourceLineNo">667</span>            this.resolution = this;<a name="line.667"></a>
+<span class="sourceLineNo">668</span>        assert(isResolved() == isResolved);<a name="line.668"></a>
+<span class="sourceLineNo">669</span>    }<a name="line.669"></a>
+<span class="sourceLineNo">670</span><a name="line.670"></a>
+<span class="sourceLineNo">671</span>    void checkForTypeAlias() {<a name="line.671"></a>
+<span class="sourceLineNo">672</span>        if (isInvocable()) {<a name="line.672"></a>
+<span class="sourceLineNo">673</span>            MethodType type;<a name="line.673"></a>
+<span class="sourceLineNo">674</span>            if (this.type instanceof MethodType)<a name="line.674"></a>
+<span class="sourceLineNo">675</span>                type = (MethodType) this.type;<a name="line.675"></a>
+<span class="sourceLineNo">676</span>            else<a name="line.676"></a>
+<span class="sourceLineNo">677</span>                this.type = type = getMethodType();<a name="line.677"></a>
+<span class="sourceLineNo">678</span>            if (type.erase() == type)  return;<a name="line.678"></a>
+<span class="sourceLineNo">679</span>            if (VerifyAccess.isTypeVisible(type, clazz))  return;<a name="line.679"></a>
+<span class="sourceLineNo">680</span>            throw new LinkageError("bad method type alias: "+type+" not visible from "+clazz);<a name="line.680"></a>
+<span class="sourceLineNo">681</span>        } else {<a name="line.681"></a>
+<span class="sourceLineNo">682</span>            Class&lt;?&gt; type;<a name="line.682"></a>
+<span class="sourceLineNo">683</span>            if (this.type instanceof Class&lt;?&gt;)<a name="line.683"></a>
+<span class="sourceLineNo">684</span>                type = (Class&lt;?&gt;) this.type;<a name="line.684"></a>
+<span class="sourceLineNo">685</span>            else<a name="line.685"></a>
+<span class="sourceLineNo">686</span>                this.type = type = getFieldType();<a name="line.686"></a>
+<span class="sourceLineNo">687</span>            if (VerifyAccess.isTypeVisible(type, clazz))  return;<a name="line.687"></a>
+<span class="sourceLineNo">688</span>            throw new LinkageError("bad field type alias: "+type+" not visible from "+clazz);<a name="line.688"></a>
+<span class="sourceLineNo">689</span>        }<a name="line.689"></a>
+<span class="sourceLineNo">690</span>    }<a name="line.690"></a>
+<span class="sourceLineNo">691</span><a name="line.691"></a>
+<span class="sourceLineNo">692</span><a name="line.692"></a>
+<span class="sourceLineNo">693</span>    /** Produce a string form of this member name.<a name="line.693"></a>
+<span class="sourceLineNo">694</span>     *  For types, it is simply the type's own string (as reported by {@code toString}).<a name="line.694"></a>
+<span class="sourceLineNo">695</span>     *  For fields, it is {@code "DeclaringClass.name/type"}.<a name="line.695"></a>
+<span class="sourceLineNo">696</span>     *  For methods and constructors, it is {@code "DeclaringClass.name(ptype...)rtype"}.<a name="line.696"></a>
+<span class="sourceLineNo">697</span>     *  If the declaring class is null, the prefix {@code "DeclaringClass."} is omitted.<a name="line.697"></a>
+<span class="sourceLineNo">698</span>     *  If the member is unresolved, a prefix {@code "*."} is prepended.<a name="line.698"></a>
+<span class="sourceLineNo">699</span>     */<a name="line.699"></a>
+<span class="sourceLineNo">700</span>    @SuppressWarnings("LocalVariableHidesMemberVariable")<a name="line.700"></a>
+<span class="sourceLineNo">701</span>    @Override<a name="line.701"></a>
+<span class="sourceLineNo">702</span>    public String toString() {<a name="line.702"></a>
+<span class="sourceLineNo">703</span>        if (isType())<a name="line.703"></a>
+<span class="sourceLineNo">704</span>            return type.toString();  // class java.lang.String<a name="line.704"></a>
+<span class="sourceLineNo">705</span>        // else it is a field, method, or constructor<a name="line.705"></a>
+<span class="sourceLineNo">706</span>        StringBuilder buf = new StringBuilder();<a name="line.706"></a>
+<span class="sourceLineNo">707</span>        if (getDeclaringClass() != null) {<a name="line.707"></a>
+<span class="sourceLineNo">708</span>            buf.append(getName(clazz));<a name="line.708"></a>
+<span class="sourceLineNo">709</span>            buf.append('.');<a name="line.709"></a>
+<span class="sourceLineNo">710</span>        }<a name="line.710"></a>
+<span class="sourceLineNo">711</span>        String name = getName();<a name="line.711"></a>
+<span class="sourceLineNo">712</span>        buf.append(name == null ? "*" : name);<a name="line.712"></a>
+<span class="sourceLineNo">713</span>        Object type = getType();<a name="line.713"></a>
+<span class="sourceLineNo">714</span>        if (!isInvocable()) {<a name="line.714"></a>
+<span class="sourceLineNo">715</span>            buf.append('/');<a name="line.715"></a>
+<span class="sourceLineNo">716</span>            buf.append(type == null ? "*" : getName(type));<a name="line.716"></a>
+<span class="sourceLineNo">717</span>        } else {<a name="line.717"></a>
+<span class="sourceLineNo">718</span>            buf.append(type == null ? "(*)*" : getName(type));<a name="line.718"></a>
+<span class="sourceLineNo">719</span>        }<a name="line.719"></a>
+<span class="sourceLineNo">720</span>        byte refKind = getReferenceKind();<a name="line.720"></a>
+<span class="sourceLineNo">721</span>        if (refKind != REF_NONE) {<a name="line.721"></a>
+<span class="sourceLineNo">722</span>            buf.append('/');<a name="line.722"></a>
+<span class="sourceLineNo">723</span>            buf.append(MethodHandleNatives.refKindName(refKind));<a name="line.723"></a>
+<span class="sourceLineNo">724</span>        }<a name="line.724"></a>
+<span class="sourceLineNo">725</span>        //buf.append("#").append(System.identityHashCode(this));<a name="line.725"></a>
+<span class="sourceLineNo">726</span>        return buf.toString();<a name="line.726"></a>
+<span class="sourceLineNo">727</span>    }<a name="line.727"></a>
+<span class="sourceLineNo">728</span>    private static String getName(Object obj) {<a name="line.728"></a>
+<span class="sourceLineNo">729</span>        if (obj instanceof Class&lt;?&gt;)<a name="line.729"></a>
+<span class="sourceLineNo">730</span>            return ((Class&lt;?&gt;)obj).getName();<a name="line.730"></a>
+<span class="sourceLineNo">731</span>        return String.valueOf(obj);<a name="line.731"></a>
+<span class="sourceLineNo">732</span>    }<a name="line.732"></a>
+<span class="sourceLineNo">733</span><a name="line.733"></a>
+<span class="sourceLineNo">734</span>    public IllegalAccessException makeAccessException(String message, Object from) {<a name="line.734"></a>
+<span class="sourceLineNo">735</span>        message = message + ": "+ toString();<a name="line.735"></a>
+<span class="sourceLineNo">736</span>        if (from != null)  message += ", from " + from;<a name="line.736"></a>
+<span class="sourceLineNo">737</span>        return new IllegalAccessException(message);<a name="line.737"></a>
+<span class="sourceLineNo">738</span>    }<a name="line.738"></a>
+<span class="sourceLineNo">739</span>    private String message() {<a name="line.739"></a>
+<span class="sourceLineNo">740</span>        if (isResolved())<a name="line.740"></a>
+<span class="sourceLineNo">741</span>            return "no access";<a name="line.741"></a>
+<span class="sourceLineNo">742</span>        else if (isConstructor())<a name="line.742"></a>
+<span class="sourceLineNo">743</span>            return "no such constructor";<a name="line.743"></a>
+<span class="sourceLineNo">744</span>        else if (isMethod())<a name="line.744"></a>
+<span class="sourceLineNo">745</span>            return "no such method";<a name="line.745"></a>
+<span class="sourceLineNo">746</span>        else<a name="line.746"></a>
+<span class="sourceLineNo">747</span>            return "no such field";<a name="line.747"></a>
+<span class="sourceLineNo">748</span>    }<a name="line.748"></a>
+<span class="sourceLineNo">749</span>    public ReflectiveOperationException makeAccessException() {<a name="line.749"></a>
+<span class="sourceLineNo">750</span>        String message = message() + ": "+ toString();<a name="line.750"></a>
+<span class="sourceLineNo">751</span>        ReflectiveOperationException ex;<a name="line.751"></a>
+<span class="sourceLineNo">752</span>        if (isResolved() || !(resolution instanceof NoSuchMethodError ||<a name="line.752"></a>
+<span class="sourceLineNo">753</span>                              resolution instanceof NoSuchFieldError))<a name="line.753"></a>
+<span class="sourceLineNo">754</span>            ex = new IllegalAccessException(message);<a name="line.754"></a>
+<span class="sourceLineNo">755</span>        else if (isConstructor())<a name="line.755"></a>
+<span class="sourceLineNo">756</span>            ex = new NoSuchMethodException(message);<a name="line.756"></a>
+<span class="sourceLineNo">757</span>        else if (isMethod())<a name="line.757"></a>
+<span class="sourceLineNo">758</span>            ex = new NoSuchMethodException(message);<a name="line.758"></a>
+<span class="sourceLineNo">759</span>        else<a name="line.759"></a>
+<span class="sourceLineNo">760</span>            ex = new NoSuchFieldException(message);<a name="line.760"></a>
+<span class="sourceLineNo">761</span>        if (resolution instanceof Throwable)<a name="line.761"></a>
+<span class="sourceLineNo">762</span>            ex.initCause((Throwable) resolution);<a name="line.762"></a>
+<span class="sourceLineNo">763</span>        return ex;<a name="line.763"></a>
+<span class="sourceLineNo">764</span>    }<a name="line.764"></a>
+<span class="sourceLineNo">765</span><a name="line.765"></a>
+<span class="sourceLineNo">766</span>    /** Actually making a query requires an access check. */<a name="line.766"></a>
+<span class="sourceLineNo">767</span>    /*non-public*/ static Factory getFactory() {<a name="line.767"></a>
+<span class="sourceLineNo">768</span>        return Factory.INSTANCE;<a name="line.768"></a>
+<span class="sourceLineNo">769</span>    }<a name="line.769"></a>
+<span class="sourceLineNo">770</span>    /** A factory type for resolving member names with the help of the VM.<a name="line.770"></a>
+<span class="sourceLineNo">771</span>     *  TBD: Define access-safe public constructors for this factory.<a name="line.771"></a>
+<span class="sourceLineNo">772</span>     */<a name="line.772"></a>
+<span class="sourceLineNo">773</span>    /*non-public*/ static class Factory {<a name="line.773"></a>
+<span class="sourceLineNo">774</span>        private Factory() { } // singleton pattern<a name="line.774"></a>
+<span class="sourceLineNo">775</span>        static Factory INSTANCE = new Factory();<a name="line.775"></a>
+<span class="sourceLineNo">776</span><a name="line.776"></a>
+<span class="sourceLineNo">777</span>        private static int ALLOWED_FLAGS = ALL_KINDS;<a name="line.777"></a>
+<span class="sourceLineNo">778</span><a name="line.778"></a>
+<span class="sourceLineNo">779</span>        /// Queries<a name="line.779"></a>
+<span class="sourceLineNo">780</span>        List&lt;MemberName&gt; getMembers(Class&lt;?&gt; defc,<a name="line.780"></a>
+<span class="sourceLineNo">781</span>                String matchName, Object matchType,<a name="line.781"></a>
+<span class="sourceLineNo">782</span>                int matchFlags, Class&lt;?&gt; lookupClass) {<a name="line.782"></a>
+<span class="sourceLineNo">783</span>            matchFlags &amp;= ALLOWED_FLAGS;<a name="line.783"></a>
+<span class="sourceLineNo">784</span>            String matchSig = null;<a name="line.784"></a>
+<span class="sourceLineNo">785</span>            if (matchType != null) {<a name="line.785"></a>
+<span class="sourceLineNo">786</span>                matchSig = BytecodeDescriptor.unparse(matchType);<a name="line.786"></a>
+<span class="sourceLineNo">787</span>                if (matchSig.startsWith("("))<a name="line.787"></a>
+<span class="sourceLineNo">788</span>                    matchFlags &amp;= ~(ALL_KINDS &amp; ~IS_INVOCABLE);<a name="line.788"></a>
+<span class="sourceLineNo">789</span>                else<a name="line.789"></a>
+<span class="sourceLineNo">790</span>                    matchFlags &amp;= ~(ALL_KINDS &amp; ~IS_FIELD);<a name="line.790"></a>
+<span class="sourceLineNo">791</span>            }<a name="line.791"></a>
+<span class="sourceLineNo">792</span>            final int BUF_MAX = 0x2000;<a name="line.792"></a>
+<span class="sourceLineNo">793</span>            int len1 = matchName == null ? 10 : matchType == null ? 4 : 1;<a name="line.793"></a>
+<span class="sourceLineNo">794</span>            MemberName[] buf = newMemberBuffer(len1);<a name="line.794"></a>
+<span class="sourceLineNo">795</span>            int totalCount = 0;<a name="line.795"></a>
+<span class="sourceLineNo">796</span>            ArrayList&lt;MemberName[]&gt; bufs = null;<a name="line.796"></a>
+<span class="sourceLineNo">797</span>            int bufCount = 0;<a name="line.797"></a>
+<span class="sourceLineNo">798</span>            for (;;) {<a name="line.798"></a>
+<span class="sourceLineNo">799</span>                bufCount = MethodHandleNatives.getMembers(defc,<a name="line.799"></a>
+<span class="sourceLineNo">800</span>                        matchName, matchSig, matchFlags,<a name="line.800"></a>
+<span class="sourceLineNo">801</span>                        lookupClass,<a name="line.801"></a>
+<span class="sourceLineNo">802</span>                        totalCount, buf);<a name="line.802"></a>
+<span class="sourceLineNo">803</span>                if (bufCount &lt;= buf.length) {<a name="line.803"></a>
+<span class="sourceLineNo">804</span>                    if (bufCount &lt; 0)  bufCount = 0;<a name="line.804"></a>
+<span class="sourceLineNo">805</span>                    totalCount += bufCount;<a name="line.805"></a>
+<span class="sourceLineNo">806</span>                    break;<a name="line.806"></a>
+<span class="sourceLineNo">807</span>                }<a name="line.807"></a>
+<span class="sourceLineNo">808</span>                // JVM returned to us with an intentional overflow!<a name="line.808"></a>
+<span class="sourceLineNo">809</span>                totalCount += buf.length;<a name="line.809"></a>
+<span class="sourceLineNo">810</span>                int excess = bufCount - buf.length;<a name="line.810"></a>
+<span class="sourceLineNo">811</span>                if (bufs == null)  bufs = new ArrayList&lt;&gt;(1);<a name="line.811"></a>
+<span class="sourceLineNo">812</span>                bufs.add(buf);<a name="line.812"></a>
+<span class="sourceLineNo">813</span>                int len2 = buf.length;<a name="line.813"></a>
+<span class="sourceLineNo">814</span>                len2 = Math.max(len2, excess);<a name="line.814"></a>
+<span class="sourceLineNo">815</span>                len2 = Math.max(len2, totalCount / 4);<a name="line.815"></a>
+<span class="sourceLineNo">816</span>                buf = newMemberBuffer(Math.min(BUF_MAX, len2));<a name="line.816"></a>
+<span class="sourceLineNo">817</span>            }<a name="line.817"></a>
+<span class="sourceLineNo">818</span>            ArrayList&lt;MemberName&gt; result = new ArrayList&lt;&gt;(totalCount);<a name="line.818"></a>
+<span class="sourceLineNo">819</span>            if (bufs != null) {<a name="line.819"></a>
+<span class="sourceLineNo">820</span>                for (MemberName[] buf0 : bufs) {<a name="line.820"></a>
+<span class="sourceLineNo">821</span>                    Collections.addAll(result, buf0);<a name="line.821"></a>
+<span class="sourceLineNo">822</span>                }<a name="line.822"></a>
+<span class="sourceLineNo">823</span>            }<a name="line.823"></a>
+<span class="sourceLineNo">824</span>            result.addAll(Arrays.asList(buf).subList(0, bufCount));<a name="line.824"></a>
+<span class="sourceLineNo">825</span>            // Signature matching is not the same as type matching, since<a name="line.825"></a>
+<span class="sourceLineNo">826</span>            // one signature might correspond to several types.<a name="line.826"></a>
+<span class="sourceLineNo">827</span>            // So if matchType is a Class or MethodType, refilter the results.<a name="line.827"></a>
+<span class="sourceLineNo">828</span>            if (matchType != null &amp;&amp; matchType != matchSig) {<a name="line.828"></a>
+<span class="sourceLineNo">829</span>                for (Iterator&lt;MemberName&gt; it = result.iterator(); it.hasNext();) {<a name="line.829"></a>
+<span class="sourceLineNo">830</span>                    MemberName m = it.next();<a name="line.830"></a>
+<span class="sourceLineNo">831</span>                    if (!matchType.equals(m.getType()))<a name="line.831"></a>
+<span class="sourceLineNo">832</span>                        it.remove();<a name="line.832"></a>
+<span class="sourceLineNo">833</span>                }<a name="line.833"></a>
+<span class="sourceLineNo">834</span>            }<a name="line.834"></a>
+<span class="sourceLineNo">835</span>            return result;<a name="line.835"></a>
+<span class="sourceLineNo">836</span>        }<a name="line.836"></a>
+<span class="sourceLineNo">837</span>        /** Produce a resolved version of the given member.<a name="line.837"></a>
+<span class="sourceLineNo">838</span>         *  Super types are searched (for inherited members) if {@code searchSupers} is true.<a name="line.838"></a>
+<span class="sourceLineNo">839</span>         *  Access checking is performed on behalf of the given {@code lookupClass}.<a name="line.839"></a>
+<span class="sourceLineNo">840</span>         *  If lookup fails or access is not permitted, null is returned.<a name="line.840"></a>
+<span class="sourceLineNo">841</span>         *  Otherwise a fresh copy of the given member is returned, with modifier bits filled in.<a name="line.841"></a>
+<span class="sourceLineNo">842</span>         */<a name="line.842"></a>
+<span class="sourceLineNo">843</span>        private MemberName resolve(byte refKind, MemberName ref, Class&lt;?&gt; lookupClass) {<a name="line.843"></a>
+<span class="sourceLineNo">844</span>            MemberName m = ref.clone();  // JVM will side-effect the ref<a name="line.844"></a>
+<span class="sourceLineNo">845</span>            assert(refKind == m.getReferenceKind());<a name="line.845"></a>
+<span class="sourceLineNo">846</span>            try {<a name="line.846"></a>
+<span class="sourceLineNo">847</span>                m = MethodHandleNatives.resolve(m, lookupClass);<a name="line.847"></a>
+<span class="sourceLineNo">848</span>                m.checkForTypeAlias();<a name="line.848"></a>
+<span class="sourceLineNo">849</span>                m.resolution = null;<a name="line.849"></a>
+<span class="sourceLineNo">850</span>            } catch (LinkageError ex) {<a name="line.850"></a>
+<span class="sourceLineNo">851</span>                // JVM reports that the "bytecode behavior" would get an error<a name="line.851"></a>
+<span class="sourceLineNo">852</span>                assert(!m.isResolved());<a name="line.852"></a>
+<span class="sourceLineNo">853</span>                m.resolution = ex;<a name="line.853"></a>
+<span class="sourceLineNo">854</span>                return m;<a name="line.854"></a>
+<span class="sourceLineNo">855</span>            }<a name="line.855"></a>
+<span class="sourceLineNo">856</span>            assert(m.referenceKindIsConsistent());<a name="line.856"></a>
+<span class="sourceLineNo">857</span>            m.initResolved(true);<a name="line.857"></a>
+<span class="sourceLineNo">858</span>            assert(m.vminfoIsConsistent());<a name="line.858"></a>
+<span class="sourceLineNo">859</span>            return m;<a name="line.859"></a>
+<span class="sourceLineNo">860</span>        }<a name="line.860"></a>
+<span class="sourceLineNo">861</span>        /** Produce a resolved version of the given member.<a name="line.861"></a>
+<span class="sourceLineNo">862</span>         *  Super types are searched (for inherited members) if {@code searchSupers} is true.<a name="line.862"></a>
+<span class="sourceLineNo">863</span>         *  Access checking is performed on behalf of the given {@code lookupClass}.<a name="line.863"></a>
+<span class="sourceLineNo">864</span>         *  If lookup fails or access is not permitted, a {@linkplain ReflectiveOperationException} is thrown.<a name="line.864"></a>
+<span class="sourceLineNo">865</span>         *  Otherwise a fresh copy of the given member is returned, with modifier bits filled in.<a name="line.865"></a>
+<span class="sourceLineNo">866</span>         */<a name="line.866"></a>
+<span class="sourceLineNo">867</span>        public<a name="line.867"></a>
+<span class="sourceLineNo">868</span>        &lt;NoSuchMemberException extends ReflectiveOperationException&gt;<a name="line.868"></a>
+<span class="sourceLineNo">869</span>        MemberName resolveOrFail(byte refKind, MemberName m, Class&lt;?&gt; lookupClass,<a name="line.869"></a>
+<span class="sourceLineNo">870</span>                                 Class&lt;NoSuchMemberException&gt; nsmClass)<a name="line.870"></a>
+<span class="sourceLineNo">871</span>                throws IllegalAccessException, NoSuchMemberException {<a name="line.871"></a>
+<span class="sourceLineNo">872</span>            MemberName result = resolve(refKind, m, lookupClass);<a name="line.872"></a>
+<span class="sourceLineNo">873</span>            if (result.isResolved())<a name="line.873"></a>
+<span class="sourceLineNo">874</span>                return result;<a name="line.874"></a>
+<span class="sourceLineNo">875</span>            ReflectiveOperationException ex = result.makeAccessException();<a name="line.875"></a>
+<span class="sourceLineNo">876</span>            if (ex instanceof IllegalAccessException)  throw (IllegalAccessException) ex;<a name="line.876"></a>
+<span class="sourceLineNo">877</span>            throw nsmClass.cast(ex);<a name="line.877"></a>
+<span class="sourceLineNo">878</span>        }<a name="line.878"></a>
+<span class="sourceLineNo">879</span>        /** Produce a resolved version of the given member.<a name="line.879"></a>
+<span class="sourceLineNo">880</span>         *  Super types are searched (for inherited members) if {@code searchSupers} is true.<a name="line.880"></a>
+<span class="sourceLineNo">881</span>         *  Access checking is performed on behalf of the given {@code lookupClass}.<a name="line.881"></a>
+<span class="sourceLineNo">882</span>         *  If lookup fails or access is not permitted, return null.<a name="line.882"></a>
+<span class="sourceLineNo">883</span>         *  Otherwise a fresh copy of the given member is returned, with modifier bits filled in.<a name="line.883"></a>
+<span class="sourceLineNo">884</span>         */<a name="line.884"></a>
+<span class="sourceLineNo">885</span>        public<a name="line.885"></a>
+<span class="sourceLineNo">886</span>        MemberName resolveOrNull(byte refKind, MemberName m, Class&lt;?&gt; lookupClass) {<a name="line.886"></a>
+<span class="sourceLineNo">887</span>            MemberName result = resolve(refKind, m, lookupClass);<a name="line.887"></a>
+<span class="sourceLineNo">888</span>            if (result.isResolved())<a name="line.888"></a>
+<span class="sourceLineNo">889</span>                return result;<a name="line.889"></a>
+<span class="sourceLineNo">890</span>            return null;<a name="line.890"></a>
+<span class="sourceLineNo">891</span>        }<a name="line.891"></a>
+<span class="sourceLineNo">892</span>        /** Return a list of all methods defined by the given class.<a name="line.892"></a>
+<span class="sourceLineNo">893</span>         *  Super types are searched (for inherited members) if {@code searchSupers} is true.<a name="line.893"></a>
+<span class="sourceLineNo">894</span>         *  Access checking is performed on behalf of the given {@code lookupClass}.<a name="line.894"></a>
+<span class="sourceLineNo">895</span>         *  Inaccessible members are not added to the last.<a name="line.895"></a>
+<span class="sourceLineNo">896</span>         */<a name="line.896"></a>
+<span class="sourceLineNo">897</span>        public List&lt;MemberName&gt; getMethods(Class&lt;?&gt; defc, boolean searchSupers,<a name="line.897"></a>
+<span class="sourceLineNo">898</span>                Class&lt;?&gt; lookupClass) {<a name="line.898"></a>
+<span class="sourceLineNo">899</span>            return getMethods(defc, searchSupers, null, null, lookupClass);<a name="line.899"></a>
+<span class="sourceLineNo">900</span>        }<a name="line.900"></a>
+<span class="sourceLineNo">901</span>        /** Return a list of matching methods defined by the given class.<a name="line.901"></a>
+<span class="sourceLineNo">902</span>         *  Super types are searched (for inherited members) if {@code searchSupers} is true.<a name="line.902"></a>
+<span class="sourceLineNo">903</span>         *  Returned methods will match the name (if not null) and the type (if not null).<a name="line.903"></a>
+<span class="sourceLineNo">904</span>         *  Access checking is performed on behalf of the given {@code lookupClass}.<a name="line.904"></a>
+<span class="sourceLineNo">905</span>         *  Inaccessible members are not added to the last.<a name="line.905"></a>
+<span class="sourceLineNo">906</span>         */<a name="line.906"></a>
+<span class="sourceLineNo">907</span>        public List&lt;MemberName&gt; getMethods(Class&lt;?&gt; defc, boolean searchSupers,<a name="line.907"></a>
+<span class="sourceLineNo">908</span>                String name, MethodType type, Class&lt;?&gt; lookupClass) {<a name="line.908"></a>
+<span class="sourceLineNo">909</span>            int matchFlags = IS_METHOD | (searchSupers ? SEARCH_ALL_SUPERS : 0);<a name="line.909"></a>
+<span class="sourceLineNo">910</span>            return getMembers(defc, name, type, matchFlags, lookupClass);<a name="line.910"></a>
+<span class="sourceLineNo">911</span>        }<a name="line.911"></a>
+<span class="sourceLineNo">912</span>        /** Return a list of all constructors defined by the given class.<a name="line.912"></a>
+<span class="sourceLineNo">913</span>         *  Access checking is performed on behalf of the given {@code lookupClass}.<a name="line.913"></a>
+<span class="sourceLineNo">914</span>         *  Inaccessible members are not added to the last.<a name="line.914"></a>
+<span class="sourceLineNo">915</span>         */<a name="line.915"></a>
+<span class="sourceLineNo">916</span>        public List&lt;MemberName&gt; getConstructors(Class&lt;?&gt; defc, Class&lt;?&gt; lookupClass) {<a name="line.916"></a>
+<span class="sourceLineNo">917</span>            return getMembers(defc, null, null, IS_CONSTRUCTOR, lookupClass);<a name="line.917"></a>
+<span class="sourceLineNo">918</span>        }<a name="line.918"></a>
+<span class="sourceLineNo">919</span>        /** Return a list of all fields defined by the given class.<a name="line.919"></a>
+<span class="sourceLineNo">920</span>         *  Super types are searched (for inherited members) if {@code searchSupers} is true.<a name="line.920"></a>
+<span class="sourceLineNo">921</span>         *  Access checking is performed on behalf of the given {@code lookupClass}.<a name="line.921"></a>
+<span class="sourceLineNo">922</span>         *  Inaccessible members are not added to the last.<a name="line.922"></a>
+<span class="sourceLineNo">923</span>         */<a name="line.923"></a>
+<span class="sourceLineNo">924</span>        public List&lt;MemberName&gt; getFields(Class&lt;?&gt; defc, boolean searchSupers,<a name="line.924"></a>
+<span class="sourceLineNo">925</span>                Class&lt;?&gt; lookupClass) {<a name="line.925"></a>
+<span class="sourceLineNo">926</span>            return getFields(defc, searchSupers, null, null, lookupClass);<a name="line.926"></a>
+<span class="sourceLineNo">927</span>        }<a name="line.927"></a>
+<span class="sourceLineNo">928</span>        /** Return a list of all fields defined by the given class.<a name="line.928"></a>
+<span class="sourceLineNo">929</span>         *  Super types are searched (for inherited members) if {@code searchSupers} is true.<a name="line.929"></a>
+<span class="sourceLineNo">930</span>         *  Returned fields will match the name (if not null) and the type (if not null).<a name="line.930"></a>
+<span class="sourceLineNo">931</span>         *  Access checking is performed on behalf of the given {@code lookupClass}.<a name="line.931"></a>
+<span class="sourceLineNo">932</span>         *  Inaccessible members are not added to the last.<a name="line.932"></a>
+<span class="sourceLineNo">933</span>         */<a name="line.933"></a>
+<span class="sourceLineNo">934</span>        public List&lt;MemberName&gt; getFields(Class&lt;?&gt; defc, boolean searchSupers,<a name="line.934"></a>
+<span class="sourceLineNo">935</span>                String name, Class&lt;?&gt; type, Class&lt;?&gt; lookupClass) {<a name="line.935"></a>
+<span class="sourceLineNo">936</span>            int matchFlags = IS_FIELD | (searchSupers ? SEARCH_ALL_SUPERS : 0);<a name="line.936"></a>
+<span class="sourceLineNo">937</span>            return getMembers(defc, name, type, matchFlags, lookupClass);<a name="line.937"></a>
+<span class="sourceLineNo">938</span>        }<a name="line.938"></a>
+<span class="sourceLineNo">939</span>        /** Return a list of all nested types defined by the given class.<a name="line.939"></a>
+<span class="sourceLineNo">940</span>         *  Super types are searched (for inherited members) if {@code searchSupers} is true.<a name="line.940"></a>
+<span class="sourceLineNo">941</span>         *  Access checking is performed on behalf of the given {@code lookupClass}.<a name="line.941"></a>
+<span class="sourceLineNo">942</span>         *  Inaccessible members are not added to the last.<a name="line.942"></a>
+<span class="sourceLineNo">943</span>         */<a name="line.943"></a>
+<span class="sourceLineNo">944</span>        public List&lt;MemberName&gt; getNestedTypes(Class&lt;?&gt; defc, boolean searchSupers,<a name="line.944"></a>
+<span class="sourceLineNo">945</span>                Class&lt;?&gt; lookupClass) {<a name="line.945"></a>
+<span class="sourceLineNo">946</span>            int matchFlags = IS_TYPE | (searchSupers ? SEARCH_ALL_SUPERS : 0);<a name="line.946"></a>
+<span class="sourceLineNo">947</span>            return getMembers(defc, null, null, matchFlags, lookupClass);<a name="line.947"></a>
+<span class="sourceLineNo">948</span>        }<a name="line.948"></a>
+<span class="sourceLineNo">949</span>        private static MemberName[] newMemberBuffer(int length) {<a name="line.949"></a>
+<span class="sourceLineNo">950</span>            MemberName[] buf = new MemberName[length];<a name="line.950"></a>
+<span class="sourceLineNo">951</span>            // fill the buffer with dummy structs for the JVM to fill in<a name="line.951"></a>
+<span class="sourceLineNo">952</span>            for (int i = 0; i &lt; length; i++)<a name="line.952"></a>
+<span class="sourceLineNo">953</span>                buf[i] = new MemberName();<a name="line.953"></a>
+<span class="sourceLineNo">954</span>            return buf;<a name="line.954"></a>
+<span class="sourceLineNo">955</span>        }<a name="line.955"></a>
+<span class="sourceLineNo">956</span>    }<a name="line.956"></a>
+<span class="sourceLineNo">957</span><a name="line.957"></a>
+<span class="sourceLineNo">958</span>//    static {<a name="line.958"></a>
+<span class="sourceLineNo">959</span>//        System.out.println("Hello world!  My methods are:");<a name="line.959"></a>
+<span class="sourceLineNo">960</span>//        System.out.println(Factory.INSTANCE.getMethods(MemberName.class, true, null));<a name="line.960"></a>
+<span class="sourceLineNo">961</span>//    }<a name="line.961"></a>
+<span class="sourceLineNo">962</span>}<a name="line.962"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

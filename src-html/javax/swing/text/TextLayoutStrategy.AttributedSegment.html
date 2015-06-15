@@ -1,0 +1,627 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package javax.swing.text;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.util.*;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.text.AttributedCharacterIterator;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.text.BreakIterator;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.font.*;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.geom.AffineTransform;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import javax.swing.JComponent;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import javax.swing.event.DocumentEvent;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import sun.font.BidiUtils;<a name="line.35"></a>
+<span class="sourceLineNo">036</span><a name="line.36"></a>
+<span class="sourceLineNo">037</span>/**<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * A flow strategy that uses java.awt.font.LineBreakMeasureer to<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * produce java.awt.font.TextLayout for i18n capable rendering.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * If the child view being placed into the flow is of type<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * GlyphView and can be rendered by TextLayout, a GlyphPainter<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * that uses TextLayout is plugged into the GlyphView.<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * @author  Timothy Prinzing<a name="line.44"></a>
+<span class="sourceLineNo">045</span> */<a name="line.45"></a>
+<span class="sourceLineNo">046</span>class TextLayoutStrategy extends FlowView.FlowStrategy {<a name="line.46"></a>
+<span class="sourceLineNo">047</span><a name="line.47"></a>
+<span class="sourceLineNo">048</span>    /**<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * Constructs a layout strategy for paragraphs based<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * upon java.awt.font.LineBreakMeasurer.<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     */<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    public TextLayoutStrategy() {<a name="line.52"></a>
+<span class="sourceLineNo">053</span>        text = new AttributedSegment();<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    }<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>    // --- FlowStrategy methods --------------------------------------------<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    /**<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * Gives notification that something was inserted into the document<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * in a location that the given flow view is responsible for.  The<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * strategy should update the appropriate changed region (which<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * depends upon the strategy used for repair).<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     *<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * @param e the change information from the associated document<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * @param alloc the current allocation of the view inside of the insets.<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     *   This value will be null if the view has not yet been displayed.<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * @see View#insertUpdate<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     */<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    public void insertUpdate(FlowView fv, DocumentEvent e, Rectangle alloc) {<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        sync(fv);<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        super.insertUpdate(fv, e, alloc);<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    }<a name="line.72"></a>
+<span class="sourceLineNo">073</span><a name="line.73"></a>
+<span class="sourceLineNo">074</span>    /**<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * Gives notification that something was removed from the document<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * in a location that the given flow view is responsible for.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     *<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * @param e the change information from the associated document<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * @param alloc the current allocation of the view inside of the insets.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * @see View#removeUpdate<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     */<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    public void removeUpdate(FlowView fv, DocumentEvent e, Rectangle alloc) {<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        sync(fv);<a name="line.83"></a>
+<span class="sourceLineNo">084</span>        super.removeUpdate(fv, e, alloc);<a name="line.84"></a>
+<span class="sourceLineNo">085</span>    }<a name="line.85"></a>
+<span class="sourceLineNo">086</span><a name="line.86"></a>
+<span class="sourceLineNo">087</span>    /**<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * Gives notification from the document that attributes were changed<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * in a location that this view is responsible for.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @param changes the change information from the associated document<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @param a the current allocation of the view<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @param f the factory to use to rebuild if the view has children<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @see View#changedUpdate<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     */<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    public void changedUpdate(FlowView fv, DocumentEvent e, Rectangle alloc) {<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        sync(fv);<a name="line.97"></a>
+<span class="sourceLineNo">098</span>        super.changedUpdate(fv, e, alloc);<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    }<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>    /**<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * Does a a full layout on the given View.  This causes all of<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * the rows (child views) to be rebuilt to match the given<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * constraints for each row.  This is called by a FlowView.layout<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * to update the child views in the flow.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     *<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * @param fv the view to reflow<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     */<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    public void layout(FlowView fv) {<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        super.layout(fv);<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    }<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    /**<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * Creates a row of views that will fit within the<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * layout span of the row.  This is implemented to execute the<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * superclass functionality (which fills the row with child<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * views or view fragments) and follow that with bidi reordering<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * of the unidirectional view fragments.<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     *<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * @param row the row to fill in with views.  This is assumed<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *   to be empty on entry.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @param pos  The current position in the children of<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *   this views element from which to start.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @return the position to start the next row<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     */<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    protected int layoutRow(FlowView fv, int rowIndex, int p0) {<a name="line.126"></a>
+<span class="sourceLineNo">127</span>        int p1 = super.layoutRow(fv, rowIndex, p0);<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        View row = fv.getView(rowIndex);<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        Document doc = fv.getDocument();<a name="line.129"></a>
+<span class="sourceLineNo">130</span>        Object i18nFlag = doc.getProperty(AbstractDocument.I18NProperty);<a name="line.130"></a>
+<span class="sourceLineNo">131</span>        if ((i18nFlag != null) &amp;&amp; i18nFlag.equals(Boolean.TRUE)) {<a name="line.131"></a>
+<span class="sourceLineNo">132</span>            int n = row.getViewCount();<a name="line.132"></a>
+<span class="sourceLineNo">133</span>            if (n &gt; 1) {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>                AbstractDocument d = (AbstractDocument)fv.getDocument();<a name="line.134"></a>
+<span class="sourceLineNo">135</span>                Element bidiRoot = d.getBidiRootElement();<a name="line.135"></a>
+<span class="sourceLineNo">136</span>                byte[] levels = new byte[n];<a name="line.136"></a>
+<span class="sourceLineNo">137</span>                View[] reorder = new View[n];<a name="line.137"></a>
+<span class="sourceLineNo">138</span><a name="line.138"></a>
+<span class="sourceLineNo">139</span>                for( int i=0; i&lt;n; i++ ) {<a name="line.139"></a>
+<span class="sourceLineNo">140</span>                    View v = row.getView(i);<a name="line.140"></a>
+<span class="sourceLineNo">141</span>                    int bidiIndex =bidiRoot.getElementIndex(v.getStartOffset());<a name="line.141"></a>
+<span class="sourceLineNo">142</span>                    Element bidiElem = bidiRoot.getElement( bidiIndex );<a name="line.142"></a>
+<span class="sourceLineNo">143</span>                    levels[i] = (byte)StyleConstants.getBidiLevel(bidiElem.getAttributes());<a name="line.143"></a>
+<span class="sourceLineNo">144</span>                    reorder[i] = v;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>                }<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>                BidiUtils.reorderVisually( levels, reorder );<a name="line.147"></a>
+<span class="sourceLineNo">148</span>                row.replace(0, n, reorder);<a name="line.148"></a>
+<span class="sourceLineNo">149</span>            }<a name="line.149"></a>
+<span class="sourceLineNo">150</span>        }<a name="line.150"></a>
+<span class="sourceLineNo">151</span>        return p1;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    }<a name="line.152"></a>
+<span class="sourceLineNo">153</span><a name="line.153"></a>
+<span class="sourceLineNo">154</span>    /**<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * Adjusts the given row if possible to fit within the<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * layout span.  Since all adjustments were already<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * calculated by the LineBreakMeasurer, this is implemented<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * to do nothing.<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @param r the row to adjust to the current layout<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *  span.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @param desiredSpan the current layout span &gt;= 0<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @param x the location r starts at.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     */<a name="line.164"></a>
+<span class="sourceLineNo">165</span>    protected void adjustRow(FlowView fv, int rowIndex, int desiredSpan, int x) {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>    }<a name="line.166"></a>
+<span class="sourceLineNo">167</span><a name="line.167"></a>
+<span class="sourceLineNo">168</span>    /**<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * Creates a unidirectional view that can be used to represent the<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * current chunk.  This can be either an entire view from the<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * logical view, or a fragment of the view.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     *<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * @param fv the view holding the flow<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * @param startOffset the start location for the view being created<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * @param spanLeft the about of span left to fill in the row<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @param rowIndex the row the view will be placed into<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     */<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    protected View createView(FlowView fv, int startOffset, int spanLeft, int rowIndex) {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        // Get the child view that contains the given starting position<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        View lv = getLogicalView(fv);<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        View row = fv.getView(rowIndex);<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        boolean requireNextWord = (viewBuffer.size() == 0) ? false : true;<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        int childIndex = lv.getViewIndex(startOffset, Position.Bias.Forward);<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        View v = lv.getView(childIndex);<a name="line.184"></a>
+<span class="sourceLineNo">185</span><a name="line.185"></a>
+<span class="sourceLineNo">186</span>        int endOffset = getLimitingOffset(v, startOffset, spanLeft, requireNextWord);<a name="line.186"></a>
+<span class="sourceLineNo">187</span>        if (endOffset == startOffset) {<a name="line.187"></a>
+<span class="sourceLineNo">188</span>            return null;<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        }<a name="line.189"></a>
+<span class="sourceLineNo">190</span><a name="line.190"></a>
+<span class="sourceLineNo">191</span>        View frag;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        if ((startOffset==v.getStartOffset()) &amp;&amp; (endOffset == v.getEndOffset())) {<a name="line.192"></a>
+<span class="sourceLineNo">193</span>            // return the entire view<a name="line.193"></a>
+<span class="sourceLineNo">194</span>            frag = v;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        } else {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>            // return a unidirectional fragment.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>            frag = v.createFragment(startOffset, endOffset);<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        }<a name="line.198"></a>
+<span class="sourceLineNo">199</span><a name="line.199"></a>
+<span class="sourceLineNo">200</span>        if ((frag instanceof GlyphView) &amp;&amp; (measurer != null)) {<a name="line.200"></a>
+<span class="sourceLineNo">201</span>            // install a TextLayout based renderer if the view is responsible<a name="line.201"></a>
+<span class="sourceLineNo">202</span>            // for glyphs.  If the view represents a tab, the default<a name="line.202"></a>
+<span class="sourceLineNo">203</span>            // glyph painter is used (may want to handle tabs differently).<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            boolean isTab = false;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            int p0 = frag.getStartOffset();<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            int p1 = frag.getEndOffset();<a name="line.206"></a>
+<span class="sourceLineNo">207</span>            if ((p1 - p0) == 1) {<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                // check for tab<a name="line.208"></a>
+<span class="sourceLineNo">209</span>                Segment s = ((GlyphView)frag).getText(p0, p1);<a name="line.209"></a>
+<span class="sourceLineNo">210</span>                char ch = s.first();<a name="line.210"></a>
+<span class="sourceLineNo">211</span>                if (ch == '\t') {<a name="line.211"></a>
+<span class="sourceLineNo">212</span>                    isTab = true;<a name="line.212"></a>
+<span class="sourceLineNo">213</span>                }<a name="line.213"></a>
+<span class="sourceLineNo">214</span>            }<a name="line.214"></a>
+<span class="sourceLineNo">215</span>            TextLayout tl = (isTab) ? null :<a name="line.215"></a>
+<span class="sourceLineNo">216</span>                measurer.nextLayout(spanLeft, text.toIteratorIndex(endOffset),<a name="line.216"></a>
+<span class="sourceLineNo">217</span>                                    requireNextWord);<a name="line.217"></a>
+<span class="sourceLineNo">218</span>            if (tl != null) {<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                ((GlyphView)frag).setGlyphPainter(new GlyphPainter2(tl));<a name="line.219"></a>
+<span class="sourceLineNo">220</span>            }<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        }<a name="line.221"></a>
+<span class="sourceLineNo">222</span>        return frag;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>    }<a name="line.223"></a>
+<span class="sourceLineNo">224</span><a name="line.224"></a>
+<span class="sourceLineNo">225</span>    /**<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * Calculate the limiting offset for the next view fragment.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * At most this would be the entire view (i.e. the limiting<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * offset would be the end offset in that case).  If the range<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * contains a tab or a direction change, that will limit the<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * offset to something less.  This value is then fed to the<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * LineBreakMeasurer as a limit to consider in addition to the<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * remaining span.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     *<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * @param v the logical view representing the starting offset.<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * @param startOffset the model location to start at.<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     */<a name="line.236"></a>
+<span class="sourceLineNo">237</span>    int getLimitingOffset(View v, int startOffset, int spanLeft, boolean requireNextWord) {<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        int endOffset = v.getEndOffset();<a name="line.238"></a>
+<span class="sourceLineNo">239</span><a name="line.239"></a>
+<span class="sourceLineNo">240</span>        // check for direction change<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        Document doc = v.getDocument();<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        if (doc instanceof AbstractDocument) {<a name="line.242"></a>
+<span class="sourceLineNo">243</span>            AbstractDocument d = (AbstractDocument) doc;<a name="line.243"></a>
+<span class="sourceLineNo">244</span>            Element bidiRoot = d.getBidiRootElement();<a name="line.244"></a>
+<span class="sourceLineNo">245</span>            if( bidiRoot.getElementCount() &gt; 1 ) {<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                int bidiIndex = bidiRoot.getElementIndex( startOffset );<a name="line.246"></a>
+<span class="sourceLineNo">247</span>                Element bidiElem = bidiRoot.getElement( bidiIndex );<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                endOffset = Math.min( bidiElem.getEndOffset(), endOffset );<a name="line.248"></a>
+<span class="sourceLineNo">249</span>            }<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        }<a name="line.250"></a>
+<span class="sourceLineNo">251</span><a name="line.251"></a>
+<span class="sourceLineNo">252</span>        // check for tab<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        if (v instanceof GlyphView) {<a name="line.253"></a>
+<span class="sourceLineNo">254</span>            Segment s = ((GlyphView)v).getText(startOffset, endOffset);<a name="line.254"></a>
+<span class="sourceLineNo">255</span>            char ch = s.first();<a name="line.255"></a>
+<span class="sourceLineNo">256</span>            if (ch == '\t') {<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                // if the first character is a tab, create a dedicated<a name="line.257"></a>
+<span class="sourceLineNo">258</span>                // view for just the tab<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                endOffset = startOffset + 1;<a name="line.259"></a>
+<span class="sourceLineNo">260</span>            } else {<a name="line.260"></a>
+<span class="sourceLineNo">261</span>                for (ch = s.next(); ch != Segment.DONE; ch = s.next()) {<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                    if (ch == '\t') {<a name="line.262"></a>
+<span class="sourceLineNo">263</span>                        // found a tab, don't include it in the text<a name="line.263"></a>
+<span class="sourceLineNo">264</span>                        endOffset = startOffset + s.getIndex() - s.getBeginIndex();<a name="line.264"></a>
+<span class="sourceLineNo">265</span>                        break;<a name="line.265"></a>
+<span class="sourceLineNo">266</span>                    }<a name="line.266"></a>
+<span class="sourceLineNo">267</span>                }<a name="line.267"></a>
+<span class="sourceLineNo">268</span>            }<a name="line.268"></a>
+<span class="sourceLineNo">269</span>        }<a name="line.269"></a>
+<span class="sourceLineNo">270</span><a name="line.270"></a>
+<span class="sourceLineNo">271</span>        // determine limit from LineBreakMeasurer<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        int limitIndex = text.toIteratorIndex(endOffset);<a name="line.272"></a>
+<span class="sourceLineNo">273</span>        if (measurer != null) {<a name="line.273"></a>
+<span class="sourceLineNo">274</span>            int index = text.toIteratorIndex(startOffset);<a name="line.274"></a>
+<span class="sourceLineNo">275</span>            if (measurer.getPosition() != index) {<a name="line.275"></a>
+<span class="sourceLineNo">276</span>                measurer.setPosition(index);<a name="line.276"></a>
+<span class="sourceLineNo">277</span>            }<a name="line.277"></a>
+<span class="sourceLineNo">278</span>            limitIndex = measurer.nextOffset(spanLeft, limitIndex, requireNextWord);<a name="line.278"></a>
+<span class="sourceLineNo">279</span>        }<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        int pos = text.toModelPosition(limitIndex);<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        return pos;<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    }<a name="line.282"></a>
+<span class="sourceLineNo">283</span><a name="line.283"></a>
+<span class="sourceLineNo">284</span>    /**<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * Synchronize the strategy with its FlowView.  Allows the strategy<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * to update its state to account for changes in that portion of the<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * model represented by the FlowView.  Also allows the strategy<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * to update the FlowView in response to these changes.<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     */<a name="line.289"></a>
+<span class="sourceLineNo">290</span>    void sync(FlowView fv) {<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        View lv = getLogicalView(fv);<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        text.setView(lv);<a name="line.292"></a>
+<span class="sourceLineNo">293</span><a name="line.293"></a>
+<span class="sourceLineNo">294</span>        Container container = fv.getContainer();<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        FontRenderContext frc = sun.swing.SwingUtilities2.<a name="line.295"></a>
+<span class="sourceLineNo">296</span>                                    getFontRenderContext(container);<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        BreakIterator iter;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        Container c = fv.getContainer();<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        if (c != null) {<a name="line.299"></a>
+<span class="sourceLineNo">300</span>            iter = BreakIterator.getLineInstance(c.getLocale());<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        } else {<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            iter = BreakIterator.getLineInstance();<a name="line.302"></a>
+<span class="sourceLineNo">303</span>        }<a name="line.303"></a>
+<span class="sourceLineNo">304</span><a name="line.304"></a>
+<span class="sourceLineNo">305</span>        Object shaper = null;<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        if (c instanceof JComponent) {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            shaper = ((JComponent) c).getClientProperty(<a name="line.307"></a>
+<span class="sourceLineNo">308</span>                                            TextAttribute.NUMERIC_SHAPING);<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        }<a name="line.309"></a>
+<span class="sourceLineNo">310</span>        text.setShaper(shaper);<a name="line.310"></a>
+<span class="sourceLineNo">311</span><a name="line.311"></a>
+<span class="sourceLineNo">312</span>        measurer = new LineBreakMeasurer(text, iter, frc);<a name="line.312"></a>
+<span class="sourceLineNo">313</span><a name="line.313"></a>
+<span class="sourceLineNo">314</span>        // If the children of the FlowView's logical view are GlyphViews, they<a name="line.314"></a>
+<span class="sourceLineNo">315</span>        // need to have their painters updated.<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        int n = lv.getViewCount();<a name="line.316"></a>
+<span class="sourceLineNo">317</span>        for( int i=0; i&lt;n; i++ ) {<a name="line.317"></a>
+<span class="sourceLineNo">318</span>            View child = lv.getView(i);<a name="line.318"></a>
+<span class="sourceLineNo">319</span>            if( child instanceof GlyphView ) {<a name="line.319"></a>
+<span class="sourceLineNo">320</span>                int p0 = child.getStartOffset();<a name="line.320"></a>
+<span class="sourceLineNo">321</span>                int p1 = child.getEndOffset();<a name="line.321"></a>
+<span class="sourceLineNo">322</span>                measurer.setPosition(text.toIteratorIndex(p0));<a name="line.322"></a>
+<span class="sourceLineNo">323</span>                TextLayout layout<a name="line.323"></a>
+<span class="sourceLineNo">324</span>                    = measurer.nextLayout( Float.MAX_VALUE,<a name="line.324"></a>
+<span class="sourceLineNo">325</span>                                           text.toIteratorIndex(p1), false );<a name="line.325"></a>
+<span class="sourceLineNo">326</span>                ((GlyphView)child).setGlyphPainter(new GlyphPainter2(layout));<a name="line.326"></a>
+<span class="sourceLineNo">327</span>            }<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        }<a name="line.328"></a>
+<span class="sourceLineNo">329</span><a name="line.329"></a>
+<span class="sourceLineNo">330</span>        // Reset measurer.<a name="line.330"></a>
+<span class="sourceLineNo">331</span>        measurer.setPosition(text.getBeginIndex());<a name="line.331"></a>
+<span class="sourceLineNo">332</span><a name="line.332"></a>
+<span class="sourceLineNo">333</span>    }<a name="line.333"></a>
+<span class="sourceLineNo">334</span><a name="line.334"></a>
+<span class="sourceLineNo">335</span>    // --- variables -------------------------------------------------------<a name="line.335"></a>
+<span class="sourceLineNo">336</span><a name="line.336"></a>
+<span class="sourceLineNo">337</span>    private LineBreakMeasurer measurer;<a name="line.337"></a>
+<span class="sourceLineNo">338</span>    private AttributedSegment text;<a name="line.338"></a>
+<span class="sourceLineNo">339</span><a name="line.339"></a>
+<span class="sourceLineNo">340</span>    /**<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * Implementation of AttributedCharacterIterator that supports<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * the GlyphView attributes for rendering the glyphs through a<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * TextLayout.<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     */<a name="line.344"></a>
+<span class="sourceLineNo">345</span>    static class AttributedSegment extends Segment implements AttributedCharacterIterator {<a name="line.345"></a>
+<span class="sourceLineNo">346</span><a name="line.346"></a>
+<span class="sourceLineNo">347</span>        AttributedSegment() {<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        }<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>        View getView() {<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            return v;<a name="line.351"></a>
+<span class="sourceLineNo">352</span>        }<a name="line.352"></a>
+<span class="sourceLineNo">353</span><a name="line.353"></a>
+<span class="sourceLineNo">354</span>        void setView(View v) {<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            this.v = v;<a name="line.355"></a>
+<span class="sourceLineNo">356</span>            Document doc = v.getDocument();<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            int p0 = v.getStartOffset();<a name="line.357"></a>
+<span class="sourceLineNo">358</span>            int p1 = v.getEndOffset();<a name="line.358"></a>
+<span class="sourceLineNo">359</span>            try {<a name="line.359"></a>
+<span class="sourceLineNo">360</span>                doc.getText(p0, p1 - p0, this);<a name="line.360"></a>
+<span class="sourceLineNo">361</span>            } catch (BadLocationException bl) {<a name="line.361"></a>
+<span class="sourceLineNo">362</span>                throw new IllegalArgumentException("Invalid view");<a name="line.362"></a>
+<span class="sourceLineNo">363</span>            }<a name="line.363"></a>
+<span class="sourceLineNo">364</span>            first();<a name="line.364"></a>
+<span class="sourceLineNo">365</span>        }<a name="line.365"></a>
+<span class="sourceLineNo">366</span><a name="line.366"></a>
+<span class="sourceLineNo">367</span>        /**<a name="line.367"></a>
+<span class="sourceLineNo">368</span>         * Get a boundary position for the font.<a name="line.368"></a>
+<span class="sourceLineNo">369</span>         * This is implemented to assume that two fonts are<a name="line.369"></a>
+<span class="sourceLineNo">370</span>         * equal if their references are equal (i.e. that the<a name="line.370"></a>
+<span class="sourceLineNo">371</span>         * font came from a cache).<a name="line.371"></a>
+<span class="sourceLineNo">372</span>         *<a name="line.372"></a>
+<span class="sourceLineNo">373</span>         * @return the location in model coordinates.  This is<a name="line.373"></a>
+<span class="sourceLineNo">374</span>         *  not the same as the Segment coordinates.<a name="line.374"></a>
+<span class="sourceLineNo">375</span>         */<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        int getFontBoundary(int childIndex, int dir) {<a name="line.376"></a>
+<span class="sourceLineNo">377</span>            View child = v.getView(childIndex);<a name="line.377"></a>
+<span class="sourceLineNo">378</span>            Font f = getFont(childIndex);<a name="line.378"></a>
+<span class="sourceLineNo">379</span>            for (childIndex += dir; (childIndex &gt;= 0) &amp;&amp; (childIndex &lt; v.getViewCount());<a name="line.379"></a>
+<span class="sourceLineNo">380</span>                 childIndex += dir) {<a name="line.380"></a>
+<span class="sourceLineNo">381</span>                Font next = getFont(childIndex);<a name="line.381"></a>
+<span class="sourceLineNo">382</span>                if (next != f) {<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                    // this run is different<a name="line.383"></a>
+<span class="sourceLineNo">384</span>                    break;<a name="line.384"></a>
+<span class="sourceLineNo">385</span>                }<a name="line.385"></a>
+<span class="sourceLineNo">386</span>                child = v.getView(childIndex);<a name="line.386"></a>
+<span class="sourceLineNo">387</span>            }<a name="line.387"></a>
+<span class="sourceLineNo">388</span>            return (dir &lt; 0) ? child.getStartOffset() : child.getEndOffset();<a name="line.388"></a>
+<span class="sourceLineNo">389</span>        }<a name="line.389"></a>
+<span class="sourceLineNo">390</span><a name="line.390"></a>
+<span class="sourceLineNo">391</span>        /**<a name="line.391"></a>
+<span class="sourceLineNo">392</span>         * Get the font at the given child index.<a name="line.392"></a>
+<span class="sourceLineNo">393</span>         */<a name="line.393"></a>
+<span class="sourceLineNo">394</span>        Font getFont(int childIndex) {<a name="line.394"></a>
+<span class="sourceLineNo">395</span>            View child = v.getView(childIndex);<a name="line.395"></a>
+<span class="sourceLineNo">396</span>            if (child instanceof GlyphView) {<a name="line.396"></a>
+<span class="sourceLineNo">397</span>                return ((GlyphView)child).getFont();<a name="line.397"></a>
+<span class="sourceLineNo">398</span>            }<a name="line.398"></a>
+<span class="sourceLineNo">399</span>            return null;<a name="line.399"></a>
+<span class="sourceLineNo">400</span>        }<a name="line.400"></a>
+<span class="sourceLineNo">401</span><a name="line.401"></a>
+<span class="sourceLineNo">402</span>        int toModelPosition(int index) {<a name="line.402"></a>
+<span class="sourceLineNo">403</span>            return v.getStartOffset() + (index - getBeginIndex());<a name="line.403"></a>
+<span class="sourceLineNo">404</span>        }<a name="line.404"></a>
+<span class="sourceLineNo">405</span><a name="line.405"></a>
+<span class="sourceLineNo">406</span>        int toIteratorIndex(int pos) {<a name="line.406"></a>
+<span class="sourceLineNo">407</span>            return pos - v.getStartOffset() + getBeginIndex();<a name="line.407"></a>
+<span class="sourceLineNo">408</span>        }<a name="line.408"></a>
+<span class="sourceLineNo">409</span><a name="line.409"></a>
+<span class="sourceLineNo">410</span>        private void setShaper(Object shaper) {<a name="line.410"></a>
+<span class="sourceLineNo">411</span>            this.shaper = shaper;<a name="line.411"></a>
+<span class="sourceLineNo">412</span>        }<a name="line.412"></a>
+<span class="sourceLineNo">413</span><a name="line.413"></a>
+<span class="sourceLineNo">414</span>        // --- AttributedCharacterIterator methods -------------------------<a name="line.414"></a>
+<span class="sourceLineNo">415</span><a name="line.415"></a>
+<span class="sourceLineNo">416</span>        /**<a name="line.416"></a>
+<span class="sourceLineNo">417</span>         * Returns the index of the first character of the run<a name="line.417"></a>
+<span class="sourceLineNo">418</span>         * with respect to all attributes containing the current character.<a name="line.418"></a>
+<span class="sourceLineNo">419</span>         */<a name="line.419"></a>
+<span class="sourceLineNo">420</span>        public int getRunStart() {<a name="line.420"></a>
+<span class="sourceLineNo">421</span>            int pos = toModelPosition(getIndex());<a name="line.421"></a>
+<span class="sourceLineNo">422</span>            int i = v.getViewIndex(pos, Position.Bias.Forward);<a name="line.422"></a>
+<span class="sourceLineNo">423</span>            View child = v.getView(i);<a name="line.423"></a>
+<span class="sourceLineNo">424</span>            return toIteratorIndex(child.getStartOffset());<a name="line.424"></a>
+<span class="sourceLineNo">425</span>        }<a name="line.425"></a>
+<span class="sourceLineNo">426</span><a name="line.426"></a>
+<span class="sourceLineNo">427</span>        /**<a name="line.427"></a>
+<span class="sourceLineNo">428</span>         * Returns the index of the first character of the run<a name="line.428"></a>
+<span class="sourceLineNo">429</span>         * with respect to the given attribute containing the current character.<a name="line.429"></a>
+<span class="sourceLineNo">430</span>         */<a name="line.430"></a>
+<span class="sourceLineNo">431</span>        public int getRunStart(AttributedCharacterIterator.Attribute attribute) {<a name="line.431"></a>
+<span class="sourceLineNo">432</span>            if (attribute instanceof TextAttribute) {<a name="line.432"></a>
+<span class="sourceLineNo">433</span>                int pos = toModelPosition(getIndex());<a name="line.433"></a>
+<span class="sourceLineNo">434</span>                int i = v.getViewIndex(pos, Position.Bias.Forward);<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                if (attribute == TextAttribute.FONT) {<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                    return toIteratorIndex(getFontBoundary(i, -1));<a name="line.436"></a>
+<span class="sourceLineNo">437</span>                }<a name="line.437"></a>
+<span class="sourceLineNo">438</span>            }<a name="line.438"></a>
+<span class="sourceLineNo">439</span>            return getBeginIndex();<a name="line.439"></a>
+<span class="sourceLineNo">440</span>        }<a name="line.440"></a>
+<span class="sourceLineNo">441</span><a name="line.441"></a>
+<span class="sourceLineNo">442</span>        /**<a name="line.442"></a>
+<span class="sourceLineNo">443</span>         * Returns the index of the first character of the run<a name="line.443"></a>
+<span class="sourceLineNo">444</span>         * with respect to the given attributes containing the current character.<a name="line.444"></a>
+<span class="sourceLineNo">445</span>         */<a name="line.445"></a>
+<span class="sourceLineNo">446</span>        public int getRunStart(Set&lt;? extends Attribute&gt; attributes) {<a name="line.446"></a>
+<span class="sourceLineNo">447</span>            int index = getBeginIndex();<a name="line.447"></a>
+<span class="sourceLineNo">448</span>            Object[] a = attributes.toArray();<a name="line.448"></a>
+<span class="sourceLineNo">449</span>            for (int i = 0; i &lt; a.length; i++) {<a name="line.449"></a>
+<span class="sourceLineNo">450</span>                TextAttribute attr = (TextAttribute) a[i];<a name="line.450"></a>
+<span class="sourceLineNo">451</span>                index = Math.max(getRunStart(attr), index);<a name="line.451"></a>
+<span class="sourceLineNo">452</span>            }<a name="line.452"></a>
+<span class="sourceLineNo">453</span>            return Math.min(getIndex(), index);<a name="line.453"></a>
+<span class="sourceLineNo">454</span>        }<a name="line.454"></a>
+<span class="sourceLineNo">455</span><a name="line.455"></a>
+<span class="sourceLineNo">456</span>        /**<a name="line.456"></a>
+<span class="sourceLineNo">457</span>         * Returns the index of the first character following the run<a name="line.457"></a>
+<span class="sourceLineNo">458</span>         * with respect to all attributes containing the current character.<a name="line.458"></a>
+<span class="sourceLineNo">459</span>         */<a name="line.459"></a>
+<span class="sourceLineNo">460</span>        public int getRunLimit() {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>            int pos = toModelPosition(getIndex());<a name="line.461"></a>
+<span class="sourceLineNo">462</span>            int i = v.getViewIndex(pos, Position.Bias.Forward);<a name="line.462"></a>
+<span class="sourceLineNo">463</span>            View child = v.getView(i);<a name="line.463"></a>
+<span class="sourceLineNo">464</span>            return toIteratorIndex(child.getEndOffset());<a name="line.464"></a>
+<span class="sourceLineNo">465</span>        }<a name="line.465"></a>
+<span class="sourceLineNo">466</span><a name="line.466"></a>
+<span class="sourceLineNo">467</span>        /**<a name="line.467"></a>
+<span class="sourceLineNo">468</span>         * Returns the index of the first character following the run<a name="line.468"></a>
+<span class="sourceLineNo">469</span>         * with respect to the given attribute containing the current character.<a name="line.469"></a>
+<span class="sourceLineNo">470</span>         */<a name="line.470"></a>
+<span class="sourceLineNo">471</span>        public int getRunLimit(AttributedCharacterIterator.Attribute attribute) {<a name="line.471"></a>
+<span class="sourceLineNo">472</span>            if (attribute instanceof TextAttribute) {<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                int pos = toModelPosition(getIndex());<a name="line.473"></a>
+<span class="sourceLineNo">474</span>                int i = v.getViewIndex(pos, Position.Bias.Forward);<a name="line.474"></a>
+<span class="sourceLineNo">475</span>                if (attribute == TextAttribute.FONT) {<a name="line.475"></a>
+<span class="sourceLineNo">476</span>                    return toIteratorIndex(getFontBoundary(i, 1));<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                }<a name="line.477"></a>
+<span class="sourceLineNo">478</span>            }<a name="line.478"></a>
+<span class="sourceLineNo">479</span>            return getEndIndex();<a name="line.479"></a>
+<span class="sourceLineNo">480</span>        }<a name="line.480"></a>
+<span class="sourceLineNo">481</span><a name="line.481"></a>
+<span class="sourceLineNo">482</span>        /**<a name="line.482"></a>
+<span class="sourceLineNo">483</span>         * Returns the index of the first character following the run<a name="line.483"></a>
+<span class="sourceLineNo">484</span>         * with respect to the given attributes containing the current character.<a name="line.484"></a>
+<span class="sourceLineNo">485</span>         */<a name="line.485"></a>
+<span class="sourceLineNo">486</span>        public int getRunLimit(Set&lt;? extends Attribute&gt; attributes) {<a name="line.486"></a>
+<span class="sourceLineNo">487</span>            int index = getEndIndex();<a name="line.487"></a>
+<span class="sourceLineNo">488</span>            Object[] a = attributes.toArray();<a name="line.488"></a>
+<span class="sourceLineNo">489</span>            for (int i = 0; i &lt; a.length; i++) {<a name="line.489"></a>
+<span class="sourceLineNo">490</span>                TextAttribute attr = (TextAttribute) a[i];<a name="line.490"></a>
+<span class="sourceLineNo">491</span>                index = Math.min(getRunLimit(attr), index);<a name="line.491"></a>
+<span class="sourceLineNo">492</span>            }<a name="line.492"></a>
+<span class="sourceLineNo">493</span>            return Math.max(getIndex(), index);<a name="line.493"></a>
+<span class="sourceLineNo">494</span>        }<a name="line.494"></a>
+<span class="sourceLineNo">495</span><a name="line.495"></a>
+<span class="sourceLineNo">496</span>        /**<a name="line.496"></a>
+<span class="sourceLineNo">497</span>         * Returns a map with the attributes defined on the current<a name="line.497"></a>
+<span class="sourceLineNo">498</span>         * character.<a name="line.498"></a>
+<span class="sourceLineNo">499</span>         */<a name="line.499"></a>
+<span class="sourceLineNo">500</span>        public Map&lt;Attribute, Object&gt; getAttributes() {<a name="line.500"></a>
+<span class="sourceLineNo">501</span>            Object[] ka = keys.toArray();<a name="line.501"></a>
+<span class="sourceLineNo">502</span>            Hashtable&lt;Attribute, Object&gt; h = new Hashtable&lt;Attribute, Object&gt;();<a name="line.502"></a>
+<span class="sourceLineNo">503</span>            for (int i = 0; i &lt; ka.length; i++) {<a name="line.503"></a>
+<span class="sourceLineNo">504</span>                TextAttribute a = (TextAttribute) ka[i];<a name="line.504"></a>
+<span class="sourceLineNo">505</span>                Object value = getAttribute(a);<a name="line.505"></a>
+<span class="sourceLineNo">506</span>                if (value != null) {<a name="line.506"></a>
+<span class="sourceLineNo">507</span>                    h.put(a, value);<a name="line.507"></a>
+<span class="sourceLineNo">508</span>                }<a name="line.508"></a>
+<span class="sourceLineNo">509</span>            }<a name="line.509"></a>
+<span class="sourceLineNo">510</span>            return h;<a name="line.510"></a>
+<span class="sourceLineNo">511</span>        }<a name="line.511"></a>
+<span class="sourceLineNo">512</span><a name="line.512"></a>
+<span class="sourceLineNo">513</span>        /**<a name="line.513"></a>
+<span class="sourceLineNo">514</span>         * Returns the value of the named attribute for the current character.<a name="line.514"></a>
+<span class="sourceLineNo">515</span>         * Returns null if the attribute is not defined.<a name="line.515"></a>
+<span class="sourceLineNo">516</span>         * @param attribute the key of the attribute whose value is requested.<a name="line.516"></a>
+<span class="sourceLineNo">517</span>         */<a name="line.517"></a>
+<span class="sourceLineNo">518</span>        public Object getAttribute(AttributedCharacterIterator.Attribute attribute) {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>            int pos = toModelPosition(getIndex());<a name="line.519"></a>
+<span class="sourceLineNo">520</span>            int childIndex = v.getViewIndex(pos, Position.Bias.Forward);<a name="line.520"></a>
+<span class="sourceLineNo">521</span>            if (attribute == TextAttribute.FONT) {<a name="line.521"></a>
+<span class="sourceLineNo">522</span>                return getFont(childIndex);<a name="line.522"></a>
+<span class="sourceLineNo">523</span>            } else if( attribute == TextAttribute.RUN_DIRECTION ) {<a name="line.523"></a>
+<span class="sourceLineNo">524</span>                return<a name="line.524"></a>
+<span class="sourceLineNo">525</span>                    v.getDocument().getProperty(TextAttribute.RUN_DIRECTION);<a name="line.525"></a>
+<span class="sourceLineNo">526</span>            } else if (attribute == TextAttribute.NUMERIC_SHAPING) {<a name="line.526"></a>
+<span class="sourceLineNo">527</span>                return shaper;<a name="line.527"></a>
+<span class="sourceLineNo">528</span>            }<a name="line.528"></a>
+<span class="sourceLineNo">529</span>            return null;<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        }<a name="line.530"></a>
+<span class="sourceLineNo">531</span><a name="line.531"></a>
+<span class="sourceLineNo">532</span>        /**<a name="line.532"></a>
+<span class="sourceLineNo">533</span>         * Returns the keys of all attributes defined on the<a name="line.533"></a>
+<span class="sourceLineNo">534</span>         * iterator's text range. The set is empty if no<a name="line.534"></a>
+<span class="sourceLineNo">535</span>         * attributes are defined.<a name="line.535"></a>
+<span class="sourceLineNo">536</span>         */<a name="line.536"></a>
+<span class="sourceLineNo">537</span>        public Set&lt;Attribute&gt; getAllAttributeKeys() {<a name="line.537"></a>
+<span class="sourceLineNo">538</span>            return keys;<a name="line.538"></a>
+<span class="sourceLineNo">539</span>        }<a name="line.539"></a>
+<span class="sourceLineNo">540</span><a name="line.540"></a>
+<span class="sourceLineNo">541</span>        View v;<a name="line.541"></a>
+<span class="sourceLineNo">542</span><a name="line.542"></a>
+<span class="sourceLineNo">543</span>        static Set&lt;Attribute&gt; keys;<a name="line.543"></a>
+<span class="sourceLineNo">544</span><a name="line.544"></a>
+<span class="sourceLineNo">545</span>        static {<a name="line.545"></a>
+<span class="sourceLineNo">546</span>            keys = new HashSet&lt;Attribute&gt;();<a name="line.546"></a>
+<span class="sourceLineNo">547</span>            keys.add(TextAttribute.FONT);<a name="line.547"></a>
+<span class="sourceLineNo">548</span>            keys.add(TextAttribute.RUN_DIRECTION);<a name="line.548"></a>
+<span class="sourceLineNo">549</span>            keys.add(TextAttribute.NUMERIC_SHAPING);<a name="line.549"></a>
+<span class="sourceLineNo">550</span>        }<a name="line.550"></a>
+<span class="sourceLineNo">551</span><a name="line.551"></a>
+<span class="sourceLineNo">552</span>        private Object shaper = null;<a name="line.552"></a>
+<span class="sourceLineNo">553</span>    }<a name="line.553"></a>
+<span class="sourceLineNo">554</span><a name="line.554"></a>
+<span class="sourceLineNo">555</span>}<a name="line.555"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

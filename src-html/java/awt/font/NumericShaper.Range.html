@@ -1,0 +1,1579 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2000, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.awt.font;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.IOException;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.ObjectOutputStream;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.Arrays;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Comparator;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.EnumSet;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.Set;<a name="line.33"></a>
+<span class="sourceLineNo">034</span><a name="line.34"></a>
+<span class="sourceLineNo">035</span>/**<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * The &lt;code&gt;NumericShaper&lt;/code&gt; class is used to convert Latin-1 (European)<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * digits to other Unicode decimal digits.  Users of this class will<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * primarily be people who wish to present data using<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * national digit shapes, but find it more convenient to represent the<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * data internally using Latin-1 (European) digits.  This does not<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * interpret the deprecated numeric shape selector character (U+206E).<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * Instances of &lt;code&gt;NumericShaper&lt;/code&gt; are typically applied<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * as attributes to text with the<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * {@link TextAttribute#NUMERIC_SHAPING NUMERIC_SHAPING} attribute<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * of the &lt;code&gt;TextAttribute&lt;/code&gt; class.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * For example, this code snippet causes a &lt;code&gt;TextLayout&lt;/code&gt; to<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * shape European digits to Arabic in an Arabic context:&lt;br&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * Map map = new HashMap();<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * map.put(TextAttribute.NUMERIC_SHAPING,<a name="line.51"></a>
+<span class="sourceLineNo">052</span> *     NumericShaper.getContextualShaper(NumericShaper.ARABIC));<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * FontRenderContext frc = ...;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * TextLayout layout = new TextLayout(text, map, frc);<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * layout.draw(g2d, x, y);<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;br&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * It is also possible to perform numeric shaping explicitly using instances<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * of &lt;code&gt;NumericShaper&lt;/code&gt;, as this code snippet demonstrates:&lt;br&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * char[] text = ...;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * // shape all EUROPEAN digits (except zero) to ARABIC digits<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * NumericShaper shaper = NumericShaper.getShaper(NumericShaper.ARABIC);<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * shaper.shape(text, start, count);<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * // shape European digits to ARABIC digits if preceding text is Arabic, or<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * // shape European digits to TAMIL digits if preceding text is Tamil, or<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * // leave European digits alone if there is no preceding text, or<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * // preceding text is neither Arabic nor Tamil<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * NumericShaper shaper =<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *     NumericShaper.getContextualShaper(NumericShaper.ARABIC |<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *                                         NumericShaper.TAMIL,<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *                                       NumericShaper.EUROPEAN);<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * shaper.shape(text, start, count);<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &lt;p&gt;&lt;b&gt;Bit mask- and enum-based Unicode ranges&lt;/b&gt;&lt;/p&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * &lt;p&gt;This class supports two different programming interfaces to<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * represent Unicode ranges for script-specific digits: bit<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * mask-based ones, such as {@link #ARABIC NumericShaper.ARABIC}, and<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * enum-based ones, such as {@link NumericShaper.Range#ARABIC}.<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * Multiple ranges can be specified by ORing bit mask-based constants,<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * such as:<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * NumericShaper.ARABIC | NumericShaper.TAMIL<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * or creating a {@code Set} with the {@link NumericShaper.Range}<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * constants, such as:<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * EnumSet.of(NumericShaper.Scirpt.ARABIC, NumericShaper.Range.TAMIL)<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * The enum-based ranges are a super set of the bit mask-based ones.<a name="line.93"></a>
+<span class="sourceLineNo">094</span> *<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * &lt;p&gt;If the two interfaces are mixed (including serialization),<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * Unicode range values are mapped to their counterparts where such<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * mapping is possible, such as {@code NumericShaper.Range.ARABIC}<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * from/to {@code NumericShaper.ARABIC}.  If any unmappable range<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * values are specified, such as {@code NumericShaper.Range.BALINESE},<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * those ranges are ignored.<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * &lt;p&gt;&lt;b&gt;Decimal Digits Precedence&lt;/b&gt;&lt;/p&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * &lt;p&gt;A Unicode range may have more than one set of decimal digits. If<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * multiple decimal digits sets are specified for the same Unicode<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * range, one of the sets will take precedence as follows.<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * &lt;table border=1 cellspacing=3 cellpadding=0 summary="NumericShaper constants precedence."&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *    &lt;tr&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *       &lt;th class="TableHeadingColor"&gt;Unicode Range&lt;/th&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> *       &lt;th class="TableHeadingColor"&gt;&lt;code&gt;NumericShaper&lt;/code&gt; Constants&lt;/th&gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *       &lt;th class="TableHeadingColor"&gt;Precedence&lt;/th&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span> *    &lt;/tr&gt;<a name="line.113"></a>
+<span class="sourceLineNo">114</span> *    &lt;tr&gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span> *       &lt;td rowspan="2"&gt;Arabic&lt;/td&gt;<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *       &lt;td&gt;{@link NumericShaper#ARABIC NumericShaper.ARABIC}&lt;br&gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span> *           {@link NumericShaper#EASTERN_ARABIC NumericShaper.EASTERN_ARABIC}&lt;/td&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span> *       &lt;td&gt;{@link NumericShaper#EASTERN_ARABIC NumericShaper.EASTERN_ARABIC}&lt;/td&gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span> *    &lt;/tr&gt;<a name="line.119"></a>
+<span class="sourceLineNo">120</span> *    &lt;tr&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span> *       &lt;td&gt;{@link NumericShaper.Range#ARABIC}&lt;br&gt;<a name="line.121"></a>
+<span class="sourceLineNo">122</span> *           {@link NumericShaper.Range#EASTERN_ARABIC}&lt;/td&gt;<a name="line.122"></a>
+<span class="sourceLineNo">123</span> *       &lt;td&gt;{@link NumericShaper.Range#EASTERN_ARABIC}&lt;/td&gt;<a name="line.123"></a>
+<span class="sourceLineNo">124</span> *    &lt;/tr&gt;<a name="line.124"></a>
+<span class="sourceLineNo">125</span> *    &lt;tr&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span> *       &lt;td&gt;Tai Tham&lt;/td&gt;<a name="line.126"></a>
+<span class="sourceLineNo">127</span> *       &lt;td&gt;{@link NumericShaper.Range#TAI_THAM_HORA}&lt;br&gt;<a name="line.127"></a>
+<span class="sourceLineNo">128</span> *           {@link NumericShaper.Range#TAI_THAM_THAM}&lt;/td&gt;<a name="line.128"></a>
+<span class="sourceLineNo">129</span> *       &lt;td&gt;{@link NumericShaper.Range#TAI_THAM_THAM}&lt;/td&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span> *    &lt;/tr&gt;<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * &lt;/table&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span> *<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * @since 1.4<a name="line.133"></a>
+<span class="sourceLineNo">134</span> */<a name="line.134"></a>
+<span class="sourceLineNo">135</span><a name="line.135"></a>
+<span class="sourceLineNo">136</span>public final class NumericShaper implements java.io.Serializable {<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    /**<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * A {@code NumericShaper.Range} represents a Unicode range of a<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * script having its own decimal digits. For example, the {@link<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * NumericShaper.Range#THAI} range has the Thai digits, THAI DIGIT<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * ZERO (U+0E50) to THAI DIGIT NINE (U+0E59).<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     *<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * &lt;p&gt;The &lt;code&gt;Range&lt;/code&gt; enum replaces the traditional bit<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * mask-based values (e.g., {@link NumericShaper#ARABIC}), and<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * supports more Unicode ranges than the bit mask-based ones. For<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * example, the following code using the bit mask:<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * &lt;blockquote&gt;&lt;pre&gt;<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * NumericShaper.getContextualShaper(NumericShaper.ARABIC |<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *                                     NumericShaper.TAMIL,<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *                                   NumericShaper.EUROPEAN);<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * can be written using this enum as:<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * &lt;blockquote&gt;&lt;pre&gt;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * NumericShaper.getContextualShaper(EnumSet.of(<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     *                                     NumericShaper.Range.ARABIC,<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *                                     NumericShaper.Range.TAMIL),<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *                                   NumericShaper.Range.EUROPEAN);<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     *<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * @since 1.7<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     */<a name="line.161"></a>
+<span class="sourceLineNo">162</span>    public static enum Range {<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        // The order of EUROPEAN to MOGOLIAN must be consistent<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        // with the bitmask-based constants.<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        /**<a name="line.165"></a>
+<span class="sourceLineNo">166</span>         * The Latin (European) range with the Latin (ASCII) digits.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>         */<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        EUROPEAN        ('\u0030', '\u0000', '\u0300'),<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        /**<a name="line.169"></a>
+<span class="sourceLineNo">170</span>         * The Arabic range with the Arabic-Indic digits.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>         */<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        ARABIC          ('\u0660', '\u0600', '\u0780'),<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        /**<a name="line.173"></a>
+<span class="sourceLineNo">174</span>         * The Arabic range with the Eastern Arabic-Indic digits.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>         */<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        EASTERN_ARABIC  ('\u06f0', '\u0600', '\u0780'),<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        /**<a name="line.177"></a>
+<span class="sourceLineNo">178</span>         * The Devanagari range with the Devanagari digits.<a name="line.178"></a>
+<span class="sourceLineNo">179</span>         */<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        DEVANAGARI      ('\u0966', '\u0900', '\u0980'),<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        /**<a name="line.181"></a>
+<span class="sourceLineNo">182</span>         * The Bengali range with the Bengali digits.<a name="line.182"></a>
+<span class="sourceLineNo">183</span>         */<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        BENGALI         ('\u09e6', '\u0980', '\u0a00'),<a name="line.184"></a>
+<span class="sourceLineNo">185</span>        /**<a name="line.185"></a>
+<span class="sourceLineNo">186</span>         * The Gurmukhi range with the Gurmukhi digits.<a name="line.186"></a>
+<span class="sourceLineNo">187</span>         */<a name="line.187"></a>
+<span class="sourceLineNo">188</span>        GURMUKHI        ('\u0a66', '\u0a00', '\u0a80'),<a name="line.188"></a>
+<span class="sourceLineNo">189</span>        /**<a name="line.189"></a>
+<span class="sourceLineNo">190</span>         * The Gujarati range with the Gujarati digits.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>         */<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        GUJARATI        ('\u0ae6', '\u0b00', '\u0b80'),<a name="line.192"></a>
+<span class="sourceLineNo">193</span>        /**<a name="line.193"></a>
+<span class="sourceLineNo">194</span>         * The Oriya range with the Oriya digits.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>         */<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        ORIYA           ('\u0b66', '\u0b00', '\u0b80'),<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        /**<a name="line.197"></a>
+<span class="sourceLineNo">198</span>         * The Tamil range with the Tamil digits.<a name="line.198"></a>
+<span class="sourceLineNo">199</span>         */<a name="line.199"></a>
+<span class="sourceLineNo">200</span>        TAMIL           ('\u0be6', '\u0b80', '\u0c00'),<a name="line.200"></a>
+<span class="sourceLineNo">201</span>        /**<a name="line.201"></a>
+<span class="sourceLineNo">202</span>         * The Telugu range with the Telugu digits.<a name="line.202"></a>
+<span class="sourceLineNo">203</span>         */<a name="line.203"></a>
+<span class="sourceLineNo">204</span>        TELUGU          ('\u0c66', '\u0c00', '\u0c80'),<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        /**<a name="line.205"></a>
+<span class="sourceLineNo">206</span>         * The Kannada range with the Kannada digits.<a name="line.206"></a>
+<span class="sourceLineNo">207</span>         */<a name="line.207"></a>
+<span class="sourceLineNo">208</span>        KANNADA         ('\u0ce6', '\u0c80', '\u0d00'),<a name="line.208"></a>
+<span class="sourceLineNo">209</span>        /**<a name="line.209"></a>
+<span class="sourceLineNo">210</span>         * The Malayalam range with the Malayalam digits.<a name="line.210"></a>
+<span class="sourceLineNo">211</span>         */<a name="line.211"></a>
+<span class="sourceLineNo">212</span>        MALAYALAM       ('\u0d66', '\u0d00', '\u0d80'),<a name="line.212"></a>
+<span class="sourceLineNo">213</span>        /**<a name="line.213"></a>
+<span class="sourceLineNo">214</span>         * The Thai range with the Thai digits.<a name="line.214"></a>
+<span class="sourceLineNo">215</span>         */<a name="line.215"></a>
+<span class="sourceLineNo">216</span>        THAI            ('\u0e50', '\u0e00', '\u0e80'),<a name="line.216"></a>
+<span class="sourceLineNo">217</span>        /**<a name="line.217"></a>
+<span class="sourceLineNo">218</span>         * The Lao range with the Lao digits.<a name="line.218"></a>
+<span class="sourceLineNo">219</span>         */<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        LAO             ('\u0ed0', '\u0e80', '\u0f00'),<a name="line.220"></a>
+<span class="sourceLineNo">221</span>        /**<a name="line.221"></a>
+<span class="sourceLineNo">222</span>         * The Tibetan range with the Tibetan digits.<a name="line.222"></a>
+<span class="sourceLineNo">223</span>         */<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        TIBETAN         ('\u0f20', '\u0f00', '\u1000'),<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        /**<a name="line.225"></a>
+<span class="sourceLineNo">226</span>         * The Myanmar range with the Myanmar digits.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>         */<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        MYANMAR         ('\u1040', '\u1000', '\u1080'),<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        /**<a name="line.229"></a>
+<span class="sourceLineNo">230</span>         * The Ethiopic range with the Ethiopic digits. Ethiopic<a name="line.230"></a>
+<span class="sourceLineNo">231</span>         * does not have a decimal digit 0 so Latin (European) 0 is<a name="line.231"></a>
+<span class="sourceLineNo">232</span>         * used.<a name="line.232"></a>
+<span class="sourceLineNo">233</span>         */<a name="line.233"></a>
+<span class="sourceLineNo">234</span>        ETHIOPIC        ('\u1369', '\u1200', '\u1380') {<a name="line.234"></a>
+<span class="sourceLineNo">235</span>            @Override<a name="line.235"></a>
+<span class="sourceLineNo">236</span>            char getNumericBase() { return 1; }<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        },<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        /**<a name="line.238"></a>
+<span class="sourceLineNo">239</span>         * The Khmer range with the Khmer digits.<a name="line.239"></a>
+<span class="sourceLineNo">240</span>         */<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        KHMER           ('\u17e0', '\u1780', '\u1800'),<a name="line.241"></a>
+<span class="sourceLineNo">242</span>        /**<a name="line.242"></a>
+<span class="sourceLineNo">243</span>         * The Mongolian range with the Mongolian digits.<a name="line.243"></a>
+<span class="sourceLineNo">244</span>         */<a name="line.244"></a>
+<span class="sourceLineNo">245</span>        MONGOLIAN       ('\u1810', '\u1800', '\u1900'),<a name="line.245"></a>
+<span class="sourceLineNo">246</span>        // The order of EUROPEAN to MOGOLIAN must be consistent<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        // with the bitmask-based constants.<a name="line.247"></a>
+<span class="sourceLineNo">248</span><a name="line.248"></a>
+<span class="sourceLineNo">249</span>        /**<a name="line.249"></a>
+<span class="sourceLineNo">250</span>         * The N'Ko range with the N'Ko digits.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>         */<a name="line.251"></a>
+<span class="sourceLineNo">252</span>        NKO             ('\u07c0', '\u07c0', '\u0800'),<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        /**<a name="line.253"></a>
+<span class="sourceLineNo">254</span>         * The Myanmar range with the Myanmar Shan digits.<a name="line.254"></a>
+<span class="sourceLineNo">255</span>         */<a name="line.255"></a>
+<span class="sourceLineNo">256</span>        MYANMAR_SHAN    ('\u1090', '\u1000', '\u10a0'),<a name="line.256"></a>
+<span class="sourceLineNo">257</span>        /**<a name="line.257"></a>
+<span class="sourceLineNo">258</span>         * The Limbu range with the Limbu digits.<a name="line.258"></a>
+<span class="sourceLineNo">259</span>         */<a name="line.259"></a>
+<span class="sourceLineNo">260</span>        LIMBU           ('\u1946', '\u1900', '\u1950'),<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        /**<a name="line.261"></a>
+<span class="sourceLineNo">262</span>         * The New Tai Lue range with the New Tai Lue digits.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>         */<a name="line.263"></a>
+<span class="sourceLineNo">264</span>        NEW_TAI_LUE     ('\u19d0', '\u1980', '\u19e0'),<a name="line.264"></a>
+<span class="sourceLineNo">265</span>        /**<a name="line.265"></a>
+<span class="sourceLineNo">266</span>         * The Balinese range with the Balinese digits.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>         */<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        BALINESE        ('\u1b50', '\u1b00', '\u1b80'),<a name="line.268"></a>
+<span class="sourceLineNo">269</span>        /**<a name="line.269"></a>
+<span class="sourceLineNo">270</span>         * The Sundanese range with the Sundanese digits.<a name="line.270"></a>
+<span class="sourceLineNo">271</span>         */<a name="line.271"></a>
+<span class="sourceLineNo">272</span>        SUNDANESE       ('\u1bb0', '\u1b80', '\u1bc0'),<a name="line.272"></a>
+<span class="sourceLineNo">273</span>        /**<a name="line.273"></a>
+<span class="sourceLineNo">274</span>         * The Lepcha range with the Lepcha digits.<a name="line.274"></a>
+<span class="sourceLineNo">275</span>         */<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        LEPCHA          ('\u1c40', '\u1c00', '\u1c50'),<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        /**<a name="line.277"></a>
+<span class="sourceLineNo">278</span>         * The Ol Chiki range with the Ol Chiki digits.<a name="line.278"></a>
+<span class="sourceLineNo">279</span>         */<a name="line.279"></a>
+<span class="sourceLineNo">280</span>        OL_CHIKI        ('\u1c50', '\u1c50', '\u1c80'),<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        /**<a name="line.281"></a>
+<span class="sourceLineNo">282</span>         * The Vai range with the Vai digits.<a name="line.282"></a>
+<span class="sourceLineNo">283</span>         */<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        VAI             ('\ua620', '\ua500', '\ua640'),<a name="line.284"></a>
+<span class="sourceLineNo">285</span>        /**<a name="line.285"></a>
+<span class="sourceLineNo">286</span>         * The Saurashtra range with the Saurashtra digits.<a name="line.286"></a>
+<span class="sourceLineNo">287</span>         */<a name="line.287"></a>
+<span class="sourceLineNo">288</span>        SAURASHTRA      ('\ua8d0', '\ua880', '\ua8e0'),<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        /**<a name="line.289"></a>
+<span class="sourceLineNo">290</span>         * The Kayah Li range with the Kayah Li digits.<a name="line.290"></a>
+<span class="sourceLineNo">291</span>         */<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        KAYAH_LI        ('\ua900', '\ua900', '\ua930'),<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        /**<a name="line.293"></a>
+<span class="sourceLineNo">294</span>         * The Cham range with the Cham digits.<a name="line.294"></a>
+<span class="sourceLineNo">295</span>         */<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        CHAM            ('\uaa50', '\uaa00', '\uaa60'),<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        /**<a name="line.297"></a>
+<span class="sourceLineNo">298</span>         * The Tai Tham Hora range with the Tai Tham Hora digits.<a name="line.298"></a>
+<span class="sourceLineNo">299</span>         */<a name="line.299"></a>
+<span class="sourceLineNo">300</span>        TAI_THAM_HORA   ('\u1a80', '\u1a20', '\u1ab0'),<a name="line.300"></a>
+<span class="sourceLineNo">301</span>        /**<a name="line.301"></a>
+<span class="sourceLineNo">302</span>         * The Tai Tham Tham range with the Tai Tham Tham digits.<a name="line.302"></a>
+<span class="sourceLineNo">303</span>         */<a name="line.303"></a>
+<span class="sourceLineNo">304</span>        TAI_THAM_THAM   ('\u1a90', '\u1a20', '\u1ab0'),<a name="line.304"></a>
+<span class="sourceLineNo">305</span>        /**<a name="line.305"></a>
+<span class="sourceLineNo">306</span>         * The Javanese range with the Javanese digits.<a name="line.306"></a>
+<span class="sourceLineNo">307</span>         */<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        JAVANESE        ('\ua9d0', '\ua980', '\ua9e0'),<a name="line.308"></a>
+<span class="sourceLineNo">309</span>        /**<a name="line.309"></a>
+<span class="sourceLineNo">310</span>         * The Meetei Mayek range with the Meetei Mayek digits.<a name="line.310"></a>
+<span class="sourceLineNo">311</span>         */<a name="line.311"></a>
+<span class="sourceLineNo">312</span>        MEETEI_MAYEK    ('\uabf0', '\uabc0', '\uac00');<a name="line.312"></a>
+<span class="sourceLineNo">313</span><a name="line.313"></a>
+<span class="sourceLineNo">314</span>        private static int toRangeIndex(Range script) {<a name="line.314"></a>
+<span class="sourceLineNo">315</span>            int index = script.ordinal();<a name="line.315"></a>
+<span class="sourceLineNo">316</span>            return index &lt; NUM_KEYS ? index : -1;<a name="line.316"></a>
+<span class="sourceLineNo">317</span>        }<a name="line.317"></a>
+<span class="sourceLineNo">318</span><a name="line.318"></a>
+<span class="sourceLineNo">319</span>        private static Range indexToRange(int index) {<a name="line.319"></a>
+<span class="sourceLineNo">320</span>            return index &lt; NUM_KEYS ? Range.values()[index] : null;<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        }<a name="line.321"></a>
+<span class="sourceLineNo">322</span><a name="line.322"></a>
+<span class="sourceLineNo">323</span>        private static int toRangeMask(Set&lt;Range&gt; ranges) {<a name="line.323"></a>
+<span class="sourceLineNo">324</span>            int m = 0;<a name="line.324"></a>
+<span class="sourceLineNo">325</span>            for (Range range : ranges) {<a name="line.325"></a>
+<span class="sourceLineNo">326</span>                int index = range.ordinal();<a name="line.326"></a>
+<span class="sourceLineNo">327</span>                if (index &lt; NUM_KEYS) {<a name="line.327"></a>
+<span class="sourceLineNo">328</span>                    m |= 1 &lt;&lt; index;<a name="line.328"></a>
+<span class="sourceLineNo">329</span>                }<a name="line.329"></a>
+<span class="sourceLineNo">330</span>            }<a name="line.330"></a>
+<span class="sourceLineNo">331</span>            return m;<a name="line.331"></a>
+<span class="sourceLineNo">332</span>        }<a name="line.332"></a>
+<span class="sourceLineNo">333</span><a name="line.333"></a>
+<span class="sourceLineNo">334</span>        private static Set&lt;Range&gt; maskToRangeSet(int mask) {<a name="line.334"></a>
+<span class="sourceLineNo">335</span>            Set&lt;Range&gt; set = EnumSet.noneOf(Range.class);<a name="line.335"></a>
+<span class="sourceLineNo">336</span>            Range[] a = Range.values();<a name="line.336"></a>
+<span class="sourceLineNo">337</span>            for (int i = 0; i &lt; NUM_KEYS; i++) {<a name="line.337"></a>
+<span class="sourceLineNo">338</span>                if ((mask &amp; (1 &lt;&lt; i)) != 0) {<a name="line.338"></a>
+<span class="sourceLineNo">339</span>                    set.add(a[i]);<a name="line.339"></a>
+<span class="sourceLineNo">340</span>                }<a name="line.340"></a>
+<span class="sourceLineNo">341</span>            }<a name="line.341"></a>
+<span class="sourceLineNo">342</span>            return set;<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        }<a name="line.343"></a>
+<span class="sourceLineNo">344</span><a name="line.344"></a>
+<span class="sourceLineNo">345</span>        // base character of range digits<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        private final int base;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        // Unicode range<a name="line.347"></a>
+<span class="sourceLineNo">348</span>        private final int start, // inclusive<a name="line.348"></a>
+<span class="sourceLineNo">349</span>                          end;   // exclusive<a name="line.349"></a>
+<span class="sourceLineNo">350</span><a name="line.350"></a>
+<span class="sourceLineNo">351</span>        private Range(int base, int start, int end) {<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            this.base = base - ('0' + getNumericBase());<a name="line.352"></a>
+<span class="sourceLineNo">353</span>            this.start = start;<a name="line.353"></a>
+<span class="sourceLineNo">354</span>            this.end = end;<a name="line.354"></a>
+<span class="sourceLineNo">355</span>        }<a name="line.355"></a>
+<span class="sourceLineNo">356</span><a name="line.356"></a>
+<span class="sourceLineNo">357</span>        private int getDigitBase() {<a name="line.357"></a>
+<span class="sourceLineNo">358</span>            return base;<a name="line.358"></a>
+<span class="sourceLineNo">359</span>        }<a name="line.359"></a>
+<span class="sourceLineNo">360</span><a name="line.360"></a>
+<span class="sourceLineNo">361</span>        char getNumericBase() {<a name="line.361"></a>
+<span class="sourceLineNo">362</span>            return 0;<a name="line.362"></a>
+<span class="sourceLineNo">363</span>        }<a name="line.363"></a>
+<span class="sourceLineNo">364</span><a name="line.364"></a>
+<span class="sourceLineNo">365</span>        private boolean inRange(int c) {<a name="line.365"></a>
+<span class="sourceLineNo">366</span>            return start &lt;= c &amp;&amp; c &lt; end;<a name="line.366"></a>
+<span class="sourceLineNo">367</span>        }<a name="line.367"></a>
+<span class="sourceLineNo">368</span>    }<a name="line.368"></a>
+<span class="sourceLineNo">369</span><a name="line.369"></a>
+<span class="sourceLineNo">370</span>    /** index of context for contextual shaping - values range from 0 to 18 */<a name="line.370"></a>
+<span class="sourceLineNo">371</span>    private int key;<a name="line.371"></a>
+<span class="sourceLineNo">372</span><a name="line.372"></a>
+<span class="sourceLineNo">373</span>    /** flag indicating whether to shape contextually (high bit) and which<a name="line.373"></a>
+<span class="sourceLineNo">374</span>     *  digit ranges to shape (bits 0-18)<a name="line.374"></a>
+<span class="sourceLineNo">375</span>     */<a name="line.375"></a>
+<span class="sourceLineNo">376</span>    private int mask;<a name="line.376"></a>
+<span class="sourceLineNo">377</span><a name="line.377"></a>
+<span class="sourceLineNo">378</span>    /**<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * The context {@code Range} for contextual shaping or the {@code<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * Range} for non-contextual shaping. {@code null} for the bit<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * mask-based API.<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     *<a name="line.382"></a>
+<span class="sourceLineNo">383</span>     * @since 1.7<a name="line.383"></a>
+<span class="sourceLineNo">384</span>     */<a name="line.384"></a>
+<span class="sourceLineNo">385</span>    private Range shapingRange;<a name="line.385"></a>
+<span class="sourceLineNo">386</span><a name="line.386"></a>
+<span class="sourceLineNo">387</span>    /**<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * {@code Set&lt;Range&gt;} indicating which Unicode ranges to<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     * shape. {@code null} for the bit mask-based API.<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     */<a name="line.390"></a>
+<span class="sourceLineNo">391</span>    private transient Set&lt;Range&gt; rangeSet;<a name="line.391"></a>
+<span class="sourceLineNo">392</span><a name="line.392"></a>
+<span class="sourceLineNo">393</span>    /**<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * rangeSet.toArray() value. Sorted by Range.base when the number<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * of elements is greater then BSEARCH_THRESHOLD.<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     */<a name="line.396"></a>
+<span class="sourceLineNo">397</span>    private transient Range[] rangeArray;<a name="line.397"></a>
+<span class="sourceLineNo">398</span><a name="line.398"></a>
+<span class="sourceLineNo">399</span>    /**<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * If more than BSEARCH_THRESHOLD ranges are specified, binary search is used.<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     */<a name="line.401"></a>
+<span class="sourceLineNo">402</span>    private static final int BSEARCH_THRESHOLD = 3;<a name="line.402"></a>
+<span class="sourceLineNo">403</span><a name="line.403"></a>
+<span class="sourceLineNo">404</span>    private static final long serialVersionUID = -8022764705923730308L;<a name="line.404"></a>
+<span class="sourceLineNo">405</span><a name="line.405"></a>
+<span class="sourceLineNo">406</span>    /** Identifies the Latin-1 (European) and extended range, and<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     *  Latin-1 (European) decimal base.<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     */<a name="line.408"></a>
+<span class="sourceLineNo">409</span>    public static final int EUROPEAN = 1&lt;&lt;0;<a name="line.409"></a>
+<span class="sourceLineNo">410</span><a name="line.410"></a>
+<span class="sourceLineNo">411</span>    /** Identifies the ARABIC range and decimal base. */<a name="line.411"></a>
+<span class="sourceLineNo">412</span>    public static final int ARABIC = 1&lt;&lt;1;<a name="line.412"></a>
+<span class="sourceLineNo">413</span><a name="line.413"></a>
+<span class="sourceLineNo">414</span>    /** Identifies the ARABIC range and ARABIC_EXTENDED decimal base. */<a name="line.414"></a>
+<span class="sourceLineNo">415</span>    public static final int EASTERN_ARABIC = 1&lt;&lt;2;<a name="line.415"></a>
+<span class="sourceLineNo">416</span><a name="line.416"></a>
+<span class="sourceLineNo">417</span>    /** Identifies the DEVANAGARI range and decimal base. */<a name="line.417"></a>
+<span class="sourceLineNo">418</span>    public static final int DEVANAGARI = 1&lt;&lt;3;<a name="line.418"></a>
+<span class="sourceLineNo">419</span><a name="line.419"></a>
+<span class="sourceLineNo">420</span>    /** Identifies the BENGALI range and decimal base. */<a name="line.420"></a>
+<span class="sourceLineNo">421</span>    public static final int BENGALI = 1&lt;&lt;4;<a name="line.421"></a>
+<span class="sourceLineNo">422</span><a name="line.422"></a>
+<span class="sourceLineNo">423</span>    /** Identifies the GURMUKHI range and decimal base. */<a name="line.423"></a>
+<span class="sourceLineNo">424</span>    public static final int GURMUKHI = 1&lt;&lt;5;<a name="line.424"></a>
+<span class="sourceLineNo">425</span><a name="line.425"></a>
+<span class="sourceLineNo">426</span>    /** Identifies the GUJARATI range and decimal base. */<a name="line.426"></a>
+<span class="sourceLineNo">427</span>    public static final int GUJARATI = 1&lt;&lt;6;<a name="line.427"></a>
+<span class="sourceLineNo">428</span><a name="line.428"></a>
+<span class="sourceLineNo">429</span>    /** Identifies the ORIYA range and decimal base. */<a name="line.429"></a>
+<span class="sourceLineNo">430</span>    public static final int ORIYA = 1&lt;&lt;7;<a name="line.430"></a>
+<span class="sourceLineNo">431</span><a name="line.431"></a>
+<span class="sourceLineNo">432</span>    /** Identifies the TAMIL range and decimal base. */<a name="line.432"></a>
+<span class="sourceLineNo">433</span>    // TAMIL DIGIT ZERO was added in Unicode 4.1<a name="line.433"></a>
+<span class="sourceLineNo">434</span>    public static final int TAMIL = 1&lt;&lt;8;<a name="line.434"></a>
+<span class="sourceLineNo">435</span><a name="line.435"></a>
+<span class="sourceLineNo">436</span>    /** Identifies the TELUGU range and decimal base. */<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    public static final int TELUGU = 1&lt;&lt;9;<a name="line.437"></a>
+<span class="sourceLineNo">438</span><a name="line.438"></a>
+<span class="sourceLineNo">439</span>    /** Identifies the KANNADA range and decimal base. */<a name="line.439"></a>
+<span class="sourceLineNo">440</span>    public static final int KANNADA = 1&lt;&lt;10;<a name="line.440"></a>
+<span class="sourceLineNo">441</span><a name="line.441"></a>
+<span class="sourceLineNo">442</span>    /** Identifies the MALAYALAM range and decimal base. */<a name="line.442"></a>
+<span class="sourceLineNo">443</span>    public static final int MALAYALAM = 1&lt;&lt;11;<a name="line.443"></a>
+<span class="sourceLineNo">444</span><a name="line.444"></a>
+<span class="sourceLineNo">445</span>    /** Identifies the THAI range and decimal base. */<a name="line.445"></a>
+<span class="sourceLineNo">446</span>    public static final int THAI = 1&lt;&lt;12;<a name="line.446"></a>
+<span class="sourceLineNo">447</span><a name="line.447"></a>
+<span class="sourceLineNo">448</span>    /** Identifies the LAO range and decimal base. */<a name="line.448"></a>
+<span class="sourceLineNo">449</span>    public static final int LAO = 1&lt;&lt;13;<a name="line.449"></a>
+<span class="sourceLineNo">450</span><a name="line.450"></a>
+<span class="sourceLineNo">451</span>    /** Identifies the TIBETAN range and decimal base. */<a name="line.451"></a>
+<span class="sourceLineNo">452</span>    public static final int TIBETAN = 1&lt;&lt;14;<a name="line.452"></a>
+<span class="sourceLineNo">453</span><a name="line.453"></a>
+<span class="sourceLineNo">454</span>    /** Identifies the MYANMAR range and decimal base. */<a name="line.454"></a>
+<span class="sourceLineNo">455</span>    public static final int MYANMAR = 1&lt;&lt;15;<a name="line.455"></a>
+<span class="sourceLineNo">456</span><a name="line.456"></a>
+<span class="sourceLineNo">457</span>    /** Identifies the ETHIOPIC range and decimal base. */<a name="line.457"></a>
+<span class="sourceLineNo">458</span>    public static final int ETHIOPIC = 1&lt;&lt;16;<a name="line.458"></a>
+<span class="sourceLineNo">459</span><a name="line.459"></a>
+<span class="sourceLineNo">460</span>    /** Identifies the KHMER range and decimal base. */<a name="line.460"></a>
+<span class="sourceLineNo">461</span>    public static final int KHMER = 1&lt;&lt;17;<a name="line.461"></a>
+<span class="sourceLineNo">462</span><a name="line.462"></a>
+<span class="sourceLineNo">463</span>    /** Identifies the MONGOLIAN range and decimal base. */<a name="line.463"></a>
+<span class="sourceLineNo">464</span>    public static final int MONGOLIAN = 1&lt;&lt;18;<a name="line.464"></a>
+<span class="sourceLineNo">465</span><a name="line.465"></a>
+<span class="sourceLineNo">466</span>    /** Identifies all ranges, for full contextual shaping.<a name="line.466"></a>
+<span class="sourceLineNo">467</span>     *<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     * &lt;p&gt;This constant specifies all of the bit mask-based<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     * ranges. Use {@code EmunSet.allOf(NumericShaper.Range.class)} to<a name="line.469"></a>
+<span class="sourceLineNo">470</span>     * specify all of the enum-based ranges.<a name="line.470"></a>
+<span class="sourceLineNo">471</span>     */<a name="line.471"></a>
+<span class="sourceLineNo">472</span>    public static final int ALL_RANGES = 0x0007ffff;<a name="line.472"></a>
+<span class="sourceLineNo">473</span><a name="line.473"></a>
+<span class="sourceLineNo">474</span>    private static final int EUROPEAN_KEY = 0;<a name="line.474"></a>
+<span class="sourceLineNo">475</span>    private static final int ARABIC_KEY = 1;<a name="line.475"></a>
+<span class="sourceLineNo">476</span>    private static final int EASTERN_ARABIC_KEY = 2;<a name="line.476"></a>
+<span class="sourceLineNo">477</span>    private static final int DEVANAGARI_KEY = 3;<a name="line.477"></a>
+<span class="sourceLineNo">478</span>    private static final int BENGALI_KEY = 4;<a name="line.478"></a>
+<span class="sourceLineNo">479</span>    private static final int GURMUKHI_KEY = 5;<a name="line.479"></a>
+<span class="sourceLineNo">480</span>    private static final int GUJARATI_KEY = 6;<a name="line.480"></a>
+<span class="sourceLineNo">481</span>    private static final int ORIYA_KEY = 7;<a name="line.481"></a>
+<span class="sourceLineNo">482</span>    private static final int TAMIL_KEY = 8;<a name="line.482"></a>
+<span class="sourceLineNo">483</span>    private static final int TELUGU_KEY = 9;<a name="line.483"></a>
+<span class="sourceLineNo">484</span>    private static final int KANNADA_KEY = 10;<a name="line.484"></a>
+<span class="sourceLineNo">485</span>    private static final int MALAYALAM_KEY = 11;<a name="line.485"></a>
+<span class="sourceLineNo">486</span>    private static final int THAI_KEY = 12;<a name="line.486"></a>
+<span class="sourceLineNo">487</span>    private static final int LAO_KEY = 13;<a name="line.487"></a>
+<span class="sourceLineNo">488</span>    private static final int TIBETAN_KEY = 14;<a name="line.488"></a>
+<span class="sourceLineNo">489</span>    private static final int MYANMAR_KEY = 15;<a name="line.489"></a>
+<span class="sourceLineNo">490</span>    private static final int ETHIOPIC_KEY = 16;<a name="line.490"></a>
+<span class="sourceLineNo">491</span>    private static final int KHMER_KEY = 17;<a name="line.491"></a>
+<span class="sourceLineNo">492</span>    private static final int MONGOLIAN_KEY = 18;<a name="line.492"></a>
+<span class="sourceLineNo">493</span><a name="line.493"></a>
+<span class="sourceLineNo">494</span>    private static final int NUM_KEYS = MONGOLIAN_KEY + 1; // fixed<a name="line.494"></a>
+<span class="sourceLineNo">495</span><a name="line.495"></a>
+<span class="sourceLineNo">496</span>    private static final int CONTEXTUAL_MASK = 1&lt;&lt;31;<a name="line.496"></a>
+<span class="sourceLineNo">497</span><a name="line.497"></a>
+<span class="sourceLineNo">498</span>    private static final char[] bases = {<a name="line.498"></a>
+<span class="sourceLineNo">499</span>        '\u0030' - '\u0030', // EUROPEAN<a name="line.499"></a>
+<span class="sourceLineNo">500</span>        '\u0660' - '\u0030', // ARABIC-INDIC<a name="line.500"></a>
+<span class="sourceLineNo">501</span>        '\u06f0' - '\u0030', // EXTENDED ARABIC-INDIC (EASTERN_ARABIC)<a name="line.501"></a>
+<span class="sourceLineNo">502</span>        '\u0966' - '\u0030', // DEVANAGARI<a name="line.502"></a>
+<span class="sourceLineNo">503</span>        '\u09e6' - '\u0030', // BENGALI<a name="line.503"></a>
+<span class="sourceLineNo">504</span>        '\u0a66' - '\u0030', // GURMUKHI<a name="line.504"></a>
+<span class="sourceLineNo">505</span>        '\u0ae6' - '\u0030', // GUJARATI<a name="line.505"></a>
+<span class="sourceLineNo">506</span>        '\u0b66' - '\u0030', // ORIYA<a name="line.506"></a>
+<span class="sourceLineNo">507</span>        '\u0be6' - '\u0030', // TAMIL - zero was added in Unicode 4.1<a name="line.507"></a>
+<span class="sourceLineNo">508</span>        '\u0c66' - '\u0030', // TELUGU<a name="line.508"></a>
+<span class="sourceLineNo">509</span>        '\u0ce6' - '\u0030', // KANNADA<a name="line.509"></a>
+<span class="sourceLineNo">510</span>        '\u0d66' - '\u0030', // MALAYALAM<a name="line.510"></a>
+<span class="sourceLineNo">511</span>        '\u0e50' - '\u0030', // THAI<a name="line.511"></a>
+<span class="sourceLineNo">512</span>        '\u0ed0' - '\u0030', // LAO<a name="line.512"></a>
+<span class="sourceLineNo">513</span>        '\u0f20' - '\u0030', // TIBETAN<a name="line.513"></a>
+<span class="sourceLineNo">514</span>        '\u1040' - '\u0030', // MYANMAR<a name="line.514"></a>
+<span class="sourceLineNo">515</span>        '\u1369' - '\u0031', // ETHIOPIC - no zero<a name="line.515"></a>
+<span class="sourceLineNo">516</span>        '\u17e0' - '\u0030', // KHMER<a name="line.516"></a>
+<span class="sourceLineNo">517</span>        '\u1810' - '\u0030', // MONGOLIAN<a name="line.517"></a>
+<span class="sourceLineNo">518</span>    };<a name="line.518"></a>
+<span class="sourceLineNo">519</span><a name="line.519"></a>
+<span class="sourceLineNo">520</span>    // some ranges adjoin or overlap, rethink if we want to do a binary search on this<a name="line.520"></a>
+<span class="sourceLineNo">521</span><a name="line.521"></a>
+<span class="sourceLineNo">522</span>    private static final char[] contexts = {<a name="line.522"></a>
+<span class="sourceLineNo">523</span>        '\u0000', '\u0300', // 'EUROPEAN' (really latin-1 and extended)<a name="line.523"></a>
+<span class="sourceLineNo">524</span>        '\u0600', '\u0780', // ARABIC<a name="line.524"></a>
+<span class="sourceLineNo">525</span>        '\u0600', '\u0780', // EASTERN_ARABIC -- note overlap with arabic<a name="line.525"></a>
+<span class="sourceLineNo">526</span>        '\u0900', '\u0980', // DEVANAGARI<a name="line.526"></a>
+<span class="sourceLineNo">527</span>        '\u0980', '\u0a00', // BENGALI<a name="line.527"></a>
+<span class="sourceLineNo">528</span>        '\u0a00', '\u0a80', // GURMUKHI<a name="line.528"></a>
+<span class="sourceLineNo">529</span>        '\u0a80', '\u0b00', // GUJARATI<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        '\u0b00', '\u0b80', // ORIYA<a name="line.530"></a>
+<span class="sourceLineNo">531</span>        '\u0b80', '\u0c00', // TAMIL<a name="line.531"></a>
+<span class="sourceLineNo">532</span>        '\u0c00', '\u0c80', // TELUGU<a name="line.532"></a>
+<span class="sourceLineNo">533</span>        '\u0c80', '\u0d00', // KANNADA<a name="line.533"></a>
+<span class="sourceLineNo">534</span>        '\u0d00', '\u0d80', // MALAYALAM<a name="line.534"></a>
+<span class="sourceLineNo">535</span>        '\u0e00', '\u0e80', // THAI<a name="line.535"></a>
+<span class="sourceLineNo">536</span>        '\u0e80', '\u0f00', // LAO<a name="line.536"></a>
+<span class="sourceLineNo">537</span>        '\u0f00', '\u1000', // TIBETAN<a name="line.537"></a>
+<span class="sourceLineNo">538</span>        '\u1000', '\u1080', // MYANMAR<a name="line.538"></a>
+<span class="sourceLineNo">539</span>        '\u1200', '\u1380', // ETHIOPIC - note missing zero<a name="line.539"></a>
+<span class="sourceLineNo">540</span>        '\u1780', '\u1800', // KHMER<a name="line.540"></a>
+<span class="sourceLineNo">541</span>        '\u1800', '\u1900', // MONGOLIAN<a name="line.541"></a>
+<span class="sourceLineNo">542</span>        '\uffff',<a name="line.542"></a>
+<span class="sourceLineNo">543</span>    };<a name="line.543"></a>
+<span class="sourceLineNo">544</span><a name="line.544"></a>
+<span class="sourceLineNo">545</span>    // assume most characters are near each other so probing the cache is infrequent,<a name="line.545"></a>
+<span class="sourceLineNo">546</span>    // and a linear probe is ok.<a name="line.546"></a>
+<span class="sourceLineNo">547</span><a name="line.547"></a>
+<span class="sourceLineNo">548</span>    private static int ctCache = 0;<a name="line.548"></a>
+<span class="sourceLineNo">549</span>    private static int ctCacheLimit = contexts.length - 2;<a name="line.549"></a>
+<span class="sourceLineNo">550</span><a name="line.550"></a>
+<span class="sourceLineNo">551</span>    // warning, synchronize access to this as it modifies state<a name="line.551"></a>
+<span class="sourceLineNo">552</span>    private static int getContextKey(char c) {<a name="line.552"></a>
+<span class="sourceLineNo">553</span>        if (c &lt; contexts[ctCache]) {<a name="line.553"></a>
+<span class="sourceLineNo">554</span>            while (ctCache &gt; 0 &amp;&amp; c &lt; contexts[ctCache]) --ctCache;<a name="line.554"></a>
+<span class="sourceLineNo">555</span>        } else if (c &gt;= contexts[ctCache + 1]) {<a name="line.555"></a>
+<span class="sourceLineNo">556</span>            while (ctCache &lt; ctCacheLimit &amp;&amp; c &gt;= contexts[ctCache + 1]) ++ctCache;<a name="line.556"></a>
+<span class="sourceLineNo">557</span>        }<a name="line.557"></a>
+<span class="sourceLineNo">558</span><a name="line.558"></a>
+<span class="sourceLineNo">559</span>        // if we're not in a known range, then return EUROPEAN as the range key<a name="line.559"></a>
+<span class="sourceLineNo">560</span>        return (ctCache &amp; 0x1) == 0 ? (ctCache / 2) : EUROPEAN_KEY;<a name="line.560"></a>
+<span class="sourceLineNo">561</span>    }<a name="line.561"></a>
+<span class="sourceLineNo">562</span><a name="line.562"></a>
+<span class="sourceLineNo">563</span>    // cache for the NumericShaper.Range version<a name="line.563"></a>
+<span class="sourceLineNo">564</span>    private transient volatile Range currentRange = Range.EUROPEAN;<a name="line.564"></a>
+<span class="sourceLineNo">565</span><a name="line.565"></a>
+<span class="sourceLineNo">566</span>    private Range rangeForCodePoint(final int codepoint) {<a name="line.566"></a>
+<span class="sourceLineNo">567</span>        if (currentRange.inRange(codepoint)) {<a name="line.567"></a>
+<span class="sourceLineNo">568</span>            return currentRange;<a name="line.568"></a>
+<span class="sourceLineNo">569</span>        }<a name="line.569"></a>
+<span class="sourceLineNo">570</span><a name="line.570"></a>
+<span class="sourceLineNo">571</span>        final Range[] ranges = rangeArray;<a name="line.571"></a>
+<span class="sourceLineNo">572</span>        if (ranges.length &gt; BSEARCH_THRESHOLD) {<a name="line.572"></a>
+<span class="sourceLineNo">573</span>            int lo = 0;<a name="line.573"></a>
+<span class="sourceLineNo">574</span>            int hi = ranges.length - 1;<a name="line.574"></a>
+<span class="sourceLineNo">575</span>            while (lo &lt;= hi) {<a name="line.575"></a>
+<span class="sourceLineNo">576</span>                int mid = (lo + hi) / 2;<a name="line.576"></a>
+<span class="sourceLineNo">577</span>                Range range = ranges[mid];<a name="line.577"></a>
+<span class="sourceLineNo">578</span>                if (codepoint &lt; range.start) {<a name="line.578"></a>
+<span class="sourceLineNo">579</span>                    hi = mid - 1;<a name="line.579"></a>
+<span class="sourceLineNo">580</span>                } else if (codepoint &gt;= range.end) {<a name="line.580"></a>
+<span class="sourceLineNo">581</span>                    lo = mid + 1;<a name="line.581"></a>
+<span class="sourceLineNo">582</span>                } else {<a name="line.582"></a>
+<span class="sourceLineNo">583</span>                    currentRange = range;<a name="line.583"></a>
+<span class="sourceLineNo">584</span>                    return range;<a name="line.584"></a>
+<span class="sourceLineNo">585</span>                }<a name="line.585"></a>
+<span class="sourceLineNo">586</span>            }<a name="line.586"></a>
+<span class="sourceLineNo">587</span>        } else {<a name="line.587"></a>
+<span class="sourceLineNo">588</span>            for (int i = 0; i &lt; ranges.length; i++) {<a name="line.588"></a>
+<span class="sourceLineNo">589</span>                if (ranges[i].inRange(codepoint)) {<a name="line.589"></a>
+<span class="sourceLineNo">590</span>                    return ranges[i];<a name="line.590"></a>
+<span class="sourceLineNo">591</span>                }<a name="line.591"></a>
+<span class="sourceLineNo">592</span>            }<a name="line.592"></a>
+<span class="sourceLineNo">593</span>        }<a name="line.593"></a>
+<span class="sourceLineNo">594</span>        return Range.EUROPEAN;<a name="line.594"></a>
+<span class="sourceLineNo">595</span>    }<a name="line.595"></a>
+<span class="sourceLineNo">596</span><a name="line.596"></a>
+<span class="sourceLineNo">597</span>    /*<a name="line.597"></a>
+<span class="sourceLineNo">598</span>     * A range table of strong directional characters (types L, R, AL).<a name="line.598"></a>
+<span class="sourceLineNo">599</span>     * Even (left) indexes are starts of ranges of non-strong-directional (or undefined)<a name="line.599"></a>
+<span class="sourceLineNo">600</span>     * characters, odd (right) indexes are starts of ranges of strong directional<a name="line.600"></a>
+<span class="sourceLineNo">601</span>     * characters.<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     */<a name="line.602"></a>
+<span class="sourceLineNo">603</span>    private static int[] strongTable = {<a name="line.603"></a>
+<span class="sourceLineNo">604</span>        0x0000, 0x0041,<a name="line.604"></a>
+<span class="sourceLineNo">605</span>        0x005b, 0x0061,<a name="line.605"></a>
+<span class="sourceLineNo">606</span>        0x007b, 0x00aa,<a name="line.606"></a>
+<span class="sourceLineNo">607</span>        0x00ab, 0x00b5,<a name="line.607"></a>
+<span class="sourceLineNo">608</span>        0x00b6, 0x00ba,<a name="line.608"></a>
+<span class="sourceLineNo">609</span>        0x00bb, 0x00c0,<a name="line.609"></a>
+<span class="sourceLineNo">610</span>        0x00d7, 0x00d8,<a name="line.610"></a>
+<span class="sourceLineNo">611</span>        0x00f7, 0x00f8,<a name="line.611"></a>
+<span class="sourceLineNo">612</span>        0x02b9, 0x02bb,<a name="line.612"></a>
+<span class="sourceLineNo">613</span>        0x02c2, 0x02d0,<a name="line.613"></a>
+<span class="sourceLineNo">614</span>        0x02d2, 0x02e0,<a name="line.614"></a>
+<span class="sourceLineNo">615</span>        0x02e5, 0x02ee,<a name="line.615"></a>
+<span class="sourceLineNo">616</span>        0x02ef, 0x0370,<a name="line.616"></a>
+<span class="sourceLineNo">617</span>        0x0374, 0x0376,<a name="line.617"></a>
+<span class="sourceLineNo">618</span>        0x037e, 0x0386,<a name="line.618"></a>
+<span class="sourceLineNo">619</span>        0x0387, 0x0388,<a name="line.619"></a>
+<span class="sourceLineNo">620</span>        0x03f6, 0x03f7,<a name="line.620"></a>
+<span class="sourceLineNo">621</span>        0x0483, 0x048a,<a name="line.621"></a>
+<span class="sourceLineNo">622</span>        0x058a, 0x05be,<a name="line.622"></a>
+<span class="sourceLineNo">623</span>        0x05bf, 0x05c0,<a name="line.623"></a>
+<span class="sourceLineNo">624</span>        0x05c1, 0x05c3,<a name="line.624"></a>
+<span class="sourceLineNo">625</span>        0x05c4, 0x05c6,<a name="line.625"></a>
+<span class="sourceLineNo">626</span>        0x05c7, 0x05d0,<a name="line.626"></a>
+<span class="sourceLineNo">627</span>        0x0600, 0x0608,<a name="line.627"></a>
+<span class="sourceLineNo">628</span>        0x0609, 0x060b,<a name="line.628"></a>
+<span class="sourceLineNo">629</span>        0x060c, 0x060d,<a name="line.629"></a>
+<span class="sourceLineNo">630</span>        0x060e, 0x061b,<a name="line.630"></a>
+<span class="sourceLineNo">631</span>        0x064b, 0x066d,<a name="line.631"></a>
+<span class="sourceLineNo">632</span>        0x0670, 0x0671,<a name="line.632"></a>
+<span class="sourceLineNo">633</span>        0x06d6, 0x06e5,<a name="line.633"></a>
+<span class="sourceLineNo">634</span>        0x06e7, 0x06ee,<a name="line.634"></a>
+<span class="sourceLineNo">635</span>        0x06f0, 0x06fa,<a name="line.635"></a>
+<span class="sourceLineNo">636</span>        0x070f, 0x0710,<a name="line.636"></a>
+<span class="sourceLineNo">637</span>        0x0711, 0x0712,<a name="line.637"></a>
+<span class="sourceLineNo">638</span>        0x0730, 0x074d,<a name="line.638"></a>
+<span class="sourceLineNo">639</span>        0x07a6, 0x07b1,<a name="line.639"></a>
+<span class="sourceLineNo">640</span>        0x07eb, 0x07f4,<a name="line.640"></a>
+<span class="sourceLineNo">641</span>        0x07f6, 0x07fa,<a name="line.641"></a>
+<span class="sourceLineNo">642</span>        0x0816, 0x081a,<a name="line.642"></a>
+<span class="sourceLineNo">643</span>        0x081b, 0x0824,<a name="line.643"></a>
+<span class="sourceLineNo">644</span>        0x0825, 0x0828,<a name="line.644"></a>
+<span class="sourceLineNo">645</span>        0x0829, 0x0830,<a name="line.645"></a>
+<span class="sourceLineNo">646</span>        0x0859, 0x085e,<a name="line.646"></a>
+<span class="sourceLineNo">647</span>        0x0900, 0x0903,<a name="line.647"></a>
+<span class="sourceLineNo">648</span>        0x093a, 0x093b,<a name="line.648"></a>
+<span class="sourceLineNo">649</span>        0x093c, 0x093d,<a name="line.649"></a>
+<span class="sourceLineNo">650</span>        0x0941, 0x0949,<a name="line.650"></a>
+<span class="sourceLineNo">651</span>        0x094d, 0x094e,<a name="line.651"></a>
+<span class="sourceLineNo">652</span>        0x0951, 0x0958,<a name="line.652"></a>
+<span class="sourceLineNo">653</span>        0x0962, 0x0964,<a name="line.653"></a>
+<span class="sourceLineNo">654</span>        0x0981, 0x0982,<a name="line.654"></a>
+<span class="sourceLineNo">655</span>        0x09bc, 0x09bd,<a name="line.655"></a>
+<span class="sourceLineNo">656</span>        0x09c1, 0x09c7,<a name="line.656"></a>
+<span class="sourceLineNo">657</span>        0x09cd, 0x09ce,<a name="line.657"></a>
+<span class="sourceLineNo">658</span>        0x09e2, 0x09e6,<a name="line.658"></a>
+<span class="sourceLineNo">659</span>        0x09f2, 0x09f4,<a name="line.659"></a>
+<span class="sourceLineNo">660</span>        0x09fb, 0x0a03,<a name="line.660"></a>
+<span class="sourceLineNo">661</span>        0x0a3c, 0x0a3e,<a name="line.661"></a>
+<span class="sourceLineNo">662</span>        0x0a41, 0x0a59,<a name="line.662"></a>
+<span class="sourceLineNo">663</span>        0x0a70, 0x0a72,<a name="line.663"></a>
+<span class="sourceLineNo">664</span>        0x0a75, 0x0a83,<a name="line.664"></a>
+<span class="sourceLineNo">665</span>        0x0abc, 0x0abd,<a name="line.665"></a>
+<span class="sourceLineNo">666</span>        0x0ac1, 0x0ac9,<a name="line.666"></a>
+<span class="sourceLineNo">667</span>        0x0acd, 0x0ad0,<a name="line.667"></a>
+<span class="sourceLineNo">668</span>        0x0ae2, 0x0ae6,<a name="line.668"></a>
+<span class="sourceLineNo">669</span>        0x0af1, 0x0b02,<a name="line.669"></a>
+<span class="sourceLineNo">670</span>        0x0b3c, 0x0b3d,<a name="line.670"></a>
+<span class="sourceLineNo">671</span>        0x0b3f, 0x0b40,<a name="line.671"></a>
+<span class="sourceLineNo">672</span>        0x0b41, 0x0b47,<a name="line.672"></a>
+<span class="sourceLineNo">673</span>        0x0b4d, 0x0b57,<a name="line.673"></a>
+<span class="sourceLineNo">674</span>        0x0b62, 0x0b66,<a name="line.674"></a>
+<span class="sourceLineNo">675</span>        0x0b82, 0x0b83,<a name="line.675"></a>
+<span class="sourceLineNo">676</span>        0x0bc0, 0x0bc1,<a name="line.676"></a>
+<span class="sourceLineNo">677</span>        0x0bcd, 0x0bd0,<a name="line.677"></a>
+<span class="sourceLineNo">678</span>        0x0bf3, 0x0c01,<a name="line.678"></a>
+<span class="sourceLineNo">679</span>        0x0c3e, 0x0c41,<a name="line.679"></a>
+<span class="sourceLineNo">680</span>        0x0c46, 0x0c58,<a name="line.680"></a>
+<span class="sourceLineNo">681</span>        0x0c62, 0x0c66,<a name="line.681"></a>
+<span class="sourceLineNo">682</span>        0x0c78, 0x0c7f,<a name="line.682"></a>
+<span class="sourceLineNo">683</span>        0x0cbc, 0x0cbd,<a name="line.683"></a>
+<span class="sourceLineNo">684</span>        0x0ccc, 0x0cd5,<a name="line.684"></a>
+<span class="sourceLineNo">685</span>        0x0ce2, 0x0ce6,<a name="line.685"></a>
+<span class="sourceLineNo">686</span>        0x0d41, 0x0d46,<a name="line.686"></a>
+<span class="sourceLineNo">687</span>        0x0d4d, 0x0d4e,<a name="line.687"></a>
+<span class="sourceLineNo">688</span>        0x0d62, 0x0d66,<a name="line.688"></a>
+<span class="sourceLineNo">689</span>        0x0dca, 0x0dcf,<a name="line.689"></a>
+<span class="sourceLineNo">690</span>        0x0dd2, 0x0dd8,<a name="line.690"></a>
+<span class="sourceLineNo">691</span>        0x0e31, 0x0e32,<a name="line.691"></a>
+<span class="sourceLineNo">692</span>        0x0e34, 0x0e40,<a name="line.692"></a>
+<span class="sourceLineNo">693</span>        0x0e47, 0x0e4f,<a name="line.693"></a>
+<span class="sourceLineNo">694</span>        0x0eb1, 0x0eb2,<a name="line.694"></a>
+<span class="sourceLineNo">695</span>        0x0eb4, 0x0ebd,<a name="line.695"></a>
+<span class="sourceLineNo">696</span>        0x0ec8, 0x0ed0,<a name="line.696"></a>
+<span class="sourceLineNo">697</span>        0x0f18, 0x0f1a,<a name="line.697"></a>
+<span class="sourceLineNo">698</span>        0x0f35, 0x0f36,<a name="line.698"></a>
+<span class="sourceLineNo">699</span>        0x0f37, 0x0f38,<a name="line.699"></a>
+<span class="sourceLineNo">700</span>        0x0f39, 0x0f3e,<a name="line.700"></a>
+<span class="sourceLineNo">701</span>        0x0f71, 0x0f7f,<a name="line.701"></a>
+<span class="sourceLineNo">702</span>        0x0f80, 0x0f85,<a name="line.702"></a>
+<span class="sourceLineNo">703</span>        0x0f86, 0x0f88,<a name="line.703"></a>
+<span class="sourceLineNo">704</span>        0x0f8d, 0x0fbe,<a name="line.704"></a>
+<span class="sourceLineNo">705</span>        0x0fc6, 0x0fc7,<a name="line.705"></a>
+<span class="sourceLineNo">706</span>        0x102d, 0x1031,<a name="line.706"></a>
+<span class="sourceLineNo">707</span>        0x1032, 0x1038,<a name="line.707"></a>
+<span class="sourceLineNo">708</span>        0x1039, 0x103b,<a name="line.708"></a>
+<span class="sourceLineNo">709</span>        0x103d, 0x103f,<a name="line.709"></a>
+<span class="sourceLineNo">710</span>        0x1058, 0x105a,<a name="line.710"></a>
+<span class="sourceLineNo">711</span>        0x105e, 0x1061,<a name="line.711"></a>
+<span class="sourceLineNo">712</span>        0x1071, 0x1075,<a name="line.712"></a>
+<span class="sourceLineNo">713</span>        0x1082, 0x1083,<a name="line.713"></a>
+<span class="sourceLineNo">714</span>        0x1085, 0x1087,<a name="line.714"></a>
+<span class="sourceLineNo">715</span>        0x108d, 0x108e,<a name="line.715"></a>
+<span class="sourceLineNo">716</span>        0x109d, 0x109e,<a name="line.716"></a>
+<span class="sourceLineNo">717</span>        0x135d, 0x1360,<a name="line.717"></a>
+<span class="sourceLineNo">718</span>        0x1390, 0x13a0,<a name="line.718"></a>
+<span class="sourceLineNo">719</span>        0x1400, 0x1401,<a name="line.719"></a>
+<span class="sourceLineNo">720</span>        0x1680, 0x1681,<a name="line.720"></a>
+<span class="sourceLineNo">721</span>        0x169b, 0x16a0,<a name="line.721"></a>
+<span class="sourceLineNo">722</span>        0x1712, 0x1720,<a name="line.722"></a>
+<span class="sourceLineNo">723</span>        0x1732, 0x1735,<a name="line.723"></a>
+<span class="sourceLineNo">724</span>        0x1752, 0x1760,<a name="line.724"></a>
+<span class="sourceLineNo">725</span>        0x1772, 0x1780,<a name="line.725"></a>
+<span class="sourceLineNo">726</span>        0x17b7, 0x17be,<a name="line.726"></a>
+<span class="sourceLineNo">727</span>        0x17c6, 0x17c7,<a name="line.727"></a>
+<span class="sourceLineNo">728</span>        0x17c9, 0x17d4,<a name="line.728"></a>
+<span class="sourceLineNo">729</span>        0x17db, 0x17dc,<a name="line.729"></a>
+<span class="sourceLineNo">730</span>        0x17dd, 0x17e0,<a name="line.730"></a>
+<span class="sourceLineNo">731</span>        0x17f0, 0x1810,<a name="line.731"></a>
+<span class="sourceLineNo">732</span>        0x18a9, 0x18aa,<a name="line.732"></a>
+<span class="sourceLineNo">733</span>        0x1920, 0x1923,<a name="line.733"></a>
+<span class="sourceLineNo">734</span>        0x1927, 0x1929,<a name="line.734"></a>
+<span class="sourceLineNo">735</span>        0x1932, 0x1933,<a name="line.735"></a>
+<span class="sourceLineNo">736</span>        0x1939, 0x1946,<a name="line.736"></a>
+<span class="sourceLineNo">737</span>        0x19de, 0x1a00,<a name="line.737"></a>
+<span class="sourceLineNo">738</span>        0x1a17, 0x1a19,<a name="line.738"></a>
+<span class="sourceLineNo">739</span>        0x1a56, 0x1a57,<a name="line.739"></a>
+<span class="sourceLineNo">740</span>        0x1a58, 0x1a61,<a name="line.740"></a>
+<span class="sourceLineNo">741</span>        0x1a62, 0x1a63,<a name="line.741"></a>
+<span class="sourceLineNo">742</span>        0x1a65, 0x1a6d,<a name="line.742"></a>
+<span class="sourceLineNo">743</span>        0x1a73, 0x1a80,<a name="line.743"></a>
+<span class="sourceLineNo">744</span>        0x1b00, 0x1b04,<a name="line.744"></a>
+<span class="sourceLineNo">745</span>        0x1b34, 0x1b35,<a name="line.745"></a>
+<span class="sourceLineNo">746</span>        0x1b36, 0x1b3b,<a name="line.746"></a>
+<span class="sourceLineNo">747</span>        0x1b3c, 0x1b3d,<a name="line.747"></a>
+<span class="sourceLineNo">748</span>        0x1b42, 0x1b43,<a name="line.748"></a>
+<span class="sourceLineNo">749</span>        0x1b6b, 0x1b74,<a name="line.749"></a>
+<span class="sourceLineNo">750</span>        0x1b80, 0x1b82,<a name="line.750"></a>
+<span class="sourceLineNo">751</span>        0x1ba2, 0x1ba6,<a name="line.751"></a>
+<span class="sourceLineNo">752</span>        0x1ba8, 0x1baa,<a name="line.752"></a>
+<span class="sourceLineNo">753</span>        0x1be6, 0x1be7,<a name="line.753"></a>
+<span class="sourceLineNo">754</span>        0x1be8, 0x1bea,<a name="line.754"></a>
+<span class="sourceLineNo">755</span>        0x1bed, 0x1bee,<a name="line.755"></a>
+<span class="sourceLineNo">756</span>        0x1bef, 0x1bf2,<a name="line.756"></a>
+<span class="sourceLineNo">757</span>        0x1c2c, 0x1c34,<a name="line.757"></a>
+<span class="sourceLineNo">758</span>        0x1c36, 0x1c3b,<a name="line.758"></a>
+<span class="sourceLineNo">759</span>        0x1cd0, 0x1cd3,<a name="line.759"></a>
+<span class="sourceLineNo">760</span>        0x1cd4, 0x1ce1,<a name="line.760"></a>
+<span class="sourceLineNo">761</span>        0x1ce2, 0x1ce9,<a name="line.761"></a>
+<span class="sourceLineNo">762</span>        0x1ced, 0x1cee,<a name="line.762"></a>
+<span class="sourceLineNo">763</span>        0x1dc0, 0x1e00,<a name="line.763"></a>
+<span class="sourceLineNo">764</span>        0x1fbd, 0x1fbe,<a name="line.764"></a>
+<span class="sourceLineNo">765</span>        0x1fbf, 0x1fc2,<a name="line.765"></a>
+<span class="sourceLineNo">766</span>        0x1fcd, 0x1fd0,<a name="line.766"></a>
+<span class="sourceLineNo">767</span>        0x1fdd, 0x1fe0,<a name="line.767"></a>
+<span class="sourceLineNo">768</span>        0x1fed, 0x1ff2,<a name="line.768"></a>
+<span class="sourceLineNo">769</span>        0x1ffd, 0x200e,<a name="line.769"></a>
+<span class="sourceLineNo">770</span>        0x2010, 0x2071,<a name="line.770"></a>
+<span class="sourceLineNo">771</span>        0x2074, 0x207f,<a name="line.771"></a>
+<span class="sourceLineNo">772</span>        0x2080, 0x2090,<a name="line.772"></a>
+<span class="sourceLineNo">773</span>        0x20a0, 0x2102,<a name="line.773"></a>
+<span class="sourceLineNo">774</span>        0x2103, 0x2107,<a name="line.774"></a>
+<span class="sourceLineNo">775</span>        0x2108, 0x210a,<a name="line.775"></a>
+<span class="sourceLineNo">776</span>        0x2114, 0x2115,<a name="line.776"></a>
+<span class="sourceLineNo">777</span>        0x2116, 0x2119,<a name="line.777"></a>
+<span class="sourceLineNo">778</span>        0x211e, 0x2124,<a name="line.778"></a>
+<span class="sourceLineNo">779</span>        0x2125, 0x2126,<a name="line.779"></a>
+<span class="sourceLineNo">780</span>        0x2127, 0x2128,<a name="line.780"></a>
+<span class="sourceLineNo">781</span>        0x2129, 0x212a,<a name="line.781"></a>
+<span class="sourceLineNo">782</span>        0x212e, 0x212f,<a name="line.782"></a>
+<span class="sourceLineNo">783</span>        0x213a, 0x213c,<a name="line.783"></a>
+<span class="sourceLineNo">784</span>        0x2140, 0x2145,<a name="line.784"></a>
+<span class="sourceLineNo">785</span>        0x214a, 0x214e,<a name="line.785"></a>
+<span class="sourceLineNo">786</span>        0x2150, 0x2160,<a name="line.786"></a>
+<span class="sourceLineNo">787</span>        0x2189, 0x2336,<a name="line.787"></a>
+<span class="sourceLineNo">788</span>        0x237b, 0x2395,<a name="line.788"></a>
+<span class="sourceLineNo">789</span>        0x2396, 0x249c,<a name="line.789"></a>
+<span class="sourceLineNo">790</span>        0x24ea, 0x26ac,<a name="line.790"></a>
+<span class="sourceLineNo">791</span>        0x26ad, 0x2800,<a name="line.791"></a>
+<span class="sourceLineNo">792</span>        0x2900, 0x2c00,<a name="line.792"></a>
+<span class="sourceLineNo">793</span>        0x2ce5, 0x2ceb,<a name="line.793"></a>
+<span class="sourceLineNo">794</span>        0x2cef, 0x2d00,<a name="line.794"></a>
+<span class="sourceLineNo">795</span>        0x2d7f, 0x2d80,<a name="line.795"></a>
+<span class="sourceLineNo">796</span>        0x2de0, 0x3005,<a name="line.796"></a>
+<span class="sourceLineNo">797</span>        0x3008, 0x3021,<a name="line.797"></a>
+<span class="sourceLineNo">798</span>        0x302a, 0x3031,<a name="line.798"></a>
+<span class="sourceLineNo">799</span>        0x3036, 0x3038,<a name="line.799"></a>
+<span class="sourceLineNo">800</span>        0x303d, 0x3041,<a name="line.800"></a>
+<span class="sourceLineNo">801</span>        0x3099, 0x309d,<a name="line.801"></a>
+<span class="sourceLineNo">802</span>        0x30a0, 0x30a1,<a name="line.802"></a>
+<span class="sourceLineNo">803</span>        0x30fb, 0x30fc,<a name="line.803"></a>
+<span class="sourceLineNo">804</span>        0x31c0, 0x31f0,<a name="line.804"></a>
+<span class="sourceLineNo">805</span>        0x321d, 0x3220,<a name="line.805"></a>
+<span class="sourceLineNo">806</span>        0x3250, 0x3260,<a name="line.806"></a>
+<span class="sourceLineNo">807</span>        0x327c, 0x327f,<a name="line.807"></a>
+<span class="sourceLineNo">808</span>        0x32b1, 0x32c0,<a name="line.808"></a>
+<span class="sourceLineNo">809</span>        0x32cc, 0x32d0,<a name="line.809"></a>
+<span class="sourceLineNo">810</span>        0x3377, 0x337b,<a name="line.810"></a>
+<span class="sourceLineNo">811</span>        0x33de, 0x33e0,<a name="line.811"></a>
+<span class="sourceLineNo">812</span>        0x33ff, 0x3400,<a name="line.812"></a>
+<span class="sourceLineNo">813</span>        0x4dc0, 0x4e00,<a name="line.813"></a>
+<span class="sourceLineNo">814</span>        0xa490, 0xa4d0,<a name="line.814"></a>
+<span class="sourceLineNo">815</span>        0xa60d, 0xa610,<a name="line.815"></a>
+<span class="sourceLineNo">816</span>        0xa66f, 0xa680,<a name="line.816"></a>
+<span class="sourceLineNo">817</span>        0xa6f0, 0xa6f2,<a name="line.817"></a>
+<span class="sourceLineNo">818</span>        0xa700, 0xa722,<a name="line.818"></a>
+<span class="sourceLineNo">819</span>        0xa788, 0xa789,<a name="line.819"></a>
+<span class="sourceLineNo">820</span>        0xa802, 0xa803,<a name="line.820"></a>
+<span class="sourceLineNo">821</span>        0xa806, 0xa807,<a name="line.821"></a>
+<span class="sourceLineNo">822</span>        0xa80b, 0xa80c,<a name="line.822"></a>
+<span class="sourceLineNo">823</span>        0xa825, 0xa827,<a name="line.823"></a>
+<span class="sourceLineNo">824</span>        0xa828, 0xa830,<a name="line.824"></a>
+<span class="sourceLineNo">825</span>        0xa838, 0xa840,<a name="line.825"></a>
+<span class="sourceLineNo">826</span>        0xa874, 0xa880,<a name="line.826"></a>
+<span class="sourceLineNo">827</span>        0xa8c4, 0xa8ce,<a name="line.827"></a>
+<span class="sourceLineNo">828</span>        0xa8e0, 0xa8f2,<a name="line.828"></a>
+<span class="sourceLineNo">829</span>        0xa926, 0xa92e,<a name="line.829"></a>
+<span class="sourceLineNo">830</span>        0xa947, 0xa952,<a name="line.830"></a>
+<span class="sourceLineNo">831</span>        0xa980, 0xa983,<a name="line.831"></a>
+<span class="sourceLineNo">832</span>        0xa9b3, 0xa9b4,<a name="line.832"></a>
+<span class="sourceLineNo">833</span>        0xa9b6, 0xa9ba,<a name="line.833"></a>
+<span class="sourceLineNo">834</span>        0xa9bc, 0xa9bd,<a name="line.834"></a>
+<span class="sourceLineNo">835</span>        0xaa29, 0xaa2f,<a name="line.835"></a>
+<span class="sourceLineNo">836</span>        0xaa31, 0xaa33,<a name="line.836"></a>
+<span class="sourceLineNo">837</span>        0xaa35, 0xaa40,<a name="line.837"></a>
+<span class="sourceLineNo">838</span>        0xaa43, 0xaa44,<a name="line.838"></a>
+<span class="sourceLineNo">839</span>        0xaa4c, 0xaa4d,<a name="line.839"></a>
+<span class="sourceLineNo">840</span>        0xaab0, 0xaab1,<a name="line.840"></a>
+<span class="sourceLineNo">841</span>        0xaab2, 0xaab5,<a name="line.841"></a>
+<span class="sourceLineNo">842</span>        0xaab7, 0xaab9,<a name="line.842"></a>
+<span class="sourceLineNo">843</span>        0xaabe, 0xaac0,<a name="line.843"></a>
+<span class="sourceLineNo">844</span>        0xaac1, 0xaac2,<a name="line.844"></a>
+<span class="sourceLineNo">845</span>        0xabe5, 0xabe6,<a name="line.845"></a>
+<span class="sourceLineNo">846</span>        0xabe8, 0xabe9,<a name="line.846"></a>
+<span class="sourceLineNo">847</span>        0xabed, 0xabf0,<a name="line.847"></a>
+<span class="sourceLineNo">848</span>        0xfb1e, 0xfb1f,<a name="line.848"></a>
+<span class="sourceLineNo">849</span>        0xfb29, 0xfb2a,<a name="line.849"></a>
+<span class="sourceLineNo">850</span>        0xfd3e, 0xfd50,<a name="line.850"></a>
+<span class="sourceLineNo">851</span>        0xfdfd, 0xfe70,<a name="line.851"></a>
+<span class="sourceLineNo">852</span>        0xfeff, 0xff21,<a name="line.852"></a>
+<span class="sourceLineNo">853</span>        0xff3b, 0xff41,<a name="line.853"></a>
+<span class="sourceLineNo">854</span>        0xff5b, 0xff66,<a name="line.854"></a>
+<span class="sourceLineNo">855</span>        0xffe0, 0x10000,<a name="line.855"></a>
+<span class="sourceLineNo">856</span>        0x10101, 0x10102,<a name="line.856"></a>
+<span class="sourceLineNo">857</span>        0x10140, 0x101d0,<a name="line.857"></a>
+<span class="sourceLineNo">858</span>        0x101fd, 0x10280,<a name="line.858"></a>
+<span class="sourceLineNo">859</span>        0x1091f, 0x10920,<a name="line.859"></a>
+<span class="sourceLineNo">860</span>        0x10a01, 0x10a10,<a name="line.860"></a>
+<span class="sourceLineNo">861</span>        0x10a38, 0x10a40,<a name="line.861"></a>
+<span class="sourceLineNo">862</span>        0x10b39, 0x10b40,<a name="line.862"></a>
+<span class="sourceLineNo">863</span>        0x10e60, 0x11000,<a name="line.863"></a>
+<span class="sourceLineNo">864</span>        0x11001, 0x11002,<a name="line.864"></a>
+<span class="sourceLineNo">865</span>        0x11038, 0x11047,<a name="line.865"></a>
+<span class="sourceLineNo">866</span>        0x11052, 0x11066,<a name="line.866"></a>
+<span class="sourceLineNo">867</span>        0x11080, 0x11082,<a name="line.867"></a>
+<span class="sourceLineNo">868</span>        0x110b3, 0x110b7,<a name="line.868"></a>
+<span class="sourceLineNo">869</span>        0x110b9, 0x110bb,<a name="line.869"></a>
+<span class="sourceLineNo">870</span>        0x1d167, 0x1d16a,<a name="line.870"></a>
+<span class="sourceLineNo">871</span>        0x1d173, 0x1d183,<a name="line.871"></a>
+<span class="sourceLineNo">872</span>        0x1d185, 0x1d18c,<a name="line.872"></a>
+<span class="sourceLineNo">873</span>        0x1d1aa, 0x1d1ae,<a name="line.873"></a>
+<span class="sourceLineNo">874</span>        0x1d200, 0x1d360,<a name="line.874"></a>
+<span class="sourceLineNo">875</span>        0x1d6db, 0x1d6dc,<a name="line.875"></a>
+<span class="sourceLineNo">876</span>        0x1d715, 0x1d716,<a name="line.876"></a>
+<span class="sourceLineNo">877</span>        0x1d74f, 0x1d750,<a name="line.877"></a>
+<span class="sourceLineNo">878</span>        0x1d789, 0x1d78a,<a name="line.878"></a>
+<span class="sourceLineNo">879</span>        0x1d7c3, 0x1d7c4,<a name="line.879"></a>
+<span class="sourceLineNo">880</span>        0x1d7ce, 0x1f110,<a name="line.880"></a>
+<span class="sourceLineNo">881</span>        0x1f300, 0x1f48c,<a name="line.881"></a>
+<span class="sourceLineNo">882</span>        0x1f48d, 0x1f524,<a name="line.882"></a>
+<span class="sourceLineNo">883</span>        0x1f525, 0x20000,<a name="line.883"></a>
+<span class="sourceLineNo">884</span>        0xe0001, 0xf0000,<a name="line.884"></a>
+<span class="sourceLineNo">885</span>        0x10fffe, 0x10ffff // sentinel<a name="line.885"></a>
+<span class="sourceLineNo">886</span>    };<a name="line.886"></a>
+<span class="sourceLineNo">887</span><a name="line.887"></a>
+<span class="sourceLineNo">888</span><a name="line.888"></a>
+<span class="sourceLineNo">889</span>    // use a binary search with a cache<a name="line.889"></a>
+<span class="sourceLineNo">890</span><a name="line.890"></a>
+<span class="sourceLineNo">891</span>    private transient volatile int stCache = 0;<a name="line.891"></a>
+<span class="sourceLineNo">892</span><a name="line.892"></a>
+<span class="sourceLineNo">893</span>    private boolean isStrongDirectional(char c) {<a name="line.893"></a>
+<span class="sourceLineNo">894</span>        int cachedIndex = stCache;<a name="line.894"></a>
+<span class="sourceLineNo">895</span>        if (c &lt; strongTable[cachedIndex]) {<a name="line.895"></a>
+<span class="sourceLineNo">896</span>            cachedIndex = search(c, strongTable, 0, cachedIndex);<a name="line.896"></a>
+<span class="sourceLineNo">897</span>        } else if (c &gt;= strongTable[cachedIndex + 1]) {<a name="line.897"></a>
+<span class="sourceLineNo">898</span>            cachedIndex = search(c, strongTable, cachedIndex + 1,<a name="line.898"></a>
+<span class="sourceLineNo">899</span>                                 strongTable.length - cachedIndex - 1);<a name="line.899"></a>
+<span class="sourceLineNo">900</span>        }<a name="line.900"></a>
+<span class="sourceLineNo">901</span>        boolean val = (cachedIndex &amp; 0x1) == 1;<a name="line.901"></a>
+<span class="sourceLineNo">902</span>        stCache = cachedIndex;<a name="line.902"></a>
+<span class="sourceLineNo">903</span>        return val;<a name="line.903"></a>
+<span class="sourceLineNo">904</span>    }<a name="line.904"></a>
+<span class="sourceLineNo">905</span><a name="line.905"></a>
+<span class="sourceLineNo">906</span>    private static int getKeyFromMask(int mask) {<a name="line.906"></a>
+<span class="sourceLineNo">907</span>        int key = 0;<a name="line.907"></a>
+<span class="sourceLineNo">908</span>        while (key &lt; NUM_KEYS &amp;&amp; ((mask &amp; (1&lt;&lt;key)) == 0)) {<a name="line.908"></a>
+<span class="sourceLineNo">909</span>            ++key;<a name="line.909"></a>
+<span class="sourceLineNo">910</span>        }<a name="line.910"></a>
+<span class="sourceLineNo">911</span>        if (key == NUM_KEYS || ((mask &amp; ~(1&lt;&lt;key)) != 0)) {<a name="line.911"></a>
+<span class="sourceLineNo">912</span>            throw new IllegalArgumentException("invalid shaper: " + Integer.toHexString(mask));<a name="line.912"></a>
+<span class="sourceLineNo">913</span>        }<a name="line.913"></a>
+<span class="sourceLineNo">914</span>        return key;<a name="line.914"></a>
+<span class="sourceLineNo">915</span>    }<a name="line.915"></a>
+<span class="sourceLineNo">916</span><a name="line.916"></a>
+<span class="sourceLineNo">917</span>    /**<a name="line.917"></a>
+<span class="sourceLineNo">918</span>     * Returns a shaper for the provided unicode range.  All<a name="line.918"></a>
+<span class="sourceLineNo">919</span>     * Latin-1 (EUROPEAN) digits are converted<a name="line.919"></a>
+<span class="sourceLineNo">920</span>     * to the corresponding decimal unicode digits.<a name="line.920"></a>
+<span class="sourceLineNo">921</span>     * @param singleRange the specified Unicode range<a name="line.921"></a>
+<span class="sourceLineNo">922</span>     * @return a non-contextual numeric shaper<a name="line.922"></a>
+<span class="sourceLineNo">923</span>     * @throws IllegalArgumentException if the range is not a single range<a name="line.923"></a>
+<span class="sourceLineNo">924</span>     */<a name="line.924"></a>
+<span class="sourceLineNo">925</span>    public static NumericShaper getShaper(int singleRange) {<a name="line.925"></a>
+<span class="sourceLineNo">926</span>        int key = getKeyFromMask(singleRange);<a name="line.926"></a>
+<span class="sourceLineNo">927</span>        return new NumericShaper(key, singleRange);<a name="line.927"></a>
+<span class="sourceLineNo">928</span>    }<a name="line.928"></a>
+<span class="sourceLineNo">929</span><a name="line.929"></a>
+<span class="sourceLineNo">930</span>    /**<a name="line.930"></a>
+<span class="sourceLineNo">931</span>     * Returns a shaper for the provided Unicode<a name="line.931"></a>
+<span class="sourceLineNo">932</span>     * range. All Latin-1 (EUROPEAN) digits are converted to the<a name="line.932"></a>
+<span class="sourceLineNo">933</span>     * corresponding decimal digits of the specified Unicode range.<a name="line.933"></a>
+<span class="sourceLineNo">934</span>     *<a name="line.934"></a>
+<span class="sourceLineNo">935</span>     * @param singleRange the Unicode range given by a {@link<a name="line.935"></a>
+<span class="sourceLineNo">936</span>     *                    NumericShaper.Range} constant.<a name="line.936"></a>
+<span class="sourceLineNo">937</span>     * @return a non-contextual {@code NumericShaper}.<a name="line.937"></a>
+<span class="sourceLineNo">938</span>     * @throws NullPointerException if {@code singleRange} is {@code null}<a name="line.938"></a>
+<span class="sourceLineNo">939</span>     * @since 1.7<a name="line.939"></a>
+<span class="sourceLineNo">940</span>     */<a name="line.940"></a>
+<span class="sourceLineNo">941</span>    public static NumericShaper getShaper(Range singleRange) {<a name="line.941"></a>
+<span class="sourceLineNo">942</span>        return new NumericShaper(singleRange, EnumSet.of(singleRange));<a name="line.942"></a>
+<span class="sourceLineNo">943</span>    }<a name="line.943"></a>
+<span class="sourceLineNo">944</span><a name="line.944"></a>
+<span class="sourceLineNo">945</span>    /**<a name="line.945"></a>
+<span class="sourceLineNo">946</span>     * Returns a contextual shaper for the provided unicode range(s).<a name="line.946"></a>
+<span class="sourceLineNo">947</span>     * Latin-1 (EUROPEAN) digits are converted to the decimal digits<a name="line.947"></a>
+<span class="sourceLineNo">948</span>     * corresponding to the range of the preceding text, if the<a name="line.948"></a>
+<span class="sourceLineNo">949</span>     * range is one of the provided ranges.  Multiple ranges are<a name="line.949"></a>
+<span class="sourceLineNo">950</span>     * represented by or-ing the values together, such as,<a name="line.950"></a>
+<span class="sourceLineNo">951</span>     * &lt;code&gt;NumericShaper.ARABIC | NumericShaper.THAI&lt;/code&gt;.  The<a name="line.951"></a>
+<span class="sourceLineNo">952</span>     * shaper assumes EUROPEAN as the starting context, that is, if<a name="line.952"></a>
+<span class="sourceLineNo">953</span>     * EUROPEAN digits are encountered before any strong directional<a name="line.953"></a>
+<span class="sourceLineNo">954</span>     * text in the string, the context is presumed to be EUROPEAN, and<a name="line.954"></a>
+<span class="sourceLineNo">955</span>     * so the digits will not shape.<a name="line.955"></a>
+<span class="sourceLineNo">956</span>     * @param ranges the specified Unicode ranges<a name="line.956"></a>
+<span class="sourceLineNo">957</span>     * @return a shaper for the specified ranges<a name="line.957"></a>
+<span class="sourceLineNo">958</span>     */<a name="line.958"></a>
+<span class="sourceLineNo">959</span>    public static NumericShaper getContextualShaper(int ranges) {<a name="line.959"></a>
+<span class="sourceLineNo">960</span>        ranges |= CONTEXTUAL_MASK;<a name="line.960"></a>
+<span class="sourceLineNo">961</span>        return new NumericShaper(EUROPEAN_KEY, ranges);<a name="line.961"></a>
+<span class="sourceLineNo">962</span>    }<a name="line.962"></a>
+<span class="sourceLineNo">963</span><a name="line.963"></a>
+<span class="sourceLineNo">964</span>    /**<a name="line.964"></a>
+<span class="sourceLineNo">965</span>     * Returns a contextual shaper for the provided Unicode<a name="line.965"></a>
+<span class="sourceLineNo">966</span>     * range(s). The Latin-1 (EUROPEAN) digits are converted to the<a name="line.966"></a>
+<span class="sourceLineNo">967</span>     * decimal digits corresponding to the range of the preceding<a name="line.967"></a>
+<span class="sourceLineNo">968</span>     * text, if the range is one of the provided ranges.<a name="line.968"></a>
+<span class="sourceLineNo">969</span>     *<a name="line.969"></a>
+<span class="sourceLineNo">970</span>     * &lt;p&gt;The shaper assumes EUROPEAN as the starting context, that<a name="line.970"></a>
+<span class="sourceLineNo">971</span>     * is, if EUROPEAN digits are encountered before any strong<a name="line.971"></a>
+<span class="sourceLineNo">972</span>     * directional text in the string, the context is presumed to be<a name="line.972"></a>
+<span class="sourceLineNo">973</span>     * EUROPEAN, and so the digits will not shape.<a name="line.973"></a>
+<span class="sourceLineNo">974</span>     *<a name="line.974"></a>
+<span class="sourceLineNo">975</span>     * @param ranges the specified Unicode ranges<a name="line.975"></a>
+<span class="sourceLineNo">976</span>     * @return a contextual shaper for the specified ranges<a name="line.976"></a>
+<span class="sourceLineNo">977</span>     * @throws NullPointerException if {@code ranges} is {@code null}.<a name="line.977"></a>
+<span class="sourceLineNo">978</span>     * @since 1.7<a name="line.978"></a>
+<span class="sourceLineNo">979</span>     */<a name="line.979"></a>
+<span class="sourceLineNo">980</span>    public static NumericShaper getContextualShaper(Set&lt;Range&gt; ranges) {<a name="line.980"></a>
+<span class="sourceLineNo">981</span>        NumericShaper shaper = new NumericShaper(Range.EUROPEAN, ranges);<a name="line.981"></a>
+<span class="sourceLineNo">982</span>        shaper.mask = CONTEXTUAL_MASK;<a name="line.982"></a>
+<span class="sourceLineNo">983</span>        return shaper;<a name="line.983"></a>
+<span class="sourceLineNo">984</span>    }<a name="line.984"></a>
+<span class="sourceLineNo">985</span><a name="line.985"></a>
+<span class="sourceLineNo">986</span>    /**<a name="line.986"></a>
+<span class="sourceLineNo">987</span>     * Returns a contextual shaper for the provided unicode range(s).<a name="line.987"></a>
+<span class="sourceLineNo">988</span>     * Latin-1 (EUROPEAN) digits will be converted to the decimal digits<a name="line.988"></a>
+<span class="sourceLineNo">989</span>     * corresponding to the range of the preceding text, if the<a name="line.989"></a>
+<span class="sourceLineNo">990</span>     * range is one of the provided ranges.  Multiple ranges are<a name="line.990"></a>
+<span class="sourceLineNo">991</span>     * represented by or-ing the values together, for example,<a name="line.991"></a>
+<span class="sourceLineNo">992</span>     * &lt;code&gt;NumericShaper.ARABIC | NumericShaper.THAI&lt;/code&gt;.  The<a name="line.992"></a>
+<span class="sourceLineNo">993</span>     * shaper uses defaultContext as the starting context.<a name="line.993"></a>
+<span class="sourceLineNo">994</span>     * @param ranges the specified Unicode ranges<a name="line.994"></a>
+<span class="sourceLineNo">995</span>     * @param defaultContext the starting context, such as<a name="line.995"></a>
+<span class="sourceLineNo">996</span>     * &lt;code&gt;NumericShaper.EUROPEAN&lt;/code&gt;<a name="line.996"></a>
+<span class="sourceLineNo">997</span>     * @return a shaper for the specified Unicode ranges.<a name="line.997"></a>
+<span class="sourceLineNo">998</span>     * @throws IllegalArgumentException if the specified<a name="line.998"></a>
+<span class="sourceLineNo">999</span>     * &lt;code&gt;defaultContext&lt;/code&gt; is not a single valid range.<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>     */<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>    public static NumericShaper getContextualShaper(int ranges, int defaultContext) {<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>        int key = getKeyFromMask(defaultContext);<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>        ranges |= CONTEXTUAL_MASK;<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>        return new NumericShaper(key, ranges);<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>    }<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span><a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>    /**<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>     * Returns a contextual shaper for the provided Unicode range(s).<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>     * The Latin-1 (EUROPEAN) digits will be converted to the decimal<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>     * digits corresponding to the range of the preceding text, if the<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>     * range is one of the provided ranges. The shaper uses {@code<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>     * defaultContext} as the starting context.<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span>     *<a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>     * @param ranges the specified Unicode ranges<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>     * @param defaultContext the starting context, such as<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>     *                       {@code NumericShaper.Range.EUROPEAN}<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>     * @return a contextual shaper for the specified Unicode ranges.<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>     * @throws NullPointerException<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>     *         if {@code ranges} or {@code defaultContext} is {@code null}<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>     * @since 1.7<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>     */<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>    public static NumericShaper getContextualShaper(Set&lt;Range&gt; ranges,<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>                                                    Range defaultContext) {<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>        if (defaultContext == null) {<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>            throw new NullPointerException();<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>        }<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>        NumericShaper shaper = new NumericShaper(defaultContext, ranges);<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>        shaper.mask = CONTEXTUAL_MASK;<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>        return shaper;<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>    }<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span><a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>    /**<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>     * Private constructor.<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>     */<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>    private NumericShaper(int key, int mask) {<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>        this.key = key;<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>        this.mask = mask;<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>    }<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span><a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>    private NumericShaper(Range defaultContext, Set&lt;Range&gt; ranges) {<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>        shapingRange = defaultContext;<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>        rangeSet = EnumSet.copyOf(ranges); // throws NPE if ranges is null.<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span><a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>        // Give precedance to EASTERN_ARABIC if both ARABIC and<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>        // EASTERN_ARABIC are specified.<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>        if (rangeSet.contains(Range.EASTERN_ARABIC)<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>            &amp;&amp; rangeSet.contains(Range.ARABIC)) {<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>            rangeSet.remove(Range.ARABIC);<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>        }<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span><a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>        // As well as the above case, give precedance to TAI_THAM_THAM if both<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>        // TAI_THAM_HORA and TAI_THAM_THAM are specified.<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>        if (rangeSet.contains(Range.TAI_THAM_THAM)<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>            &amp;&amp; rangeSet.contains(Range.TAI_THAM_HORA)) {<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>            rangeSet.remove(Range.TAI_THAM_HORA);<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>        }<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span><a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>        rangeArray = rangeSet.toArray(new Range[rangeSet.size()]);<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>        if (rangeArray.length &gt; BSEARCH_THRESHOLD) {<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>            // sort rangeArray for binary search<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>            Arrays.sort(rangeArray,<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>                        new Comparator&lt;Range&gt;() {<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>                            public int compare(Range s1, Range s2) {<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>                                return s1.base &gt; s2.base ? 1 : s1.base == s2.base ? 0 : -1;<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span>                            }<a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>                        });<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>        }<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>    }<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span><a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>    /**<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>     * Converts the digits in the text that occur between start and<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>     * start + count.<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>     * @param text an array of characters to convert<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>     * @param start the index into &lt;code&gt;text&lt;/code&gt; to start<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>     *        converting<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>     * @param count the number of characters in &lt;code&gt;text&lt;/code&gt;<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>     *        to convert<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>     * @throws IndexOutOfBoundsException if start or start + count is<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>     *        out of bounds<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>     * @throws NullPointerException if text is null<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>     */<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>    public void shape(char[] text, int start, int count) {<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>        checkParams(text, start, count);<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>        if (isContextual()) {<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>            if (rangeSet == null) {<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>                shapeContextually(text, start, count, key);<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>            } else {<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>                shapeContextually(text, start, count, shapingRange);<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>            }<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>        } else {<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>            shapeNonContextually(text, start, count);<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>        }<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>    }<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span><a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>    /**<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>     * Converts the digits in the text that occur between start and<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>     * start + count, using the provided context.<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>     * Context is ignored if the shaper is not a contextual shaper.<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>     * @param text an array of characters<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>     * @param start the index into &lt;code&gt;text&lt;/code&gt; to start<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>     *        converting<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>     * @param count the number of characters in &lt;code&gt;text&lt;/code&gt;<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>     *        to convert<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>     * @param context the context to which to convert the<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>     *        characters, such as &lt;code&gt;NumericShaper.EUROPEAN&lt;/code&gt;<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>     * @throws IndexOutOfBoundsException if start or start + count is<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>     *        out of bounds<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>     * @throws NullPointerException if text is null<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>     * @throws IllegalArgumentException if this is a contextual shaper<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>     * and the specified &lt;code&gt;context&lt;/code&gt; is not a single valid<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>     * range.<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>     */<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>    public void shape(char[] text, int start, int count, int context) {<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>        checkParams(text, start, count);<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>        if (isContextual()) {<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>            int ctxKey = getKeyFromMask(context);<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>            if (rangeSet == null) {<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>                shapeContextually(text, start, count, ctxKey);<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>            } else {<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>                shapeContextually(text, start, count, Range.values()[ctxKey]);<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>            }<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>        } else {<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>            shapeNonContextually(text, start, count);<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>        }<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>    }<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span><a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>    /**<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>     * Converts the digits in the text that occur between {@code<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>     * start} and {@code start + count}, using the provided {@code<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>     * context}. {@code Context} is ignored if the shaper is not a<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>     * contextual shaper.<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>     *<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>     * @param text  a {@code char} array<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>     * @param start the index into {@code text} to start converting<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span>     * @param count the number of {@code char}s in {@code text}<a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>     *              to convert<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>     * @param context the context to which to convert the characters,<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>     *                such as {@code NumericShaper.Range.EUROPEAN}<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>     * @throws IndexOutOfBoundsException<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>     *         if {@code start} or {@code start + count} is out of bounds<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>     * @throws NullPointerException<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>     *         if {@code text} or {@code context} is null<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>     * @since 1.7<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>     */<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>    public void shape(char[] text, int start, int count, Range context) {<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>        checkParams(text, start, count);<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>        if (context == null) {<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>            throw new NullPointerException("context is null");<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>        }<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span><a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>        if (isContextual()) {<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>            if (rangeSet != null) {<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>                shapeContextually(text, start, count, context);<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>            } else {<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>                int key = Range.toRangeIndex(context);<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>                if (key &gt;= 0) {<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span>                    shapeContextually(text, start, count, key);<a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>                } else {<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>                    shapeContextually(text, start, count, shapingRange);<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span>                }<a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>            }<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>        } else {<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>            shapeNonContextually(text, start, count);<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>        }<a name="line.1164"></a>
+<span class="sourceLineNo">1165</span>    }<a name="line.1165"></a>
+<span class="sourceLineNo">1166</span><a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>    private void checkParams(char[] text, int start, int count) {<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>        if (text == null) {<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>            throw new NullPointerException("text is null");<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>        }<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>        if ((start &lt; 0)<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>            || (start &gt; text.length)<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span>            || ((start + count) &lt; 0)<a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>            || ((start + count) &gt; text.length)) {<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>            throw new IndexOutOfBoundsException(<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>                "bad start or count for text of length " + text.length);<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>        }<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>    }<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span><a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>    /**<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>     * Returns a &lt;code&gt;boolean&lt;/code&gt; indicating whether or not<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span>     * this shaper shapes contextually.<a name="line.1182"></a>
+<span class="sourceLineNo">1183</span>     * @return &lt;code&gt;true&lt;/code&gt; if this shaper is contextual;<a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>     *         &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>     */<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>    public boolean isContextual() {<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>        return (mask &amp; CONTEXTUAL_MASK) != 0;<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>    }<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span><a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>    /**<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>     * Returns an &lt;code&gt;int&lt;/code&gt; that ORs together the values for<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>     * all the ranges that will be shaped.<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span>     * &lt;p&gt;<a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>     * For example, to check if a shaper shapes to Arabic, you would use the<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>     * following:<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>     * &lt;blockquote&gt;<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>     *   &lt;code&gt;if ((shaper.getRanges() &amp; shaper.ARABIC) != 0) { ... &lt;/code&gt;<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>     * &lt;/blockquote&gt;<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>     *<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>     * &lt;p&gt;Note that this method supports only the bit mask-based<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>     * ranges. Call {@link #getRangeSet()} for the enum-based ranges.<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span>     *<a name="line.1202"></a>
+<span class="sourceLineNo">1203</span>     * @return the values for all the ranges to be shaped.<a name="line.1203"></a>
+<span class="sourceLineNo">1204</span>     */<a name="line.1204"></a>
+<span class="sourceLineNo">1205</span>    public int getRanges() {<a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>        return mask &amp; ~CONTEXTUAL_MASK;<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span>    }<a name="line.1207"></a>
+<span class="sourceLineNo">1208</span><a name="line.1208"></a>
+<span class="sourceLineNo">1209</span>    /**<a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>     * Returns a {@code Set} representing all the Unicode ranges in<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span>     * this {@code NumericShaper} that will be shaped.<a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>     *<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span>     * @return all the Unicode ranges to be shaped.<a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>     * @since 1.7<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>     */<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>    public Set&lt;Range&gt; getRangeSet() {<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>        if (rangeSet != null) {<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span>            return EnumSet.copyOf(rangeSet);<a name="line.1218"></a>
+<span class="sourceLineNo">1219</span>        }<a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>        return Range.maskToRangeSet(mask);<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span>    }<a name="line.1221"></a>
+<span class="sourceLineNo">1222</span><a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>    /**<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>     * Perform non-contextual shaping.<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span>     */<a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>    private void shapeNonContextually(char[] text, int start, int count) {<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span>        int base;<a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>        char minDigit = '0';<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span>        if (shapingRange != null) {<a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>            base = shapingRange.getDigitBase();<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span>            minDigit += shapingRange.getNumericBase();<a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>        } else {<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>            base = bases[key];<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>            if (key == ETHIOPIC_KEY) {<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span>                minDigit++; // Ethiopic doesn't use decimal zero<a name="line.1235"></a>
+<span class="sourceLineNo">1236</span>            }<a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>        }<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span>        for (int i = start, e = start + count; i &lt; e; ++i) {<a name="line.1238"></a>
+<span class="sourceLineNo">1239</span>            char c = text[i];<a name="line.1239"></a>
+<span class="sourceLineNo">1240</span>            if (c &gt;= minDigit &amp;&amp; c &lt;= '\u0039') {<a name="line.1240"></a>
+<span class="sourceLineNo">1241</span>                text[i] = (char)(c + base);<a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>            }<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>        }<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span>    }<a name="line.1244"></a>
+<span class="sourceLineNo">1245</span><a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>    /**<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span>     * Perform contextual shaping.<a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>     * Synchronized to protect caches used in getContextKey.<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>     */<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>    private synchronized void shapeContextually(char[] text, int start, int count, int ctxKey) {<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span><a name="line.1251"></a>
+<span class="sourceLineNo">1252</span>        // if we don't support this context, then don't shape<a name="line.1252"></a>
+<span class="sourceLineNo">1253</span>        if ((mask &amp; (1&lt;&lt;ctxKey)) == 0) {<a name="line.1253"></a>
+<span class="sourceLineNo">1254</span>            ctxKey = EUROPEAN_KEY;<a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>        }<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span>        int lastkey = ctxKey;<a name="line.1256"></a>
+<span class="sourceLineNo">1257</span><a name="line.1257"></a>
+<span class="sourceLineNo">1258</span>        int base = bases[ctxKey];<a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>        char minDigit = ctxKey == ETHIOPIC_KEY ? '1' : '0'; // Ethiopic doesn't use decimal zero<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span><a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>        synchronized (NumericShaper.class) {<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>            for (int i = start, e = start + count; i &lt; e; ++i) {<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>                char c = text[i];<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>                if (c &gt;= minDigit &amp;&amp; c &lt;= '\u0039') {<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span>                    text[i] = (char)(c + base);<a name="line.1265"></a>
+<span class="sourceLineNo">1266</span>                }<a name="line.1266"></a>
+<span class="sourceLineNo">1267</span><a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>                if (isStrongDirectional(c)) {<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span>                    int newkey = getContextKey(c);<a name="line.1269"></a>
+<span class="sourceLineNo">1270</span>                    if (newkey != lastkey) {<a name="line.1270"></a>
+<span class="sourceLineNo">1271</span>                        lastkey = newkey;<a name="line.1271"></a>
+<span class="sourceLineNo">1272</span><a name="line.1272"></a>
+<span class="sourceLineNo">1273</span>                        ctxKey = newkey;<a name="line.1273"></a>
+<span class="sourceLineNo">1274</span>                        if (((mask &amp; EASTERN_ARABIC) != 0) &amp;&amp;<a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>                             (ctxKey == ARABIC_KEY ||<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span>                              ctxKey == EASTERN_ARABIC_KEY)) {<a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>                            ctxKey = EASTERN_ARABIC_KEY;<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span>                        } else if (((mask &amp; ARABIC) != 0) &amp;&amp;<a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>                             (ctxKey == ARABIC_KEY ||<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span>                              ctxKey == EASTERN_ARABIC_KEY)) {<a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>                            ctxKey = ARABIC_KEY;<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span>                        } else if ((mask &amp; (1&lt;&lt;ctxKey)) == 0) {<a name="line.1282"></a>
+<span class="sourceLineNo">1283</span>                            ctxKey = EUROPEAN_KEY;<a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>                        }<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span><a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>                        base = bases[ctxKey];<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span><a name="line.1287"></a>
+<span class="sourceLineNo">1288</span>                        minDigit = ctxKey == ETHIOPIC_KEY ? '1' : '0'; // Ethiopic doesn't use decimal zero<a name="line.1288"></a>
+<span class="sourceLineNo">1289</span>                    }<a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>                }<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span>            }<a name="line.1291"></a>
+<span class="sourceLineNo">1292</span>        }<a name="line.1292"></a>
+<span class="sourceLineNo">1293</span>    }<a name="line.1293"></a>
+<span class="sourceLineNo">1294</span><a name="line.1294"></a>
+<span class="sourceLineNo">1295</span>    private void shapeContextually(char[] text, int start, int count, Range ctxKey) {<a name="line.1295"></a>
+<span class="sourceLineNo">1296</span>        // if we don't support the specified context, then don't shape.<a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>        if (ctxKey == null || !rangeSet.contains(ctxKey)) {<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span>            ctxKey = Range.EUROPEAN;<a name="line.1298"></a>
+<span class="sourceLineNo">1299</span>        }<a name="line.1299"></a>
+<span class="sourceLineNo">1300</span><a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>        Range lastKey = ctxKey;<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>        int base = ctxKey.getDigitBase();<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>        char minDigit = (char)('0' + ctxKey.getNumericBase());<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span>        final int end = start + count;<a name="line.1304"></a>
+<span class="sourceLineNo">1305</span>        for (int i = start; i &lt; end; ++i) {<a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>            char c = text[i];<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span>            if (c &gt;= minDigit &amp;&amp; c &lt;= '9') {<a name="line.1307"></a>
+<span class="sourceLineNo">1308</span>                text[i] = (char)(c + base);<a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>                continue;<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span>            }<a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>            if (isStrongDirectional(c)) {<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>                ctxKey = rangeForCodePoint(c);<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span>                if (ctxKey != lastKey) {<a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>                    lastKey = ctxKey;<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span>                    base = ctxKey.getDigitBase();<a name="line.1315"></a>
+<span class="sourceLineNo">1316</span>                    minDigit = (char)('0' + ctxKey.getNumericBase());<a name="line.1316"></a>
+<span class="sourceLineNo">1317</span>                }<a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>            }<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span>        }<a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>    }<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span><a name="line.1321"></a>
+<span class="sourceLineNo">1322</span>    /**<a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>     * Returns a hash code for this shaper.<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>     * @return this shaper's hash code.<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>     * @see java.lang.Object#hashCode<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span>     */<a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>    public int hashCode() {<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span>        int hash = mask;<a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>        if (rangeSet != null) {<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>            // Use the CONTEXTUAL_MASK bit only for the enum-based<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>            // NumericShaper. A deserialized NumericShaper might have<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span>            // bit masks.<a name="line.1332"></a>
+<span class="sourceLineNo">1333</span>            hash &amp;= CONTEXTUAL_MASK;<a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>            hash ^= rangeSet.hashCode();<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span>        }<a name="line.1335"></a>
+<span class="sourceLineNo">1336</span>        return hash;<a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>    }<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span><a name="line.1338"></a>
+<span class="sourceLineNo">1339</span>    /**<a name="line.1339"></a>
+<span class="sourceLineNo">1340</span>     * Returns {@code true} if the specified object is an instance of<a name="line.1340"></a>
+<span class="sourceLineNo">1341</span>     * &lt;code&gt;NumericShaper&lt;/code&gt; and shapes identically to this one,<a name="line.1341"></a>
+<span class="sourceLineNo">1342</span>     * regardless of the range representations, the bit mask or the<a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>     * enum. For example, the following code produces {@code "true"}.<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span>     * &lt;blockquote&gt;&lt;pre&gt;<a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>     * NumericShaper ns1 = NumericShaper.getShaper(NumericShaper.ARABIC);<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>     * NumericShaper ns2 = NumericShaper.getShaper(NumericShaper.Range.ARABIC);<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>     * System.out.println(ns1.equals(ns2));<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span>     * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>     *<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>     * @param o the specified object to compare to this<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span>     *          &lt;code&gt;NumericShaper&lt;/code&gt;<a name="line.1351"></a>
+<span class="sourceLineNo">1352</span>     * @return &lt;code&gt;true&lt;/code&gt; if &lt;code&gt;o&lt;/code&gt; is an instance<a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>     *         of &lt;code&gt;NumericShaper&lt;/code&gt; and shapes in the same way;<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span>     *         &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>     * @see java.lang.Object#equals(java.lang.Object)<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span>     */<a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>    public boolean equals(Object o) {<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span>        if (o != null) {<a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>            try {<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span>                NumericShaper rhs = (NumericShaper)o;<a name="line.1360"></a>
+<span class="sourceLineNo">1361</span>                if (rangeSet != null) {<a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>                    if (rhs.rangeSet != null) {<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span>                        return isContextual() == rhs.isContextual()<a name="line.1363"></a>
+<span class="sourceLineNo">1364</span>                            &amp;&amp; rangeSet.equals(rhs.rangeSet)<a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>                            &amp;&amp; shapingRange == rhs.shapingRange;<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span>                    }<a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>                    return isContextual() == rhs.isContextual()<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span>                        &amp;&amp; rangeSet.equals(Range.maskToRangeSet(rhs.mask))<a name="line.1368"></a>
+<span class="sourceLineNo">1369</span>                        &amp;&amp; shapingRange == Range.indexToRange(rhs.key);<a name="line.1369"></a>
+<span class="sourceLineNo">1370</span>                } else if (rhs.rangeSet != null) {<a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>                    Set&lt;Range&gt; rset = Range.maskToRangeSet(mask);<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span>                    Range srange = Range.indexToRange(key);<a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>                    return isContextual() == rhs.isContextual()<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>                        &amp;&amp; rset.equals(rhs.rangeSet)<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span>                        &amp;&amp; srange == rhs.shapingRange;<a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>                }<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>                return rhs.mask == mask &amp;&amp; rhs.key == key;<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>            }<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span>            catch (ClassCastException e) {<a name="line.1379"></a>
+<span class="sourceLineNo">1380</span>            }<a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>        }<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span>        return false;<a name="line.1382"></a>
+<span class="sourceLineNo">1383</span>    }<a name="line.1383"></a>
+<span class="sourceLineNo">1384</span><a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>    /**<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span>     * Returns a &lt;code&gt;String&lt;/code&gt; that describes this shaper. This method<a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>     * is used for debugging purposes only.<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span>     * @return a &lt;code&gt;String&lt;/code&gt; describing this shaper.<a name="line.1388"></a>
+<span class="sourceLineNo">1389</span>     */<a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>    public String toString() {<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>        StringBuilder buf = new StringBuilder(super.toString());<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span><a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>        buf.append("[contextual:").append(isContextual());<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span><a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>        String[] keyNames = null;<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span>        if (isContextual()) {<a name="line.1396"></a>
+<span class="sourceLineNo">1397</span>            buf.append(", context:");<a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>            buf.append(shapingRange == null ? Range.values()[key] : shapingRange);<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span>        }<a name="line.1399"></a>
+<span class="sourceLineNo">1400</span><a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>        if (rangeSet == null) {<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span>            buf.append(", range(s): ");<a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>            boolean first = true;<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span>            for (int i = 0; i &lt; NUM_KEYS; ++i) {<a name="line.1404"></a>
+<span class="sourceLineNo">1405</span>                if ((mask &amp; (1 &lt;&lt; i)) != 0) {<a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>                    if (first) {<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>                        first = false;<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span>                    } else {<a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>                        buf.append(", ");<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span>                    }<a name="line.1410"></a>
+<span class="sourceLineNo">1411</span>                    buf.append(Range.values()[i]);<a name="line.1411"></a>
+<span class="sourceLineNo">1412</span>                }<a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>            }<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span>        } else {<a name="line.1414"></a>
+<span class="sourceLineNo">1415</span>            buf.append(", range set: ").append(rangeSet);<a name="line.1415"></a>
+<span class="sourceLineNo">1416</span>        }<a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>        buf.append(']');<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span><a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>        return buf.toString();<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span>    }<a name="line.1420"></a>
+<span class="sourceLineNo">1421</span><a name="line.1421"></a>
+<span class="sourceLineNo">1422</span>    /**<a name="line.1422"></a>
+<span class="sourceLineNo">1423</span>     * Returns the index of the high bit in value (assuming le, actually<a name="line.1423"></a>
+<span class="sourceLineNo">1424</span>     * power of 2 &gt;= value). value must be positive.<a name="line.1424"></a>
+<span class="sourceLineNo">1425</span>     */<a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>    private static int getHighBit(int value) {<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span>        if (value &lt;= 0) {<a name="line.1427"></a>
+<span class="sourceLineNo">1428</span>            return -32;<a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>        }<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span><a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>        int bit = 0;<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span><a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>        if (value &gt;= 1 &lt;&lt; 16) {<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span>            value &gt;&gt;= 16;<a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>            bit += 16;<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span>        }<a name="line.1436"></a>
+<span class="sourceLineNo">1437</span><a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>        if (value &gt;= 1 &lt;&lt; 8) {<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>            value &gt;&gt;= 8;<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>            bit += 8;<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>        }<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span><a name="line.1442"></a>
+<span class="sourceLineNo">1443</span>        if (value &gt;= 1 &lt;&lt; 4) {<a name="line.1443"></a>
+<span class="sourceLineNo">1444</span>            value &gt;&gt;= 4;<a name="line.1444"></a>
+<span class="sourceLineNo">1445</span>            bit += 4;<a name="line.1445"></a>
+<span class="sourceLineNo">1446</span>        }<a name="line.1446"></a>
+<span class="sourceLineNo">1447</span><a name="line.1447"></a>
+<span class="sourceLineNo">1448</span>        if (value &gt;= 1 &lt;&lt; 2) {<a name="line.1448"></a>
+<span class="sourceLineNo">1449</span>            value &gt;&gt;= 2;<a name="line.1449"></a>
+<span class="sourceLineNo">1450</span>            bit += 2;<a name="line.1450"></a>
+<span class="sourceLineNo">1451</span>        }<a name="line.1451"></a>
+<span class="sourceLineNo">1452</span><a name="line.1452"></a>
+<span class="sourceLineNo">1453</span>        if (value &gt;= 1 &lt;&lt; 1) {<a name="line.1453"></a>
+<span class="sourceLineNo">1454</span>            bit += 1;<a name="line.1454"></a>
+<span class="sourceLineNo">1455</span>        }<a name="line.1455"></a>
+<span class="sourceLineNo">1456</span><a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>        return bit;<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span>    }<a name="line.1458"></a>
+<span class="sourceLineNo">1459</span><a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>    /**<a name="line.1460"></a>
+<span class="sourceLineNo">1461</span>     * fast binary search over subrange of array.<a name="line.1461"></a>
+<span class="sourceLineNo">1462</span>     */<a name="line.1462"></a>
+<span class="sourceLineNo">1463</span>    private static int search(int value, int[] array, int start, int length)<a name="line.1463"></a>
+<span class="sourceLineNo">1464</span>    {<a name="line.1464"></a>
+<span class="sourceLineNo">1465</span>        int power = 1 &lt;&lt; getHighBit(length);<a name="line.1465"></a>
+<span class="sourceLineNo">1466</span>        int extra = length - power;<a name="line.1466"></a>
+<span class="sourceLineNo">1467</span>        int probe = power;<a name="line.1467"></a>
+<span class="sourceLineNo">1468</span>        int index = start;<a name="line.1468"></a>
+<span class="sourceLineNo">1469</span><a name="line.1469"></a>
+<span class="sourceLineNo">1470</span>        if (value &gt;= array[index + extra]) {<a name="line.1470"></a>
+<span class="sourceLineNo">1471</span>            index += extra;<a name="line.1471"></a>
+<span class="sourceLineNo">1472</span>        }<a name="line.1472"></a>
+<span class="sourceLineNo">1473</span><a name="line.1473"></a>
+<span class="sourceLineNo">1474</span>        while (probe &gt; 1) {<a name="line.1474"></a>
+<span class="sourceLineNo">1475</span>            probe &gt;&gt;= 1;<a name="line.1475"></a>
+<span class="sourceLineNo">1476</span><a name="line.1476"></a>
+<span class="sourceLineNo">1477</span>            if (value &gt;= array[index + probe]) {<a name="line.1477"></a>
+<span class="sourceLineNo">1478</span>                index += probe;<a name="line.1478"></a>
+<span class="sourceLineNo">1479</span>            }<a name="line.1479"></a>
+<span class="sourceLineNo">1480</span>        }<a name="line.1480"></a>
+<span class="sourceLineNo">1481</span><a name="line.1481"></a>
+<span class="sourceLineNo">1482</span>        return index;<a name="line.1482"></a>
+<span class="sourceLineNo">1483</span>    }<a name="line.1483"></a>
+<span class="sourceLineNo">1484</span><a name="line.1484"></a>
+<span class="sourceLineNo">1485</span>    /**<a name="line.1485"></a>
+<span class="sourceLineNo">1486</span>     * Converts the {@code NumericShaper.Range} enum-based parameters,<a name="line.1486"></a>
+<span class="sourceLineNo">1487</span>     * if any, to the bit mask-based counterparts and writes this<a name="line.1487"></a>
+<span class="sourceLineNo">1488</span>     * object to the {@code stream}. Any enum constants that have no<a name="line.1488"></a>
+<span class="sourceLineNo">1489</span>     * bit mask-based counterparts are ignored in the conversion.<a name="line.1489"></a>
+<span class="sourceLineNo">1490</span>     *<a name="line.1490"></a>
+<span class="sourceLineNo">1491</span>     * @param stream the output stream to write to<a name="line.1491"></a>
+<span class="sourceLineNo">1492</span>     * @throws IOException if an I/O error occurs while writing to {@code stream}<a name="line.1492"></a>
+<span class="sourceLineNo">1493</span>     * @since 1.7<a name="line.1493"></a>
+<span class="sourceLineNo">1494</span>     */<a name="line.1494"></a>
+<span class="sourceLineNo">1495</span>    private void writeObject(ObjectOutputStream stream) throws IOException {<a name="line.1495"></a>
+<span class="sourceLineNo">1496</span>        if (shapingRange != null) {<a name="line.1496"></a>
+<span class="sourceLineNo">1497</span>            int index = Range.toRangeIndex(shapingRange);<a name="line.1497"></a>
+<span class="sourceLineNo">1498</span>            if (index &gt;= 0) {<a name="line.1498"></a>
+<span class="sourceLineNo">1499</span>                key = index;<a name="line.1499"></a>
+<span class="sourceLineNo">1500</span>            }<a name="line.1500"></a>
+<span class="sourceLineNo">1501</span>        }<a name="line.1501"></a>
+<span class="sourceLineNo">1502</span>        if (rangeSet != null) {<a name="line.1502"></a>
+<span class="sourceLineNo">1503</span>            mask |= Range.toRangeMask(rangeSet);<a name="line.1503"></a>
+<span class="sourceLineNo">1504</span>        }<a name="line.1504"></a>
+<span class="sourceLineNo">1505</span>        stream.defaultWriteObject();<a name="line.1505"></a>
+<span class="sourceLineNo">1506</span>    }<a name="line.1506"></a>
+<span class="sourceLineNo">1507</span>}<a name="line.1507"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

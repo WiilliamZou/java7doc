@@ -1,0 +1,462 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.security;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.security.spec.AlgorithmParameterSpec;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.nio.ByteBuffer;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>import sun.security.jca.JCAUtil;<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>/**<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * This class defines the &lt;i&gt;Service Provider Interface&lt;/i&gt; (&lt;b&gt;SPI&lt;/b&gt;)<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * for the &lt;code&gt;Signature&lt;/code&gt; class, which is used to provide the<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * functionality of a digital signature algorithm. Digital signatures are used<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * for authentication and integrity assurance of digital data.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt; All the abstract methods in this class must be implemented by each<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * cryptographic service provider who wishes to supply the implementation<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * of a particular signature algorithm.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * @author Benjamin Renaud<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * @see Signature<a name="line.49"></a>
+<span class="sourceLineNo">050</span> */<a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span>public abstract class SignatureSpi {<a name="line.52"></a>
+<span class="sourceLineNo">053</span><a name="line.53"></a>
+<span class="sourceLineNo">054</span>    /**<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     * Application-specified source of randomness.<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     */<a name="line.56"></a>
+<span class="sourceLineNo">057</span>    protected SecureRandom appRandom = null;<a name="line.57"></a>
+<span class="sourceLineNo">058</span><a name="line.58"></a>
+<span class="sourceLineNo">059</span>    /**<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * Initializes this signature object with the specified<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * public key for verification operations.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     *<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * @param publicKey the public key of the identity whose signature is<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * going to be verified.<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     *<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * @exception InvalidKeyException if the key is improperly<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * encoded, parameters are missing, and so on.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     */<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    protected abstract void engineInitVerify(PublicKey publicKey)<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        throws InvalidKeyException;<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>    /**<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * Initializes this signature object with the specified<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * private key for signing operations.<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     *<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * @param privateKey the private key of the identity whose signature<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * will be generated.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     *<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * @exception InvalidKeyException if the key is improperly<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * encoded, parameters are missing, and so on.<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     */<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    protected abstract void engineInitSign(PrivateKey privateKey)<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        throws InvalidKeyException;<a name="line.83"></a>
+<span class="sourceLineNo">084</span><a name="line.84"></a>
+<span class="sourceLineNo">085</span>    /**<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * Initializes this signature object with the specified<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * private key and source of randomness for signing operations.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * &lt;p&gt;This concrete method has been added to this previously-defined<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * abstract class. (For backwards compatibility, it cannot be abstract.)<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @param privateKey the private key of the identity whose signature<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * will be generated.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @param random the source of randomness<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @exception InvalidKeyException if the key is improperly<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * encoded, parameters are missing, and so on.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     */<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    protected void engineInitSign(PrivateKey privateKey,<a name="line.99"></a>
+<span class="sourceLineNo">100</span>                                  SecureRandom random)<a name="line.100"></a>
+<span class="sourceLineNo">101</span>        throws InvalidKeyException {<a name="line.101"></a>
+<span class="sourceLineNo">102</span>            this.appRandom = random;<a name="line.102"></a>
+<span class="sourceLineNo">103</span>            engineInitSign(privateKey);<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    }<a name="line.104"></a>
+<span class="sourceLineNo">105</span><a name="line.105"></a>
+<span class="sourceLineNo">106</span>    /**<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * Updates the data to be signed or verified<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * using the specified byte.<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     *<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * @param b the byte to use for the update.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     *<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @exception SignatureException if the engine is not initialized<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * properly.<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     */<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    protected abstract void engineUpdate(byte b) throws SignatureException;<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>    /**<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * Updates the data to be signed or verified, using the<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * specified array of bytes, starting at the specified offset.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     *<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * @param b the array of bytes<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @param off the offset to start from in the array of bytes<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * @param len the number of bytes to use, starting at offset<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     *<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @exception SignatureException if the engine is not initialized<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * properly<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     */<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    protected abstract void engineUpdate(byte[] b, int off, int len)<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        throws SignatureException;<a name="line.129"></a>
+<span class="sourceLineNo">130</span><a name="line.130"></a>
+<span class="sourceLineNo">131</span>    /**<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * Updates the data to be signed or verified using the specified<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * ByteBuffer. Processes the &lt;code&gt;data.remaining()&lt;/code&gt; bytes<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * starting at at &lt;code&gt;data.position()&lt;/code&gt;.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * Upon return, the buffer's position will be equal to its limit;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * its limit will not have changed.<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @param input the ByteBuffer<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @since 1.5<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     */<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    protected void engineUpdate(ByteBuffer input) {<a name="line.141"></a>
+<span class="sourceLineNo">142</span>        if (input.hasRemaining() == false) {<a name="line.142"></a>
+<span class="sourceLineNo">143</span>            return;<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        }<a name="line.144"></a>
+<span class="sourceLineNo">145</span>        try {<a name="line.145"></a>
+<span class="sourceLineNo">146</span>            if (input.hasArray()) {<a name="line.146"></a>
+<span class="sourceLineNo">147</span>                byte[] b = input.array();<a name="line.147"></a>
+<span class="sourceLineNo">148</span>                int ofs = input.arrayOffset();<a name="line.148"></a>
+<span class="sourceLineNo">149</span>                int pos = input.position();<a name="line.149"></a>
+<span class="sourceLineNo">150</span>                int lim = input.limit();<a name="line.150"></a>
+<span class="sourceLineNo">151</span>                engineUpdate(b, ofs + pos, lim - pos);<a name="line.151"></a>
+<span class="sourceLineNo">152</span>                input.position(lim);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>            } else {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>                int len = input.remaining();<a name="line.154"></a>
+<span class="sourceLineNo">155</span>                byte[] b = new byte[JCAUtil.getTempArraySize(len)];<a name="line.155"></a>
+<span class="sourceLineNo">156</span>                while (len &gt; 0) {<a name="line.156"></a>
+<span class="sourceLineNo">157</span>                    int chunk = Math.min(len, b.length);<a name="line.157"></a>
+<span class="sourceLineNo">158</span>                    input.get(b, 0, chunk);<a name="line.158"></a>
+<span class="sourceLineNo">159</span>                    engineUpdate(b, 0, chunk);<a name="line.159"></a>
+<span class="sourceLineNo">160</span>                    len -= chunk;<a name="line.160"></a>
+<span class="sourceLineNo">161</span>                }<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            }<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        } catch (SignatureException e) {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            // is specified to only occur when the engine is not initialized<a name="line.164"></a>
+<span class="sourceLineNo">165</span>            // this case should never occur as it is caught in Signature.java<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            throw new ProviderException("update() failed", e);<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        }<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    }<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>    /**<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * Returns the signature bytes of all the data<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * updated so far.<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * The format of the signature depends on the underlying<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * signature scheme.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @return the signature bytes of the signing operation's result.<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * @exception SignatureException if the engine is not<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * initialized properly or if this signature algorithm is unable to<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * process the input data provided.<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     */<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    protected abstract byte[] engineSign() throws SignatureException;<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>    /**<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * Finishes this signature operation and stores the resulting signature<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * bytes in the provided buffer &lt;code&gt;outbuf&lt;/code&gt;, starting at<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;code&gt;offset&lt;/code&gt;.<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * The format of the signature depends on the underlying<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * signature scheme.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     *<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * &lt;p&gt;The signature implementation is reset to its initial state<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * (the state it was in after a call to one of the<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * &lt;code&gt;engineInitSign&lt;/code&gt; methods)<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * and can be reused to generate further signatures with the same private<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * key.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     *<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * This method should be abstract, but we leave it concrete for<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * binary compatibility.  Knowledgeable providers should override this<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * method.<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     *<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * @param outbuf buffer for the signature result.<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     *<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * @param offset offset into &lt;code&gt;outbuf&lt;/code&gt; where the signature is<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * stored.<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     *<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * @param len number of bytes within &lt;code&gt;outbuf&lt;/code&gt; allotted for the<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * signature.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * Both this default implementation and the SUN provider do not<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * return partial digests. If the value of this parameter is less<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * than the actual signature length, this method will throw a<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * SignatureException.<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * This parameter is ignored if its value is greater than or equal to<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * the actual signature length.<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     *<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * @return the number of bytes placed into &lt;code&gt;outbuf&lt;/code&gt;<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @exception SignatureException if the engine is not<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * initialized properly, if this signature algorithm is unable to<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * process the input data provided, or if &lt;code&gt;len&lt;/code&gt; is less<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * than the actual signature length.<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     *<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * @since 1.2<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     */<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    protected int engineSign(byte[] outbuf, int offset, int len)<a name="line.224"></a>
+<span class="sourceLineNo">225</span>                        throws SignatureException {<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        byte[] sig = engineSign();<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        if (len &lt; sig.length) {<a name="line.227"></a>
+<span class="sourceLineNo">228</span>                throw new SignatureException<a name="line.228"></a>
+<span class="sourceLineNo">229</span>                    ("partial signatures not returned");<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        }<a name="line.230"></a>
+<span class="sourceLineNo">231</span>        if (outbuf.length - offset &lt; sig.length) {<a name="line.231"></a>
+<span class="sourceLineNo">232</span>                throw new SignatureException<a name="line.232"></a>
+<span class="sourceLineNo">233</span>                    ("insufficient space in the output buffer to store the "<a name="line.233"></a>
+<span class="sourceLineNo">234</span>                     + "signature");<a name="line.234"></a>
+<span class="sourceLineNo">235</span>        }<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        System.arraycopy(sig, 0, outbuf, offset, sig.length);<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        return sig.length;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>    }<a name="line.238"></a>
+<span class="sourceLineNo">239</span><a name="line.239"></a>
+<span class="sourceLineNo">240</span>    /**<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * Verifies the passed-in signature.<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     *<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * @param sigBytes the signature bytes to be verified.<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     *<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * @return true if the signature was verified, false if not.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * @exception SignatureException if the engine is not<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * initialized properly, the passed-in signature is improperly<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * encoded or of the wrong type, if this signature algorithm is unable to<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * process the input data provided, etc.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     */<a name="line.251"></a>
+<span class="sourceLineNo">252</span>    protected abstract boolean engineVerify(byte[] sigBytes)<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        throws SignatureException;<a name="line.253"></a>
+<span class="sourceLineNo">254</span><a name="line.254"></a>
+<span class="sourceLineNo">255</span>    /**<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * Verifies the passed-in signature in the specified array<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * of bytes, starting at the specified offset.<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     *<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * &lt;p&gt; Note: Subclasses should overwrite the default implementation.<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     *<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     *<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * @param sigBytes the signature bytes to be verified.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * @param offset the offset to start from in the array of bytes.<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * @param length the number of bytes to use, starting at offset.<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     *<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * @return true if the signature was verified, false if not.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     *<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * @exception SignatureException if the engine is not<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * initialized properly, the passed-in signature is improperly<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * encoded or of the wrong type, if this signature algorithm is unable to<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * process the input data provided, etc.<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @since 1.4<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     */<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    protected boolean engineVerify(byte[] sigBytes, int offset, int length)<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        throws SignatureException {<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        byte[] sigBytesCopy = new byte[length];<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        System.arraycopy(sigBytes, offset, sigBytesCopy, 0, length);<a name="line.277"></a>
+<span class="sourceLineNo">278</span>        return engineVerify(sigBytesCopy);<a name="line.278"></a>
+<span class="sourceLineNo">279</span>    }<a name="line.279"></a>
+<span class="sourceLineNo">280</span><a name="line.280"></a>
+<span class="sourceLineNo">281</span>    /**<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * Sets the specified algorithm parameter to the specified<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * value. This method supplies a general-purpose mechanism through<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * which it is possible to set the various parameters of this object.<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * A parameter may be any settable parameter for the algorithm, such as<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * a parameter size, or a source of random bits for signature generation<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * (if appropriate), or an indication of whether or not to perform<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * a specific but optional computation. A uniform algorithm-specific<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * naming scheme for each parameter is desirable but left unspecified<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * at this time.<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     *<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * @param param the string identifier of the parameter.<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     *<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * @param value the parameter value.<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     *<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * @exception InvalidParameterException if &lt;code&gt;param&lt;/code&gt; is an<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * invalid parameter for this signature algorithm engine,<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     * the parameter is already set<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * and cannot be set again, a security exception occurs, and so on.<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     *<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * @deprecated Replaced by {@link<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * #engineSetParameter(java.security.spec.AlgorithmParameterSpec)<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * engineSetParameter}.<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     */<a name="line.304"></a>
+<span class="sourceLineNo">305</span>    @Deprecated<a name="line.305"></a>
+<span class="sourceLineNo">306</span>    protected abstract void engineSetParameter(String param, Object value)<a name="line.306"></a>
+<span class="sourceLineNo">307</span>        throws InvalidParameterException;<a name="line.307"></a>
+<span class="sourceLineNo">308</span><a name="line.308"></a>
+<span class="sourceLineNo">309</span>    /**<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * &lt;p&gt;This method is overridden by providers to initialize<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * this signature engine with the specified parameter set.<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     *<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * @param params the parameters<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     *<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * @exception UnsupportedOperationException if this method is not<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * overridden by a provider<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     *<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     * @exception InvalidAlgorithmParameterException if this method is<a name="line.318"></a>
+<span class="sourceLineNo">319</span>     * overridden by a provider and the given parameters<a name="line.319"></a>
+<span class="sourceLineNo">320</span>     * are inappropriate for this signature engine<a name="line.320"></a>
+<span class="sourceLineNo">321</span>     */<a name="line.321"></a>
+<span class="sourceLineNo">322</span>    protected void engineSetParameter(AlgorithmParameterSpec params)<a name="line.322"></a>
+<span class="sourceLineNo">323</span>        throws InvalidAlgorithmParameterException {<a name="line.323"></a>
+<span class="sourceLineNo">324</span>            throw new UnsupportedOperationException();<a name="line.324"></a>
+<span class="sourceLineNo">325</span>    }<a name="line.325"></a>
+<span class="sourceLineNo">326</span><a name="line.326"></a>
+<span class="sourceLineNo">327</span>    /**<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * &lt;p&gt;This method is overridden by providers to return the<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * parameters used with this signature engine, or null<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * if this signature engine does not use any parameters.<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     *<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * &lt;p&gt;The returned parameters may be the same that were used to initialize<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * this signature engine, or may contain a combination of default and<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * randomly generated parameter values used by the underlying signature<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * implementation if this signature engine requires algorithm parameters<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * but was not initialized with any.<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     *<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * @return the parameters used with this signature engine, or null if this<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     * signature engine does not use any parameters<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     *<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * @exception UnsupportedOperationException if this method is<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * not overridden by a provider<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * @since 1.4<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     */<a name="line.344"></a>
+<span class="sourceLineNo">345</span>    protected AlgorithmParameters engineGetParameters() {<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        throw new UnsupportedOperationException();<a name="line.346"></a>
+<span class="sourceLineNo">347</span>    }<a name="line.347"></a>
+<span class="sourceLineNo">348</span><a name="line.348"></a>
+<span class="sourceLineNo">349</span>    /**<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     * Gets the value of the specified algorithm parameter.<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * This method supplies a general-purpose mechanism through which it<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     * is possible to get the various parameters of this object. A parameter<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * may be any settable parameter for the algorithm, such as a parameter<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * size, or  a source of random bits for signature generation (if<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * appropriate), or an indication of whether or not to perform a<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * specific but optional computation. A uniform algorithm-specific<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * naming scheme for each parameter is desirable but left unspecified<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * at this time.<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     *<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * @param param the string name of the parameter.<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     *<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * @return the object that represents the parameter value, or null if<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * there is none.<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     *<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     * @exception InvalidParameterException if &lt;code&gt;param&lt;/code&gt; is an<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * invalid parameter for this engine, or another exception occurs while<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     * trying to get this parameter.<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     *<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     * @deprecated<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     */<a name="line.370"></a>
+<span class="sourceLineNo">371</span>    @Deprecated<a name="line.371"></a>
+<span class="sourceLineNo">372</span>    protected abstract Object engineGetParameter(String param)<a name="line.372"></a>
+<span class="sourceLineNo">373</span>        throws InvalidParameterException;<a name="line.373"></a>
+<span class="sourceLineNo">374</span><a name="line.374"></a>
+<span class="sourceLineNo">375</span>    /**<a name="line.375"></a>
+<span class="sourceLineNo">376</span>     * Returns a clone if the implementation is cloneable.<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     *<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     * @return a clone if the implementation is cloneable.<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     *<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * @exception CloneNotSupportedException if this is called<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * on an implementation that does not support &lt;code&gt;Cloneable&lt;/code&gt;.<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     */<a name="line.382"></a>
+<span class="sourceLineNo">383</span>    public Object clone() throws CloneNotSupportedException {<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        if (this instanceof Cloneable) {<a name="line.384"></a>
+<span class="sourceLineNo">385</span>            return super.clone();<a name="line.385"></a>
+<span class="sourceLineNo">386</span>        } else {<a name="line.386"></a>
+<span class="sourceLineNo">387</span>            throw new CloneNotSupportedException();<a name="line.387"></a>
+<span class="sourceLineNo">388</span>        }<a name="line.388"></a>
+<span class="sourceLineNo">389</span>    }<a name="line.389"></a>
+<span class="sourceLineNo">390</span>}<a name="line.390"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

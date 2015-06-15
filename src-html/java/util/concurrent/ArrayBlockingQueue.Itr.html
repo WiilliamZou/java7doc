@@ -1,0 +1,877 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> *<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> */<a name="line.23"></a>
+<span class="sourceLineNo">024</span><a name="line.24"></a>
+<span class="sourceLineNo">025</span>/*<a name="line.25"></a>
+<span class="sourceLineNo">026</span> *<a name="line.26"></a>
+<span class="sourceLineNo">027</span> *<a name="line.27"></a>
+<span class="sourceLineNo">028</span> *<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * Written by Doug Lea with assistance from members of JCP JSR-166<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * Expert Group and released to the public domain, as explained at<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * http://creativecommons.org/publicdomain/zero/1.0/<a name="line.33"></a>
+<span class="sourceLineNo">034</span> */<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>package java.util.concurrent;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.util.concurrent.locks.*;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.util.*;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>/**<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * A bounded {@linkplain BlockingQueue blocking queue} backed by an<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * array.  This queue orders elements FIFO (first-in-first-out).  The<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * &lt;em&gt;head&lt;/em&gt; of the queue is that element that has been on the<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * queue the longest time.  The &lt;em&gt;tail&lt;/em&gt; of the queue is that<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * element that has been on the queue the shortest time. New elements<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * are inserted at the tail of the queue, and the queue retrieval<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * operations obtain elements at the head of the queue.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;p&gt;This is a classic &amp;quot;bounded buffer&amp;quot;, in which a<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * fixed-sized array holds elements inserted by producers and<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * extracted by consumers.  Once created, the capacity cannot be<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * changed.  Attempts to {@code put} an element into a full queue<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * will result in the operation blocking; attempts to {@code take} an<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * element from an empty queue will similarly block.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;p&gt;This class supports an optional fairness policy for ordering<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * waiting producer and consumer threads.  By default, this ordering<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * is not guaranteed. However, a queue constructed with fairness set<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * to {@code true} grants threads access in FIFO order. Fairness<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * generally decreases throughput but reduces variability and avoids<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * starvation.<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;p&gt;This class and its iterator implement all of the<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;em&gt;optional&lt;/em&gt; methods of the {@link Collection} and {@link<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * Iterator} interfaces.<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;p&gt;This class is a member of the<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;a href="{@docRoot}/../technotes/guides/collections/index.html"&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * Java Collections Framework&lt;/a&gt;.<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * @since 1.5<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * @author Doug Lea<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * @param &lt;E&gt; the type of elements held in this collection<a name="line.73"></a>
+<span class="sourceLineNo">074</span> */<a name="line.74"></a>
+<span class="sourceLineNo">075</span>public class ArrayBlockingQueue&lt;E&gt; extends AbstractQueue&lt;E&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        implements BlockingQueue&lt;E&gt;, java.io.Serializable {<a name="line.76"></a>
+<span class="sourceLineNo">077</span><a name="line.77"></a>
+<span class="sourceLineNo">078</span>    /**<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * Serialization ID. This class relies on default serialization<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * even for the items array, which is default-serialized, even if<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * it is empty. Otherwise it could not be declared final, which is<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * necessary here.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     */<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    private static final long serialVersionUID = -817911632652898426L;<a name="line.84"></a>
+<span class="sourceLineNo">085</span><a name="line.85"></a>
+<span class="sourceLineNo">086</span>    /** The queued items */<a name="line.86"></a>
+<span class="sourceLineNo">087</span>    final Object[] items;<a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span>    /** items index for next take, poll, peek or remove */<a name="line.89"></a>
+<span class="sourceLineNo">090</span>    int takeIndex;<a name="line.90"></a>
+<span class="sourceLineNo">091</span><a name="line.91"></a>
+<span class="sourceLineNo">092</span>    /** items index for next put, offer, or add */<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    int putIndex;<a name="line.93"></a>
+<span class="sourceLineNo">094</span><a name="line.94"></a>
+<span class="sourceLineNo">095</span>    /** Number of elements in the queue */<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    int count;<a name="line.96"></a>
+<span class="sourceLineNo">097</span><a name="line.97"></a>
+<span class="sourceLineNo">098</span>    /*<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * Concurrency control uses the classic two-condition algorithm<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * found in any textbook.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     */<a name="line.101"></a>
+<span class="sourceLineNo">102</span><a name="line.102"></a>
+<span class="sourceLineNo">103</span>    /** Main lock guarding all access */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    final ReentrantLock lock;<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    /** Condition for waiting takes */<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    private final Condition notEmpty;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    /** Condition for waiting puts */<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    private final Condition notFull;<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span>    // Internal helper methods<a name="line.110"></a>
+<span class="sourceLineNo">111</span><a name="line.111"></a>
+<span class="sourceLineNo">112</span>    /**<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * Circularly increment i.<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     */<a name="line.114"></a>
+<span class="sourceLineNo">115</span>    final int inc(int i) {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>        return (++i == items.length) ? 0 : i;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    }<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>    /**<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * Circularly decrement i.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     */<a name="line.121"></a>
+<span class="sourceLineNo">122</span>    final int dec(int i) {<a name="line.122"></a>
+<span class="sourceLineNo">123</span>        return ((i == 0) ? items.length : i) - 1;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    }<a name="line.124"></a>
+<span class="sourceLineNo">125</span><a name="line.125"></a>
+<span class="sourceLineNo">126</span>    @SuppressWarnings("unchecked")<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    static &lt;E&gt; E cast(Object item) {<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        return (E) item;<a name="line.128"></a>
+<span class="sourceLineNo">129</span>    }<a name="line.129"></a>
+<span class="sourceLineNo">130</span><a name="line.130"></a>
+<span class="sourceLineNo">131</span>    /**<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * Returns item at index i.<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     */<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    final E itemAt(int i) {<a name="line.134"></a>
+<span class="sourceLineNo">135</span>        return this.&lt;E&gt;cast(items[i]);<a name="line.135"></a>
+<span class="sourceLineNo">136</span>    }<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>    /**<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * Throws NullPointerException if argument is null.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * @param v the element<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     */<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    private static void checkNotNull(Object v) {<a name="line.143"></a>
+<span class="sourceLineNo">144</span>        if (v == null)<a name="line.144"></a>
+<span class="sourceLineNo">145</span>            throw new NullPointerException();<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    }<a name="line.146"></a>
+<span class="sourceLineNo">147</span><a name="line.147"></a>
+<span class="sourceLineNo">148</span>    /**<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * Inserts element at current put position, advances, and signals.<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * Call only when holding lock.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     */<a name="line.151"></a>
+<span class="sourceLineNo">152</span>    private void insert(E x) {<a name="line.152"></a>
+<span class="sourceLineNo">153</span>        items[putIndex] = x;<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        putIndex = inc(putIndex);<a name="line.154"></a>
+<span class="sourceLineNo">155</span>        ++count;<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        notEmpty.signal();<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    }<a name="line.157"></a>
+<span class="sourceLineNo">158</span><a name="line.158"></a>
+<span class="sourceLineNo">159</span>    /**<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * Extracts element at current take position, advances, and signals.<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * Call only when holding lock.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     */<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    private E extract() {<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        final Object[] items = this.items;<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        E x = this.&lt;E&gt;cast(items[takeIndex]);<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        items[takeIndex] = null;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        takeIndex = inc(takeIndex);<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        --count;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        notFull.signal();<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        return x;<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    }<a name="line.171"></a>
+<span class="sourceLineNo">172</span><a name="line.172"></a>
+<span class="sourceLineNo">173</span>    /**<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * Deletes item at position i.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * Utility for remove and iterator.remove.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * Call only when holding lock.<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     */<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    void removeAt(int i) {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>        final Object[] items = this.items;<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        // if removing front item, just advance<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        if (i == takeIndex) {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>            items[takeIndex] = null;<a name="line.182"></a>
+<span class="sourceLineNo">183</span>            takeIndex = inc(takeIndex);<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        } else {<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            // slide over all others up through putIndex.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            for (;;) {<a name="line.186"></a>
+<span class="sourceLineNo">187</span>                int nexti = inc(i);<a name="line.187"></a>
+<span class="sourceLineNo">188</span>                if (nexti != putIndex) {<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                    items[i] = items[nexti];<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                    i = nexti;<a name="line.190"></a>
+<span class="sourceLineNo">191</span>                } else {<a name="line.191"></a>
+<span class="sourceLineNo">192</span>                    items[i] = null;<a name="line.192"></a>
+<span class="sourceLineNo">193</span>                    putIndex = i;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>                    break;<a name="line.194"></a>
+<span class="sourceLineNo">195</span>                }<a name="line.195"></a>
+<span class="sourceLineNo">196</span>            }<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        }<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        --count;<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        notFull.signal();<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    }<a name="line.200"></a>
+<span class="sourceLineNo">201</span><a name="line.201"></a>
+<span class="sourceLineNo">202</span>    /**<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * Creates an {@code ArrayBlockingQueue} with the given (fixed)<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * capacity and default access policy.<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     *<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * @param capacity the capacity of this queue<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * @throws IllegalArgumentException if {@code capacity &lt; 1}<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     */<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    public ArrayBlockingQueue(int capacity) {<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        this(capacity, false);<a name="line.210"></a>
+<span class="sourceLineNo">211</span>    }<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>    /**<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * Creates an {@code ArrayBlockingQueue} with the given (fixed)<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * capacity and the specified access policy.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @param capacity the capacity of this queue<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * @param fair if {@code true} then queue accesses for threads blocked<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     *        on insertion or removal, are processed in FIFO order;<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     *        if {@code false} the access order is unspecified.<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * @throws IllegalArgumentException if {@code capacity &lt; 1}<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     */<a name="line.222"></a>
+<span class="sourceLineNo">223</span>    public ArrayBlockingQueue(int capacity, boolean fair) {<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        if (capacity &lt;= 0)<a name="line.224"></a>
+<span class="sourceLineNo">225</span>            throw new IllegalArgumentException();<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        this.items = new Object[capacity];<a name="line.226"></a>
+<span class="sourceLineNo">227</span>        lock = new ReentrantLock(fair);<a name="line.227"></a>
+<span class="sourceLineNo">228</span>        notEmpty = lock.newCondition();<a name="line.228"></a>
+<span class="sourceLineNo">229</span>        notFull =  lock.newCondition();<a name="line.229"></a>
+<span class="sourceLineNo">230</span>    }<a name="line.230"></a>
+<span class="sourceLineNo">231</span><a name="line.231"></a>
+<span class="sourceLineNo">232</span>    /**<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * Creates an {@code ArrayBlockingQueue} with the given (fixed)<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * capacity, the specified access policy and initially containing the<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * elements of the given collection,<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * added in traversal order of the collection's iterator.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     *<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * @param capacity the capacity of this queue<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * @param fair if {@code true} then queue accesses for threads blocked<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     *        on insertion or removal, are processed in FIFO order;<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     *        if {@code false} the access order is unspecified.<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * @param c the collection of elements to initially contain<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * @throws IllegalArgumentException if {@code capacity} is less than<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     *         {@code c.size()}, or less than 1.<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * @throws NullPointerException if the specified collection or any<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *         of its elements are null<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     */<a name="line.247"></a>
+<span class="sourceLineNo">248</span>    public ArrayBlockingQueue(int capacity, boolean fair,<a name="line.248"></a>
+<span class="sourceLineNo">249</span>                              Collection&lt;? extends E&gt; c) {<a name="line.249"></a>
+<span class="sourceLineNo">250</span>        this(capacity, fair);<a name="line.250"></a>
+<span class="sourceLineNo">251</span><a name="line.251"></a>
+<span class="sourceLineNo">252</span>        final ReentrantLock lock = this.lock;<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        lock.lock(); // Lock only for visibility, not mutual exclusion<a name="line.253"></a>
+<span class="sourceLineNo">254</span>        try {<a name="line.254"></a>
+<span class="sourceLineNo">255</span>            int i = 0;<a name="line.255"></a>
+<span class="sourceLineNo">256</span>            try {<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                for (E e : c) {<a name="line.257"></a>
+<span class="sourceLineNo">258</span>                    checkNotNull(e);<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                    items[i++] = e;<a name="line.259"></a>
+<span class="sourceLineNo">260</span>                }<a name="line.260"></a>
+<span class="sourceLineNo">261</span>            } catch (ArrayIndexOutOfBoundsException ex) {<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                throw new IllegalArgumentException();<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            }<a name="line.263"></a>
+<span class="sourceLineNo">264</span>            count = i;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>            putIndex = (i == capacity) ? 0 : i;<a name="line.265"></a>
+<span class="sourceLineNo">266</span>        } finally {<a name="line.266"></a>
+<span class="sourceLineNo">267</span>            lock.unlock();<a name="line.267"></a>
+<span class="sourceLineNo">268</span>        }<a name="line.268"></a>
+<span class="sourceLineNo">269</span>    }<a name="line.269"></a>
+<span class="sourceLineNo">270</span><a name="line.270"></a>
+<span class="sourceLineNo">271</span>    /**<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * Inserts the specified element at the tail of this queue if it is<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * possible to do so immediately without exceeding the queue's capacity,<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * returning {@code true} upon success and throwing an<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * {@code IllegalStateException} if this queue is full.<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     *<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * @param e the element to add<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * @return {@code true} (as specified by {@link Collection#add})<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * @throws IllegalStateException if this queue is full<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * @throws NullPointerException if the specified element is null<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     */<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    public boolean add(E e) {<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        return super.add(e);<a name="line.283"></a>
+<span class="sourceLineNo">284</span>    }<a name="line.284"></a>
+<span class="sourceLineNo">285</span><a name="line.285"></a>
+<span class="sourceLineNo">286</span>    /**<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * Inserts the specified element at the tail of this queue if it is<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * possible to do so immediately without exceeding the queue's capacity,<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * returning {@code true} upon success and {@code false} if this queue<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * is full.  This method is generally preferable to method {@link #add},<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * which can fail to insert an element only by throwing an exception.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     *<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     * @throws NullPointerException if the specified element is null<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     */<a name="line.294"></a>
+<span class="sourceLineNo">295</span>    public boolean offer(E e) {<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        checkNotNull(e);<a name="line.296"></a>
+<span class="sourceLineNo">297</span>        final ReentrantLock lock = this.lock;<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        lock.lock();<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        try {<a name="line.299"></a>
+<span class="sourceLineNo">300</span>            if (count == items.length)<a name="line.300"></a>
+<span class="sourceLineNo">301</span>                return false;<a name="line.301"></a>
+<span class="sourceLineNo">302</span>            else {<a name="line.302"></a>
+<span class="sourceLineNo">303</span>                insert(e);<a name="line.303"></a>
+<span class="sourceLineNo">304</span>                return true;<a name="line.304"></a>
+<span class="sourceLineNo">305</span>            }<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        } finally {<a name="line.306"></a>
+<span class="sourceLineNo">307</span>            lock.unlock();<a name="line.307"></a>
+<span class="sourceLineNo">308</span>        }<a name="line.308"></a>
+<span class="sourceLineNo">309</span>    }<a name="line.309"></a>
+<span class="sourceLineNo">310</span><a name="line.310"></a>
+<span class="sourceLineNo">311</span>    /**<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * Inserts the specified element at the tail of this queue, waiting<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * for space to become available if the queue is full.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     *<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * @throws InterruptedException {@inheritDoc}<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * @throws NullPointerException {@inheritDoc}<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     */<a name="line.317"></a>
+<span class="sourceLineNo">318</span>    public void put(E e) throws InterruptedException {<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        checkNotNull(e);<a name="line.319"></a>
+<span class="sourceLineNo">320</span>        final ReentrantLock lock = this.lock;<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        lock.lockInterruptibly();<a name="line.321"></a>
+<span class="sourceLineNo">322</span>        try {<a name="line.322"></a>
+<span class="sourceLineNo">323</span>            while (count == items.length)<a name="line.323"></a>
+<span class="sourceLineNo">324</span>                notFull.await();<a name="line.324"></a>
+<span class="sourceLineNo">325</span>            insert(e);<a name="line.325"></a>
+<span class="sourceLineNo">326</span>        } finally {<a name="line.326"></a>
+<span class="sourceLineNo">327</span>            lock.unlock();<a name="line.327"></a>
+<span class="sourceLineNo">328</span>        }<a name="line.328"></a>
+<span class="sourceLineNo">329</span>    }<a name="line.329"></a>
+<span class="sourceLineNo">330</span><a name="line.330"></a>
+<span class="sourceLineNo">331</span>    /**<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * Inserts the specified element at the tail of this queue, waiting<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * up to the specified wait time for space to become available if<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * the queue is full.<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     *<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     * @throws InterruptedException {@inheritDoc}<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * @throws NullPointerException {@inheritDoc}<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     */<a name="line.338"></a>
+<span class="sourceLineNo">339</span>    public boolean offer(E e, long timeout, TimeUnit unit)<a name="line.339"></a>
+<span class="sourceLineNo">340</span>        throws InterruptedException {<a name="line.340"></a>
+<span class="sourceLineNo">341</span><a name="line.341"></a>
+<span class="sourceLineNo">342</span>        checkNotNull(e);<a name="line.342"></a>
+<span class="sourceLineNo">343</span>        long nanos = unit.toNanos(timeout);<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        final ReentrantLock lock = this.lock;<a name="line.344"></a>
+<span class="sourceLineNo">345</span>        lock.lockInterruptibly();<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        try {<a name="line.346"></a>
+<span class="sourceLineNo">347</span>            while (count == items.length) {<a name="line.347"></a>
+<span class="sourceLineNo">348</span>                if (nanos &lt;= 0)<a name="line.348"></a>
+<span class="sourceLineNo">349</span>                    return false;<a name="line.349"></a>
+<span class="sourceLineNo">350</span>                nanos = notFull.awaitNanos(nanos);<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            }<a name="line.351"></a>
+<span class="sourceLineNo">352</span>            insert(e);<a name="line.352"></a>
+<span class="sourceLineNo">353</span>            return true;<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        } finally {<a name="line.354"></a>
+<span class="sourceLineNo">355</span>            lock.unlock();<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        }<a name="line.356"></a>
+<span class="sourceLineNo">357</span>    }<a name="line.357"></a>
+<span class="sourceLineNo">358</span><a name="line.358"></a>
+<span class="sourceLineNo">359</span>    public E poll() {<a name="line.359"></a>
+<span class="sourceLineNo">360</span>        final ReentrantLock lock = this.lock;<a name="line.360"></a>
+<span class="sourceLineNo">361</span>        lock.lock();<a name="line.361"></a>
+<span class="sourceLineNo">362</span>        try {<a name="line.362"></a>
+<span class="sourceLineNo">363</span>            return (count == 0) ? null : extract();<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        } finally {<a name="line.364"></a>
+<span class="sourceLineNo">365</span>            lock.unlock();<a name="line.365"></a>
+<span class="sourceLineNo">366</span>        }<a name="line.366"></a>
+<span class="sourceLineNo">367</span>    }<a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>    public E take() throws InterruptedException {<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        final ReentrantLock lock = this.lock;<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        lock.lockInterruptibly();<a name="line.371"></a>
+<span class="sourceLineNo">372</span>        try {<a name="line.372"></a>
+<span class="sourceLineNo">373</span>            while (count == 0)<a name="line.373"></a>
+<span class="sourceLineNo">374</span>                notEmpty.await();<a name="line.374"></a>
+<span class="sourceLineNo">375</span>            return extract();<a name="line.375"></a>
+<span class="sourceLineNo">376</span>        } finally {<a name="line.376"></a>
+<span class="sourceLineNo">377</span>            lock.unlock();<a name="line.377"></a>
+<span class="sourceLineNo">378</span>        }<a name="line.378"></a>
+<span class="sourceLineNo">379</span>    }<a name="line.379"></a>
+<span class="sourceLineNo">380</span><a name="line.380"></a>
+<span class="sourceLineNo">381</span>    public E poll(long timeout, TimeUnit unit) throws InterruptedException {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>        long nanos = unit.toNanos(timeout);<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        final ReentrantLock lock = this.lock;<a name="line.383"></a>
+<span class="sourceLineNo">384</span>        lock.lockInterruptibly();<a name="line.384"></a>
+<span class="sourceLineNo">385</span>        try {<a name="line.385"></a>
+<span class="sourceLineNo">386</span>            while (count == 0) {<a name="line.386"></a>
+<span class="sourceLineNo">387</span>                if (nanos &lt;= 0)<a name="line.387"></a>
+<span class="sourceLineNo">388</span>                    return null;<a name="line.388"></a>
+<span class="sourceLineNo">389</span>                nanos = notEmpty.awaitNanos(nanos);<a name="line.389"></a>
+<span class="sourceLineNo">390</span>            }<a name="line.390"></a>
+<span class="sourceLineNo">391</span>            return extract();<a name="line.391"></a>
+<span class="sourceLineNo">392</span>        } finally {<a name="line.392"></a>
+<span class="sourceLineNo">393</span>            lock.unlock();<a name="line.393"></a>
+<span class="sourceLineNo">394</span>        }<a name="line.394"></a>
+<span class="sourceLineNo">395</span>    }<a name="line.395"></a>
+<span class="sourceLineNo">396</span><a name="line.396"></a>
+<span class="sourceLineNo">397</span>    public E peek() {<a name="line.397"></a>
+<span class="sourceLineNo">398</span>        final ReentrantLock lock = this.lock;<a name="line.398"></a>
+<span class="sourceLineNo">399</span>        lock.lock();<a name="line.399"></a>
+<span class="sourceLineNo">400</span>        try {<a name="line.400"></a>
+<span class="sourceLineNo">401</span>            return (count == 0) ? null : itemAt(takeIndex);<a name="line.401"></a>
+<span class="sourceLineNo">402</span>        } finally {<a name="line.402"></a>
+<span class="sourceLineNo">403</span>            lock.unlock();<a name="line.403"></a>
+<span class="sourceLineNo">404</span>        }<a name="line.404"></a>
+<span class="sourceLineNo">405</span>    }<a name="line.405"></a>
+<span class="sourceLineNo">406</span><a name="line.406"></a>
+<span class="sourceLineNo">407</span>    // this doc comment is overridden to remove the reference to collections<a name="line.407"></a>
+<span class="sourceLineNo">408</span>    // greater in size than Integer.MAX_VALUE<a name="line.408"></a>
+<span class="sourceLineNo">409</span>    /**<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     * Returns the number of elements in this queue.<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     *<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * @return the number of elements in this queue<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     */<a name="line.413"></a>
+<span class="sourceLineNo">414</span>    public int size() {<a name="line.414"></a>
+<span class="sourceLineNo">415</span>        final ReentrantLock lock = this.lock;<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        lock.lock();<a name="line.416"></a>
+<span class="sourceLineNo">417</span>        try {<a name="line.417"></a>
+<span class="sourceLineNo">418</span>            return count;<a name="line.418"></a>
+<span class="sourceLineNo">419</span>        } finally {<a name="line.419"></a>
+<span class="sourceLineNo">420</span>            lock.unlock();<a name="line.420"></a>
+<span class="sourceLineNo">421</span>        }<a name="line.421"></a>
+<span class="sourceLineNo">422</span>    }<a name="line.422"></a>
+<span class="sourceLineNo">423</span><a name="line.423"></a>
+<span class="sourceLineNo">424</span>    // this doc comment is a modified copy of the inherited doc comment,<a name="line.424"></a>
+<span class="sourceLineNo">425</span>    // without the reference to unlimited queues.<a name="line.425"></a>
+<span class="sourceLineNo">426</span>    /**<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     * Returns the number of additional elements that this queue can ideally<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     * (in the absence of memory or resource constraints) accept without<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * blocking. This is always equal to the initial capacity of this queue<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * less the current {@code size} of this queue.<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     *<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     * &lt;p&gt;Note that you &lt;em&gt;cannot&lt;/em&gt; always tell if an attempt to insert<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     * an element will succeed by inspecting {@code remainingCapacity}<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     * because it may be the case that another thread is about to<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     * insert or remove an element.<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     */<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    public int remainingCapacity() {<a name="line.437"></a>
+<span class="sourceLineNo">438</span>        final ReentrantLock lock = this.lock;<a name="line.438"></a>
+<span class="sourceLineNo">439</span>        lock.lock();<a name="line.439"></a>
+<span class="sourceLineNo">440</span>        try {<a name="line.440"></a>
+<span class="sourceLineNo">441</span>            return items.length - count;<a name="line.441"></a>
+<span class="sourceLineNo">442</span>        } finally {<a name="line.442"></a>
+<span class="sourceLineNo">443</span>            lock.unlock();<a name="line.443"></a>
+<span class="sourceLineNo">444</span>        }<a name="line.444"></a>
+<span class="sourceLineNo">445</span>    }<a name="line.445"></a>
+<span class="sourceLineNo">446</span><a name="line.446"></a>
+<span class="sourceLineNo">447</span>    /**<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * Removes a single instance of the specified element from this queue,<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     * if it is present.  More formally, removes an element {@code e} such<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * that {@code o.equals(e)}, if this queue contains one or more such<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     * elements.<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     * Returns {@code true} if this queue contained the specified element<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     * (or equivalently, if this queue changed as a result of the call).<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     *<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * &lt;p&gt;Removal of interior elements in circular array based queues<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     * is an intrinsically slow and disruptive operation, so should<a name="line.456"></a>
+<span class="sourceLineNo">457</span>     * be undertaken only in exceptional circumstances, ideally<a name="line.457"></a>
+<span class="sourceLineNo">458</span>     * only when the queue is known not to be accessible by other<a name="line.458"></a>
+<span class="sourceLineNo">459</span>     * threads.<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     *<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     * @param o element to be removed from this queue, if present<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     * @return {@code true} if this queue changed as a result of the call<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     */<a name="line.463"></a>
+<span class="sourceLineNo">464</span>    public boolean remove(Object o) {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>        if (o == null) return false;<a name="line.465"></a>
+<span class="sourceLineNo">466</span>        final Object[] items = this.items;<a name="line.466"></a>
+<span class="sourceLineNo">467</span>        final ReentrantLock lock = this.lock;<a name="line.467"></a>
+<span class="sourceLineNo">468</span>        lock.lock();<a name="line.468"></a>
+<span class="sourceLineNo">469</span>        try {<a name="line.469"></a>
+<span class="sourceLineNo">470</span>            for (int i = takeIndex, k = count; k &gt; 0; i = inc(i), k--) {<a name="line.470"></a>
+<span class="sourceLineNo">471</span>                if (o.equals(items[i])) {<a name="line.471"></a>
+<span class="sourceLineNo">472</span>                    removeAt(i);<a name="line.472"></a>
+<span class="sourceLineNo">473</span>                    return true;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>                }<a name="line.474"></a>
+<span class="sourceLineNo">475</span>            }<a name="line.475"></a>
+<span class="sourceLineNo">476</span>            return false;<a name="line.476"></a>
+<span class="sourceLineNo">477</span>        } finally {<a name="line.477"></a>
+<span class="sourceLineNo">478</span>            lock.unlock();<a name="line.478"></a>
+<span class="sourceLineNo">479</span>        }<a name="line.479"></a>
+<span class="sourceLineNo">480</span>    }<a name="line.480"></a>
+<span class="sourceLineNo">481</span><a name="line.481"></a>
+<span class="sourceLineNo">482</span>    /**<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     * Returns {@code true} if this queue contains the specified element.<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * More formally, returns {@code true} if and only if this queue contains<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     * at least one element {@code e} such that {@code o.equals(e)}.<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     *<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     * @param o object to be checked for containment in this queue<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     * @return {@code true} if this queue contains the specified element<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     */<a name="line.489"></a>
+<span class="sourceLineNo">490</span>    public boolean contains(Object o) {<a name="line.490"></a>
+<span class="sourceLineNo">491</span>        if (o == null) return false;<a name="line.491"></a>
+<span class="sourceLineNo">492</span>        final Object[] items = this.items;<a name="line.492"></a>
+<span class="sourceLineNo">493</span>        final ReentrantLock lock = this.lock;<a name="line.493"></a>
+<span class="sourceLineNo">494</span>        lock.lock();<a name="line.494"></a>
+<span class="sourceLineNo">495</span>        try {<a name="line.495"></a>
+<span class="sourceLineNo">496</span>            for (int i = takeIndex, k = count; k &gt; 0; i = inc(i), k--)<a name="line.496"></a>
+<span class="sourceLineNo">497</span>                if (o.equals(items[i]))<a name="line.497"></a>
+<span class="sourceLineNo">498</span>                    return true;<a name="line.498"></a>
+<span class="sourceLineNo">499</span>            return false;<a name="line.499"></a>
+<span class="sourceLineNo">500</span>        } finally {<a name="line.500"></a>
+<span class="sourceLineNo">501</span>            lock.unlock();<a name="line.501"></a>
+<span class="sourceLineNo">502</span>        }<a name="line.502"></a>
+<span class="sourceLineNo">503</span>    }<a name="line.503"></a>
+<span class="sourceLineNo">504</span><a name="line.504"></a>
+<span class="sourceLineNo">505</span>    /**<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     * Returns an array containing all of the elements in this queue, in<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     * proper sequence.<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     *<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     * &lt;p&gt;The returned array will be "safe" in that no references to it are<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     * maintained by this queue.  (In other words, this method must allocate<a name="line.510"></a>
+<span class="sourceLineNo">511</span>     * a new array).  The caller is thus free to modify the returned array.<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     *<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     * &lt;p&gt;This method acts as bridge between array-based and collection-based<a name="line.513"></a>
+<span class="sourceLineNo">514</span>     * APIs.<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     *<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     * @return an array containing all of the elements in this queue<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     */<a name="line.517"></a>
+<span class="sourceLineNo">518</span>    public Object[] toArray() {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>        final Object[] items = this.items;<a name="line.519"></a>
+<span class="sourceLineNo">520</span>        final ReentrantLock lock = this.lock;<a name="line.520"></a>
+<span class="sourceLineNo">521</span>        lock.lock();<a name="line.521"></a>
+<span class="sourceLineNo">522</span>        try {<a name="line.522"></a>
+<span class="sourceLineNo">523</span>            final int count = this.count;<a name="line.523"></a>
+<span class="sourceLineNo">524</span>            Object[] a = new Object[count];<a name="line.524"></a>
+<span class="sourceLineNo">525</span>            for (int i = takeIndex, k = 0; k &lt; count; i = inc(i), k++)<a name="line.525"></a>
+<span class="sourceLineNo">526</span>                a[k] = items[i];<a name="line.526"></a>
+<span class="sourceLineNo">527</span>            return a;<a name="line.527"></a>
+<span class="sourceLineNo">528</span>        } finally {<a name="line.528"></a>
+<span class="sourceLineNo">529</span>            lock.unlock();<a name="line.529"></a>
+<span class="sourceLineNo">530</span>        }<a name="line.530"></a>
+<span class="sourceLineNo">531</span>    }<a name="line.531"></a>
+<span class="sourceLineNo">532</span><a name="line.532"></a>
+<span class="sourceLineNo">533</span>    /**<a name="line.533"></a>
+<span class="sourceLineNo">534</span>     * Returns an array containing all of the elements in this queue, in<a name="line.534"></a>
+<span class="sourceLineNo">535</span>     * proper sequence; the runtime type of the returned array is that of<a name="line.535"></a>
+<span class="sourceLineNo">536</span>     * the specified array.  If the queue fits in the specified array, it<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * is returned therein.  Otherwise, a new array is allocated with the<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     * runtime type of the specified array and the size of this queue.<a name="line.538"></a>
+<span class="sourceLineNo">539</span>     *<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     * &lt;p&gt;If this queue fits in the specified array with room to spare<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     * (i.e., the array has more elements than this queue), the element in<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * the array immediately following the end of the queue is set to<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * {@code null}.<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     *<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     * &lt;p&gt;Like the {@link #toArray()} method, this method acts as bridge between<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     * array-based and collection-based APIs.  Further, this method allows<a name="line.546"></a>
+<span class="sourceLineNo">547</span>     * precise control over the runtime type of the output array, and may,<a name="line.547"></a>
+<span class="sourceLineNo">548</span>     * under certain circumstances, be used to save allocation costs.<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     *<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     * &lt;p&gt;Suppose {@code x} is a queue known to contain only strings.<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     * The following code can be used to dump the queue into a newly<a name="line.551"></a>
+<span class="sourceLineNo">552</span>     * allocated array of {@code String}:<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     *<a name="line.553"></a>
+<span class="sourceLineNo">554</span>     * &lt;pre&gt;<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     *     String[] y = x.toArray(new String[0]);&lt;/pre&gt;<a name="line.555"></a>
+<span class="sourceLineNo">556</span>     *<a name="line.556"></a>
+<span class="sourceLineNo">557</span>     * Note that {@code toArray(new Object[0])} is identical in function to<a name="line.557"></a>
+<span class="sourceLineNo">558</span>     * {@code toArray()}.<a name="line.558"></a>
+<span class="sourceLineNo">559</span>     *<a name="line.559"></a>
+<span class="sourceLineNo">560</span>     * @param a the array into which the elements of the queue are to<a name="line.560"></a>
+<span class="sourceLineNo">561</span>     *          be stored, if it is big enough; otherwise, a new array of the<a name="line.561"></a>
+<span class="sourceLineNo">562</span>     *          same runtime type is allocated for this purpose<a name="line.562"></a>
+<span class="sourceLineNo">563</span>     * @return an array containing all of the elements in this queue<a name="line.563"></a>
+<span class="sourceLineNo">564</span>     * @throws ArrayStoreException if the runtime type of the specified array<a name="line.564"></a>
+<span class="sourceLineNo">565</span>     *         is not a supertype of the runtime type of every element in<a name="line.565"></a>
+<span class="sourceLineNo">566</span>     *         this queue<a name="line.566"></a>
+<span class="sourceLineNo">567</span>     * @throws NullPointerException if the specified array is null<a name="line.567"></a>
+<span class="sourceLineNo">568</span>     */<a name="line.568"></a>
+<span class="sourceLineNo">569</span>    @SuppressWarnings("unchecked")<a name="line.569"></a>
+<span class="sourceLineNo">570</span>    public &lt;T&gt; T[] toArray(T[] a) {<a name="line.570"></a>
+<span class="sourceLineNo">571</span>        final Object[] items = this.items;<a name="line.571"></a>
+<span class="sourceLineNo">572</span>        final ReentrantLock lock = this.lock;<a name="line.572"></a>
+<span class="sourceLineNo">573</span>        lock.lock();<a name="line.573"></a>
+<span class="sourceLineNo">574</span>        try {<a name="line.574"></a>
+<span class="sourceLineNo">575</span>            final int count = this.count;<a name="line.575"></a>
+<span class="sourceLineNo">576</span>            final int len = a.length;<a name="line.576"></a>
+<span class="sourceLineNo">577</span>            if (len &lt; count)<a name="line.577"></a>
+<span class="sourceLineNo">578</span>                a = (T[])java.lang.reflect.Array.newInstance(<a name="line.578"></a>
+<span class="sourceLineNo">579</span>                    a.getClass().getComponentType(), count);<a name="line.579"></a>
+<span class="sourceLineNo">580</span>            for (int i = takeIndex, k = 0; k &lt; count; i = inc(i), k++)<a name="line.580"></a>
+<span class="sourceLineNo">581</span>                a[k] = (T) items[i];<a name="line.581"></a>
+<span class="sourceLineNo">582</span>            if (len &gt; count)<a name="line.582"></a>
+<span class="sourceLineNo">583</span>                a[count] = null;<a name="line.583"></a>
+<span class="sourceLineNo">584</span>            return a;<a name="line.584"></a>
+<span class="sourceLineNo">585</span>        } finally {<a name="line.585"></a>
+<span class="sourceLineNo">586</span>            lock.unlock();<a name="line.586"></a>
+<span class="sourceLineNo">587</span>        }<a name="line.587"></a>
+<span class="sourceLineNo">588</span>    }<a name="line.588"></a>
+<span class="sourceLineNo">589</span><a name="line.589"></a>
+<span class="sourceLineNo">590</span>    public String toString() {<a name="line.590"></a>
+<span class="sourceLineNo">591</span>        final ReentrantLock lock = this.lock;<a name="line.591"></a>
+<span class="sourceLineNo">592</span>        lock.lock();<a name="line.592"></a>
+<span class="sourceLineNo">593</span>        try {<a name="line.593"></a>
+<span class="sourceLineNo">594</span>            int k = count;<a name="line.594"></a>
+<span class="sourceLineNo">595</span>            if (k == 0)<a name="line.595"></a>
+<span class="sourceLineNo">596</span>                return "[]";<a name="line.596"></a>
+<span class="sourceLineNo">597</span><a name="line.597"></a>
+<span class="sourceLineNo">598</span>            StringBuilder sb = new StringBuilder();<a name="line.598"></a>
+<span class="sourceLineNo">599</span>            sb.append('[');<a name="line.599"></a>
+<span class="sourceLineNo">600</span>            for (int i = takeIndex; ; i = inc(i)) {<a name="line.600"></a>
+<span class="sourceLineNo">601</span>                Object e = items[i];<a name="line.601"></a>
+<span class="sourceLineNo">602</span>                sb.append(e == this ? "(this Collection)" : e);<a name="line.602"></a>
+<span class="sourceLineNo">603</span>                if (--k == 0)<a name="line.603"></a>
+<span class="sourceLineNo">604</span>                    return sb.append(']').toString();<a name="line.604"></a>
+<span class="sourceLineNo">605</span>                sb.append(',').append(' ');<a name="line.605"></a>
+<span class="sourceLineNo">606</span>            }<a name="line.606"></a>
+<span class="sourceLineNo">607</span>        } finally {<a name="line.607"></a>
+<span class="sourceLineNo">608</span>            lock.unlock();<a name="line.608"></a>
+<span class="sourceLineNo">609</span>        }<a name="line.609"></a>
+<span class="sourceLineNo">610</span>    }<a name="line.610"></a>
+<span class="sourceLineNo">611</span><a name="line.611"></a>
+<span class="sourceLineNo">612</span>    /**<a name="line.612"></a>
+<span class="sourceLineNo">613</span>     * Atomically removes all of the elements from this queue.<a name="line.613"></a>
+<span class="sourceLineNo">614</span>     * The queue will be empty after this call returns.<a name="line.614"></a>
+<span class="sourceLineNo">615</span>     */<a name="line.615"></a>
+<span class="sourceLineNo">616</span>    public void clear() {<a name="line.616"></a>
+<span class="sourceLineNo">617</span>        final Object[] items = this.items;<a name="line.617"></a>
+<span class="sourceLineNo">618</span>        final ReentrantLock lock = this.lock;<a name="line.618"></a>
+<span class="sourceLineNo">619</span>        lock.lock();<a name="line.619"></a>
+<span class="sourceLineNo">620</span>        try {<a name="line.620"></a>
+<span class="sourceLineNo">621</span>            for (int i = takeIndex, k = count; k &gt; 0; i = inc(i), k--)<a name="line.621"></a>
+<span class="sourceLineNo">622</span>                items[i] = null;<a name="line.622"></a>
+<span class="sourceLineNo">623</span>            count = 0;<a name="line.623"></a>
+<span class="sourceLineNo">624</span>            putIndex = 0;<a name="line.624"></a>
+<span class="sourceLineNo">625</span>            takeIndex = 0;<a name="line.625"></a>
+<span class="sourceLineNo">626</span>            notFull.signalAll();<a name="line.626"></a>
+<span class="sourceLineNo">627</span>        } finally {<a name="line.627"></a>
+<span class="sourceLineNo">628</span>            lock.unlock();<a name="line.628"></a>
+<span class="sourceLineNo">629</span>        }<a name="line.629"></a>
+<span class="sourceLineNo">630</span>    }<a name="line.630"></a>
+<span class="sourceLineNo">631</span><a name="line.631"></a>
+<span class="sourceLineNo">632</span>    /**<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     * @throws UnsupportedOperationException {@inheritDoc}<a name="line.633"></a>
+<span class="sourceLineNo">634</span>     * @throws ClassCastException            {@inheritDoc}<a name="line.634"></a>
+<span class="sourceLineNo">635</span>     * @throws NullPointerException          {@inheritDoc}<a name="line.635"></a>
+<span class="sourceLineNo">636</span>     * @throws IllegalArgumentException      {@inheritDoc}<a name="line.636"></a>
+<span class="sourceLineNo">637</span>     */<a name="line.637"></a>
+<span class="sourceLineNo">638</span>    public int drainTo(Collection&lt;? super E&gt; c) {<a name="line.638"></a>
+<span class="sourceLineNo">639</span>        checkNotNull(c);<a name="line.639"></a>
+<span class="sourceLineNo">640</span>        if (c == this)<a name="line.640"></a>
+<span class="sourceLineNo">641</span>            throw new IllegalArgumentException();<a name="line.641"></a>
+<span class="sourceLineNo">642</span>        final Object[] items = this.items;<a name="line.642"></a>
+<span class="sourceLineNo">643</span>        final ReentrantLock lock = this.lock;<a name="line.643"></a>
+<span class="sourceLineNo">644</span>        lock.lock();<a name="line.644"></a>
+<span class="sourceLineNo">645</span>        try {<a name="line.645"></a>
+<span class="sourceLineNo">646</span>            int i = takeIndex;<a name="line.646"></a>
+<span class="sourceLineNo">647</span>            int n = 0;<a name="line.647"></a>
+<span class="sourceLineNo">648</span>            int max = count;<a name="line.648"></a>
+<span class="sourceLineNo">649</span>            while (n &lt; max) {<a name="line.649"></a>
+<span class="sourceLineNo">650</span>                c.add(this.&lt;E&gt;cast(items[i]));<a name="line.650"></a>
+<span class="sourceLineNo">651</span>                items[i] = null;<a name="line.651"></a>
+<span class="sourceLineNo">652</span>                i = inc(i);<a name="line.652"></a>
+<span class="sourceLineNo">653</span>                ++n;<a name="line.653"></a>
+<span class="sourceLineNo">654</span>            }<a name="line.654"></a>
+<span class="sourceLineNo">655</span>            if (n &gt; 0) {<a name="line.655"></a>
+<span class="sourceLineNo">656</span>                count = 0;<a name="line.656"></a>
+<span class="sourceLineNo">657</span>                putIndex = 0;<a name="line.657"></a>
+<span class="sourceLineNo">658</span>                takeIndex = 0;<a name="line.658"></a>
+<span class="sourceLineNo">659</span>                notFull.signalAll();<a name="line.659"></a>
+<span class="sourceLineNo">660</span>            }<a name="line.660"></a>
+<span class="sourceLineNo">661</span>            return n;<a name="line.661"></a>
+<span class="sourceLineNo">662</span>        } finally {<a name="line.662"></a>
+<span class="sourceLineNo">663</span>            lock.unlock();<a name="line.663"></a>
+<span class="sourceLineNo">664</span>        }<a name="line.664"></a>
+<span class="sourceLineNo">665</span>    }<a name="line.665"></a>
+<span class="sourceLineNo">666</span><a name="line.666"></a>
+<span class="sourceLineNo">667</span>    /**<a name="line.667"></a>
+<span class="sourceLineNo">668</span>     * @throws UnsupportedOperationException {@inheritDoc}<a name="line.668"></a>
+<span class="sourceLineNo">669</span>     * @throws ClassCastException            {@inheritDoc}<a name="line.669"></a>
+<span class="sourceLineNo">670</span>     * @throws NullPointerException          {@inheritDoc}<a name="line.670"></a>
+<span class="sourceLineNo">671</span>     * @throws IllegalArgumentException      {@inheritDoc}<a name="line.671"></a>
+<span class="sourceLineNo">672</span>     */<a name="line.672"></a>
+<span class="sourceLineNo">673</span>    public int drainTo(Collection&lt;? super E&gt; c, int maxElements) {<a name="line.673"></a>
+<span class="sourceLineNo">674</span>        checkNotNull(c);<a name="line.674"></a>
+<span class="sourceLineNo">675</span>        if (c == this)<a name="line.675"></a>
+<span class="sourceLineNo">676</span>            throw new IllegalArgumentException();<a name="line.676"></a>
+<span class="sourceLineNo">677</span>        if (maxElements &lt;= 0)<a name="line.677"></a>
+<span class="sourceLineNo">678</span>            return 0;<a name="line.678"></a>
+<span class="sourceLineNo">679</span>        final Object[] items = this.items;<a name="line.679"></a>
+<span class="sourceLineNo">680</span>        final ReentrantLock lock = this.lock;<a name="line.680"></a>
+<span class="sourceLineNo">681</span>        lock.lock();<a name="line.681"></a>
+<span class="sourceLineNo">682</span>        try {<a name="line.682"></a>
+<span class="sourceLineNo">683</span>            int i = takeIndex;<a name="line.683"></a>
+<span class="sourceLineNo">684</span>            int n = 0;<a name="line.684"></a>
+<span class="sourceLineNo">685</span>            int max = (maxElements &lt; count) ? maxElements : count;<a name="line.685"></a>
+<span class="sourceLineNo">686</span>            while (n &lt; max) {<a name="line.686"></a>
+<span class="sourceLineNo">687</span>                c.add(this.&lt;E&gt;cast(items[i]));<a name="line.687"></a>
+<span class="sourceLineNo">688</span>                items[i] = null;<a name="line.688"></a>
+<span class="sourceLineNo">689</span>                i = inc(i);<a name="line.689"></a>
+<span class="sourceLineNo">690</span>                ++n;<a name="line.690"></a>
+<span class="sourceLineNo">691</span>            }<a name="line.691"></a>
+<span class="sourceLineNo">692</span>            if (n &gt; 0) {<a name="line.692"></a>
+<span class="sourceLineNo">693</span>                count -= n;<a name="line.693"></a>
+<span class="sourceLineNo">694</span>                takeIndex = i;<a name="line.694"></a>
+<span class="sourceLineNo">695</span>                notFull.signalAll();<a name="line.695"></a>
+<span class="sourceLineNo">696</span>            }<a name="line.696"></a>
+<span class="sourceLineNo">697</span>            return n;<a name="line.697"></a>
+<span class="sourceLineNo">698</span>        } finally {<a name="line.698"></a>
+<span class="sourceLineNo">699</span>            lock.unlock();<a name="line.699"></a>
+<span class="sourceLineNo">700</span>        }<a name="line.700"></a>
+<span class="sourceLineNo">701</span>    }<a name="line.701"></a>
+<span class="sourceLineNo">702</span><a name="line.702"></a>
+<span class="sourceLineNo">703</span>    /**<a name="line.703"></a>
+<span class="sourceLineNo">704</span>     * Returns an iterator over the elements in this queue in proper sequence.<a name="line.704"></a>
+<span class="sourceLineNo">705</span>     * The elements will be returned in order from first (head) to last (tail).<a name="line.705"></a>
+<span class="sourceLineNo">706</span>     *<a name="line.706"></a>
+<span class="sourceLineNo">707</span>     * &lt;p&gt;The returned {@code Iterator} is a "weakly consistent" iterator that<a name="line.707"></a>
+<span class="sourceLineNo">708</span>     * will never throw {@link java.util.ConcurrentModificationException<a name="line.708"></a>
+<span class="sourceLineNo">709</span>     * ConcurrentModificationException},<a name="line.709"></a>
+<span class="sourceLineNo">710</span>     * and guarantees to traverse elements as they existed upon<a name="line.710"></a>
+<span class="sourceLineNo">711</span>     * construction of the iterator, and may (but is not guaranteed to)<a name="line.711"></a>
+<span class="sourceLineNo">712</span>     * reflect any modifications subsequent to construction.<a name="line.712"></a>
+<span class="sourceLineNo">713</span>     *<a name="line.713"></a>
+<span class="sourceLineNo">714</span>     * @return an iterator over the elements in this queue in proper sequence<a name="line.714"></a>
+<span class="sourceLineNo">715</span>     */<a name="line.715"></a>
+<span class="sourceLineNo">716</span>    public Iterator&lt;E&gt; iterator() {<a name="line.716"></a>
+<span class="sourceLineNo">717</span>        return new Itr();<a name="line.717"></a>
+<span class="sourceLineNo">718</span>    }<a name="line.718"></a>
+<span class="sourceLineNo">719</span><a name="line.719"></a>
+<span class="sourceLineNo">720</span>    /**<a name="line.720"></a>
+<span class="sourceLineNo">721</span>     * Iterator for ArrayBlockingQueue. To maintain weak consistency<a name="line.721"></a>
+<span class="sourceLineNo">722</span>     * with respect to puts and takes, we (1) read ahead one slot, so<a name="line.722"></a>
+<span class="sourceLineNo">723</span>     * as to not report hasNext true but then not have an element to<a name="line.723"></a>
+<span class="sourceLineNo">724</span>     * return -- however we later recheck this slot to use the most<a name="line.724"></a>
+<span class="sourceLineNo">725</span>     * current value; (2) ensure that each array slot is traversed at<a name="line.725"></a>
+<span class="sourceLineNo">726</span>     * most once (by tracking "remaining" elements); (3) skip over<a name="line.726"></a>
+<span class="sourceLineNo">727</span>     * null slots, which can occur if takes race ahead of iterators.<a name="line.727"></a>
+<span class="sourceLineNo">728</span>     * However, for circular array-based queues, we cannot rely on any<a name="line.728"></a>
+<span class="sourceLineNo">729</span>     * well established definition of what it means to be weakly<a name="line.729"></a>
+<span class="sourceLineNo">730</span>     * consistent with respect to interior removes since these may<a name="line.730"></a>
+<span class="sourceLineNo">731</span>     * require slot overwrites in the process of sliding elements to<a name="line.731"></a>
+<span class="sourceLineNo">732</span>     * cover gaps. So we settle for resiliency, operating on<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     * established apparent nexts, which may miss some elements that<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     * have moved between calls to next.<a name="line.734"></a>
+<span class="sourceLineNo">735</span>     */<a name="line.735"></a>
+<span class="sourceLineNo">736</span>    private class Itr implements Iterator&lt;E&gt; {<a name="line.736"></a>
+<span class="sourceLineNo">737</span>        private int remaining; // Number of elements yet to be returned<a name="line.737"></a>
+<span class="sourceLineNo">738</span>        private int nextIndex; // Index of element to be returned by next<a name="line.738"></a>
+<span class="sourceLineNo">739</span>        private E nextItem;    // Element to be returned by next call to next<a name="line.739"></a>
+<span class="sourceLineNo">740</span>        private E lastItem;    // Element returned by last call to next<a name="line.740"></a>
+<span class="sourceLineNo">741</span>        private int lastRet;   // Index of last element returned, or -1 if none<a name="line.741"></a>
+<span class="sourceLineNo">742</span><a name="line.742"></a>
+<span class="sourceLineNo">743</span>        Itr() {<a name="line.743"></a>
+<span class="sourceLineNo">744</span>            final ReentrantLock lock = ArrayBlockingQueue.this.lock;<a name="line.744"></a>
+<span class="sourceLineNo">745</span>            lock.lock();<a name="line.745"></a>
+<span class="sourceLineNo">746</span>            try {<a name="line.746"></a>
+<span class="sourceLineNo">747</span>                lastRet = -1;<a name="line.747"></a>
+<span class="sourceLineNo">748</span>                if ((remaining = count) &gt; 0)<a name="line.748"></a>
+<span class="sourceLineNo">749</span>                    nextItem = itemAt(nextIndex = takeIndex);<a name="line.749"></a>
+<span class="sourceLineNo">750</span>            } finally {<a name="line.750"></a>
+<span class="sourceLineNo">751</span>                lock.unlock();<a name="line.751"></a>
+<span class="sourceLineNo">752</span>            }<a name="line.752"></a>
+<span class="sourceLineNo">753</span>        }<a name="line.753"></a>
+<span class="sourceLineNo">754</span><a name="line.754"></a>
+<span class="sourceLineNo">755</span>        public boolean hasNext() {<a name="line.755"></a>
+<span class="sourceLineNo">756</span>            return remaining &gt; 0;<a name="line.756"></a>
+<span class="sourceLineNo">757</span>        }<a name="line.757"></a>
+<span class="sourceLineNo">758</span><a name="line.758"></a>
+<span class="sourceLineNo">759</span>        public E next() {<a name="line.759"></a>
+<span class="sourceLineNo">760</span>            final ReentrantLock lock = ArrayBlockingQueue.this.lock;<a name="line.760"></a>
+<span class="sourceLineNo">761</span>            lock.lock();<a name="line.761"></a>
+<span class="sourceLineNo">762</span>            try {<a name="line.762"></a>
+<span class="sourceLineNo">763</span>                if (remaining &lt;= 0)<a name="line.763"></a>
+<span class="sourceLineNo">764</span>                    throw new NoSuchElementException();<a name="line.764"></a>
+<span class="sourceLineNo">765</span>                lastRet = nextIndex;<a name="line.765"></a>
+<span class="sourceLineNo">766</span>                E x = itemAt(nextIndex);  // check for fresher value<a name="line.766"></a>
+<span class="sourceLineNo">767</span>                if (x == null) {<a name="line.767"></a>
+<span class="sourceLineNo">768</span>                    x = nextItem;         // we are forced to report old value<a name="line.768"></a>
+<span class="sourceLineNo">769</span>                    lastItem = null;      // but ensure remove fails<a name="line.769"></a>
+<span class="sourceLineNo">770</span>                }<a name="line.770"></a>
+<span class="sourceLineNo">771</span>                else<a name="line.771"></a>
+<span class="sourceLineNo">772</span>                    lastItem = x;<a name="line.772"></a>
+<span class="sourceLineNo">773</span>                while (--remaining &gt; 0 &amp;&amp; // skip over nulls<a name="line.773"></a>
+<span class="sourceLineNo">774</span>                       (nextItem = itemAt(nextIndex = inc(nextIndex))) == null)<a name="line.774"></a>
+<span class="sourceLineNo">775</span>                    ;<a name="line.775"></a>
+<span class="sourceLineNo">776</span>                return x;<a name="line.776"></a>
+<span class="sourceLineNo">777</span>            } finally {<a name="line.777"></a>
+<span class="sourceLineNo">778</span>                lock.unlock();<a name="line.778"></a>
+<span class="sourceLineNo">779</span>            }<a name="line.779"></a>
+<span class="sourceLineNo">780</span>        }<a name="line.780"></a>
+<span class="sourceLineNo">781</span><a name="line.781"></a>
+<span class="sourceLineNo">782</span>        public void remove() {<a name="line.782"></a>
+<span class="sourceLineNo">783</span>            final ReentrantLock lock = ArrayBlockingQueue.this.lock;<a name="line.783"></a>
+<span class="sourceLineNo">784</span>            lock.lock();<a name="line.784"></a>
+<span class="sourceLineNo">785</span>            try {<a name="line.785"></a>
+<span class="sourceLineNo">786</span>                int i = lastRet;<a name="line.786"></a>
+<span class="sourceLineNo">787</span>                if (i == -1)<a name="line.787"></a>
+<span class="sourceLineNo">788</span>                    throw new IllegalStateException();<a name="line.788"></a>
+<span class="sourceLineNo">789</span>                lastRet = -1;<a name="line.789"></a>
+<span class="sourceLineNo">790</span>                E x = lastItem;<a name="line.790"></a>
+<span class="sourceLineNo">791</span>                lastItem = null;<a name="line.791"></a>
+<span class="sourceLineNo">792</span>                // only remove if item still at index<a name="line.792"></a>
+<span class="sourceLineNo">793</span>                if (x != null &amp;&amp; x == items[i]) {<a name="line.793"></a>
+<span class="sourceLineNo">794</span>                    boolean removingHead = (i == takeIndex);<a name="line.794"></a>
+<span class="sourceLineNo">795</span>                    removeAt(i);<a name="line.795"></a>
+<span class="sourceLineNo">796</span>                    if (!removingHead)<a name="line.796"></a>
+<span class="sourceLineNo">797</span>                        nextIndex = dec(nextIndex);<a name="line.797"></a>
+<span class="sourceLineNo">798</span>                }<a name="line.798"></a>
+<span class="sourceLineNo">799</span>            } finally {<a name="line.799"></a>
+<span class="sourceLineNo">800</span>                lock.unlock();<a name="line.800"></a>
+<span class="sourceLineNo">801</span>            }<a name="line.801"></a>
+<span class="sourceLineNo">802</span>        }<a name="line.802"></a>
+<span class="sourceLineNo">803</span>    }<a name="line.803"></a>
+<span class="sourceLineNo">804</span><a name="line.804"></a>
+<span class="sourceLineNo">805</span>}<a name="line.805"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

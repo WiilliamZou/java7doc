@@ -1,0 +1,244 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.sql.rowset.serial;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.sql.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * A serialized mapping of a &lt;code&gt;Ref&lt;/code&gt; object, which is the mapping in the<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * Java programming language of an SQL &lt;code&gt;REF&lt;/code&gt; value.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;p&gt;<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * The &lt;code&gt;SerialRef&lt;/code&gt; class provides a constructor  for<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * creating a &lt;code&gt;SerialRef&lt;/code&gt; instance from a &lt;code&gt;Ref&lt;/code&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * object and provides methods for getting and setting the &lt;code&gt;Ref&lt;/code&gt; object.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> */<a name="line.39"></a>
+<span class="sourceLineNo">040</span>public class SerialRef implements Ref, Serializable, Cloneable {<a name="line.40"></a>
+<span class="sourceLineNo">041</span><a name="line.41"></a>
+<span class="sourceLineNo">042</span>    /**<a name="line.42"></a>
+<span class="sourceLineNo">043</span>     * String containing the base type name.<a name="line.43"></a>
+<span class="sourceLineNo">044</span>     * @serial<a name="line.44"></a>
+<span class="sourceLineNo">045</span>     */<a name="line.45"></a>
+<span class="sourceLineNo">046</span>    private String baseTypeName;<a name="line.46"></a>
+<span class="sourceLineNo">047</span><a name="line.47"></a>
+<span class="sourceLineNo">048</span>    /**<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * This will store the type &lt;code&gt;Ref&lt;/code&gt; as an &lt;code&gt;Object&lt;/code&gt;.<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     */<a name="line.50"></a>
+<span class="sourceLineNo">051</span>    private Object object;<a name="line.51"></a>
+<span class="sourceLineNo">052</span><a name="line.52"></a>
+<span class="sourceLineNo">053</span>    /**<a name="line.53"></a>
+<span class="sourceLineNo">054</span>     * Private copy of the Ref reference.<a name="line.54"></a>
+<span class="sourceLineNo">055</span>     */<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    private Ref reference;<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>    /**<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * Constructs a &lt;code&gt;SerialRef&lt;/code&gt; object from the given &lt;code&gt;Ref&lt;/code&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * object.<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     *<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * @param ref a Ref object; cannot be &lt;code&gt;null&lt;/code&gt;<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * @throws SQLException if a database access occurs; if &lt;code&gt;ref&lt;/code&gt;<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     *     is &lt;code&gt;null&lt;/code&gt;; or if the &lt;code&gt;Ref&lt;/code&gt; object returns a<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     *     &lt;code&gt;null&lt;/code&gt; value base type name.<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * @throws SerialException if an error occurs serializing the &lt;code&gt;Ref&lt;/code&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     *     object<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     */<a name="line.68"></a>
+<span class="sourceLineNo">069</span>    public SerialRef(Ref ref) throws SerialException, SQLException {<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        if (ref == null) {<a name="line.70"></a>
+<span class="sourceLineNo">071</span>            throw new SQLException("Cannot instantiate a SerialRef object " +<a name="line.71"></a>
+<span class="sourceLineNo">072</span>                "with a null Ref object");<a name="line.72"></a>
+<span class="sourceLineNo">073</span>        }<a name="line.73"></a>
+<span class="sourceLineNo">074</span>        reference = ref;<a name="line.74"></a>
+<span class="sourceLineNo">075</span>        object = ref;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>        if (ref.getBaseTypeName() == null) {<a name="line.76"></a>
+<span class="sourceLineNo">077</span>            throw new SQLException("Cannot instantiate a SerialRef object " +<a name="line.77"></a>
+<span class="sourceLineNo">078</span>                "that returns a null base type name");<a name="line.78"></a>
+<span class="sourceLineNo">079</span>        } else {<a name="line.79"></a>
+<span class="sourceLineNo">080</span>            baseTypeName = ref.getBaseTypeName();<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        }<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    }<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    /**<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * Returns a string describing the base type name of the &lt;code&gt;Ref&lt;/code&gt;.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     *<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @return a string of the base type name of the Ref<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * @throws SerialException in no Ref object has been set<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     */<a name="line.89"></a>
+<span class="sourceLineNo">090</span>    public String getBaseTypeName() throws SerialException {<a name="line.90"></a>
+<span class="sourceLineNo">091</span>        return baseTypeName;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>    }<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>    /**<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * Returns an &lt;code&gt;Object&lt;/code&gt; representing the SQL structured type<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * to which this &lt;code&gt;SerialRef&lt;/code&gt; object refers.  The attributes<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * of the structured type are mapped according to the given type map.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @param map a &lt;code&gt;java.util.Map&lt;/code&gt; object containing zero or<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     *        more entries, with each entry consisting of 1) a &lt;code&gt;String&lt;/code&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *        giving the fully qualified name of a UDT and 2) the<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     *        &lt;code&gt;Class&lt;/code&gt; object for the &lt;code&gt;SQLData&lt;/code&gt; implementation<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     *        that defines how the UDT is to be mapped<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @return an object instance resolved from the Ref reference and mapped<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     *        according to the supplied type map<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * @throws SerialException if an error is encountered in the reference<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     *        resolution<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     */<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    public Object getObject(java.util.Map&lt;String,Class&lt;?&gt;&gt; map)<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        throws SerialException<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    {<a name="line.111"></a>
+<span class="sourceLineNo">112</span>        map = new Hashtable(map);<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        if (object != null) {<a name="line.113"></a>
+<span class="sourceLineNo">114</span>            return map.get(object);<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        } else {<a name="line.115"></a>
+<span class="sourceLineNo">116</span>            throw new SerialException("The object is not set");<a name="line.116"></a>
+<span class="sourceLineNo">117</span>        }<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    }<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    /**<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * Returns an &lt;code&gt;Object&lt;/code&gt; representing the SQL structured type<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * to which this &lt;code&gt;SerialRef&lt;/code&gt; object refers.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @return an object instance resolved from the Ref reference<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @throws SerialException if an error is encountered in the reference<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     *         resolution<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     */<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    public Object getObject() throws SerialException {<a name="line.128"></a>
+<span class="sourceLineNo">129</span><a name="line.129"></a>
+<span class="sourceLineNo">130</span>        if (reference != null) {<a name="line.130"></a>
+<span class="sourceLineNo">131</span>            try {<a name="line.131"></a>
+<span class="sourceLineNo">132</span>                return reference.getObject();<a name="line.132"></a>
+<span class="sourceLineNo">133</span>            } catch (SQLException e) {<a name="line.133"></a>
+<span class="sourceLineNo">134</span>                throw new SerialException("SQLException: " + e.getMessage());<a name="line.134"></a>
+<span class="sourceLineNo">135</span>            }<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        }<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>        if (object != null) {<a name="line.138"></a>
+<span class="sourceLineNo">139</span>            return object;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        }<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span>        throw new SerialException("The object is not set");<a name="line.143"></a>
+<span class="sourceLineNo">144</span><a name="line.144"></a>
+<span class="sourceLineNo">145</span>    }<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>    /**<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * Sets the SQL structured type that this &lt;code&gt;SerialRef&lt;/code&gt; object<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * references to the given &lt;code&gt;Object&lt;/code&gt; object.<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @param obj an &lt;code&gt;Object&lt;/code&gt; representing the SQL structured type<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *        to be referenced<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @throws SerialException if an error is encountered generating the<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * the structured type referenced by this &lt;code&gt;SerialRef&lt;/code&gt; object<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     */<a name="line.155"></a>
+<span class="sourceLineNo">156</span>    public void setObject(Object obj) throws SerialException {<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        try {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>            reference.setObject(obj);<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        } catch (SQLException e) {<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            throw new SerialException("SQLException: " + e.getMessage());<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        }<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        object = obj;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    }<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>    /**<a name="line.165"></a>
+<span class="sourceLineNo">166</span>         * The identifier that assists in the serialization of this &lt;code&gt;SerialRef&lt;/code&gt;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * object.<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     */<a name="line.168"></a>
+<span class="sourceLineNo">169</span>    static final long serialVersionUID = -4727123500609662274L;<a name="line.169"></a>
+<span class="sourceLineNo">170</span><a name="line.170"></a>
+<span class="sourceLineNo">171</span><a name="line.171"></a>
+<span class="sourceLineNo">172</span>}<a name="line.172"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

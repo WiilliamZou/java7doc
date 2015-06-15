@@ -1,0 +1,300 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.lang.invoke;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>/**<a name="line.28"></a>
+<span class="sourceLineNo">029</span> * &lt;p&gt;<a name="line.29"></a>
+<span class="sourceLineNo">030</span> * A {@code SwitchPoint} is an object which can publish state transitions to other threads.<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * A switch point is initially in the &lt;em&gt;valid&lt;/em&gt; state, but may at any time be<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * changed to the &lt;em&gt;invalid&lt;/em&gt; state.  Invalidation cannot be reversed.<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * A switch point can combine a &lt;em&gt;guarded pair&lt;/em&gt; of method handles into a<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * &lt;em&gt;guarded delegator&lt;/em&gt;.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * The guarded delegator is a method handle which delegates to one of the old method handles.<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * The state of the switch point determines which of the two gets the delegation.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * &lt;p&gt;<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * A single switch point may be used to control any number of method handles.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * (Indirectly, therefore, it can control any number of call sites.)<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * This is done by using the single switch point as a factory for combining<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * any number of guarded method handle pairs into guarded delegators.<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;p&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * When a guarded delegator is created from a guarded pair, the pair<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * is wrapped in a new method handle {@code M},<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * which is permanently associated with the switch point that created it.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * Each pair consists of a target {@code T} and a fallback {@code F}.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * While the switch point is valid, invocations to {@code M} are delegated to {@code T}.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * After it is invalidated, invocations are delegated to {@code F}.<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;p&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * Invalidation is global and immediate, as if the switch point contained a<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * volatile boolean variable consulted on every call to {@code M}.<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * The invalidation is also permanent, which means the switch point<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * can change state only once.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * The switch point will always delegate to {@code F} after being invalidated.<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * At that point {@code guardWithTest} may ignore {@code T} and return {@code F}.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;p&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * Here is an example of a switch point in action:<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span>MethodHandle MH_strcat = MethodHandles.lookup()<a name="line.59"></a>
+<span class="sourceLineNo">060</span>    .findVirtual(String.class, "concat", MethodType.methodType(String.class, String.class));<a name="line.60"></a>
+<span class="sourceLineNo">061</span>SwitchPoint spt = new SwitchPoint();<a name="line.61"></a>
+<span class="sourceLineNo">062</span>assert(!spt.hasBeenInvalidated());<a name="line.62"></a>
+<span class="sourceLineNo">063</span>// the following steps may be repeated to re-use the same switch point:<a name="line.63"></a>
+<span class="sourceLineNo">064</span>MethodHandle worker1 = MH_strcat;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>MethodHandle worker2 = MethodHandles.permuteArguments(MH_strcat, MH_strcat.type(), 1, 0);<a name="line.65"></a>
+<span class="sourceLineNo">066</span>MethodHandle worker = spt.guardWithTest(worker1, worker2);<a name="line.66"></a>
+<span class="sourceLineNo">067</span>assertEquals("method", (String) worker.invokeExact("met", "hod"));<a name="line.67"></a>
+<span class="sourceLineNo">068</span>SwitchPoint.invalidateAll(new SwitchPoint[]{ spt });<a name="line.68"></a>
+<span class="sourceLineNo">069</span>assert(spt.hasBeenInvalidated());<a name="line.69"></a>
+<span class="sourceLineNo">070</span>assertEquals("hodmet", (String) worker.invokeExact("met", "hod"));<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;p style="font-size:smaller;"&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * &lt;em&gt;Discussion:&lt;/em&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * Switch points are useful without subclassing.  They may also be subclassed.<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * This may be useful in order to associate application-specific invalidation logic<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * with the switch point.<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * Notice that there is no permanent association between a switch point and<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * the method handles it produces and consumes.<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * The garbage collector may collect method handles produced or consumed<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * by a switch point independently of the lifetime of the switch point itself.<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * &lt;p style="font-size:smaller;"&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;em&gt;Implementation Note:&lt;/em&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * A switch point behaves as if implemented on top of {@link MutableCallSite},<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * approximately as follows:<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span>public class SwitchPoint {<a name="line.86"></a>
+<span class="sourceLineNo">087</span>  private static final MethodHandle<a name="line.87"></a>
+<span class="sourceLineNo">088</span>    K_true  = MethodHandles.constant(boolean.class, true),<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    K_false = MethodHandles.constant(boolean.class, false);<a name="line.89"></a>
+<span class="sourceLineNo">090</span>  private final MutableCallSite mcs;<a name="line.90"></a>
+<span class="sourceLineNo">091</span>  private final MethodHandle mcsInvoker;<a name="line.91"></a>
+<span class="sourceLineNo">092</span>  public SwitchPoint() {<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    this.mcs = new MutableCallSite(K_true);<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    this.mcsInvoker = mcs.dynamicInvoker();<a name="line.94"></a>
+<span class="sourceLineNo">095</span>  }<a name="line.95"></a>
+<span class="sourceLineNo">096</span>  public MethodHandle guardWithTest(<a name="line.96"></a>
+<span class="sourceLineNo">097</span>                MethodHandle target, MethodHandle fallback) {<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    // Note:  mcsInvoker is of type ()boolean.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>    // Target and fallback may take any arguments, but must have the same type.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    return MethodHandles.guardWithTest(this.mcsInvoker, target, fallback);<a name="line.100"></a>
+<span class="sourceLineNo">101</span>  }<a name="line.101"></a>
+<span class="sourceLineNo">102</span>  public static void invalidateAll(SwitchPoint[] spts) {<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    List&amp;lt;MutableCallSite&amp;gt; mcss = new ArrayList&amp;lt;&amp;gt;();<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    for (SwitchPoint spt : spts)  mcss.add(spt.mcs);<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    for (MutableCallSite mcs : mcss)  mcs.setTarget(K_false);<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    MutableCallSite.syncAll(mcss.toArray(new MutableCallSite[0]));<a name="line.106"></a>
+<span class="sourceLineNo">107</span>  }<a name="line.107"></a>
+<span class="sourceLineNo">108</span>}<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * @author Remi Forax, JSR 292 EG<a name="line.110"></a>
+<span class="sourceLineNo">111</span> */<a name="line.111"></a>
+<span class="sourceLineNo">112</span>public class SwitchPoint {<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    private static final MethodHandle<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        K_true  = MethodHandles.constant(boolean.class, true),<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        K_false = MethodHandles.constant(boolean.class, false);<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>    private final MutableCallSite mcs;<a name="line.117"></a>
+<span class="sourceLineNo">118</span>    private final MethodHandle mcsInvoker;<a name="line.118"></a>
+<span class="sourceLineNo">119</span><a name="line.119"></a>
+<span class="sourceLineNo">120</span>    /**<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * Creates a new switch point.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     */<a name="line.122"></a>
+<span class="sourceLineNo">123</span>    public SwitchPoint() {<a name="line.123"></a>
+<span class="sourceLineNo">124</span>        this.mcs = new MutableCallSite(K_true);<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        this.mcsInvoker = mcs.dynamicInvoker();<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    }<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span>    /**<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * Determines if this switch point has been invalidated yet.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     *<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * &lt;p style="font-size:smaller;"&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * &lt;em&gt;Discussion:&lt;/em&gt;<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * Because of the one-way nature of invalidation, once a switch point begins<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * to return true for {@code hasBeenInvalidated},<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * it will always do so in the future.<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * On the other hand, a valid switch point visible to other threads may<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * be invalidated at any moment, due to a request by another thread.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * &lt;p style="font-size:smaller;"&gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * Since invalidation is a global and immediate operation,<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * the execution of this query, on a valid switchpoint,<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * must be internally sequenced with any<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * other threads that could cause invalidation.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * This query may therefore be expensive.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * The recommended way to build a boolean-valued method handle<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * which queries the invalidation state of a switch point {@code s} is<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * to call {@code s.guardWithTest} on<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * {@link MethodHandles#constant constant} true and false method handles.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     *<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * @return true if this switch point has been invalidated<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     */<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    public boolean hasBeenInvalidated() {<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        return (mcs.getTarget() != K_true);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    }<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>    /**<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * Returns a method handle which always delegates either to the target or the fallback.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * The method handle will delegate to the target exactly as long as the switch point is valid.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * After that, it will permanently delegate to the fallback.<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * &lt;p&gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * The target and fallback must be of exactly the same method type,<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * and the resulting combined method handle will also be of this type.<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @param target the method handle selected by the switch point as long as it is valid<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @param fallback the method handle selected by the switch point after it is invalidated<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * @return a combined method handle which always calls either the target or fallback<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @throws NullPointerException if either argument is null<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * @throws IllegalArgumentException if the two method types do not match<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * @see MethodHandles#guardWithTest<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     */<a name="line.169"></a>
+<span class="sourceLineNo">170</span>    public MethodHandle guardWithTest(MethodHandle target, MethodHandle fallback) {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        if (mcs.getTarget() == K_false)<a name="line.171"></a>
+<span class="sourceLineNo">172</span>            return fallback;  // already invalid<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        return MethodHandles.guardWithTest(mcsInvoker, target, fallback);<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    }<a name="line.174"></a>
+<span class="sourceLineNo">175</span><a name="line.175"></a>
+<span class="sourceLineNo">176</span>    /**<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * Sets all of the given switch points into the invalid state.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * After this call executes, no thread will observe any of the<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * switch points to be in a valid state.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * &lt;p&gt;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * This operation is likely to be expensive and should be used sparingly.<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * If possible, it should be buffered for batch processing on sets of switch points.<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * &lt;p&gt;<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * If {@code switchPoints} contains a null element,<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * a {@code NullPointerException} will be raised.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * In this case, some non-null elements in the array may be<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * processed before the method returns abnormally.<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * Which elements these are (if any) is implementation-dependent.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * &lt;p style="font-size:smaller;"&gt;<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * &lt;em&gt;Discussion:&lt;/em&gt;<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * For performance reasons, {@code invalidateAll} is not a virtual method<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * on a single switch point, but rather applies to a set of switch points.<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * Some implementations may incur a large fixed overhead cost<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * for processing one or more invalidation operations,<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * but a small incremental cost for each additional invalidation.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * In any case, this operation is likely to be costly, since<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * other threads may have to be somehow interrupted<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * in order to make them notice the updated switch point state.<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * However, it may be observed that a single call to invalidate<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * several switch points has the same formal effect as many calls,<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * each on just one of the switch points.<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     *<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * &lt;p style="font-size:smaller;"&gt;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * &lt;em&gt;Implementation Note:&lt;/em&gt;<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * Simple implementations of {@code SwitchPoint} may use<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * a private {@link MutableCallSite} to publish the state of a switch point.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * In such an implementation, the {@code invalidateAll} method can<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * simply change the call site's target, and issue one call to<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * {@linkplain MutableCallSite#syncAll synchronize} all the<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * private call sites.<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     *<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * @param switchPoints an array of call sites to be synchronized<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * @throws NullPointerException if the {@code switchPoints} array reference is null<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     *                              or the array contains a null<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     */<a name="line.216"></a>
+<span class="sourceLineNo">217</span>    public static void invalidateAll(SwitchPoint[] switchPoints) {<a name="line.217"></a>
+<span class="sourceLineNo">218</span>        if (switchPoints.length == 0)  return;<a name="line.218"></a>
+<span class="sourceLineNo">219</span>        MutableCallSite[] sites = new MutableCallSite[switchPoints.length];<a name="line.219"></a>
+<span class="sourceLineNo">220</span>        for (int i = 0; i &lt; switchPoints.length; i++) {<a name="line.220"></a>
+<span class="sourceLineNo">221</span>            SwitchPoint spt = switchPoints[i];<a name="line.221"></a>
+<span class="sourceLineNo">222</span>            if (spt == null)  break;  // MSC.syncAll will trigger a NPE<a name="line.222"></a>
+<span class="sourceLineNo">223</span>            sites[i] = spt.mcs;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>            spt.mcs.setTarget(K_false);<a name="line.224"></a>
+<span class="sourceLineNo">225</span>        }<a name="line.225"></a>
+<span class="sourceLineNo">226</span>        MutableCallSite.syncAll(sites);<a name="line.226"></a>
+<span class="sourceLineNo">227</span>    }<a name="line.227"></a>
+<span class="sourceLineNo">228</span>}<a name="line.228"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

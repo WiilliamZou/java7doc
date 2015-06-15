@@ -1,0 +1,1636 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1996, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.beans;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import com.sun.beans.TypeResolver;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import com.sun.beans.WeakCache;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import com.sun.beans.finder.ClassFinder;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.Component;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.lang.ref.Reference;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.lang.ref.SoftReference;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.lang.reflect.Method;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.lang.reflect.Modifier;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.lang.reflect.Type;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>import java.util.Map;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import java.util.ArrayList;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import java.util.HashMap;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import java.util.Iterator;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import java.util.EventListener;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import java.util.EventObject;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import java.util.List;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import java.util.TreeMap;<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>import sun.reflect.misc.ReflectUtil;<a name="line.49"></a>
+<span class="sourceLineNo">050</span><a name="line.50"></a>
+<span class="sourceLineNo">051</span>/**<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * The Introspector class provides a standard way for tools to learn about<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * the properties, events, and methods supported by a target Java Bean.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt;<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * For each of those three kinds of information, the Introspector will<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * separately analyze the bean's class and superclasses looking for<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * either explicit or implicit information and use that information to<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * build a BeanInfo object that comprehensively describes the target bean.<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * &lt;p&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * For each class "Foo", explicit information may be available if there exists<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * a corresponding "FooBeanInfo" class that provides a non-null value when<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * queried for the information.   We first look for the BeanInfo class by<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * taking the full package-qualified name of the target bean class and<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * appending "BeanInfo" to form a new class name.  If this fails, then<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * we take the final classname component of this name, and look for that<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * class in each of the packages specified in the BeanInfo package search<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * path.<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;p&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * Thus for a class such as "sun.xyz.OurButton" we would first look for a<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * BeanInfo class called "sun.xyz.OurButtonBeanInfo" and if that failed we'd<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * look in each package in the BeanInfo search path for an OurButtonBeanInfo<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * class.  With the default search path, this would mean looking for<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * "sun.beans.infos.OurButtonBeanInfo".<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;p&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * If a class provides explicit BeanInfo about itself then we add that to<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * the BeanInfo information we obtained from analyzing any derived classes,<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * but we regard the explicit information as being definitive for the current<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * class and its base classes, and do not proceed any further up the superclass<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * chain.<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * &lt;p&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * If we don't find explicit BeanInfo on a class, we use low-level<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * reflection to study the methods of the class and apply standard design<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * patterns to identify property accessors, event sources, or public<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * methods.  We then proceed to analyze the class's superclass and add<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * in the information from it (and possibly on up the superclass chain).<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;p&gt;<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * For more information about introspection and design patterns, please<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * consult the<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *  &lt;a href="http://java.sun.com/products/javabeans/docs/index.html"&gt;JavaBeans&amp;trade; specification&lt;/a&gt;.<a name="line.89"></a>
+<span class="sourceLineNo">090</span> */<a name="line.90"></a>
+<span class="sourceLineNo">091</span><a name="line.91"></a>
+<span class="sourceLineNo">092</span>public class Introspector {<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>    // Flags that can be used to control getBeanInfo:<a name="line.94"></a>
+<span class="sourceLineNo">095</span>    public final static int USE_ALL_BEANINFO           = 1;<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    public final static int IGNORE_IMMEDIATE_BEANINFO  = 2;<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    public final static int IGNORE_ALL_BEANINFO        = 3;<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    // Static Caches to speed up introspection.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>    private static final WeakCache&lt;Class&lt;?&gt;, Method[]&gt; declaredMethodCache = new WeakCache&lt;&gt;();<a name="line.100"></a>
+<span class="sourceLineNo">101</span><a name="line.101"></a>
+<span class="sourceLineNo">102</span>    private Class beanClass;<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    private BeanInfo explicitBeanInfo;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    private BeanInfo superBeanInfo;<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    private BeanInfo additionalBeanInfo[];<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>    private boolean propertyChangeSource = false;<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    private static Class eventListenerType = EventListener.class;<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span>    // These should be removed.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    private String defaultEventName;<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    private String defaultPropertyName;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    private int defaultEventIndex = -1;<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    private int defaultPropertyIndex = -1;<a name="line.114"></a>
+<span class="sourceLineNo">115</span><a name="line.115"></a>
+<span class="sourceLineNo">116</span>    // Methods maps from Method objects to MethodDescriptors<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    private Map methods;<a name="line.117"></a>
+<span class="sourceLineNo">118</span><a name="line.118"></a>
+<span class="sourceLineNo">119</span>    // properties maps from String names to PropertyDescriptors<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    private Map properties;<a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>    // events maps from String names to EventSetDescriptors<a name="line.122"></a>
+<span class="sourceLineNo">123</span>    private Map events;<a name="line.123"></a>
+<span class="sourceLineNo">124</span><a name="line.124"></a>
+<span class="sourceLineNo">125</span>    private final static EventSetDescriptor[] EMPTY_EVENTSETDESCRIPTORS = new EventSetDescriptor[0];<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>    static final String ADD_PREFIX = "add";<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    static final String REMOVE_PREFIX = "remove";<a name="line.128"></a>
+<span class="sourceLineNo">129</span>    static final String GET_PREFIX = "get";<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    static final String SET_PREFIX = "set";<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    static final String IS_PREFIX = "is";<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>    //======================================================================<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    //                          Public methods<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    //======================================================================<a name="line.135"></a>
+<span class="sourceLineNo">136</span><a name="line.136"></a>
+<span class="sourceLineNo">137</span>    /**<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * Introspect on a Java Bean and learn about all its properties, exposed<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * methods, and events.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * &lt;p&gt;<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * If the BeanInfo class for a Java Bean has been previously Introspected<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * then the BeanInfo class is retrieved from the BeanInfo cache.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     *<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * @param beanClass  The bean class to be analyzed.<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * @return  A BeanInfo object describing the target bean.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @exception IntrospectionException if an exception occurs during<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *              introspection.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * @see #flushCaches<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * @see #flushFromCaches<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     */<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    public static BeanInfo getBeanInfo(Class&lt;?&gt; beanClass)<a name="line.151"></a>
+<span class="sourceLineNo">152</span>        throws IntrospectionException<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        if (!ReflectUtil.isPackageAccessible(beanClass)) {<a name="line.154"></a>
+<span class="sourceLineNo">155</span>            return (new Introspector(beanClass, null, USE_ALL_BEANINFO)).getBeanInfo();<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        }<a name="line.156"></a>
+<span class="sourceLineNo">157</span>        ThreadGroupContext context = ThreadGroupContext.getContext();<a name="line.157"></a>
+<span class="sourceLineNo">158</span>        BeanInfo beanInfo;<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        synchronized (declaredMethodCache) {<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            beanInfo = context.getBeanInfo(beanClass);<a name="line.160"></a>
+<span class="sourceLineNo">161</span>        }<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        if (beanInfo == null) {<a name="line.162"></a>
+<span class="sourceLineNo">163</span>            beanInfo = new Introspector(beanClass, null, USE_ALL_BEANINFO).getBeanInfo();<a name="line.163"></a>
+<span class="sourceLineNo">164</span>            synchronized (declaredMethodCache) {<a name="line.164"></a>
+<span class="sourceLineNo">165</span>                context.putBeanInfo(beanClass, beanInfo);<a name="line.165"></a>
+<span class="sourceLineNo">166</span>            }<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        }<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        return beanInfo;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>    }<a name="line.169"></a>
+<span class="sourceLineNo">170</span><a name="line.170"></a>
+<span class="sourceLineNo">171</span>    /**<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * Introspect on a Java bean and learn about all its properties, exposed<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * methods, and events, subject to some control flags.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * &lt;p&gt;<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * If the BeanInfo class for a Java Bean has been previously Introspected<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * based on the same arguments then the BeanInfo class is retrieved<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * from the BeanInfo cache.<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @param beanClass  The bean class to be analyzed.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @param flags  Flags to control the introspection.<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     *     If flags == USE_ALL_BEANINFO then we use all of the BeanInfo<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     *          classes we can discover.<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     *     If flags == IGNORE_IMMEDIATE_BEANINFO then we ignore any<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     *           BeanInfo associated with the specified beanClass.<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     *     If flags == IGNORE_ALL_BEANINFO then we ignore all BeanInfo<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *           associated with the specified beanClass or any of its<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     *           parent classes.<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * @return  A BeanInfo object describing the target bean.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * @exception IntrospectionException if an exception occurs during<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     *              introspection.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     */<a name="line.191"></a>
+<span class="sourceLineNo">192</span>    public static BeanInfo getBeanInfo(Class&lt;?&gt; beanClass, int flags)<a name="line.192"></a>
+<span class="sourceLineNo">193</span>                                                throws IntrospectionException {<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        return getBeanInfo(beanClass, null, flags);<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    }<a name="line.195"></a>
+<span class="sourceLineNo">196</span><a name="line.196"></a>
+<span class="sourceLineNo">197</span>    /**<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     * Introspect on a Java bean and learn all about its properties, exposed<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * methods, below a given "stop" point.<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * &lt;p&gt;<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * If the BeanInfo class for a Java Bean has been previously Introspected<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * based on the same arguments, then the BeanInfo class is retrieved<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * from the BeanInfo cache.<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     *<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * @param beanClass The bean class to be analyzed.<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * @param stopClass The baseclass at which to stop the analysis.  Any<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     *    methods/properties/events in the stopClass or in its baseclasses<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     *    will be ignored in the analysis.<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * @exception IntrospectionException if an exception occurs during<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *              introspection.<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     */<a name="line.211"></a>
+<span class="sourceLineNo">212</span>    public static BeanInfo getBeanInfo(Class&lt;?&gt; beanClass, Class&lt;?&gt; stopClass)<a name="line.212"></a>
+<span class="sourceLineNo">213</span>                                                throws IntrospectionException {<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        return getBeanInfo(beanClass, stopClass, USE_ALL_BEANINFO);<a name="line.214"></a>
+<span class="sourceLineNo">215</span>    }<a name="line.215"></a>
+<span class="sourceLineNo">216</span><a name="line.216"></a>
+<span class="sourceLineNo">217</span>    /**<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * Introspect on a Java Bean and learn about all its properties,<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * exposed methods and events, below a given {@code stopClass} point<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * subject to some control {@code flags}.<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * &lt;dl&gt;<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     *  &lt;dt&gt;USE_ALL_BEANINFO&lt;/dt&gt;<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     *  &lt;dd&gt;Any BeanInfo that can be discovered will be used.&lt;/dd&gt;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     *  &lt;dt&gt;IGNORE_IMMEDIATE_BEANINFO&lt;/dt&gt;<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     *  &lt;dd&gt;Any BeanInfo associated with the specified {@code beanClass} will be ignored.&lt;/dd&gt;<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     *  &lt;dt&gt;IGNORE_ALL_BEANINFO&lt;/dt&gt;<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     *  &lt;dd&gt;Any BeanInfo associated with the specified {@code beanClass}<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     *      or any of its parent classes will be ignored.&lt;/dd&gt;<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * &lt;/dl&gt;<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * Any methods/properties/events in the {@code stopClass}<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * or in its parent classes will be ignored in the analysis.<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * &lt;p&gt;<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * If the BeanInfo class for a Java Bean has been<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * previously introspected based on the same arguments then<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * the BeanInfo class is retrieved from the BeanInfo cache.<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     *<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * @param beanClass  the bean class to be analyzed<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * @param stopClass  the parent class at which to stop the analysis<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * @param flags      flags to control the introspection<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * @return a BeanInfo object describing the target bean<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * @exception IntrospectionException if an exception occurs during introspection<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     *<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * @since 1.7<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     */<a name="line.244"></a>
+<span class="sourceLineNo">245</span>    public static BeanInfo getBeanInfo(Class&lt;?&gt; beanClass, Class&lt;?&gt; stopClass,<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                                        int flags) throws IntrospectionException {<a name="line.246"></a>
+<span class="sourceLineNo">247</span>        BeanInfo bi;<a name="line.247"></a>
+<span class="sourceLineNo">248</span>        if (stopClass == null &amp;&amp; flags == USE_ALL_BEANINFO) {<a name="line.248"></a>
+<span class="sourceLineNo">249</span>            // Same parameters to take advantage of caching.<a name="line.249"></a>
+<span class="sourceLineNo">250</span>            bi = getBeanInfo(beanClass);<a name="line.250"></a>
+<span class="sourceLineNo">251</span>        } else {<a name="line.251"></a>
+<span class="sourceLineNo">252</span>            bi = (new Introspector(beanClass, stopClass, flags)).getBeanInfo();<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        }<a name="line.253"></a>
+<span class="sourceLineNo">254</span>        return bi;<a name="line.254"></a>
+<span class="sourceLineNo">255</span><a name="line.255"></a>
+<span class="sourceLineNo">256</span>        // Old behaviour: Make an independent copy of the BeanInfo.<a name="line.256"></a>
+<span class="sourceLineNo">257</span>        //return new GenericBeanInfo(bi);<a name="line.257"></a>
+<span class="sourceLineNo">258</span>    }<a name="line.258"></a>
+<span class="sourceLineNo">259</span><a name="line.259"></a>
+<span class="sourceLineNo">260</span><a name="line.260"></a>
+<span class="sourceLineNo">261</span>    /**<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * Utility method to take a string and convert it to normal Java variable<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * name capitalization.  This normally means converting the first<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * character from upper case to lower case, but in the (unusual) special<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * case when there is more than one character and both the first and<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * second characters are upper case, we leave it alone.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * &lt;p&gt;<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * Thus "FooBah" becomes "fooBah" and "X" becomes "x", but "URL" stays<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * as "URL".<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     *<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * @param  name The string to be decapitalized.<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @return  The decapitalized version of the string.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     */<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    public static String decapitalize(String name) {<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        if (name == null || name.length() == 0) {<a name="line.275"></a>
+<span class="sourceLineNo">276</span>            return name;<a name="line.276"></a>
+<span class="sourceLineNo">277</span>        }<a name="line.277"></a>
+<span class="sourceLineNo">278</span>        if (name.length() &gt; 1 &amp;&amp; Character.isUpperCase(name.charAt(1)) &amp;&amp;<a name="line.278"></a>
+<span class="sourceLineNo">279</span>                        Character.isUpperCase(name.charAt(0))){<a name="line.279"></a>
+<span class="sourceLineNo">280</span>            return name;<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        }<a name="line.281"></a>
+<span class="sourceLineNo">282</span>        char chars[] = name.toCharArray();<a name="line.282"></a>
+<span class="sourceLineNo">283</span>        chars[0] = Character.toLowerCase(chars[0]);<a name="line.283"></a>
+<span class="sourceLineNo">284</span>        return new String(chars);<a name="line.284"></a>
+<span class="sourceLineNo">285</span>    }<a name="line.285"></a>
+<span class="sourceLineNo">286</span><a name="line.286"></a>
+<span class="sourceLineNo">287</span>    /**<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * Gets the list of package names that will be used for<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     *          finding BeanInfo classes.<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     *<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * @return  The array of package names that will be searched in<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     *          order to find BeanInfo classes. The default value<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     *          for this array is implementation-dependent; e.g.<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     *          Sun implementation initially sets to {"sun.beans.infos"}.<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     */<a name="line.295"></a>
+<span class="sourceLineNo">296</span><a name="line.296"></a>
+<span class="sourceLineNo">297</span>    public static String[] getBeanInfoSearchPath() {<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        return ThreadGroupContext.getContext().getBeanInfoFinder().getPackages();<a name="line.298"></a>
+<span class="sourceLineNo">299</span>    }<a name="line.299"></a>
+<span class="sourceLineNo">300</span><a name="line.300"></a>
+<span class="sourceLineNo">301</span>    /**<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * Change the list of package names that will be used for<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     *          finding BeanInfo classes.  The behaviour of<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     *          this method is undefined if parameter path<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     *          is null.<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     *<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * &lt;p&gt;First, if there is a security manager, its &lt;code&gt;checkPropertiesAccess&lt;/code&gt;<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * method is called. This could result in a SecurityException.<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     *<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * @param path  Array of package names.<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @exception  SecurityException  if a security manager exists and its<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     *             &lt;code&gt;checkPropertiesAccess&lt;/code&gt; method doesn't allow setting<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     *              of system properties.<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * @see SecurityManager#checkPropertiesAccess<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     */<a name="line.315"></a>
+<span class="sourceLineNo">316</span><a name="line.316"></a>
+<span class="sourceLineNo">317</span>    public static void setBeanInfoSearchPath(String[] path) {<a name="line.317"></a>
+<span class="sourceLineNo">318</span>        SecurityManager sm = System.getSecurityManager();<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        if (sm != null) {<a name="line.319"></a>
+<span class="sourceLineNo">320</span>            sm.checkPropertiesAccess();<a name="line.320"></a>
+<span class="sourceLineNo">321</span>        }<a name="line.321"></a>
+<span class="sourceLineNo">322</span>        ThreadGroupContext.getContext().getBeanInfoFinder().setPackages(path);<a name="line.322"></a>
+<span class="sourceLineNo">323</span>    }<a name="line.323"></a>
+<span class="sourceLineNo">324</span><a name="line.324"></a>
+<span class="sourceLineNo">325</span><a name="line.325"></a>
+<span class="sourceLineNo">326</span>    /**<a name="line.326"></a>
+<span class="sourceLineNo">327</span>     * Flush all of the Introspector's internal caches.  This method is<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * not normally required.  It is normally only needed by advanced<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * tools that update existing "Class" objects in-place and need<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * to make the Introspector re-analyze existing Class objects.<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     */<a name="line.331"></a>
+<span class="sourceLineNo">332</span><a name="line.332"></a>
+<span class="sourceLineNo">333</span>    public static void flushCaches() {<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        synchronized (declaredMethodCache) {<a name="line.334"></a>
+<span class="sourceLineNo">335</span>            ThreadGroupContext.getContext().clearBeanInfoCache();<a name="line.335"></a>
+<span class="sourceLineNo">336</span>            declaredMethodCache.clear();<a name="line.336"></a>
+<span class="sourceLineNo">337</span>        }<a name="line.337"></a>
+<span class="sourceLineNo">338</span>    }<a name="line.338"></a>
+<span class="sourceLineNo">339</span><a name="line.339"></a>
+<span class="sourceLineNo">340</span>    /**<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * Flush the Introspector's internal cached information for a given class.<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * This method is not normally required.  It is normally only needed<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     * by advanced tools that update existing "Class" objects in-place<a name="line.343"></a>
+<span class="sourceLineNo">344</span>     * and need to make the Introspector re-analyze an existing Class object.<a name="line.344"></a>
+<span class="sourceLineNo">345</span>     *<a name="line.345"></a>
+<span class="sourceLineNo">346</span>     * Note that only the direct state associated with the target Class<a name="line.346"></a>
+<span class="sourceLineNo">347</span>     * object is flushed.  We do not flush state for other Class objects<a name="line.347"></a>
+<span class="sourceLineNo">348</span>     * with the same name, nor do we flush state for any related Class<a name="line.348"></a>
+<span class="sourceLineNo">349</span>     * objects (such as subclasses), even though their state may include<a name="line.349"></a>
+<span class="sourceLineNo">350</span>     * information indirectly obtained from the target Class object.<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     *<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     * @param clz  Class object to be flushed.<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * @throws NullPointerException If the Class object is null.<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     */<a name="line.354"></a>
+<span class="sourceLineNo">355</span>    public static void flushFromCaches(Class&lt;?&gt; clz) {<a name="line.355"></a>
+<span class="sourceLineNo">356</span>        if (clz == null) {<a name="line.356"></a>
+<span class="sourceLineNo">357</span>            throw new NullPointerException();<a name="line.357"></a>
+<span class="sourceLineNo">358</span>        }<a name="line.358"></a>
+<span class="sourceLineNo">359</span>        synchronized (declaredMethodCache) {<a name="line.359"></a>
+<span class="sourceLineNo">360</span>            ThreadGroupContext.getContext().removeBeanInfo(clz);<a name="line.360"></a>
+<span class="sourceLineNo">361</span>            declaredMethodCache.put(clz, null);<a name="line.361"></a>
+<span class="sourceLineNo">362</span>        }<a name="line.362"></a>
+<span class="sourceLineNo">363</span>    }<a name="line.363"></a>
+<span class="sourceLineNo">364</span><a name="line.364"></a>
+<span class="sourceLineNo">365</span>    //======================================================================<a name="line.365"></a>
+<span class="sourceLineNo">366</span>    //                  Private implementation methods<a name="line.366"></a>
+<span class="sourceLineNo">367</span>    //======================================================================<a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>    private Introspector(Class beanClass, Class stopClass, int flags)<a name="line.369"></a>
+<span class="sourceLineNo">370</span>                                            throws IntrospectionException {<a name="line.370"></a>
+<span class="sourceLineNo">371</span>        this.beanClass = beanClass;<a name="line.371"></a>
+<span class="sourceLineNo">372</span><a name="line.372"></a>
+<span class="sourceLineNo">373</span>        // Check stopClass is a superClass of startClass.<a name="line.373"></a>
+<span class="sourceLineNo">374</span>        if (stopClass != null) {<a name="line.374"></a>
+<span class="sourceLineNo">375</span>            boolean isSuper = false;<a name="line.375"></a>
+<span class="sourceLineNo">376</span>            for (Class c = beanClass.getSuperclass(); c != null; c = c.getSuperclass()) {<a name="line.376"></a>
+<span class="sourceLineNo">377</span>                if (c == stopClass) {<a name="line.377"></a>
+<span class="sourceLineNo">378</span>                    isSuper = true;<a name="line.378"></a>
+<span class="sourceLineNo">379</span>                }<a name="line.379"></a>
+<span class="sourceLineNo">380</span>            }<a name="line.380"></a>
+<span class="sourceLineNo">381</span>            if (!isSuper) {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>                throw new IntrospectionException(stopClass.getName() + " not superclass of " +<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                                        beanClass.getName());<a name="line.383"></a>
+<span class="sourceLineNo">384</span>            }<a name="line.384"></a>
+<span class="sourceLineNo">385</span>        }<a name="line.385"></a>
+<span class="sourceLineNo">386</span><a name="line.386"></a>
+<span class="sourceLineNo">387</span>        if (flags == USE_ALL_BEANINFO) {<a name="line.387"></a>
+<span class="sourceLineNo">388</span>            explicitBeanInfo = findExplicitBeanInfo(beanClass);<a name="line.388"></a>
+<span class="sourceLineNo">389</span>        }<a name="line.389"></a>
+<span class="sourceLineNo">390</span><a name="line.390"></a>
+<span class="sourceLineNo">391</span>        Class superClass = beanClass.getSuperclass();<a name="line.391"></a>
+<span class="sourceLineNo">392</span>        if (superClass != stopClass) {<a name="line.392"></a>
+<span class="sourceLineNo">393</span>            int newFlags = flags;<a name="line.393"></a>
+<span class="sourceLineNo">394</span>            if (newFlags == IGNORE_IMMEDIATE_BEANINFO) {<a name="line.394"></a>
+<span class="sourceLineNo">395</span>                newFlags = USE_ALL_BEANINFO;<a name="line.395"></a>
+<span class="sourceLineNo">396</span>            }<a name="line.396"></a>
+<span class="sourceLineNo">397</span>            superBeanInfo = getBeanInfo(superClass, stopClass, newFlags);<a name="line.397"></a>
+<span class="sourceLineNo">398</span>        }<a name="line.398"></a>
+<span class="sourceLineNo">399</span>        if (explicitBeanInfo != null) {<a name="line.399"></a>
+<span class="sourceLineNo">400</span>            additionalBeanInfo = explicitBeanInfo.getAdditionalBeanInfo();<a name="line.400"></a>
+<span class="sourceLineNo">401</span>        }<a name="line.401"></a>
+<span class="sourceLineNo">402</span>        if (additionalBeanInfo == null) {<a name="line.402"></a>
+<span class="sourceLineNo">403</span>            additionalBeanInfo = new BeanInfo[0];<a name="line.403"></a>
+<span class="sourceLineNo">404</span>        }<a name="line.404"></a>
+<span class="sourceLineNo">405</span>    }<a name="line.405"></a>
+<span class="sourceLineNo">406</span><a name="line.406"></a>
+<span class="sourceLineNo">407</span>    /**<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * Constructs a GenericBeanInfo class from the state of the Introspector<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     */<a name="line.409"></a>
+<span class="sourceLineNo">410</span>    private BeanInfo getBeanInfo() throws IntrospectionException {<a name="line.410"></a>
+<span class="sourceLineNo">411</span><a name="line.411"></a>
+<span class="sourceLineNo">412</span>        // the evaluation order here is import, as we evaluate the<a name="line.412"></a>
+<span class="sourceLineNo">413</span>        // event sets and locate PropertyChangeListeners before we<a name="line.413"></a>
+<span class="sourceLineNo">414</span>        // look for properties.<a name="line.414"></a>
+<span class="sourceLineNo">415</span>        BeanDescriptor bd = getTargetBeanDescriptor();<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        MethodDescriptor mds[] = getTargetMethodInfo();<a name="line.416"></a>
+<span class="sourceLineNo">417</span>        EventSetDescriptor esds[] = getTargetEventInfo();<a name="line.417"></a>
+<span class="sourceLineNo">418</span>        PropertyDescriptor pds[] = getTargetPropertyInfo();<a name="line.418"></a>
+<span class="sourceLineNo">419</span><a name="line.419"></a>
+<span class="sourceLineNo">420</span>        int defaultEvent = getTargetDefaultEventIndex();<a name="line.420"></a>
+<span class="sourceLineNo">421</span>        int defaultProperty = getTargetDefaultPropertyIndex();<a name="line.421"></a>
+<span class="sourceLineNo">422</span><a name="line.422"></a>
+<span class="sourceLineNo">423</span>        return new GenericBeanInfo(bd, esds, defaultEvent, pds,<a name="line.423"></a>
+<span class="sourceLineNo">424</span>                        defaultProperty, mds, explicitBeanInfo);<a name="line.424"></a>
+<span class="sourceLineNo">425</span><a name="line.425"></a>
+<span class="sourceLineNo">426</span>    }<a name="line.426"></a>
+<span class="sourceLineNo">427</span><a name="line.427"></a>
+<span class="sourceLineNo">428</span>    /**<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * Looks for an explicit BeanInfo class that corresponds to the Class.<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     * First it looks in the existing package that the Class is defined in,<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * then it checks to see if the class is its own BeanInfo. Finally,<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     * the BeanInfo search path is prepended to the class and searched.<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     *<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     * @param beanClass  the class type of the bean<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     * @return Instance of an explicit BeanInfo class or null if one isn't found.<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     */<a name="line.436"></a>
+<span class="sourceLineNo">437</span>    private static BeanInfo findExplicitBeanInfo(Class beanClass) {<a name="line.437"></a>
+<span class="sourceLineNo">438</span>        return ThreadGroupContext.getContext().getBeanInfoFinder().find(beanClass);<a name="line.438"></a>
+<span class="sourceLineNo">439</span>    }<a name="line.439"></a>
+<span class="sourceLineNo">440</span><a name="line.440"></a>
+<span class="sourceLineNo">441</span>    /**<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     * @return An array of PropertyDescriptors describing the editable<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * properties supported by the target bean.<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     */<a name="line.444"></a>
+<span class="sourceLineNo">445</span><a name="line.445"></a>
+<span class="sourceLineNo">446</span>    private PropertyDescriptor[] getTargetPropertyInfo() {<a name="line.446"></a>
+<span class="sourceLineNo">447</span><a name="line.447"></a>
+<span class="sourceLineNo">448</span>        // Check if the bean has its own BeanInfo that will provide<a name="line.448"></a>
+<span class="sourceLineNo">449</span>        // explicit information.<a name="line.449"></a>
+<span class="sourceLineNo">450</span>        PropertyDescriptor[] explicitProperties = null;<a name="line.450"></a>
+<span class="sourceLineNo">451</span>        if (explicitBeanInfo != null) {<a name="line.451"></a>
+<span class="sourceLineNo">452</span>            explicitProperties = getPropertyDescriptors(this.explicitBeanInfo);<a name="line.452"></a>
+<span class="sourceLineNo">453</span>        }<a name="line.453"></a>
+<span class="sourceLineNo">454</span><a name="line.454"></a>
+<span class="sourceLineNo">455</span>        if (explicitProperties == null &amp;&amp; superBeanInfo != null) {<a name="line.455"></a>
+<span class="sourceLineNo">456</span>            // We have no explicit BeanInfo properties.  Check with our parent.<a name="line.456"></a>
+<span class="sourceLineNo">457</span>            addPropertyDescriptors(getPropertyDescriptors(this.superBeanInfo));<a name="line.457"></a>
+<span class="sourceLineNo">458</span>        }<a name="line.458"></a>
+<span class="sourceLineNo">459</span><a name="line.459"></a>
+<span class="sourceLineNo">460</span>        for (int i = 0; i &lt; additionalBeanInfo.length; i++) {<a name="line.460"></a>
+<span class="sourceLineNo">461</span>            addPropertyDescriptors(additionalBeanInfo[i].getPropertyDescriptors());<a name="line.461"></a>
+<span class="sourceLineNo">462</span>        }<a name="line.462"></a>
+<span class="sourceLineNo">463</span><a name="line.463"></a>
+<span class="sourceLineNo">464</span>        if (explicitProperties != null) {<a name="line.464"></a>
+<span class="sourceLineNo">465</span>            // Add the explicit BeanInfo data to our results.<a name="line.465"></a>
+<span class="sourceLineNo">466</span>            addPropertyDescriptors(explicitProperties);<a name="line.466"></a>
+<span class="sourceLineNo">467</span><a name="line.467"></a>
+<span class="sourceLineNo">468</span>        } else {<a name="line.468"></a>
+<span class="sourceLineNo">469</span><a name="line.469"></a>
+<span class="sourceLineNo">470</span>            // Apply some reflection to the current class.<a name="line.470"></a>
+<span class="sourceLineNo">471</span><a name="line.471"></a>
+<span class="sourceLineNo">472</span>            // First get an array of all the public methods at this level<a name="line.472"></a>
+<span class="sourceLineNo">473</span>            Method methodList[] = getPublicDeclaredMethods(beanClass);<a name="line.473"></a>
+<span class="sourceLineNo">474</span><a name="line.474"></a>
+<span class="sourceLineNo">475</span>            // Now analyze each method.<a name="line.475"></a>
+<span class="sourceLineNo">476</span>            for (int i = 0; i &lt; methodList.length; i++) {<a name="line.476"></a>
+<span class="sourceLineNo">477</span>                Method method = methodList[i];<a name="line.477"></a>
+<span class="sourceLineNo">478</span>                if (method == null) {<a name="line.478"></a>
+<span class="sourceLineNo">479</span>                    continue;<a name="line.479"></a>
+<span class="sourceLineNo">480</span>                }<a name="line.480"></a>
+<span class="sourceLineNo">481</span>                // skip static methods.<a name="line.481"></a>
+<span class="sourceLineNo">482</span>                int mods = method.getModifiers();<a name="line.482"></a>
+<span class="sourceLineNo">483</span>                if (Modifier.isStatic(mods)) {<a name="line.483"></a>
+<span class="sourceLineNo">484</span>                    continue;<a name="line.484"></a>
+<span class="sourceLineNo">485</span>                }<a name="line.485"></a>
+<span class="sourceLineNo">486</span>                String name = method.getName();<a name="line.486"></a>
+<span class="sourceLineNo">487</span>                Class argTypes[] = method.getParameterTypes();<a name="line.487"></a>
+<span class="sourceLineNo">488</span>                Class resultType = method.getReturnType();<a name="line.488"></a>
+<span class="sourceLineNo">489</span>                int argCount = argTypes.length;<a name="line.489"></a>
+<span class="sourceLineNo">490</span>                PropertyDescriptor pd = null;<a name="line.490"></a>
+<span class="sourceLineNo">491</span><a name="line.491"></a>
+<span class="sourceLineNo">492</span>                if (name.length() &lt;= 3 &amp;&amp; !name.startsWith(IS_PREFIX)) {<a name="line.492"></a>
+<span class="sourceLineNo">493</span>                    // Optimization. Don't bother with invalid propertyNames.<a name="line.493"></a>
+<span class="sourceLineNo">494</span>                    continue;<a name="line.494"></a>
+<span class="sourceLineNo">495</span>                }<a name="line.495"></a>
+<span class="sourceLineNo">496</span><a name="line.496"></a>
+<span class="sourceLineNo">497</span>                try {<a name="line.497"></a>
+<span class="sourceLineNo">498</span><a name="line.498"></a>
+<span class="sourceLineNo">499</span>                    if (argCount == 0) {<a name="line.499"></a>
+<span class="sourceLineNo">500</span>                        if (name.startsWith(GET_PREFIX)) {<a name="line.500"></a>
+<span class="sourceLineNo">501</span>                            // Simple getter<a name="line.501"></a>
+<span class="sourceLineNo">502</span>                            pd = new PropertyDescriptor(this.beanClass, name.substring(3), method, null);<a name="line.502"></a>
+<span class="sourceLineNo">503</span>                        } else if (resultType == boolean.class &amp;&amp; name.startsWith(IS_PREFIX)) {<a name="line.503"></a>
+<span class="sourceLineNo">504</span>                            // Boolean getter<a name="line.504"></a>
+<span class="sourceLineNo">505</span>                            pd = new PropertyDescriptor(this.beanClass, name.substring(2), method, null);<a name="line.505"></a>
+<span class="sourceLineNo">506</span>                        }<a name="line.506"></a>
+<span class="sourceLineNo">507</span>                    } else if (argCount == 1) {<a name="line.507"></a>
+<span class="sourceLineNo">508</span>                        if (int.class.equals(argTypes[0]) &amp;&amp; name.startsWith(GET_PREFIX)) {<a name="line.508"></a>
+<span class="sourceLineNo">509</span>                            pd = new IndexedPropertyDescriptor(this.beanClass, name.substring(3), null, null, method, null);<a name="line.509"></a>
+<span class="sourceLineNo">510</span>                        } else if (void.class.equals(resultType) &amp;&amp; name.startsWith(SET_PREFIX)) {<a name="line.510"></a>
+<span class="sourceLineNo">511</span>                            // Simple setter<a name="line.511"></a>
+<span class="sourceLineNo">512</span>                            pd = new PropertyDescriptor(this.beanClass, name.substring(3), null, method);<a name="line.512"></a>
+<span class="sourceLineNo">513</span>                            if (throwsException(method, PropertyVetoException.class)) {<a name="line.513"></a>
+<span class="sourceLineNo">514</span>                                pd.setConstrained(true);<a name="line.514"></a>
+<span class="sourceLineNo">515</span>                            }<a name="line.515"></a>
+<span class="sourceLineNo">516</span>                        }<a name="line.516"></a>
+<span class="sourceLineNo">517</span>                    } else if (argCount == 2) {<a name="line.517"></a>
+<span class="sourceLineNo">518</span>                            if (void.class.equals(resultType) &amp;&amp; int.class.equals(argTypes[0]) &amp;&amp; name.startsWith(SET_PREFIX)) {<a name="line.518"></a>
+<span class="sourceLineNo">519</span>                            pd = new IndexedPropertyDescriptor(this.beanClass, name.substring(3), null, null, null, method);<a name="line.519"></a>
+<span class="sourceLineNo">520</span>                            if (throwsException(method, PropertyVetoException.class)) {<a name="line.520"></a>
+<span class="sourceLineNo">521</span>                                pd.setConstrained(true);<a name="line.521"></a>
+<span class="sourceLineNo">522</span>                            }<a name="line.522"></a>
+<span class="sourceLineNo">523</span>                        }<a name="line.523"></a>
+<span class="sourceLineNo">524</span>                    }<a name="line.524"></a>
+<span class="sourceLineNo">525</span>                } catch (IntrospectionException ex) {<a name="line.525"></a>
+<span class="sourceLineNo">526</span>                    // This happens if a PropertyDescriptor or IndexedPropertyDescriptor<a name="line.526"></a>
+<span class="sourceLineNo">527</span>                    // constructor fins that the method violates details of the deisgn<a name="line.527"></a>
+<span class="sourceLineNo">528</span>                    // pattern, e.g. by having an empty name, or a getter returning<a name="line.528"></a>
+<span class="sourceLineNo">529</span>                    // void , or whatever.<a name="line.529"></a>
+<span class="sourceLineNo">530</span>                    pd = null;<a name="line.530"></a>
+<span class="sourceLineNo">531</span>                }<a name="line.531"></a>
+<span class="sourceLineNo">532</span><a name="line.532"></a>
+<span class="sourceLineNo">533</span>                if (pd != null) {<a name="line.533"></a>
+<span class="sourceLineNo">534</span>                    // If this class or one of its base classes is a PropertyChange<a name="line.534"></a>
+<span class="sourceLineNo">535</span>                    // source, then we assume that any properties we discover are "bound".<a name="line.535"></a>
+<span class="sourceLineNo">536</span>                    if (propertyChangeSource) {<a name="line.536"></a>
+<span class="sourceLineNo">537</span>                        pd.setBound(true);<a name="line.537"></a>
+<span class="sourceLineNo">538</span>                    }<a name="line.538"></a>
+<span class="sourceLineNo">539</span>                    addPropertyDescriptor(pd);<a name="line.539"></a>
+<span class="sourceLineNo">540</span>                }<a name="line.540"></a>
+<span class="sourceLineNo">541</span>            }<a name="line.541"></a>
+<span class="sourceLineNo">542</span>        }<a name="line.542"></a>
+<span class="sourceLineNo">543</span>        processPropertyDescriptors();<a name="line.543"></a>
+<span class="sourceLineNo">544</span><a name="line.544"></a>
+<span class="sourceLineNo">545</span>        // Allocate and populate the result array.<a name="line.545"></a>
+<span class="sourceLineNo">546</span>        PropertyDescriptor result[] = new PropertyDescriptor[properties.size()];<a name="line.546"></a>
+<span class="sourceLineNo">547</span>        result = (PropertyDescriptor[])properties.values().toArray(result);<a name="line.547"></a>
+<span class="sourceLineNo">548</span><a name="line.548"></a>
+<span class="sourceLineNo">549</span>        // Set the default index.<a name="line.549"></a>
+<span class="sourceLineNo">550</span>        if (defaultPropertyName != null) {<a name="line.550"></a>
+<span class="sourceLineNo">551</span>            for (int i = 0; i &lt; result.length; i++) {<a name="line.551"></a>
+<span class="sourceLineNo">552</span>                if (defaultPropertyName.equals(result[i].getName())) {<a name="line.552"></a>
+<span class="sourceLineNo">553</span>                    defaultPropertyIndex = i;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>                }<a name="line.554"></a>
+<span class="sourceLineNo">555</span>            }<a name="line.555"></a>
+<span class="sourceLineNo">556</span>        }<a name="line.556"></a>
+<span class="sourceLineNo">557</span><a name="line.557"></a>
+<span class="sourceLineNo">558</span>        return result;<a name="line.558"></a>
+<span class="sourceLineNo">559</span>    }<a name="line.559"></a>
+<span class="sourceLineNo">560</span><a name="line.560"></a>
+<span class="sourceLineNo">561</span>    private HashMap pdStore = new HashMap();<a name="line.561"></a>
+<span class="sourceLineNo">562</span><a name="line.562"></a>
+<span class="sourceLineNo">563</span>    /**<a name="line.563"></a>
+<span class="sourceLineNo">564</span>     * Adds the property descriptor to the list store.<a name="line.564"></a>
+<span class="sourceLineNo">565</span>     */<a name="line.565"></a>
+<span class="sourceLineNo">566</span>    private void addPropertyDescriptor(PropertyDescriptor pd) {<a name="line.566"></a>
+<span class="sourceLineNo">567</span>        String propName = pd.getName();<a name="line.567"></a>
+<span class="sourceLineNo">568</span>        List list = (List)pdStore.get(propName);<a name="line.568"></a>
+<span class="sourceLineNo">569</span>        if (list == null) {<a name="line.569"></a>
+<span class="sourceLineNo">570</span>            list = new ArrayList();<a name="line.570"></a>
+<span class="sourceLineNo">571</span>            pdStore.put(propName, list);<a name="line.571"></a>
+<span class="sourceLineNo">572</span>        }<a name="line.572"></a>
+<span class="sourceLineNo">573</span>        if (this.beanClass != pd.getClass0()) {<a name="line.573"></a>
+<span class="sourceLineNo">574</span>            // replace existing property descriptor<a name="line.574"></a>
+<span class="sourceLineNo">575</span>            // only if we have types to resolve<a name="line.575"></a>
+<span class="sourceLineNo">576</span>            // in the context of this.beanClass<a name="line.576"></a>
+<span class="sourceLineNo">577</span>            Method read = pd.getReadMethod();<a name="line.577"></a>
+<span class="sourceLineNo">578</span>            Method write = pd.getWriteMethod();<a name="line.578"></a>
+<span class="sourceLineNo">579</span>            boolean cls = true;<a name="line.579"></a>
+<span class="sourceLineNo">580</span>            if (read != null) cls = cls &amp;&amp; read.getGenericReturnType() instanceof Class;<a name="line.580"></a>
+<span class="sourceLineNo">581</span>            if (write != null) cls = cls &amp;&amp; write.getGenericParameterTypes()[0] instanceof Class;<a name="line.581"></a>
+<span class="sourceLineNo">582</span>            if (pd instanceof IndexedPropertyDescriptor) {<a name="line.582"></a>
+<span class="sourceLineNo">583</span>                IndexedPropertyDescriptor ipd = (IndexedPropertyDescriptor) pd;<a name="line.583"></a>
+<span class="sourceLineNo">584</span>                Method readI = ipd.getIndexedReadMethod();<a name="line.584"></a>
+<span class="sourceLineNo">585</span>                Method writeI = ipd.getIndexedWriteMethod();<a name="line.585"></a>
+<span class="sourceLineNo">586</span>                if (readI != null) cls = cls &amp;&amp; readI.getGenericReturnType() instanceof Class;<a name="line.586"></a>
+<span class="sourceLineNo">587</span>                if (writeI != null) cls = cls &amp;&amp; writeI.getGenericParameterTypes()[1] instanceof Class;<a name="line.587"></a>
+<span class="sourceLineNo">588</span>                if (!cls) {<a name="line.588"></a>
+<span class="sourceLineNo">589</span>                    pd = new IndexedPropertyDescriptor(ipd);<a name="line.589"></a>
+<span class="sourceLineNo">590</span>                    pd.updateGenericsFor(this.beanClass);<a name="line.590"></a>
+<span class="sourceLineNo">591</span>                }<a name="line.591"></a>
+<span class="sourceLineNo">592</span>            }<a name="line.592"></a>
+<span class="sourceLineNo">593</span>            else if (!cls) {<a name="line.593"></a>
+<span class="sourceLineNo">594</span>                pd = new PropertyDescriptor(pd);<a name="line.594"></a>
+<span class="sourceLineNo">595</span>                pd.updateGenericsFor(this.beanClass);<a name="line.595"></a>
+<span class="sourceLineNo">596</span>            }<a name="line.596"></a>
+<span class="sourceLineNo">597</span>        }<a name="line.597"></a>
+<span class="sourceLineNo">598</span>        list.add(pd);<a name="line.598"></a>
+<span class="sourceLineNo">599</span>    }<a name="line.599"></a>
+<span class="sourceLineNo">600</span><a name="line.600"></a>
+<span class="sourceLineNo">601</span>    private void addPropertyDescriptors(PropertyDescriptor[] descriptors) {<a name="line.601"></a>
+<span class="sourceLineNo">602</span>        if (descriptors != null) {<a name="line.602"></a>
+<span class="sourceLineNo">603</span>            for (PropertyDescriptor descriptor : descriptors) {<a name="line.603"></a>
+<span class="sourceLineNo">604</span>                addPropertyDescriptor(descriptor);<a name="line.604"></a>
+<span class="sourceLineNo">605</span>            }<a name="line.605"></a>
+<span class="sourceLineNo">606</span>        }<a name="line.606"></a>
+<span class="sourceLineNo">607</span>    }<a name="line.607"></a>
+<span class="sourceLineNo">608</span><a name="line.608"></a>
+<span class="sourceLineNo">609</span>    private PropertyDescriptor[] getPropertyDescriptors(BeanInfo info) {<a name="line.609"></a>
+<span class="sourceLineNo">610</span>        PropertyDescriptor[] descriptors = info.getPropertyDescriptors();<a name="line.610"></a>
+<span class="sourceLineNo">611</span>        int index = info.getDefaultPropertyIndex();<a name="line.611"></a>
+<span class="sourceLineNo">612</span>        if ((0 &lt;= index) &amp;&amp; (index &lt; descriptors.length)) {<a name="line.612"></a>
+<span class="sourceLineNo">613</span>            this.defaultPropertyName = descriptors[index].getName();<a name="line.613"></a>
+<span class="sourceLineNo">614</span>        }<a name="line.614"></a>
+<span class="sourceLineNo">615</span>        return descriptors;<a name="line.615"></a>
+<span class="sourceLineNo">616</span>    }<a name="line.616"></a>
+<span class="sourceLineNo">617</span><a name="line.617"></a>
+<span class="sourceLineNo">618</span>    /**<a name="line.618"></a>
+<span class="sourceLineNo">619</span>     * Populates the property descriptor table by merging the<a name="line.619"></a>
+<span class="sourceLineNo">620</span>     * lists of Property descriptors.<a name="line.620"></a>
+<span class="sourceLineNo">621</span>     */<a name="line.621"></a>
+<span class="sourceLineNo">622</span>    private void processPropertyDescriptors() {<a name="line.622"></a>
+<span class="sourceLineNo">623</span>        if (properties == null) {<a name="line.623"></a>
+<span class="sourceLineNo">624</span>            properties = new TreeMap();<a name="line.624"></a>
+<span class="sourceLineNo">625</span>        }<a name="line.625"></a>
+<span class="sourceLineNo">626</span><a name="line.626"></a>
+<span class="sourceLineNo">627</span>        List list;<a name="line.627"></a>
+<span class="sourceLineNo">628</span><a name="line.628"></a>
+<span class="sourceLineNo">629</span>        PropertyDescriptor pd, gpd, spd;<a name="line.629"></a>
+<span class="sourceLineNo">630</span>        IndexedPropertyDescriptor ipd, igpd, ispd;<a name="line.630"></a>
+<span class="sourceLineNo">631</span><a name="line.631"></a>
+<span class="sourceLineNo">632</span>        Iterator it = pdStore.values().iterator();<a name="line.632"></a>
+<span class="sourceLineNo">633</span>        while (it.hasNext()) {<a name="line.633"></a>
+<span class="sourceLineNo">634</span>            pd = null; gpd = null; spd = null;<a name="line.634"></a>
+<span class="sourceLineNo">635</span>            ipd = null; igpd = null; ispd = null;<a name="line.635"></a>
+<span class="sourceLineNo">636</span><a name="line.636"></a>
+<span class="sourceLineNo">637</span>            list = (List)it.next();<a name="line.637"></a>
+<span class="sourceLineNo">638</span><a name="line.638"></a>
+<span class="sourceLineNo">639</span>            // First pass. Find the latest getter method. Merge properties<a name="line.639"></a>
+<span class="sourceLineNo">640</span>            // of previous getter methods.<a name="line.640"></a>
+<span class="sourceLineNo">641</span>            for (int i = 0; i &lt; list.size(); i++) {<a name="line.641"></a>
+<span class="sourceLineNo">642</span>                pd = (PropertyDescriptor)list.get(i);<a name="line.642"></a>
+<span class="sourceLineNo">643</span>                if (pd instanceof IndexedPropertyDescriptor) {<a name="line.643"></a>
+<span class="sourceLineNo">644</span>                    ipd = (IndexedPropertyDescriptor)pd;<a name="line.644"></a>
+<span class="sourceLineNo">645</span>                    if (ipd.getIndexedReadMethod() != null) {<a name="line.645"></a>
+<span class="sourceLineNo">646</span>                        if (igpd != null) {<a name="line.646"></a>
+<span class="sourceLineNo">647</span>                            igpd = new IndexedPropertyDescriptor(igpd, ipd);<a name="line.647"></a>
+<span class="sourceLineNo">648</span>                        } else {<a name="line.648"></a>
+<span class="sourceLineNo">649</span>                            igpd = ipd;<a name="line.649"></a>
+<span class="sourceLineNo">650</span>                        }<a name="line.650"></a>
+<span class="sourceLineNo">651</span>                    }<a name="line.651"></a>
+<span class="sourceLineNo">652</span>                } else {<a name="line.652"></a>
+<span class="sourceLineNo">653</span>                    if (pd.getReadMethod() != null) {<a name="line.653"></a>
+<span class="sourceLineNo">654</span>                        if (gpd != null) {<a name="line.654"></a>
+<span class="sourceLineNo">655</span>                            // Don't replace the existing read<a name="line.655"></a>
+<span class="sourceLineNo">656</span>                            // method if it starts with "is"<a name="line.656"></a>
+<span class="sourceLineNo">657</span>                            Method method = gpd.getReadMethod();<a name="line.657"></a>
+<span class="sourceLineNo">658</span>                            if (!method.getName().startsWith(IS_PREFIX)) {<a name="line.658"></a>
+<span class="sourceLineNo">659</span>                                gpd = new PropertyDescriptor(gpd, pd);<a name="line.659"></a>
+<span class="sourceLineNo">660</span>                            }<a name="line.660"></a>
+<span class="sourceLineNo">661</span>                        } else {<a name="line.661"></a>
+<span class="sourceLineNo">662</span>                            gpd = pd;<a name="line.662"></a>
+<span class="sourceLineNo">663</span>                        }<a name="line.663"></a>
+<span class="sourceLineNo">664</span>                    }<a name="line.664"></a>
+<span class="sourceLineNo">665</span>                }<a name="line.665"></a>
+<span class="sourceLineNo">666</span>            }<a name="line.666"></a>
+<span class="sourceLineNo">667</span><a name="line.667"></a>
+<span class="sourceLineNo">668</span>            // Second pass. Find the latest setter method which<a name="line.668"></a>
+<span class="sourceLineNo">669</span>            // has the same type as the getter method.<a name="line.669"></a>
+<span class="sourceLineNo">670</span>            for (int i = 0; i &lt; list.size(); i++) {<a name="line.670"></a>
+<span class="sourceLineNo">671</span>                pd = (PropertyDescriptor)list.get(i);<a name="line.671"></a>
+<span class="sourceLineNo">672</span>                if (pd instanceof IndexedPropertyDescriptor) {<a name="line.672"></a>
+<span class="sourceLineNo">673</span>                    ipd = (IndexedPropertyDescriptor)pd;<a name="line.673"></a>
+<span class="sourceLineNo">674</span>                    if (ipd.getIndexedWriteMethod() != null) {<a name="line.674"></a>
+<span class="sourceLineNo">675</span>                        if (igpd != null) {<a name="line.675"></a>
+<span class="sourceLineNo">676</span>                            if (igpd.getIndexedPropertyType()<a name="line.676"></a>
+<span class="sourceLineNo">677</span>                                == ipd.getIndexedPropertyType()) {<a name="line.677"></a>
+<span class="sourceLineNo">678</span>                                if (ispd != null) {<a name="line.678"></a>
+<span class="sourceLineNo">679</span>                                    ispd = new IndexedPropertyDescriptor(ispd, ipd);<a name="line.679"></a>
+<span class="sourceLineNo">680</span>                                } else {<a name="line.680"></a>
+<span class="sourceLineNo">681</span>                                    ispd = ipd;<a name="line.681"></a>
+<span class="sourceLineNo">682</span>                                }<a name="line.682"></a>
+<span class="sourceLineNo">683</span>                            }<a name="line.683"></a>
+<span class="sourceLineNo">684</span>                        } else {<a name="line.684"></a>
+<span class="sourceLineNo">685</span>                            if (ispd != null) {<a name="line.685"></a>
+<span class="sourceLineNo">686</span>                                ispd = new IndexedPropertyDescriptor(ispd, ipd);<a name="line.686"></a>
+<span class="sourceLineNo">687</span>                            } else {<a name="line.687"></a>
+<span class="sourceLineNo">688</span>                                ispd = ipd;<a name="line.688"></a>
+<span class="sourceLineNo">689</span>                            }<a name="line.689"></a>
+<span class="sourceLineNo">690</span>                        }<a name="line.690"></a>
+<span class="sourceLineNo">691</span>                    }<a name="line.691"></a>
+<span class="sourceLineNo">692</span>                } else {<a name="line.692"></a>
+<span class="sourceLineNo">693</span>                    if (pd.getWriteMethod() != null) {<a name="line.693"></a>
+<span class="sourceLineNo">694</span>                        if (gpd != null) {<a name="line.694"></a>
+<span class="sourceLineNo">695</span>                            if (gpd.getPropertyType() == pd.getPropertyType()) {<a name="line.695"></a>
+<span class="sourceLineNo">696</span>                                if (spd != null) {<a name="line.696"></a>
+<span class="sourceLineNo">697</span>                                    spd = new PropertyDescriptor(spd, pd);<a name="line.697"></a>
+<span class="sourceLineNo">698</span>                                } else {<a name="line.698"></a>
+<span class="sourceLineNo">699</span>                                    spd = pd;<a name="line.699"></a>
+<span class="sourceLineNo">700</span>                                }<a name="line.700"></a>
+<span class="sourceLineNo">701</span>                            }<a name="line.701"></a>
+<span class="sourceLineNo">702</span>                        } else {<a name="line.702"></a>
+<span class="sourceLineNo">703</span>                            if (spd != null) {<a name="line.703"></a>
+<span class="sourceLineNo">704</span>                                spd = new PropertyDescriptor(spd, pd);<a name="line.704"></a>
+<span class="sourceLineNo">705</span>                            } else {<a name="line.705"></a>
+<span class="sourceLineNo">706</span>                                spd = pd;<a name="line.706"></a>
+<span class="sourceLineNo">707</span>                            }<a name="line.707"></a>
+<span class="sourceLineNo">708</span>                        }<a name="line.708"></a>
+<span class="sourceLineNo">709</span>                    }<a name="line.709"></a>
+<span class="sourceLineNo">710</span>                }<a name="line.710"></a>
+<span class="sourceLineNo">711</span>            }<a name="line.711"></a>
+<span class="sourceLineNo">712</span><a name="line.712"></a>
+<span class="sourceLineNo">713</span>            // At this stage we should have either PDs or IPDs for the<a name="line.713"></a>
+<span class="sourceLineNo">714</span>            // representative getters and setters. The order at which the<a name="line.714"></a>
+<span class="sourceLineNo">715</span>            // property descriptors are determined represent the<a name="line.715"></a>
+<span class="sourceLineNo">716</span>            // precedence of the property ordering.<a name="line.716"></a>
+<span class="sourceLineNo">717</span>            pd = null; ipd = null;<a name="line.717"></a>
+<span class="sourceLineNo">718</span><a name="line.718"></a>
+<span class="sourceLineNo">719</span>            if (igpd != null &amp;&amp; ispd != null) {<a name="line.719"></a>
+<span class="sourceLineNo">720</span>                // Complete indexed properties set<a name="line.720"></a>
+<span class="sourceLineNo">721</span>                // Merge any classic property descriptors<a name="line.721"></a>
+<span class="sourceLineNo">722</span>                if (gpd != null) {<a name="line.722"></a>
+<span class="sourceLineNo">723</span>                    PropertyDescriptor tpd = mergePropertyDescriptor(igpd, gpd);<a name="line.723"></a>
+<span class="sourceLineNo">724</span>                    if (tpd instanceof IndexedPropertyDescriptor) {<a name="line.724"></a>
+<span class="sourceLineNo">725</span>                        igpd = (IndexedPropertyDescriptor)tpd;<a name="line.725"></a>
+<span class="sourceLineNo">726</span>                    }<a name="line.726"></a>
+<span class="sourceLineNo">727</span>                }<a name="line.727"></a>
+<span class="sourceLineNo">728</span>                if (spd != null) {<a name="line.728"></a>
+<span class="sourceLineNo">729</span>                    PropertyDescriptor tpd = mergePropertyDescriptor(ispd, spd);<a name="line.729"></a>
+<span class="sourceLineNo">730</span>                    if (tpd instanceof IndexedPropertyDescriptor) {<a name="line.730"></a>
+<span class="sourceLineNo">731</span>                        ispd = (IndexedPropertyDescriptor)tpd;<a name="line.731"></a>
+<span class="sourceLineNo">732</span>                    }<a name="line.732"></a>
+<span class="sourceLineNo">733</span>                }<a name="line.733"></a>
+<span class="sourceLineNo">734</span>                if (igpd == ispd) {<a name="line.734"></a>
+<span class="sourceLineNo">735</span>                    pd = igpd;<a name="line.735"></a>
+<span class="sourceLineNo">736</span>                } else {<a name="line.736"></a>
+<span class="sourceLineNo">737</span>                    pd = mergePropertyDescriptor(igpd, ispd);<a name="line.737"></a>
+<span class="sourceLineNo">738</span>                }<a name="line.738"></a>
+<span class="sourceLineNo">739</span>            } else if (gpd != null &amp;&amp; spd != null) {<a name="line.739"></a>
+<span class="sourceLineNo">740</span>                // Complete simple properties set<a name="line.740"></a>
+<span class="sourceLineNo">741</span>                if (gpd == spd) {<a name="line.741"></a>
+<span class="sourceLineNo">742</span>                    pd = gpd;<a name="line.742"></a>
+<span class="sourceLineNo">743</span>                } else {<a name="line.743"></a>
+<span class="sourceLineNo">744</span>                    pd = mergePropertyDescriptor(gpd, spd);<a name="line.744"></a>
+<span class="sourceLineNo">745</span>                }<a name="line.745"></a>
+<span class="sourceLineNo">746</span>            } else if (ispd != null) {<a name="line.746"></a>
+<span class="sourceLineNo">747</span>                // indexed setter<a name="line.747"></a>
+<span class="sourceLineNo">748</span>                pd = ispd;<a name="line.748"></a>
+<span class="sourceLineNo">749</span>                // Merge any classic property descriptors<a name="line.749"></a>
+<span class="sourceLineNo">750</span>                if (spd != null) {<a name="line.750"></a>
+<span class="sourceLineNo">751</span>                    pd = mergePropertyDescriptor(ispd, spd);<a name="line.751"></a>
+<span class="sourceLineNo">752</span>                }<a name="line.752"></a>
+<span class="sourceLineNo">753</span>                if (gpd != null) {<a name="line.753"></a>
+<span class="sourceLineNo">754</span>                    pd = mergePropertyDescriptor(ispd, gpd);<a name="line.754"></a>
+<span class="sourceLineNo">755</span>                }<a name="line.755"></a>
+<span class="sourceLineNo">756</span>            } else if (igpd != null) {<a name="line.756"></a>
+<span class="sourceLineNo">757</span>                // indexed getter<a name="line.757"></a>
+<span class="sourceLineNo">758</span>                pd = igpd;<a name="line.758"></a>
+<span class="sourceLineNo">759</span>                // Merge any classic property descriptors<a name="line.759"></a>
+<span class="sourceLineNo">760</span>                if (gpd != null) {<a name="line.760"></a>
+<span class="sourceLineNo">761</span>                    pd = mergePropertyDescriptor(igpd, gpd);<a name="line.761"></a>
+<span class="sourceLineNo">762</span>                }<a name="line.762"></a>
+<span class="sourceLineNo">763</span>                if (spd != null) {<a name="line.763"></a>
+<span class="sourceLineNo">764</span>                    pd = mergePropertyDescriptor(igpd, spd);<a name="line.764"></a>
+<span class="sourceLineNo">765</span>                }<a name="line.765"></a>
+<span class="sourceLineNo">766</span>            } else if (spd != null) {<a name="line.766"></a>
+<span class="sourceLineNo">767</span>                // simple setter<a name="line.767"></a>
+<span class="sourceLineNo">768</span>                pd = spd;<a name="line.768"></a>
+<span class="sourceLineNo">769</span>            } else if (gpd != null) {<a name="line.769"></a>
+<span class="sourceLineNo">770</span>                // simple getter<a name="line.770"></a>
+<span class="sourceLineNo">771</span>                pd = gpd;<a name="line.771"></a>
+<span class="sourceLineNo">772</span>            }<a name="line.772"></a>
+<span class="sourceLineNo">773</span><a name="line.773"></a>
+<span class="sourceLineNo">774</span>            // Very special case to ensure that an IndexedPropertyDescriptor<a name="line.774"></a>
+<span class="sourceLineNo">775</span>            // doesn't contain less information than the enclosed<a name="line.775"></a>
+<span class="sourceLineNo">776</span>            // PropertyDescriptor. If it does, then recreate as a<a name="line.776"></a>
+<span class="sourceLineNo">777</span>            // PropertyDescriptor. See 4168833<a name="line.777"></a>
+<span class="sourceLineNo">778</span>            if (pd instanceof IndexedPropertyDescriptor) {<a name="line.778"></a>
+<span class="sourceLineNo">779</span>                ipd = (IndexedPropertyDescriptor)pd;<a name="line.779"></a>
+<span class="sourceLineNo">780</span>                if (ipd.getIndexedReadMethod() == null &amp;&amp; ipd.getIndexedWriteMethod() == null) {<a name="line.780"></a>
+<span class="sourceLineNo">781</span>                    pd = new PropertyDescriptor(ipd);<a name="line.781"></a>
+<span class="sourceLineNo">782</span>                }<a name="line.782"></a>
+<span class="sourceLineNo">783</span>            }<a name="line.783"></a>
+<span class="sourceLineNo">784</span><a name="line.784"></a>
+<span class="sourceLineNo">785</span>            // Find the first property descriptor<a name="line.785"></a>
+<span class="sourceLineNo">786</span>            // which does not have getter and setter methods.<a name="line.786"></a>
+<span class="sourceLineNo">787</span>            // See regression bug 4984912.<a name="line.787"></a>
+<span class="sourceLineNo">788</span>            if ( (pd == null) &amp;&amp; (list.size() &gt; 0) ) {<a name="line.788"></a>
+<span class="sourceLineNo">789</span>                pd = (PropertyDescriptor) list.get(0);<a name="line.789"></a>
+<span class="sourceLineNo">790</span>            }<a name="line.790"></a>
+<span class="sourceLineNo">791</span><a name="line.791"></a>
+<span class="sourceLineNo">792</span>            if (pd != null) {<a name="line.792"></a>
+<span class="sourceLineNo">793</span>                properties.put(pd.getName(), pd);<a name="line.793"></a>
+<span class="sourceLineNo">794</span>            }<a name="line.794"></a>
+<span class="sourceLineNo">795</span>        }<a name="line.795"></a>
+<span class="sourceLineNo">796</span>    }<a name="line.796"></a>
+<span class="sourceLineNo">797</span><a name="line.797"></a>
+<span class="sourceLineNo">798</span>    /**<a name="line.798"></a>
+<span class="sourceLineNo">799</span>     * Adds the property descriptor to the indexedproperty descriptor only if the<a name="line.799"></a>
+<span class="sourceLineNo">800</span>     * types are the same.<a name="line.800"></a>
+<span class="sourceLineNo">801</span>     *<a name="line.801"></a>
+<span class="sourceLineNo">802</span>     * The most specific property descriptor will take precedence.<a name="line.802"></a>
+<span class="sourceLineNo">803</span>     */<a name="line.803"></a>
+<span class="sourceLineNo">804</span>    private PropertyDescriptor mergePropertyDescriptor(IndexedPropertyDescriptor ipd,<a name="line.804"></a>
+<span class="sourceLineNo">805</span>                                                       PropertyDescriptor pd) {<a name="line.805"></a>
+<span class="sourceLineNo">806</span>        PropertyDescriptor result = null;<a name="line.806"></a>
+<span class="sourceLineNo">807</span><a name="line.807"></a>
+<span class="sourceLineNo">808</span>        Class propType = pd.getPropertyType();<a name="line.808"></a>
+<span class="sourceLineNo">809</span>        Class ipropType = ipd.getIndexedPropertyType();<a name="line.809"></a>
+<span class="sourceLineNo">810</span><a name="line.810"></a>
+<span class="sourceLineNo">811</span>        if (propType.isArray() &amp;&amp; propType.getComponentType() == ipropType) {<a name="line.811"></a>
+<span class="sourceLineNo">812</span>            if (pd.getClass0().isAssignableFrom(ipd.getClass0())) {<a name="line.812"></a>
+<span class="sourceLineNo">813</span>                result = new IndexedPropertyDescriptor(pd, ipd);<a name="line.813"></a>
+<span class="sourceLineNo">814</span>            } else {<a name="line.814"></a>
+<span class="sourceLineNo">815</span>                result = new IndexedPropertyDescriptor(ipd, pd);<a name="line.815"></a>
+<span class="sourceLineNo">816</span>            }<a name="line.816"></a>
+<span class="sourceLineNo">817</span>        } else {<a name="line.817"></a>
+<span class="sourceLineNo">818</span>            // Cannot merge the pd because of type mismatch<a name="line.818"></a>
+<span class="sourceLineNo">819</span>            // Return the most specific pd<a name="line.819"></a>
+<span class="sourceLineNo">820</span>            if (pd.getClass0().isAssignableFrom(ipd.getClass0())) {<a name="line.820"></a>
+<span class="sourceLineNo">821</span>                result = ipd;<a name="line.821"></a>
+<span class="sourceLineNo">822</span>            } else {<a name="line.822"></a>
+<span class="sourceLineNo">823</span>                result = pd;<a name="line.823"></a>
+<span class="sourceLineNo">824</span>                // Try to add methods which may have been lost in the type change<a name="line.824"></a>
+<span class="sourceLineNo">825</span>                // See 4168833<a name="line.825"></a>
+<span class="sourceLineNo">826</span>                Method write = result.getWriteMethod();<a name="line.826"></a>
+<span class="sourceLineNo">827</span>                Method read = result.getReadMethod();<a name="line.827"></a>
+<span class="sourceLineNo">828</span><a name="line.828"></a>
+<span class="sourceLineNo">829</span>                if (read == null &amp;&amp; write != null) {<a name="line.829"></a>
+<span class="sourceLineNo">830</span>                    read = findMethod(result.getClass0(),<a name="line.830"></a>
+<span class="sourceLineNo">831</span>                                      GET_PREFIX + NameGenerator.capitalize(result.getName()), 0);<a name="line.831"></a>
+<span class="sourceLineNo">832</span>                    if (read != null) {<a name="line.832"></a>
+<span class="sourceLineNo">833</span>                        try {<a name="line.833"></a>
+<span class="sourceLineNo">834</span>                            result.setReadMethod(read);<a name="line.834"></a>
+<span class="sourceLineNo">835</span>                        } catch (IntrospectionException ex) {<a name="line.835"></a>
+<span class="sourceLineNo">836</span>                            // no consequences for failure.<a name="line.836"></a>
+<span class="sourceLineNo">837</span>                        }<a name="line.837"></a>
+<span class="sourceLineNo">838</span>                    }<a name="line.838"></a>
+<span class="sourceLineNo">839</span>                }<a name="line.839"></a>
+<span class="sourceLineNo">840</span>                if (write == null &amp;&amp; read != null) {<a name="line.840"></a>
+<span class="sourceLineNo">841</span>                    write = findMethod(result.getClass0(),<a name="line.841"></a>
+<span class="sourceLineNo">842</span>                                       SET_PREFIX + NameGenerator.capitalize(result.getName()), 1,<a name="line.842"></a>
+<span class="sourceLineNo">843</span>                                       new Class[] { FeatureDescriptor.getReturnType(result.getClass0(), read) });<a name="line.843"></a>
+<span class="sourceLineNo">844</span>                    if (write != null) {<a name="line.844"></a>
+<span class="sourceLineNo">845</span>                        try {<a name="line.845"></a>
+<span class="sourceLineNo">846</span>                            result.setWriteMethod(write);<a name="line.846"></a>
+<span class="sourceLineNo">847</span>                        } catch (IntrospectionException ex) {<a name="line.847"></a>
+<span class="sourceLineNo">848</span>                            // no consequences for failure.<a name="line.848"></a>
+<span class="sourceLineNo">849</span>                        }<a name="line.849"></a>
+<span class="sourceLineNo">850</span>                    }<a name="line.850"></a>
+<span class="sourceLineNo">851</span>                }<a name="line.851"></a>
+<span class="sourceLineNo">852</span>            }<a name="line.852"></a>
+<span class="sourceLineNo">853</span>        }<a name="line.853"></a>
+<span class="sourceLineNo">854</span>        return result;<a name="line.854"></a>
+<span class="sourceLineNo">855</span>    }<a name="line.855"></a>
+<span class="sourceLineNo">856</span><a name="line.856"></a>
+<span class="sourceLineNo">857</span>    // Handle regular pd merge<a name="line.857"></a>
+<span class="sourceLineNo">858</span>    private PropertyDescriptor mergePropertyDescriptor(PropertyDescriptor pd1,<a name="line.858"></a>
+<span class="sourceLineNo">859</span>                                                       PropertyDescriptor pd2) {<a name="line.859"></a>
+<span class="sourceLineNo">860</span>        if (pd1.getClass0().isAssignableFrom(pd2.getClass0())) {<a name="line.860"></a>
+<span class="sourceLineNo">861</span>            return new PropertyDescriptor(pd1, pd2);<a name="line.861"></a>
+<span class="sourceLineNo">862</span>        } else {<a name="line.862"></a>
+<span class="sourceLineNo">863</span>            return new PropertyDescriptor(pd2, pd1);<a name="line.863"></a>
+<span class="sourceLineNo">864</span>        }<a name="line.864"></a>
+<span class="sourceLineNo">865</span>    }<a name="line.865"></a>
+<span class="sourceLineNo">866</span><a name="line.866"></a>
+<span class="sourceLineNo">867</span>    // Handle regular ipd merge<a name="line.867"></a>
+<span class="sourceLineNo">868</span>    private PropertyDescriptor mergePropertyDescriptor(IndexedPropertyDescriptor ipd1,<a name="line.868"></a>
+<span class="sourceLineNo">869</span>                                                       IndexedPropertyDescriptor ipd2) {<a name="line.869"></a>
+<span class="sourceLineNo">870</span>        if (ipd1.getClass0().isAssignableFrom(ipd2.getClass0())) {<a name="line.870"></a>
+<span class="sourceLineNo">871</span>            return new IndexedPropertyDescriptor(ipd1, ipd2);<a name="line.871"></a>
+<span class="sourceLineNo">872</span>        } else {<a name="line.872"></a>
+<span class="sourceLineNo">873</span>            return new IndexedPropertyDescriptor(ipd2, ipd1);<a name="line.873"></a>
+<span class="sourceLineNo">874</span>        }<a name="line.874"></a>
+<span class="sourceLineNo">875</span>    }<a name="line.875"></a>
+<span class="sourceLineNo">876</span><a name="line.876"></a>
+<span class="sourceLineNo">877</span>    /**<a name="line.877"></a>
+<span class="sourceLineNo">878</span>     * @return An array of EventSetDescriptors describing the kinds of<a name="line.878"></a>
+<span class="sourceLineNo">879</span>     * events fired by the target bean.<a name="line.879"></a>
+<span class="sourceLineNo">880</span>     */<a name="line.880"></a>
+<span class="sourceLineNo">881</span>    private EventSetDescriptor[] getTargetEventInfo() throws IntrospectionException {<a name="line.881"></a>
+<span class="sourceLineNo">882</span>        if (events == null) {<a name="line.882"></a>
+<span class="sourceLineNo">883</span>            events = new HashMap();<a name="line.883"></a>
+<span class="sourceLineNo">884</span>        }<a name="line.884"></a>
+<span class="sourceLineNo">885</span><a name="line.885"></a>
+<span class="sourceLineNo">886</span>        // Check if the bean has its own BeanInfo that will provide<a name="line.886"></a>
+<span class="sourceLineNo">887</span>        // explicit information.<a name="line.887"></a>
+<span class="sourceLineNo">888</span>        EventSetDescriptor[] explicitEvents = null;<a name="line.888"></a>
+<span class="sourceLineNo">889</span>        if (explicitBeanInfo != null) {<a name="line.889"></a>
+<span class="sourceLineNo">890</span>            explicitEvents = explicitBeanInfo.getEventSetDescriptors();<a name="line.890"></a>
+<span class="sourceLineNo">891</span>            int ix = explicitBeanInfo.getDefaultEventIndex();<a name="line.891"></a>
+<span class="sourceLineNo">892</span>            if (ix &gt;= 0 &amp;&amp; ix &lt; explicitEvents.length) {<a name="line.892"></a>
+<span class="sourceLineNo">893</span>                defaultEventName = explicitEvents[ix].getName();<a name="line.893"></a>
+<span class="sourceLineNo">894</span>            }<a name="line.894"></a>
+<span class="sourceLineNo">895</span>        }<a name="line.895"></a>
+<span class="sourceLineNo">896</span><a name="line.896"></a>
+<span class="sourceLineNo">897</span>        if (explicitEvents == null &amp;&amp; superBeanInfo != null) {<a name="line.897"></a>
+<span class="sourceLineNo">898</span>            // We have no explicit BeanInfo events.  Check with our parent.<a name="line.898"></a>
+<span class="sourceLineNo">899</span>            EventSetDescriptor supers[] = superBeanInfo.getEventSetDescriptors();<a name="line.899"></a>
+<span class="sourceLineNo">900</span>            for (int i = 0 ; i &lt; supers.length; i++) {<a name="line.900"></a>
+<span class="sourceLineNo">901</span>                addEvent(supers[i]);<a name="line.901"></a>
+<span class="sourceLineNo">902</span>            }<a name="line.902"></a>
+<span class="sourceLineNo">903</span>            int ix = superBeanInfo.getDefaultEventIndex();<a name="line.903"></a>
+<span class="sourceLineNo">904</span>            if (ix &gt;= 0 &amp;&amp; ix &lt; supers.length) {<a name="line.904"></a>
+<span class="sourceLineNo">905</span>                defaultEventName = supers[ix].getName();<a name="line.905"></a>
+<span class="sourceLineNo">906</span>            }<a name="line.906"></a>
+<span class="sourceLineNo">907</span>        }<a name="line.907"></a>
+<span class="sourceLineNo">908</span><a name="line.908"></a>
+<span class="sourceLineNo">909</span>        for (int i = 0; i &lt; additionalBeanInfo.length; i++) {<a name="line.909"></a>
+<span class="sourceLineNo">910</span>            EventSetDescriptor additional[] = additionalBeanInfo[i].getEventSetDescriptors();<a name="line.910"></a>
+<span class="sourceLineNo">911</span>            if (additional != null) {<a name="line.911"></a>
+<span class="sourceLineNo">912</span>                for (int j = 0 ; j &lt; additional.length; j++) {<a name="line.912"></a>
+<span class="sourceLineNo">913</span>                    addEvent(additional[j]);<a name="line.913"></a>
+<span class="sourceLineNo">914</span>                }<a name="line.914"></a>
+<span class="sourceLineNo">915</span>            }<a name="line.915"></a>
+<span class="sourceLineNo">916</span>        }<a name="line.916"></a>
+<span class="sourceLineNo">917</span><a name="line.917"></a>
+<span class="sourceLineNo">918</span>        if (explicitEvents != null) {<a name="line.918"></a>
+<span class="sourceLineNo">919</span>            // Add the explicit explicitBeanInfo data to our results.<a name="line.919"></a>
+<span class="sourceLineNo">920</span>            for (int i = 0 ; i &lt; explicitEvents.length; i++) {<a name="line.920"></a>
+<span class="sourceLineNo">921</span>                addEvent(explicitEvents[i]);<a name="line.921"></a>
+<span class="sourceLineNo">922</span>            }<a name="line.922"></a>
+<span class="sourceLineNo">923</span><a name="line.923"></a>
+<span class="sourceLineNo">924</span>        } else {<a name="line.924"></a>
+<span class="sourceLineNo">925</span><a name="line.925"></a>
+<span class="sourceLineNo">926</span>            // Apply some reflection to the current class.<a name="line.926"></a>
+<span class="sourceLineNo">927</span><a name="line.927"></a>
+<span class="sourceLineNo">928</span>            // Get an array of all the public beans methods at this level<a name="line.928"></a>
+<span class="sourceLineNo">929</span>            Method methodList[] = getPublicDeclaredMethods(beanClass);<a name="line.929"></a>
+<span class="sourceLineNo">930</span><a name="line.930"></a>
+<span class="sourceLineNo">931</span>            // Find all suitable "add", "remove" and "get" Listener methods<a name="line.931"></a>
+<span class="sourceLineNo">932</span>            // The name of the listener type is the key for these hashtables<a name="line.932"></a>
+<span class="sourceLineNo">933</span>            // i.e, ActionListener<a name="line.933"></a>
+<span class="sourceLineNo">934</span>            Map adds = null;<a name="line.934"></a>
+<span class="sourceLineNo">935</span>            Map removes = null;<a name="line.935"></a>
+<span class="sourceLineNo">936</span>            Map gets = null;<a name="line.936"></a>
+<span class="sourceLineNo">937</span><a name="line.937"></a>
+<span class="sourceLineNo">938</span>            for (int i = 0; i &lt; methodList.length; i++) {<a name="line.938"></a>
+<span class="sourceLineNo">939</span>                Method method = methodList[i];<a name="line.939"></a>
+<span class="sourceLineNo">940</span>                if (method == null) {<a name="line.940"></a>
+<span class="sourceLineNo">941</span>                    continue;<a name="line.941"></a>
+<span class="sourceLineNo">942</span>                }<a name="line.942"></a>
+<span class="sourceLineNo">943</span>                // skip static methods.<a name="line.943"></a>
+<span class="sourceLineNo">944</span>                int mods = method.getModifiers();<a name="line.944"></a>
+<span class="sourceLineNo">945</span>                if (Modifier.isStatic(mods)) {<a name="line.945"></a>
+<span class="sourceLineNo">946</span>                    continue;<a name="line.946"></a>
+<span class="sourceLineNo">947</span>                }<a name="line.947"></a>
+<span class="sourceLineNo">948</span>                String name = method.getName();<a name="line.948"></a>
+<span class="sourceLineNo">949</span>                // Optimization avoid getParameterTypes<a name="line.949"></a>
+<span class="sourceLineNo">950</span>                if (!name.startsWith(ADD_PREFIX) &amp;&amp; !name.startsWith(REMOVE_PREFIX)<a name="line.950"></a>
+<span class="sourceLineNo">951</span>                    &amp;&amp; !name.startsWith(GET_PREFIX)) {<a name="line.951"></a>
+<span class="sourceLineNo">952</span>                    continue;<a name="line.952"></a>
+<span class="sourceLineNo">953</span>                }<a name="line.953"></a>
+<span class="sourceLineNo">954</span><a name="line.954"></a>
+<span class="sourceLineNo">955</span>                if (name.startsWith(ADD_PREFIX)) {<a name="line.955"></a>
+<span class="sourceLineNo">956</span>                    Class&lt;?&gt; returnType = method.getReturnType();<a name="line.956"></a>
+<span class="sourceLineNo">957</span>                    if (returnType == void.class) {<a name="line.957"></a>
+<span class="sourceLineNo">958</span>                        Type[] parameterTypes = method.getGenericParameterTypes();<a name="line.958"></a>
+<span class="sourceLineNo">959</span>                        if (parameterTypes.length == 1) {<a name="line.959"></a>
+<span class="sourceLineNo">960</span>                            Class&lt;?&gt; type = TypeResolver.erase(TypeResolver.resolveInClass(beanClass, parameterTypes[0]));<a name="line.960"></a>
+<span class="sourceLineNo">961</span>                            if (Introspector.isSubclass(type, eventListenerType)) {<a name="line.961"></a>
+<span class="sourceLineNo">962</span>                                String listenerName = name.substring(3);<a name="line.962"></a>
+<span class="sourceLineNo">963</span>                                if (listenerName.length() &gt; 0 &amp;&amp;<a name="line.963"></a>
+<span class="sourceLineNo">964</span>                                    type.getName().endsWith(listenerName)) {<a name="line.964"></a>
+<span class="sourceLineNo">965</span>                                    if (adds == null) {<a name="line.965"></a>
+<span class="sourceLineNo">966</span>                                        adds = new HashMap();<a name="line.966"></a>
+<span class="sourceLineNo">967</span>                                    }<a name="line.967"></a>
+<span class="sourceLineNo">968</span>                                    adds.put(listenerName, method);<a name="line.968"></a>
+<span class="sourceLineNo">969</span>                                }<a name="line.969"></a>
+<span class="sourceLineNo">970</span>                            }<a name="line.970"></a>
+<span class="sourceLineNo">971</span>                        }<a name="line.971"></a>
+<span class="sourceLineNo">972</span>                    }<a name="line.972"></a>
+<span class="sourceLineNo">973</span>                }<a name="line.973"></a>
+<span class="sourceLineNo">974</span>                else if (name.startsWith(REMOVE_PREFIX)) {<a name="line.974"></a>
+<span class="sourceLineNo">975</span>                    Class&lt;?&gt; returnType = method.getReturnType();<a name="line.975"></a>
+<span class="sourceLineNo">976</span>                    if (returnType == void.class) {<a name="line.976"></a>
+<span class="sourceLineNo">977</span>                        Type[] parameterTypes = method.getGenericParameterTypes();<a name="line.977"></a>
+<span class="sourceLineNo">978</span>                        if (parameterTypes.length == 1) {<a name="line.978"></a>
+<span class="sourceLineNo">979</span>                            Class&lt;?&gt; type = TypeResolver.erase(TypeResolver.resolveInClass(beanClass, parameterTypes[0]));<a name="line.979"></a>
+<span class="sourceLineNo">980</span>                            if (Introspector.isSubclass(type, eventListenerType)) {<a name="line.980"></a>
+<span class="sourceLineNo">981</span>                                String listenerName = name.substring(6);<a name="line.981"></a>
+<span class="sourceLineNo">982</span>                                if (listenerName.length() &gt; 0 &amp;&amp;<a name="line.982"></a>
+<span class="sourceLineNo">983</span>                                    type.getName().endsWith(listenerName)) {<a name="line.983"></a>
+<span class="sourceLineNo">984</span>                                    if (removes == null) {<a name="line.984"></a>
+<span class="sourceLineNo">985</span>                                        removes = new HashMap();<a name="line.985"></a>
+<span class="sourceLineNo">986</span>                                    }<a name="line.986"></a>
+<span class="sourceLineNo">987</span>                                    removes.put(listenerName, method);<a name="line.987"></a>
+<span class="sourceLineNo">988</span>                                }<a name="line.988"></a>
+<span class="sourceLineNo">989</span>                            }<a name="line.989"></a>
+<span class="sourceLineNo">990</span>                        }<a name="line.990"></a>
+<span class="sourceLineNo">991</span>                    }<a name="line.991"></a>
+<span class="sourceLineNo">992</span>                }<a name="line.992"></a>
+<span class="sourceLineNo">993</span>                else if (name.startsWith(GET_PREFIX)) {<a name="line.993"></a>
+<span class="sourceLineNo">994</span>                    Class&lt;?&gt;[] parameterTypes = method.getParameterTypes();<a name="line.994"></a>
+<span class="sourceLineNo">995</span>                    if (parameterTypes.length == 0) {<a name="line.995"></a>
+<span class="sourceLineNo">996</span>                        Class&lt;?&gt; returnType = FeatureDescriptor.getReturnType(beanClass, method);<a name="line.996"></a>
+<span class="sourceLineNo">997</span>                        if (returnType.isArray()) {<a name="line.997"></a>
+<span class="sourceLineNo">998</span>                            Class&lt;?&gt; type = returnType.getComponentType();<a name="line.998"></a>
+<span class="sourceLineNo">999</span>                            if (Introspector.isSubclass(type, eventListenerType)) {<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>                                String listenerName  = name.substring(3, name.length() - 1);<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span>                                if (listenerName.length() &gt; 0 &amp;&amp;<a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>                                    type.getName().endsWith(listenerName)) {<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>                                    if (gets == null) {<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>                                        gets = new HashMap();<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>                                    }<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>                                    gets.put(listenerName, method);<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>                                }<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>                            }<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>                        }<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>                    }<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>                }<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>            }<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span><a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>            if (adds != null &amp;&amp; removes != null) {<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>                // Now look for matching addFooListener+removeFooListener pairs.<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>                // Bonus if there is a matching getFooListeners method as well.<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>                Iterator keys = adds.keySet().iterator();<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>                while (keys.hasNext()) {<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>                    String listenerName = (String) keys.next();<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>                    // Skip any "add" which doesn't have a matching "remove" or<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>                    // a listener name that doesn't end with Listener<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>                    if (removes.get(listenerName) == null || !listenerName.endsWith("Listener")) {<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>                        continue;<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>                    }<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>                    String eventName = decapitalize(listenerName.substring(0, listenerName.length()-8));<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>                    Method addMethod = (Method)adds.get(listenerName);<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span>                    Method removeMethod = (Method)removes.get(listenerName);<a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>                    Method getMethod = null;<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>                    if (gets != null) {<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>                        getMethod = (Method)gets.get(listenerName);<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>                    }<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>                    Class argType = FeatureDescriptor.getParameterTypes(beanClass, addMethod)[0];<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span><a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>                    // generate a list of Method objects for each of the target methods:<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>                    Method allMethods[] = getPublicDeclaredMethods(argType);<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>                    List validMethods = new ArrayList(allMethods.length);<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span>                    for (int i = 0; i &lt; allMethods.length; i++) {<a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>                        if (allMethods[i] == null) {<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>                            continue;<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>                        }<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span><a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>                        if (isEventHandler(allMethods[i])) {<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>                            validMethods.add(allMethods[i]);<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>                        }<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>                    }<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>                    Method[] methods = (Method[])validMethods.toArray(new Method[validMethods.size()]);<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span><a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>                    EventSetDescriptor esd = new EventSetDescriptor(eventName, argType,<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>                                                                    methods, addMethod,<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>                                                                    removeMethod,<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>                                                                    getMethod);<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span><a name="line.1052"></a>
+<span class="sourceLineNo">1053</span>                    // If the adder method throws the TooManyListenersException then it<a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>                    // is a Unicast event source.<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>                    if (throwsException(addMethod,<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>                                        java.util.TooManyListenersException.class)) {<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>                        esd.setUnicast(true);<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>                    }<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>                    addEvent(esd);<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>                }<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>            } // if (adds != null ...<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>        }<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>        EventSetDescriptor[] result;<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span>        if (events.size() == 0) {<a name="line.1064"></a>
+<span class="sourceLineNo">1065</span>            result = EMPTY_EVENTSETDESCRIPTORS;<a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>        } else {<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>            // Allocate and populate the result array.<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>            result = new EventSetDescriptor[events.size()];<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>            result = (EventSetDescriptor[])events.values().toArray(result);<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span><a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>            // Set the default index.<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>            if (defaultEventName != null) {<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>                for (int i = 0; i &lt; result.length; i++) {<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>                    if (defaultEventName.equals(result[i].getName())) {<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>                        defaultEventIndex = i;<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>                    }<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>                }<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>            }<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>        }<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>        return result;<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>    }<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span><a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>    private void addEvent(EventSetDescriptor esd) {<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>        String key = esd.getName();<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>        if (esd.getName().equals("propertyChange")) {<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span>            propertyChangeSource = true;<a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>        }<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>        EventSetDescriptor old = (EventSetDescriptor)events.get(key);<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span>        if (old == null) {<a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>            events.put(key, esd);<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>            return;<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span>        }<a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>        EventSetDescriptor composite = new EventSetDescriptor(old, esd);<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>        events.put(key, composite);<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>    }<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span><a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>    /**<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>     * @return An array of MethodDescriptors describing the private<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>     * methods supported by the target bean.<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>     */<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>    private MethodDescriptor[] getTargetMethodInfo() {<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>        if (methods == null) {<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>            methods = new HashMap(100);<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>        }<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span><a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>        // Check if the bean has its own BeanInfo that will provide<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>        // explicit information.<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>        MethodDescriptor[] explicitMethods = null;<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>        if (explicitBeanInfo != null) {<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>            explicitMethods = explicitBeanInfo.getMethodDescriptors();<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span>        }<a name="line.1111"></a>
+<span class="sourceLineNo">1112</span><a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>        if (explicitMethods == null &amp;&amp; superBeanInfo != null) {<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span>            // We have no explicit BeanInfo methods.  Check with our parent.<a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>            MethodDescriptor supers[] = superBeanInfo.getMethodDescriptors();<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>            for (int i = 0 ; i &lt; supers.length; i++) {<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span>                addMethod(supers[i]);<a name="line.1117"></a>
+<span class="sourceLineNo">1118</span>            }<a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>        }<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span><a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>        for (int i = 0; i &lt; additionalBeanInfo.length; i++) {<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>            MethodDescriptor additional[] = additionalBeanInfo[i].getMethodDescriptors();<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>            if (additional != null) {<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>                for (int j = 0 ; j &lt; additional.length; j++) {<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>                    addMethod(additional[j]);<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>                }<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>            }<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>        }<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span><a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>        if (explicitMethods != null) {<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>            // Add the explicit explicitBeanInfo data to our results.<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span>            for (int i = 0 ; i &lt; explicitMethods.length; i++) {<a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>                addMethod(explicitMethods[i]);<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>            }<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span><a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>        } else {<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span><a name="line.1137"></a>
+<span class="sourceLineNo">1138</span>            // Apply some reflection to the current class.<a name="line.1138"></a>
+<span class="sourceLineNo">1139</span><a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>            // First get an array of all the beans methods at this level<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>            Method methodList[] = getPublicDeclaredMethods(beanClass);<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span><a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>            // Now analyze each method.<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>            for (int i = 0; i &lt; methodList.length; i++) {<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>                Method method = methodList[i];<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>                if (method == null) {<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>                    continue;<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>                }<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>                MethodDescriptor md = new MethodDescriptor(method);<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>                addMethod(md);<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>            }<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>        }<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span><a name="line.1153"></a>
+<span class="sourceLineNo">1154</span>        // Allocate and populate the result array.<a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>        MethodDescriptor result[] = new MethodDescriptor[methods.size()];<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>        result = (MethodDescriptor[])methods.values().toArray(result);<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span><a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>        return result;<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>    }<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span><a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>    private void addMethod(MethodDescriptor md) {<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>        // We have to be careful here to distinguish method by both name<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>        // and argument lists.<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>        // This method gets called a *lot, so we try to be efficient.<a name="line.1164"></a>
+<span class="sourceLineNo">1165</span>        String name = md.getName();<a name="line.1165"></a>
+<span class="sourceLineNo">1166</span><a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>        MethodDescriptor old = (MethodDescriptor)methods.get(name);<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>        if (old == null) {<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>            // This is the common case.<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>            methods.put(name, md);<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>            return;<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>        }<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span><a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>        // We have a collision on method names.  This is rare.<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span><a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>        // Check if old and md have the same type.<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>        String[] p1 = md.getParamNames();<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>        String[] p2 = old.getParamNames();<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span><a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>        boolean match = false;<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span>        if (p1.length == p2.length) {<a name="line.1181"></a>
+<span class="sourceLineNo">1182</span>            match = true;<a name="line.1182"></a>
+<span class="sourceLineNo">1183</span>            for (int i = 0; i &lt; p1.length; i++) {<a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>                if (p1[i] != p2[i]) {<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>                    match = false;<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>                    break;<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>                }<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>            }<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span>        }<a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>        if (match) {<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>            MethodDescriptor composite = new MethodDescriptor(old, md);<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>            methods.put(name, composite);<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span>            return;<a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>        }<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span><a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>        // We have a collision on method names with different type signatures.<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>        // This is very rare.<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span><a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>        String longKey = makeQualifiedMethodName(name, p1);<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>        old = (MethodDescriptor)methods.get(longKey);<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>        if (old == null) {<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span>            methods.put(longKey, md);<a name="line.1202"></a>
+<span class="sourceLineNo">1203</span>            return;<a name="line.1203"></a>
+<span class="sourceLineNo">1204</span>        }<a name="line.1204"></a>
+<span class="sourceLineNo">1205</span>        MethodDescriptor composite = new MethodDescriptor(old, md);<a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>        methods.put(longKey, composite);<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span>    }<a name="line.1207"></a>
+<span class="sourceLineNo">1208</span><a name="line.1208"></a>
+<span class="sourceLineNo">1209</span>    /**<a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>     * Creates a key for a method in a method cache.<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span>     */<a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>    private static String makeQualifiedMethodName(String name, String[] params) {<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span>        StringBuffer sb = new StringBuffer(name);<a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>        sb.append('=');<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>        for (int i = 0; i &lt; params.length; i++) {<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>            sb.append(':');<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>            sb.append(params[i]);<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span>        }<a name="line.1218"></a>
+<span class="sourceLineNo">1219</span>        return sb.toString();<a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>    }<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span><a name="line.1221"></a>
+<span class="sourceLineNo">1222</span>    private int getTargetDefaultEventIndex() {<a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>        return defaultEventIndex;<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>    }<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span><a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>    private int getTargetDefaultPropertyIndex() {<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span>        return defaultPropertyIndex;<a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>    }<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span><a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>    private BeanDescriptor getTargetBeanDescriptor() {<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span>        // Use explicit info, if available,<a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>        if (explicitBeanInfo != null) {<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>            BeanDescriptor bd = explicitBeanInfo.getBeanDescriptor();<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>            if (bd != null) {<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span>                return (bd);<a name="line.1235"></a>
+<span class="sourceLineNo">1236</span>            }<a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>        }<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span>        // OK, fabricate a default BeanDescriptor.<a name="line.1238"></a>
+<span class="sourceLineNo">1239</span>        return new BeanDescriptor(this.beanClass, findCustomizerClass(this.beanClass));<a name="line.1239"></a>
+<span class="sourceLineNo">1240</span>    }<a name="line.1240"></a>
+<span class="sourceLineNo">1241</span><a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>    private static Class&lt;?&gt; findCustomizerClass(Class&lt;?&gt; type) {<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>        String name = type.getName() + "Customizer";<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span>        try {<a name="line.1244"></a>
+<span class="sourceLineNo">1245</span>            type = ClassFinder.findClass(name, type.getClassLoader());<a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>            // Each customizer should inherit java.awt.Component and implement java.beans.Customizer<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span>            // according to the section 9.3 of JavaBeans&amp;trade; specification<a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>            if (Component.class.isAssignableFrom(type) &amp;&amp; Customizer.class.isAssignableFrom(type)) {<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>                return type;<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>            }<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span>        }<a name="line.1251"></a>
+<span class="sourceLineNo">1252</span>        catch (Exception exception) {<a name="line.1252"></a>
+<span class="sourceLineNo">1253</span>            // ignore any exceptions<a name="line.1253"></a>
+<span class="sourceLineNo">1254</span>        }<a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>        return null;<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span>    }<a name="line.1256"></a>
+<span class="sourceLineNo">1257</span><a name="line.1257"></a>
+<span class="sourceLineNo">1258</span>    private boolean isEventHandler(Method m) {<a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>        // We assume that a method is an event handler if it has a single<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span>        // argument, whose type inherit from java.util.Event.<a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>        Type argTypes[] = m.getGenericParameterTypes();<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>        if (argTypes.length != 1) {<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>            return false;<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>        }<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span>        return isSubclass(TypeResolver.erase(TypeResolver.resolveInClass(beanClass, argTypes[0])), EventObject.class);<a name="line.1265"></a>
+<span class="sourceLineNo">1266</span>    }<a name="line.1266"></a>
+<span class="sourceLineNo">1267</span><a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>    /*<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span>     * Internal method to return *public* methods within a class.<a name="line.1269"></a>
+<span class="sourceLineNo">1270</span>     */<a name="line.1270"></a>
+<span class="sourceLineNo">1271</span>    private static Method[] getPublicDeclaredMethods(Class clz) {<a name="line.1271"></a>
+<span class="sourceLineNo">1272</span>        // Looking up Class.getDeclaredMethods is relatively expensive,<a name="line.1272"></a>
+<span class="sourceLineNo">1273</span>        // so we cache the results.<a name="line.1273"></a>
+<span class="sourceLineNo">1274</span>        if (!ReflectUtil.isPackageAccessible(clz)) {<a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>            return new Method[0];<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span>        }<a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>        synchronized (declaredMethodCache) {<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span>            Method[] result = declaredMethodCache.get(clz);<a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>            if (result == null) {<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span>                result = clz.getMethods();<a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>                for (int i = 0; i &lt; result.length; i++) {<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span>                    Method method = result[i];<a name="line.1282"></a>
+<span class="sourceLineNo">1283</span>                    if (!method.getDeclaringClass().equals(clz)) {<a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>                        result[i] = null;<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span>                    }<a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>                }<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span>                declaredMethodCache.put(clz, result);<a name="line.1287"></a>
+<span class="sourceLineNo">1288</span>            }<a name="line.1288"></a>
+<span class="sourceLineNo">1289</span>            return result;<a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>        }<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span>    }<a name="line.1291"></a>
+<span class="sourceLineNo">1292</span><a name="line.1292"></a>
+<span class="sourceLineNo">1293</span>    //======================================================================<a name="line.1293"></a>
+<span class="sourceLineNo">1294</span>    // Package private support methods.<a name="line.1294"></a>
+<span class="sourceLineNo">1295</span>    //======================================================================<a name="line.1295"></a>
+<span class="sourceLineNo">1296</span><a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>    /**<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span>     * Internal support for finding a target methodName with a given<a name="line.1298"></a>
+<span class="sourceLineNo">1299</span>     * parameter list on a given class.<a name="line.1299"></a>
+<span class="sourceLineNo">1300</span>     */<a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>    private static Method internalFindMethod(Class start, String methodName,<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>                                                 int argCount, Class args[]) {<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>        // For overriden methods we need to find the most derived version.<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span>        // So we start with the given class and walk up the superclass chain.<a name="line.1304"></a>
+<span class="sourceLineNo">1305</span><a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>        Method method = null;<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span><a name="line.1307"></a>
+<span class="sourceLineNo">1308</span>        for (Class cl = start; cl != null; cl = cl.getSuperclass()) {<a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>            Method methods[] = getPublicDeclaredMethods(cl);<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span>            for (int i = 0; i &lt; methods.length; i++) {<a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>                method = methods[i];<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>                if (method == null) {<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span>                    continue;<a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>                }<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span><a name="line.1315"></a>
+<span class="sourceLineNo">1316</span>                // make sure method signature matches.<a name="line.1316"></a>
+<span class="sourceLineNo">1317</span>                if (method.getName().equals(methodName)) {<a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>                    Type[] params = method.getGenericParameterTypes();<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span>                    if (params.length == argCount) {<a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>                        if (args != null) {<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span>                            boolean different = false;<a name="line.1321"></a>
+<span class="sourceLineNo">1322</span>                            if (argCount &gt; 0) {<a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>                                for (int j = 0; j &lt; argCount; j++) {<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>                                    if (TypeResolver.erase(TypeResolver.resolveInClass(start, params[j])) != args[j]) {<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>                                        different = true;<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span>                                        continue;<a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>                                    }<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span>                                }<a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>                                if (different) {<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>                                    continue;<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>                                }<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span>                            }<a name="line.1332"></a>
+<span class="sourceLineNo">1333</span>                        }<a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>                        return method;<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span>                    }<a name="line.1335"></a>
+<span class="sourceLineNo">1336</span>                }<a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>            }<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span>        }<a name="line.1338"></a>
+<span class="sourceLineNo">1339</span>        method = null;<a name="line.1339"></a>
+<span class="sourceLineNo">1340</span><a name="line.1340"></a>
+<span class="sourceLineNo">1341</span>        // Now check any inherited interfaces.  This is necessary both when<a name="line.1341"></a>
+<span class="sourceLineNo">1342</span>        // the argument class is itself an interface, and when the argument<a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>        // class is an abstract class.<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span>        Class ifcs[] = start.getInterfaces();<a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>        for (int i = 0 ; i &lt; ifcs.length; i++) {<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>            // Note: The original implementation had both methods calling<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>            // the 3 arg method. This is preserved but perhaps it should<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span>            // pass the args array instead of null.<a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>            method = internalFindMethod(ifcs[i], methodName, argCount, null);<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>            if (method != null) {<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span>                break;<a name="line.1351"></a>
+<span class="sourceLineNo">1352</span>            }<a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>        }<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span>        return method;<a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>    }<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span><a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>    /**<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span>     * Find a target methodName on a given class.<a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>     */<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span>    static Method findMethod(Class cls, String methodName, int argCount) {<a name="line.1360"></a>
+<span class="sourceLineNo">1361</span>        return findMethod(cls, methodName, argCount, null);<a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>    }<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span><a name="line.1363"></a>
+<span class="sourceLineNo">1364</span>    /**<a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>     * Find a target methodName with specific parameter list on a given class.<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span>     * &lt;p&gt;<a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>     * Used in the contructors of the EventSetDescriptor,<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span>     * PropertyDescriptor and the IndexedPropertyDescriptor.<a name="line.1368"></a>
+<span class="sourceLineNo">1369</span>     * &lt;p&gt;<a name="line.1369"></a>
+<span class="sourceLineNo">1370</span>     * @param cls The Class object on which to retrieve the method.<a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>     * @param methodName Name of the method.<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span>     * @param argCount Number of arguments for the desired method.<a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>     * @param args Array of argument types for the method.<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>     * @return the method or null if not found<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span>     */<a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>    static Method findMethod(Class cls, String methodName, int argCount,<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>                             Class args[]) {<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>        if (methodName == null) {<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span>            return null;<a name="line.1379"></a>
+<span class="sourceLineNo">1380</span>        }<a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>        return internalFindMethod(cls, methodName, argCount, args);<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span>    }<a name="line.1382"></a>
+<span class="sourceLineNo">1383</span><a name="line.1383"></a>
+<span class="sourceLineNo">1384</span>    /**<a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>     * Return true if class a is either equivalent to class b, or<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span>     * if class a is a subclass of class b, i.e. if a either "extends"<a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>     * or "implements" b.<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span>     * Note tht either or both "Class" objects may represent interfaces.<a name="line.1388"></a>
+<span class="sourceLineNo">1389</span>     */<a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>    static  boolean isSubclass(Class a, Class b) {<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>        // We rely on the fact that for any given java class or<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span>        // primtitive type there is a unqiue Class object, so<a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>        // we can use object equivalence in the comparisons.<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span>        if (a == b) {<a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>            return true;<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span>        }<a name="line.1396"></a>
+<span class="sourceLineNo">1397</span>        if (a == null || b == null) {<a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>            return false;<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span>        }<a name="line.1399"></a>
+<span class="sourceLineNo">1400</span>        for (Class x = a; x != null; x = x.getSuperclass()) {<a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>            if (x == b) {<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span>                return true;<a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>            }<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span>            if (b.isInterface()) {<a name="line.1404"></a>
+<span class="sourceLineNo">1405</span>                Class interfaces[] = x.getInterfaces();<a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>                for (int i = 0; i &lt; interfaces.length; i++) {<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>                    if (isSubclass(interfaces[i], b)) {<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span>                        return true;<a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>                    }<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span>                }<a name="line.1410"></a>
+<span class="sourceLineNo">1411</span>            }<a name="line.1411"></a>
+<span class="sourceLineNo">1412</span>        }<a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>        return false;<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span>    }<a name="line.1414"></a>
+<span class="sourceLineNo">1415</span><a name="line.1415"></a>
+<span class="sourceLineNo">1416</span>    /**<a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>     * Return true iff the given method throws the given exception.<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span>     */<a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>    private boolean throwsException(Method method, Class exception) {<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span>        Class exs[] = method.getExceptionTypes();<a name="line.1420"></a>
+<span class="sourceLineNo">1421</span>        for (int i = 0; i &lt; exs.length; i++) {<a name="line.1421"></a>
+<span class="sourceLineNo">1422</span>            if (exs[i] == exception) {<a name="line.1422"></a>
+<span class="sourceLineNo">1423</span>                return true;<a name="line.1423"></a>
+<span class="sourceLineNo">1424</span>            }<a name="line.1424"></a>
+<span class="sourceLineNo">1425</span>        }<a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>        return false;<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span>    }<a name="line.1427"></a>
+<span class="sourceLineNo">1428</span><a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>    /**<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span>     * Try to create an instance of a named class.<a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>     * First try the classloader of "sibling", then try the system<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span>     * classloader then the class loader of the current Thread.<a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>     */<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span>    static Object instantiate(Class sibling, String className)<a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>                 throws InstantiationException, IllegalAccessException,<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span>                                                ClassNotFoundException {<a name="line.1436"></a>
+<span class="sourceLineNo">1437</span>        // First check with sibling's classloader (if any).<a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>        ClassLoader cl = sibling.getClassLoader();<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>        Class cls = ClassFinder.findClass(className, cl);<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>        return cls.newInstance();<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>    }<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span><a name="line.1442"></a>
+<span class="sourceLineNo">1443</span>} // end class Introspector<a name="line.1443"></a>
+<span class="sourceLineNo">1444</span><a name="line.1444"></a>
+<span class="sourceLineNo">1445</span>//===========================================================================<a name="line.1445"></a>
+<span class="sourceLineNo">1446</span><a name="line.1446"></a>
+<span class="sourceLineNo">1447</span>/**<a name="line.1447"></a>
+<span class="sourceLineNo">1448</span> * Package private implementation support class for Introspector's<a name="line.1448"></a>
+<span class="sourceLineNo">1449</span> * internal use.<a name="line.1449"></a>
+<span class="sourceLineNo">1450</span> * &lt;p&gt;<a name="line.1450"></a>
+<span class="sourceLineNo">1451</span> * Mostly this is used as a placeholder for the descriptors.<a name="line.1451"></a>
+<span class="sourceLineNo">1452</span> */<a name="line.1452"></a>
+<span class="sourceLineNo">1453</span><a name="line.1453"></a>
+<span class="sourceLineNo">1454</span>class GenericBeanInfo extends SimpleBeanInfo {<a name="line.1454"></a>
+<span class="sourceLineNo">1455</span><a name="line.1455"></a>
+<span class="sourceLineNo">1456</span>    private BeanDescriptor beanDescriptor;<a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>    private EventSetDescriptor[] events;<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span>    private int defaultEvent;<a name="line.1458"></a>
+<span class="sourceLineNo">1459</span>    private PropertyDescriptor[] properties;<a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>    private int defaultProperty;<a name="line.1460"></a>
+<span class="sourceLineNo">1461</span>    private MethodDescriptor[] methods;<a name="line.1461"></a>
+<span class="sourceLineNo">1462</span>    private Reference&lt;BeanInfo&gt; targetBeanInfoRef;<a name="line.1462"></a>
+<span class="sourceLineNo">1463</span><a name="line.1463"></a>
+<span class="sourceLineNo">1464</span>    public GenericBeanInfo(BeanDescriptor beanDescriptor,<a name="line.1464"></a>
+<span class="sourceLineNo">1465</span>                EventSetDescriptor[] events, int defaultEvent,<a name="line.1465"></a>
+<span class="sourceLineNo">1466</span>                PropertyDescriptor[] properties, int defaultProperty,<a name="line.1466"></a>
+<span class="sourceLineNo">1467</span>                MethodDescriptor[] methods, BeanInfo targetBeanInfo) {<a name="line.1467"></a>
+<span class="sourceLineNo">1468</span>        this.beanDescriptor = beanDescriptor;<a name="line.1468"></a>
+<span class="sourceLineNo">1469</span>        this.events = events;<a name="line.1469"></a>
+<span class="sourceLineNo">1470</span>        this.defaultEvent = defaultEvent;<a name="line.1470"></a>
+<span class="sourceLineNo">1471</span>        this.properties = properties;<a name="line.1471"></a>
+<span class="sourceLineNo">1472</span>        this.defaultProperty = defaultProperty;<a name="line.1472"></a>
+<span class="sourceLineNo">1473</span>        this.methods = methods;<a name="line.1473"></a>
+<span class="sourceLineNo">1474</span>        this.targetBeanInfoRef = (targetBeanInfo != null)<a name="line.1474"></a>
+<span class="sourceLineNo">1475</span>                ? new SoftReference&lt;&gt;(targetBeanInfo)<a name="line.1475"></a>
+<span class="sourceLineNo">1476</span>                : null;<a name="line.1476"></a>
+<span class="sourceLineNo">1477</span>    }<a name="line.1477"></a>
+<span class="sourceLineNo">1478</span><a name="line.1478"></a>
+<span class="sourceLineNo">1479</span>    /**<a name="line.1479"></a>
+<span class="sourceLineNo">1480</span>     * Package-private dup constructor<a name="line.1480"></a>
+<span class="sourceLineNo">1481</span>     * This must isolate the new object from any changes to the old object.<a name="line.1481"></a>
+<span class="sourceLineNo">1482</span>     */<a name="line.1482"></a>
+<span class="sourceLineNo">1483</span>    GenericBeanInfo(GenericBeanInfo old) {<a name="line.1483"></a>
+<span class="sourceLineNo">1484</span><a name="line.1484"></a>
+<span class="sourceLineNo">1485</span>        beanDescriptor = new BeanDescriptor(old.beanDescriptor);<a name="line.1485"></a>
+<span class="sourceLineNo">1486</span>        if (old.events != null) {<a name="line.1486"></a>
+<span class="sourceLineNo">1487</span>            int len = old.events.length;<a name="line.1487"></a>
+<span class="sourceLineNo">1488</span>            events = new EventSetDescriptor[len];<a name="line.1488"></a>
+<span class="sourceLineNo">1489</span>            for (int i = 0; i &lt; len; i++) {<a name="line.1489"></a>
+<span class="sourceLineNo">1490</span>                events[i] = new EventSetDescriptor(old.events[i]);<a name="line.1490"></a>
+<span class="sourceLineNo">1491</span>            }<a name="line.1491"></a>
+<span class="sourceLineNo">1492</span>        }<a name="line.1492"></a>
+<span class="sourceLineNo">1493</span>        defaultEvent = old.defaultEvent;<a name="line.1493"></a>
+<span class="sourceLineNo">1494</span>        if (old.properties != null) {<a name="line.1494"></a>
+<span class="sourceLineNo">1495</span>            int len = old.properties.length;<a name="line.1495"></a>
+<span class="sourceLineNo">1496</span>            properties = new PropertyDescriptor[len];<a name="line.1496"></a>
+<span class="sourceLineNo">1497</span>            for (int i = 0; i &lt; len; i++) {<a name="line.1497"></a>
+<span class="sourceLineNo">1498</span>                PropertyDescriptor oldp = old.properties[i];<a name="line.1498"></a>
+<span class="sourceLineNo">1499</span>                if (oldp instanceof IndexedPropertyDescriptor) {<a name="line.1499"></a>
+<span class="sourceLineNo">1500</span>                    properties[i] = new IndexedPropertyDescriptor(<a name="line.1500"></a>
+<span class="sourceLineNo">1501</span>                                        (IndexedPropertyDescriptor) oldp);<a name="line.1501"></a>
+<span class="sourceLineNo">1502</span>                } else {<a name="line.1502"></a>
+<span class="sourceLineNo">1503</span>                    properties[i] = new PropertyDescriptor(oldp);<a name="line.1503"></a>
+<span class="sourceLineNo">1504</span>                }<a name="line.1504"></a>
+<span class="sourceLineNo">1505</span>            }<a name="line.1505"></a>
+<span class="sourceLineNo">1506</span>        }<a name="line.1506"></a>
+<span class="sourceLineNo">1507</span>        defaultProperty = old.defaultProperty;<a name="line.1507"></a>
+<span class="sourceLineNo">1508</span>        if (old.methods != null) {<a name="line.1508"></a>
+<span class="sourceLineNo">1509</span>            int len = old.methods.length;<a name="line.1509"></a>
+<span class="sourceLineNo">1510</span>            methods = new MethodDescriptor[len];<a name="line.1510"></a>
+<span class="sourceLineNo">1511</span>            for (int i = 0; i &lt; len; i++) {<a name="line.1511"></a>
+<span class="sourceLineNo">1512</span>                methods[i] = new MethodDescriptor(old.methods[i]);<a name="line.1512"></a>
+<span class="sourceLineNo">1513</span>            }<a name="line.1513"></a>
+<span class="sourceLineNo">1514</span>        }<a name="line.1514"></a>
+<span class="sourceLineNo">1515</span>        this.targetBeanInfoRef = old.targetBeanInfoRef;<a name="line.1515"></a>
+<span class="sourceLineNo">1516</span>    }<a name="line.1516"></a>
+<span class="sourceLineNo">1517</span><a name="line.1517"></a>
+<span class="sourceLineNo">1518</span>    public PropertyDescriptor[] getPropertyDescriptors() {<a name="line.1518"></a>
+<span class="sourceLineNo">1519</span>        return properties;<a name="line.1519"></a>
+<span class="sourceLineNo">1520</span>    }<a name="line.1520"></a>
+<span class="sourceLineNo">1521</span><a name="line.1521"></a>
+<span class="sourceLineNo">1522</span>    public int getDefaultPropertyIndex() {<a name="line.1522"></a>
+<span class="sourceLineNo">1523</span>        return defaultProperty;<a name="line.1523"></a>
+<span class="sourceLineNo">1524</span>    }<a name="line.1524"></a>
+<span class="sourceLineNo">1525</span><a name="line.1525"></a>
+<span class="sourceLineNo">1526</span>    public EventSetDescriptor[] getEventSetDescriptors() {<a name="line.1526"></a>
+<span class="sourceLineNo">1527</span>        return events;<a name="line.1527"></a>
+<span class="sourceLineNo">1528</span>    }<a name="line.1528"></a>
+<span class="sourceLineNo">1529</span><a name="line.1529"></a>
+<span class="sourceLineNo">1530</span>    public int getDefaultEventIndex() {<a name="line.1530"></a>
+<span class="sourceLineNo">1531</span>        return defaultEvent;<a name="line.1531"></a>
+<span class="sourceLineNo">1532</span>    }<a name="line.1532"></a>
+<span class="sourceLineNo">1533</span><a name="line.1533"></a>
+<span class="sourceLineNo">1534</span>    public MethodDescriptor[] getMethodDescriptors() {<a name="line.1534"></a>
+<span class="sourceLineNo">1535</span>        return methods;<a name="line.1535"></a>
+<span class="sourceLineNo">1536</span>    }<a name="line.1536"></a>
+<span class="sourceLineNo">1537</span><a name="line.1537"></a>
+<span class="sourceLineNo">1538</span>    public BeanDescriptor getBeanDescriptor() {<a name="line.1538"></a>
+<span class="sourceLineNo">1539</span>        return beanDescriptor;<a name="line.1539"></a>
+<span class="sourceLineNo">1540</span>    }<a name="line.1540"></a>
+<span class="sourceLineNo">1541</span><a name="line.1541"></a>
+<span class="sourceLineNo">1542</span>    public java.awt.Image getIcon(int iconKind) {<a name="line.1542"></a>
+<span class="sourceLineNo">1543</span>        BeanInfo targetBeanInfo = getTargetBeanInfo();<a name="line.1543"></a>
+<span class="sourceLineNo">1544</span>        if (targetBeanInfo != null) {<a name="line.1544"></a>
+<span class="sourceLineNo">1545</span>            return targetBeanInfo.getIcon(iconKind);<a name="line.1545"></a>
+<span class="sourceLineNo">1546</span>        }<a name="line.1546"></a>
+<span class="sourceLineNo">1547</span>        return super.getIcon(iconKind);<a name="line.1547"></a>
+<span class="sourceLineNo">1548</span>    }<a name="line.1548"></a>
+<span class="sourceLineNo">1549</span><a name="line.1549"></a>
+<span class="sourceLineNo">1550</span>    private BeanInfo getTargetBeanInfo() {<a name="line.1550"></a>
+<span class="sourceLineNo">1551</span>        if (this.targetBeanInfoRef == null) {<a name="line.1551"></a>
+<span class="sourceLineNo">1552</span>            return null;<a name="line.1552"></a>
+<span class="sourceLineNo">1553</span>        }<a name="line.1553"></a>
+<span class="sourceLineNo">1554</span>        BeanInfo targetBeanInfo = this.targetBeanInfoRef.get();<a name="line.1554"></a>
+<span class="sourceLineNo">1555</span>        if (targetBeanInfo == null) {<a name="line.1555"></a>
+<span class="sourceLineNo">1556</span>            targetBeanInfo = ThreadGroupContext.getContext().getBeanInfoFinder()<a name="line.1556"></a>
+<span class="sourceLineNo">1557</span>                    .find(this.beanDescriptor.getBeanClass());<a name="line.1557"></a>
+<span class="sourceLineNo">1558</span>            if (targetBeanInfo != null) {<a name="line.1558"></a>
+<span class="sourceLineNo">1559</span>                this.targetBeanInfoRef = new SoftReference&lt;&gt;(targetBeanInfo);<a name="line.1559"></a>
+<span class="sourceLineNo">1560</span>            }<a name="line.1560"></a>
+<span class="sourceLineNo">1561</span>        }<a name="line.1561"></a>
+<span class="sourceLineNo">1562</span>        return targetBeanInfo;<a name="line.1562"></a>
+<span class="sourceLineNo">1563</span>    }<a name="line.1563"></a>
+<span class="sourceLineNo">1564</span>}<a name="line.1564"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

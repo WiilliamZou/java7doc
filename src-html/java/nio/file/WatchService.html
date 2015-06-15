@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.nio.file;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.Closeable;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.IOException;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.util.concurrent.TimeUnit;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * A watch service that &lt;em&gt;watches&lt;/em&gt; registered objects for changes and<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * events. For example a file manager may use a watch service to monitor a<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * directory for changes so that it can update its display of the list of files<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * when files are created or deleted.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * &lt;p&gt; A {@link Watchable} object is registered with a watch service by invoking<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * its {@link Watchable#register register} method, returning a {@link WatchKey}<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * to represent the registration. When an event for an object is detected the<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * key is &lt;em&gt;signalled&lt;/em&gt;, and if not currently signalled, it is queued to<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * the watch service so that it can be retrieved by consumers that invoke the<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * {@link #poll() poll} or {@link #take() take} methods to retrieve keys<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * and process events. Once the events have been processed the consumer<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * invokes the key's {@link WatchKey#reset reset} method to reset the key which<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * allows the key to be signalled and re-queued with further events.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;p&gt; Registration with a watch service is cancelled by invoking the key's<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * {@link WatchKey#cancel cancel} method. A key that is queued at the time that<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * it is cancelled remains in the queue until it is retrieved. Depending on the<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * object, a key may be cancelled automatically. For example, suppose a<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * directory is watched and the watch service detects that it has been deleted<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * or its file system is no longer accessible. When a key is cancelled in this<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * manner it is signalled and queued, if not currently signalled. To ensure<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * that the consumer is notified the return value from the {@code reset}<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * method indicates if the key is valid.<a name="line.56"></a>
+<span class="sourceLineNo">057</span> *<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;p&gt; A watch service is safe for use by multiple concurrent consumers. To<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * ensure that only one consumer processes the events for a particular object at<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * any time then care should be taken to ensure that the key's {@code reset}<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * method is only invoked after its events have been processed. The {@link<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * #close close} method may be invoked at any time to close the service causing<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * any threads waiting to retrieve keys, to throw {@code<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * ClosedWatchServiceException}.<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;p&gt; File systems may report events faster than they can be retrieved or<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * processed and an implementation may impose an unspecified limit on the number<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * of events that it may accumulate. Where an implementation &lt;em&gt;knowingly&lt;/em&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * discards events then it arranges for the key's {@link WatchKey#pollEvents<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * pollEvents} method to return an element with an event type of {@link<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * StandardWatchEventKinds#OVERFLOW OVERFLOW}. This event can be used by the<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * consumer as a trigger to re-examine the state of the object.<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;p&gt; When an event is reported to indicate that a file in a watched directory<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * has been modified then there is no guarantee that the program (or programs)<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * that have modified the file have completed. Care should be taken to coordinate<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * access with other programs that may be updating the file.<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * The {@link java.nio.channels.FileChannel FileChannel} class defines methods<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * to lock regions of a file against access by other programs.<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * &lt;h4&gt;Platform dependencies&lt;/h4&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * &lt;p&gt; The implementation that observes events from the file system is intended<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * to map directly on to the native file event notification facility where<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * available, or to use a primitive mechanism, such as polling, when a native<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * facility is not available. Consequently, many of the details on how events<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * are detected, their timeliness, and whether their ordering is preserved are<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * highly implementation specific. For example, when a file in a watched<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * directory is modified then it may result in a single {@link<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * StandardWatchEventKinds#ENTRY_MODIFY ENTRY_MODIFY} event in some<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * implementations but several events in other implementations. Short-lived<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * files (meaning files that are deleted very quickly after they are created)<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * may not be detected by primitive implementations that periodically poll the<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * file system to detect changes.<a name="line.94"></a>
+<span class="sourceLineNo">095</span> *<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;p&gt; If a watched file is not located on a local storage device then it is<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * implementation specific if changes to the file can be detected. In particular,<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * it is not required that changes to files carried out on remote systems be<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * detected.<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * @since 1.7<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * @see FileSystem#newWatchService<a name="line.103"></a>
+<span class="sourceLineNo">104</span> */<a name="line.104"></a>
+<span class="sourceLineNo">105</span><a name="line.105"></a>
+<span class="sourceLineNo">106</span>public interface WatchService<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    extends Closeable<a name="line.107"></a>
+<span class="sourceLineNo">108</span>{<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span>    /**<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * Closes this watch service.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     *<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * &lt;p&gt; If a thread is currently blocked in the {@link #take take} or {@link<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * #poll(long,TimeUnit) poll} methods waiting for a key to be queued then<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * it immediately receives a {@link ClosedWatchServiceException}. Any<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * valid keys associated with this watch service are {@link WatchKey#isValid<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * invalidated}.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * &lt;p&gt; After a watch service is closed, any further attempt to invoke<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * operations upon it will throw {@link ClosedWatchServiceException}.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * If this watch service is already closed then invoking this method<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * has no effect.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     *<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @throws  IOException<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     *          if an I/O error occurs<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     */<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    @Override<a name="line.127"></a>
+<span class="sourceLineNo">128</span>    void close() throws IOException;<a name="line.128"></a>
+<span class="sourceLineNo">129</span><a name="line.129"></a>
+<span class="sourceLineNo">130</span>    /**<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * Retrieves and removes the next watch key, or {@code null} if none are<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * present.<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * @return  the next watch key, or {@code null}<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @throws  ClosedWatchServiceException<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *          if this watch service is closed<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     */<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    WatchKey poll();<a name="line.139"></a>
+<span class="sourceLineNo">140</span><a name="line.140"></a>
+<span class="sourceLineNo">141</span>    /**<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * Retrieves and removes the next watch key, waiting if necessary up to the<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * specified wait time if none are yet present.<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     *<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * @param   timeout<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     *          how to wait before giving up, in units of unit<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @param   unit<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     *          a {@code TimeUnit} determining how to interpret the timeout<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     *          parameter<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * @return  the next watch key, or {@code null}<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @throws  ClosedWatchServiceException<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     *          if this watch service is closed, or it is closed while waiting<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     *          for the next key<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * @throws  InterruptedException<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     *          if interrupted while waiting<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     */<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    WatchKey poll(long timeout, TimeUnit unit)<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        throws InterruptedException;<a name="line.160"></a>
+<span class="sourceLineNo">161</span><a name="line.161"></a>
+<span class="sourceLineNo">162</span>    /**<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * Retrieves and removes next watch key, waiting if none are yet present.<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     *<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * @return  the next watch key<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     *<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     * @throws  ClosedWatchServiceException<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     *          if this watch service is closed, or it is closed while waiting<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *          for the next key<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * @throws  InterruptedException<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     *          if interrupted while waiting<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    WatchKey take() throws InterruptedException;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>}<a name="line.174"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>/* ********************************************************************<a name="line.26"></a>
+<span class="sourceLineNo">027</span> **********************************************************************<a name="line.27"></a>
+<span class="sourceLineNo">028</span> **********************************************************************<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *** COPYRIGHT (c) Eastman Kodak Company, 1997                      ***<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *** As  an unpublished  work pursuant to Title 17 of the United    ***<a name="line.30"></a>
+<span class="sourceLineNo">031</span> *** States Code.  All rights reserved.                             ***<a name="line.31"></a>
+<span class="sourceLineNo">032</span> **********************************************************************<a name="line.32"></a>
+<span class="sourceLineNo">033</span> **********************************************************************<a name="line.33"></a>
+<span class="sourceLineNo">034</span> **********************************************************************/<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>package java.awt.image.renderable;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.awt.geom.Rectangle2D;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.awt.image.RenderedImage;<a name="line.38"></a>
+<span class="sourceLineNo">039</span><a name="line.39"></a>
+<span class="sourceLineNo">040</span>/**<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * ContextualRenderedImageFactory provides an interface for the<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * functionality that may differ between instances of<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * RenderableImageOp.  Thus different operations on RenderableImages<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * may be performed by a single class such as RenderedImageOp through<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * the use of multiple instances of ContextualRenderedImageFactory.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * The name ContextualRenderedImageFactory is commonly shortened to<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * "CRIF."<a name="line.47"></a>
+<span class="sourceLineNo">048</span> *<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;p&gt; All operations that are to be used in a rendering-independent<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * chain must implement ContextualRenderedImageFactory.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;p&gt; Classes that implement this interface must provide a<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * constructor with no arguments.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> */<a name="line.54"></a>
+<span class="sourceLineNo">055</span>public interface ContextualRenderedImageFactory extends RenderedImageFactory {<a name="line.55"></a>
+<span class="sourceLineNo">056</span><a name="line.56"></a>
+<span class="sourceLineNo">057</span>    /**<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * Maps the operation's output RenderContext into a RenderContext<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * for each of the operation's sources.  This is useful for<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * operations that can be expressed in whole or in part simply as<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * alterations in the RenderContext, such as an affine mapping, or<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * operations that wish to obtain lower quality renderings of<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * their sources in order to save processing effort or<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * transmission bandwith.  Some operations, such as blur, can also<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * use this mechanism to avoid obtaining sources of higher quality<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * than necessary.<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     *<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * @param i the index of the source image.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @param renderContext the RenderContext being applied to the operation.<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * @param paramBlock a ParameterBlock containing the operation's<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     *        sources and parameters.<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * @param image the RenderableImage being rendered.<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * @return a &lt;code&gt;RenderContext&lt;/code&gt; for<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     *         the source at the specified index of the parameters<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     *         Vector contained in the specified ParameterBlock.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     */<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    RenderContext mapRenderContext(int i,<a name="line.77"></a>
+<span class="sourceLineNo">078</span>                                   RenderContext renderContext,<a name="line.78"></a>
+<span class="sourceLineNo">079</span>                                   ParameterBlock paramBlock,<a name="line.79"></a>
+<span class="sourceLineNo">080</span>                                   RenderableImage image);<a name="line.80"></a>
+<span class="sourceLineNo">081</span><a name="line.81"></a>
+<span class="sourceLineNo">082</span>    /**<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * Creates a rendering, given a RenderContext and a ParameterBlock<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * containing the operation's sources and parameters.  The output<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * is a RenderedImage that takes the RenderContext into account to<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * determine its dimensions and placement on the image plane.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * This method houses the "intelligence" that allows a<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * rendering-independent operation to adapt to a specific<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * RenderContext.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @param renderContext The RenderContext specifying the rendering<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @param paramBlock a ParameterBlock containing the operation's<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     *        sources and parameters<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @return a &lt;code&gt;RenderedImage&lt;/code&gt; from the sources and parameters<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     *         in the specified ParameterBlock and according to the<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *         rendering instructions in the specified RenderContext.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     */<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    RenderedImage create(RenderContext renderContext,<a name="line.98"></a>
+<span class="sourceLineNo">099</span>                         ParameterBlock paramBlock);<a name="line.99"></a>
+<span class="sourceLineNo">100</span><a name="line.100"></a>
+<span class="sourceLineNo">101</span>    /**<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * Returns the bounding box for the output of the operation,<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * performed on a given set of sources, in rendering-independent<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * space.  The bounds are returned as a Rectangle2D, that is, an<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * axis-aligned rectangle with floating-point corner coordinates.<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     *<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * @param paramBlock a ParameterBlock containing the operation's<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     *        sources and parameters.<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * @return a Rectangle2D specifying the rendering-independent<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     *         bounding box of the output.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     */<a name="line.111"></a>
+<span class="sourceLineNo">112</span>    Rectangle2D getBounds2D(ParameterBlock paramBlock);<a name="line.112"></a>
+<span class="sourceLineNo">113</span><a name="line.113"></a>
+<span class="sourceLineNo">114</span>    /**<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * Gets the appropriate instance of the property specified by the name<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * parameter.  This method must determine which instance of a property to<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * return when there are multiple sources that each specify the property.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * @param paramBlock a ParameterBlock containing the operation's<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     *        sources and parameters.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * @param name a String naming the desired property.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @return an object reference to the value of the property requested.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    Object getProperty(ParameterBlock paramBlock, String name);<a name="line.124"></a>
+<span class="sourceLineNo">125</span><a name="line.125"></a>
+<span class="sourceLineNo">126</span>    /**<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * Returns a list of names recognized by getProperty.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @return the list of property names.<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     */<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    String[] getPropertyNames();<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /**<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * Returns true if successive renderings (that is, calls to<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * create(RenderContext, ParameterBlock)) with the same arguments<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * may produce different results.  This method may be used to<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * determine whether an existing rendering may be cached and<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * reused.  It is always safe to return true.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @return &lt;code&gt;true&lt;/code&gt; if successive renderings with the<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     *         same arguments might produce different results;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     *         &lt;code&gt;false&lt;/code&gt; otherwise.<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     */<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    boolean isDynamic();<a name="line.142"></a>
+<span class="sourceLineNo">143</span>}<a name="line.143"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

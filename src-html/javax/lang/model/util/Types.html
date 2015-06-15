@@ -1,0 +1,373 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.lang.model.util;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.List;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.lang.model.element.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.lang.model.type.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * Utility methods for operating on types.<a name="line.33"></a>
+<span class="sourceLineNo">034</span> *<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;p&gt;&lt;b&gt;Compatibility Note:&lt;/b&gt; Methods may be added to this interface<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * in future releases of the platform.<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * @author Joseph D. Darcy<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * @author Scott Seligman<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * @author Peter von der Ah&amp;eacute;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * @see javax.annotation.processing.ProcessingEnvironment#getTypeUtils<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * @since 1.6<a name="line.42"></a>
+<span class="sourceLineNo">043</span> */<a name="line.43"></a>
+<span class="sourceLineNo">044</span>public interface Types {<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>    /**<a name="line.46"></a>
+<span class="sourceLineNo">047</span>     * Returns the element corresponding to a type.<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * The type may be a {@code DeclaredType} or {@code TypeVariable}.<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * Returns {@code null} if the type is not one with a<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * corresponding element.<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     *<a name="line.51"></a>
+<span class="sourceLineNo">052</span>     * @return the element corresponding to the given type<a name="line.52"></a>
+<span class="sourceLineNo">053</span>     */<a name="line.53"></a>
+<span class="sourceLineNo">054</span>    Element asElement(TypeMirror t);<a name="line.54"></a>
+<span class="sourceLineNo">055</span><a name="line.55"></a>
+<span class="sourceLineNo">056</span>    /**<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * Tests whether two {@code TypeMirror} objects represent the same type.<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     *<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * &lt;p&gt;Caveat: if either of the arguments to this method represents a<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * wildcard, this method will return false.  As a consequence, a wildcard<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * is not the same type as itself.  This might be surprising at first,<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     * but makes sense once you consider that an example like this must be<a name="line.62"></a>
+<span class="sourceLineNo">063</span>     * rejected by the compiler:<a name="line.63"></a>
+<span class="sourceLineNo">064</span>     * &lt;pre&gt;<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     *   {@code List&lt;?&gt; list = new ArrayList&lt;Object&gt;();}<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     *   {@code list.add(list.get(0));}<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * &lt;/pre&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     *<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @param t1  the first type<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * @param t2  the second type<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * @return {@code true} if and only if the two types are the same<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     */<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    boolean isSameType(TypeMirror t1, TypeMirror t2);<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    /**<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * Tests whether one type is a subtype of another.<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * Any type is considered to be a subtype of itself.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     *<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * @param t1  the first type<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * @param t2  the second type<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * @return {@code true} if and only if the first type is a subtype<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     *          of the second<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * @throws IllegalArgumentException if given an executable or package type<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * @jls 4.10 Subtyping<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     */<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    boolean isSubtype(TypeMirror t1, TypeMirror t2);<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>    /**<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * Tests whether one type is assignable to another.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @param t1  the first type<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @param t2  the second type<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @return {@code true} if and only if the first type is assignable<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     *          to the second<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * @throws IllegalArgumentException if given an executable or package type<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * @jls 5.2 Assignment Conversion<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     */<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    boolean isAssignable(TypeMirror t1, TypeMirror t2);<a name="line.98"></a>
+<span class="sourceLineNo">099</span><a name="line.99"></a>
+<span class="sourceLineNo">100</span>    /**<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * Tests whether one type argument &lt;i&gt;contains&lt;/i&gt; another.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     *<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * @param t1  the first type<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @param t2  the second type<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * @return {@code true} if and only if the first type contains the second<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * @throws IllegalArgumentException if given an executable or package type<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * @jls 4.5.1.1 Type Argument Containment and Equivalence<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     */<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    boolean contains(TypeMirror t1, TypeMirror t2);<a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>    /**<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * Tests whether the signature of one method is a &lt;i&gt;subsignature&lt;/i&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * of another.<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     *<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * @param m1  the first method<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * @param m2  the second method<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * @return {@code true} if and only if the first signature is a<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *          subsignature of the second<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * @jls 8.4.2 Method Signature<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     */<a name="line.120"></a>
+<span class="sourceLineNo">121</span>    boolean isSubsignature(ExecutableType m1, ExecutableType m2);<a name="line.121"></a>
+<span class="sourceLineNo">122</span><a name="line.122"></a>
+<span class="sourceLineNo">123</span>    /**<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * Returns the direct supertypes of a type.  The interface types, if any,<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * will appear last in the list.<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     *<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * @param t  the type being examined<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @return the direct supertypes, or an empty list if none<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * @throws IllegalArgumentException if given an executable or package type<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     */<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    List&lt;? extends TypeMirror&gt; directSupertypes(TypeMirror t);<a name="line.131"></a>
+<span class="sourceLineNo">132</span><a name="line.132"></a>
+<span class="sourceLineNo">133</span>    /**<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * Returns the erasure of a type.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @param t  the type to be erased<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * @return the erasure of the given type<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     * @throws IllegalArgumentException if given a package type<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * @jls 4.6 Type Erasure<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     */<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    TypeMirror erasure(TypeMirror t);<a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span>    /**<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * Returns the class of a boxed value of a given primitive type.<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * That is, &lt;i&gt;boxing conversion&lt;/i&gt; is applied.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     *<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @param p  the primitive type to be converted<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * @return the class of a boxed value of type {@code p}<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * @jls 5.1.7 Boxing Conversion<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     */<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    TypeElement boxedClass(PrimitiveType p);<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>    /**<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * Returns the type (a primitive type) of unboxed values of a given type.<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * That is, &lt;i&gt;unboxing conversion&lt;/i&gt; is applied.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * @param t  the type to be unboxed<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * @return the type of an unboxed value of type {@code t}<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * @throws IllegalArgumentException if the given type has no<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *          unboxing conversion<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @jls 5.1.8 Unboxing Conversion<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     */<a name="line.162"></a>
+<span class="sourceLineNo">163</span>    PrimitiveType unboxedType(TypeMirror t);<a name="line.163"></a>
+<span class="sourceLineNo">164</span><a name="line.164"></a>
+<span class="sourceLineNo">165</span>    /**<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * Applies capture conversion to a type.<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     * @param t  the type to be converted<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     * @return the result of applying capture conversion<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     * @throws IllegalArgumentException if given an executable or package type<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     * @jls 5.1.10 Capture Conversion<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     */<a name="line.172"></a>
+<span class="sourceLineNo">173</span>    TypeMirror capture(TypeMirror t);<a name="line.173"></a>
+<span class="sourceLineNo">174</span><a name="line.174"></a>
+<span class="sourceLineNo">175</span>    /**<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * Returns a primitive type.<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     *<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * @param kind  the kind of primitive type to return<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * @return a primitive type<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * @throws IllegalArgumentException if {@code kind} is not a primitive kind<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     */<a name="line.181"></a>
+<span class="sourceLineNo">182</span>    PrimitiveType getPrimitiveType(TypeKind kind);<a name="line.182"></a>
+<span class="sourceLineNo">183</span><a name="line.183"></a>
+<span class="sourceLineNo">184</span>    /**<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * Returns the null type.  This is the type of {@code null}.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * @return the null type<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     */<a name="line.188"></a>
+<span class="sourceLineNo">189</span>    NullType getNullType();<a name="line.189"></a>
+<span class="sourceLineNo">190</span><a name="line.190"></a>
+<span class="sourceLineNo">191</span>    /**<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * Returns a pseudo-type used where no actual type is appropriate.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * The kind of type to return may be either<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * {@link TypeKind#VOID VOID} or {@link TypeKind#NONE NONE}.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * For packages, use<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * {@link Elements#getPackageElement(CharSequence)}{@code .asType()}<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * instead.<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     *<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     * @param kind  the kind of type to return<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * @return a pseudo-type of kind {@code VOID} or {@code NONE}<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * @throws IllegalArgumentException if {@code kind} is not valid<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     */<a name="line.202"></a>
+<span class="sourceLineNo">203</span>    NoType getNoType(TypeKind kind);<a name="line.203"></a>
+<span class="sourceLineNo">204</span><a name="line.204"></a>
+<span class="sourceLineNo">205</span>    /**<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * Returns an array type with the specified component type.<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     *<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * @param componentType  the component type<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * @return an array type with the specified component type.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     * @throws IllegalArgumentException if the component type is not valid for<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     *          an array<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     */<a name="line.212"></a>
+<span class="sourceLineNo">213</span>    ArrayType getArrayType(TypeMirror componentType);<a name="line.213"></a>
+<span class="sourceLineNo">214</span><a name="line.214"></a>
+<span class="sourceLineNo">215</span>    /**<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * Returns a new wildcard type argument.  Either of the wildcard's<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * bounds may be specified, or neither, but not both.<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     *<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @param extendsBound  the extends (upper) bound, or {@code null} if none<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * @param superBound    the super (lower) bound, or {@code null} if none<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * @return a new wildcard<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * @throws IllegalArgumentException if bounds are not valid<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     */<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    WildcardType getWildcardType(TypeMirror extendsBound,<a name="line.224"></a>
+<span class="sourceLineNo">225</span>                                 TypeMirror superBound);<a name="line.225"></a>
+<span class="sourceLineNo">226</span><a name="line.226"></a>
+<span class="sourceLineNo">227</span>    /**<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * Returns the type corresponding to a type element and<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * actual type arguments.<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * Given the type element for {@code Set} and the type mirror<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * for {@code String},<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * for example, this method may be used to get the<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * parameterized type {@code Set&lt;String&gt;}.<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     *<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * &lt;p&gt; The number of type arguments must either equal the<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * number of the type element's formal type parameters, or must be<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * zero.  If zero, and if the type element is generic,<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * then the type element's raw type is returned.<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     *<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * &lt;p&gt; If a parameterized type is being returned, its type element<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * must not be contained within a generic outer class.<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * The parameterized type {@code Outer&lt;String&gt;.Inner&lt;Number&gt;},<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * for example, may be constructed by first using this<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * method to get the type {@code Outer&lt;String&gt;}, and then invoking<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * {@link #getDeclaredType(DeclaredType, TypeElement, TypeMirror...)}.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * @param typeElem  the type element<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * @param typeArgs  the actual type arguments<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * @return the type corresponding to the type element and<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     *          actual type arguments<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * @throws IllegalArgumentException if too many or too few<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     *          type arguments are given, or if an inappropriate type<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     *          argument or type element is provided<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     */<a name="line.254"></a>
+<span class="sourceLineNo">255</span>    DeclaredType getDeclaredType(TypeElement typeElem, TypeMirror... typeArgs);<a name="line.255"></a>
+<span class="sourceLineNo">256</span><a name="line.256"></a>
+<span class="sourceLineNo">257</span>    /**<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * Returns the type corresponding to a type element<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * and actual type arguments, given a<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * {@linkplain DeclaredType#getEnclosingType() containing type}<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * of which it is a member.<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * The parameterized type {@code Outer&lt;String&gt;.Inner&lt;Number&gt;},<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * for example, may be constructed by first using<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * {@link #getDeclaredType(TypeElement, TypeMirror...)}<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * to get the type {@code Outer&lt;String&gt;}, and then invoking<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * this method.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     *<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * &lt;p&gt; If the containing type is a parameterized type,<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * the number of type arguments must equal the<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * number of {@code typeElem}'s formal type parameters.<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * If it is not parameterized or if it is {@code null}, this method is<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * equivalent to {@code getDeclaredType(typeElem, typeArgs)}.<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     *<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * @param containing  the containing type, or {@code null} if none<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * @param typeElem    the type element<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * @param typeArgs    the actual type arguments<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * @return the type corresponding to the type element and<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     *          actual type arguments, contained within the given type<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * @throws IllegalArgumentException if too many or too few<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     *          type arguments are given, or if an inappropriate type<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     *          argument, type element, or containing type is provided<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     */<a name="line.282"></a>
+<span class="sourceLineNo">283</span>    DeclaredType getDeclaredType(DeclaredType containing,<a name="line.283"></a>
+<span class="sourceLineNo">284</span>                                 TypeElement typeElem, TypeMirror... typeArgs);<a name="line.284"></a>
+<span class="sourceLineNo">285</span><a name="line.285"></a>
+<span class="sourceLineNo">286</span>    /**<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * Returns the type of an element when that element is viewed as<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     * a member of, or otherwise directly contained by, a given type.<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * For example,<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * when viewed as a member of the parameterized type {@code Set&lt;String&gt;},<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     * the {@code Set.add} method is an {@code ExecutableType}<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     * whose parameter is of type {@code String}.<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     *<a name="line.293"></a>
+<span class="sourceLineNo">294</span>     * @param containing  the containing type<a name="line.294"></a>
+<span class="sourceLineNo">295</span>     * @param element     the element<a name="line.295"></a>
+<span class="sourceLineNo">296</span>     * @return the type of the element as viewed from the containing type<a name="line.296"></a>
+<span class="sourceLineNo">297</span>     * @throws IllegalArgumentException if the element is not a valid one<a name="line.297"></a>
+<span class="sourceLineNo">298</span>     *          for the given type<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     */<a name="line.299"></a>
+<span class="sourceLineNo">300</span>    TypeMirror asMemberOf(DeclaredType containing, Element element);<a name="line.300"></a>
+<span class="sourceLineNo">301</span>}<a name="line.301"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

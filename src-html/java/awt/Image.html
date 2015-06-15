@@ -1,0 +1,425 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1995, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package java.awt;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.awt.image.ImageProducer;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.image.ImageObserver;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.image.ImageFilter;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.awt.image.FilteredImageSource;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.awt.image.AreaAveragingScaleFilter;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.awt.image.ReplicateScaleFilter;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>import sun.awt.image.SurfaceManager;<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>/**<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * The abstract class &lt;code&gt;Image&lt;/code&gt; is the superclass of all<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * classes that represent graphical images. The image must be<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * obtained in a platform-specific manner.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * @author      Sami Shaio<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * @author      Arthur van Hoff<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * @since       JDK1.0<a name="line.43"></a>
+<span class="sourceLineNo">044</span> */<a name="line.44"></a>
+<span class="sourceLineNo">045</span>public abstract class Image {<a name="line.45"></a>
+<span class="sourceLineNo">046</span><a name="line.46"></a>
+<span class="sourceLineNo">047</span>    /**<a name="line.47"></a>
+<span class="sourceLineNo">048</span>     * convenience object; we can use this single static object for<a name="line.48"></a>
+<span class="sourceLineNo">049</span>     * all images that do not create their own image caps; it holds the<a name="line.49"></a>
+<span class="sourceLineNo">050</span>     * default (unaccelerated) properties.<a name="line.50"></a>
+<span class="sourceLineNo">051</span>     */<a name="line.51"></a>
+<span class="sourceLineNo">052</span>    private static ImageCapabilities defaultImageCaps =<a name="line.52"></a>
+<span class="sourceLineNo">053</span>        new ImageCapabilities(false);<a name="line.53"></a>
+<span class="sourceLineNo">054</span><a name="line.54"></a>
+<span class="sourceLineNo">055</span>    /**<a name="line.55"></a>
+<span class="sourceLineNo">056</span>     * Priority for accelerating this image.  Subclasses are free to<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * set different default priorities and applications are free to<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * set the priority for specific images via the<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * &lt;code&gt;setAccelerationPriority(float)&lt;/code&gt; method.<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * @since 1.5<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     */<a name="line.61"></a>
+<span class="sourceLineNo">062</span>    protected float accelerationPriority = .5f;<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>    /**<a name="line.64"></a>
+<span class="sourceLineNo">065</span>     * Determines the width of the image. If the width is not yet known,<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * this method returns &lt;code&gt;-1&lt;/code&gt; and the specified<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * &lt;code&gt;ImageObserver&lt;/code&gt; object is notified later.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * @param     observer   an object waiting for the image to be loaded.<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @return    the width of this image, or &lt;code&gt;-1&lt;/code&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     *                   if the width is not yet known.<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * @see       java.awt.Image#getHeight<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * @see       java.awt.image.ImageObserver<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     */<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    public abstract int getWidth(ImageObserver observer);<a name="line.74"></a>
+<span class="sourceLineNo">075</span><a name="line.75"></a>
+<span class="sourceLineNo">076</span>    /**<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * Determines the height of the image. If the height is not yet known,<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * this method returns &lt;code&gt;-1&lt;/code&gt; and the specified<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * &lt;code&gt;ImageObserver&lt;/code&gt; object is notified later.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * @param     observer   an object waiting for the image to be loaded.<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * @return    the height of this image, or &lt;code&gt;-1&lt;/code&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     *                   if the height is not yet known.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * @see       java.awt.Image#getWidth<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * @see       java.awt.image.ImageObserver<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     */<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    public abstract int getHeight(ImageObserver observer);<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span>    /**<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * Gets the object that produces the pixels for the image.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * This method is called by the image filtering classes and by<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * methods that perform image conversion and scaling.<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @return     the image producer that produces the pixels<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     *                                  for this image.<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * @see        java.awt.image.ImageProducer<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     */<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    public abstract ImageProducer getSource();<a name="line.96"></a>
+<span class="sourceLineNo">097</span><a name="line.97"></a>
+<span class="sourceLineNo">098</span>    /**<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * Creates a graphics context for drawing to an off-screen image.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * This method can only be called for off-screen images.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * @return  a graphics context to draw to the off-screen image.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @exception UnsupportedOperationException if called for a<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     *            non-off-screen image.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * @see     java.awt.Graphics<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * @see     java.awt.Component#createImage(int, int)<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     */<a name="line.106"></a>
+<span class="sourceLineNo">107</span>    public abstract Graphics getGraphics();<a name="line.107"></a>
+<span class="sourceLineNo">108</span><a name="line.108"></a>
+<span class="sourceLineNo">109</span>    /**<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * Gets a property of this image by name.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * &lt;p&gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * Individual property names are defined by the various image<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * formats. If a property is not defined for a particular image, this<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * method returns the &lt;code&gt;UndefinedProperty&lt;/code&gt; object.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * &lt;p&gt;<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * If the properties for this image are not yet known, this method<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * returns &lt;code&gt;null&lt;/code&gt;, and the &lt;code&gt;ImageObserver&lt;/code&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * object is notified later.<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * &lt;p&gt;<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * The property name &lt;code&gt;"comment"&lt;/code&gt; should be used to store<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * an optional comment which can be presented to the application as a<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * description of the image, its source, or its author.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * @param       name   a property name.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * @param       observer   an object waiting for this image to be loaded.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @return      the value of the named property.<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * @throws      &lt;code&gt;NullPointerException&lt;/code&gt; if the property name is null.<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * @see         java.awt.image.ImageObserver<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * @see         java.awt.Image#UndefinedProperty<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     */<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    public abstract Object getProperty(String name, ImageObserver observer);<a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /**<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * The &lt;code&gt;UndefinedProperty&lt;/code&gt; object should be returned whenever a<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * property which was not defined for a particular image is fetched.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     */<a name="line.135"></a>
+<span class="sourceLineNo">136</span>    public static final Object UndefinedProperty = new Object();<a name="line.136"></a>
+<span class="sourceLineNo">137</span><a name="line.137"></a>
+<span class="sourceLineNo">138</span>    /**<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * Creates a scaled version of this image.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * A new &lt;code&gt;Image&lt;/code&gt; object is returned which will render<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * the image at the specified &lt;code&gt;width&lt;/code&gt; and<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * &lt;code&gt;height&lt;/code&gt; by default.  The new &lt;code&gt;Image&lt;/code&gt; object<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * may be loaded asynchronously even if the original source image<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * has already been loaded completely.<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * &lt;p&gt;<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * If either &lt;code&gt;width&lt;/code&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * or &lt;code&gt;height&lt;/code&gt; is a negative number then a value is<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * substituted to maintain the aspect ratio of the original image<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * dimensions. If both &lt;code&gt;width&lt;/code&gt; and &lt;code&gt;height&lt;/code&gt;<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     * are negative, then the original image dimensions are used.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     *<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * @param width the width to which to scale the image.<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * @param height the height to which to scale the image.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     * @param hints flags to indicate the type of algorithm to use<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * for image resampling.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * @return     a scaled version of the image.<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * @exception IllegalArgumentException if &lt;code&gt;width&lt;/code&gt;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *             or &lt;code&gt;height&lt;/code&gt; is zero.<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @see        java.awt.Image#SCALE_DEFAULT<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @see        java.awt.Image#SCALE_FAST<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @see        java.awt.Image#SCALE_SMOOTH<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @see        java.awt.Image#SCALE_REPLICATE<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     * @see        java.awt.Image#SCALE_AREA_AVERAGING<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @since      JDK1.1<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     */<a name="line.167"></a>
+<span class="sourceLineNo">168</span>    public Image getScaledInstance(int width, int height, int hints) {<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        ImageFilter filter;<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        if ((hints &amp; (SCALE_SMOOTH | SCALE_AREA_AVERAGING)) != 0) {<a name="line.170"></a>
+<span class="sourceLineNo">171</span>            filter = new AreaAveragingScaleFilter(width, height);<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        } else {<a name="line.172"></a>
+<span class="sourceLineNo">173</span>            filter = new ReplicateScaleFilter(width, height);<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        }<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        ImageProducer prod;<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        prod = new FilteredImageSource(getSource(), filter);<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        return Toolkit.getDefaultToolkit().createImage(prod);<a name="line.177"></a>
+<span class="sourceLineNo">178</span>    }<a name="line.178"></a>
+<span class="sourceLineNo">179</span><a name="line.179"></a>
+<span class="sourceLineNo">180</span>    /**<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * Use the default image-scaling algorithm.<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * @since JDK1.1<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     */<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    public static final int SCALE_DEFAULT = 1;<a name="line.184"></a>
+<span class="sourceLineNo">185</span><a name="line.185"></a>
+<span class="sourceLineNo">186</span>    /**<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * Choose an image-scaling algorithm that gives higher priority<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * to scaling speed than smoothness of the scaled image.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * @since JDK1.1<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>    public static final int SCALE_FAST = 2;<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>    /**<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * Choose an image-scaling algorithm that gives higher priority<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * to image smoothness than scaling speed.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @since JDK1.1<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     */<a name="line.197"></a>
+<span class="sourceLineNo">198</span>    public static final int SCALE_SMOOTH = 4;<a name="line.198"></a>
+<span class="sourceLineNo">199</span><a name="line.199"></a>
+<span class="sourceLineNo">200</span>    /**<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * Use the image scaling algorithm embodied in the<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * &lt;code&gt;ReplicateScaleFilter&lt;/code&gt; class.<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * The &lt;code&gt;Image&lt;/code&gt; object is free to substitute a different filter<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * that performs the same algorithm yet integrates more efficiently<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * into the imaging infrastructure supplied by the toolkit.<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * @see        java.awt.image.ReplicateScaleFilter<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * @since      JDK1.1<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     */<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    public static final int SCALE_REPLICATE = 8;<a name="line.209"></a>
+<span class="sourceLineNo">210</span><a name="line.210"></a>
+<span class="sourceLineNo">211</span>    /**<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * Use the Area Averaging image scaling algorithm.  The<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * image object is free to substitute a different filter that<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * performs the same algorithm yet integrates more efficiently<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * into the image infrastructure supplied by the toolkit.<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * @see java.awt.image.AreaAveragingScaleFilter<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @since JDK1.1<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     */<a name="line.218"></a>
+<span class="sourceLineNo">219</span>    public static final int SCALE_AREA_AVERAGING = 16;<a name="line.219"></a>
+<span class="sourceLineNo">220</span><a name="line.220"></a>
+<span class="sourceLineNo">221</span>    /**<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * Flushes all reconstructable resources being used by this Image object.<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * This includes any pixel data that is being cached for rendering to<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * the screen as well as any system resources that are being used<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * to store data or pixels for the image if they can be recreated.<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * The image is reset to a state similar to when it was first created<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * so that if it is again rendered, the image data will have to be<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * recreated or fetched again from its source.<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * &lt;p&gt;<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * Examples of how this method affects specific types of Image object:<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * &lt;ul&gt;<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * &lt;li&gt;<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * BufferedImage objects leave the primary Raster which stores their<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * pixels untouched, but flush any information cached about those<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * pixels such as copies uploaded to the display hardware for<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * accelerated blits.<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * &lt;li&gt;<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * Image objects created by the Component methods which take a<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * width and height leave their primary buffer of pixels untouched,<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * but have all cached information released much like is done for<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * BufferedImage objects.<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * &lt;li&gt;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * VolatileImage objects release all of their pixel resources<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * including their primary copy which is typically stored on<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * the display hardware where resources are scarce.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * These objects can later be restored using their<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * {@link java.awt.image.VolatileImage#validate validate}<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * method.<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * &lt;li&gt;<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * Image objects created by the Toolkit and Component classes which are<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * loaded from files, URLs or produced by an {@link ImageProducer}<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * are unloaded and all local resources are released.<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * These objects can later be reloaded from their original source<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     * as needed when they are rendered, just as when they were first<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     * created.<a name="line.255"></a>
+<span class="sourceLineNo">256</span>     * &lt;/ul&gt;<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     */<a name="line.257"></a>
+<span class="sourceLineNo">258</span>    public void flush() {<a name="line.258"></a>
+<span class="sourceLineNo">259</span>        if (surfaceManager != null) {<a name="line.259"></a>
+<span class="sourceLineNo">260</span>            surfaceManager.flush();<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        }<a name="line.261"></a>
+<span class="sourceLineNo">262</span>    }<a name="line.262"></a>
+<span class="sourceLineNo">263</span><a name="line.263"></a>
+<span class="sourceLineNo">264</span>    /**<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * Returns an ImageCapabilities object which can be<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * inquired as to the capabilities of this<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * Image on the specified GraphicsConfiguration.<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * This allows programmers to find<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * out more runtime information on the specific Image<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     * object that they have created.  For example, the user<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * might create a BufferedImage but the system may have<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * no video memory left for creating an image of that<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * size on the given GraphicsConfiguration, so although the object<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     * may be acceleratable in general, it<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * does not have that capability on this GraphicsConfiguration.<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * @param gc a &lt;code&gt;GraphicsConfiguration&lt;/code&gt; object.  A value of null<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * for this parameter will result in getting the image capabilities<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * for the default &lt;code&gt;GraphicsConfiguration&lt;/code&gt;.<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * @return an &lt;code&gt;ImageCapabilities&lt;/code&gt; object that contains<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     * the capabilities of this &lt;code&gt;Image&lt;/code&gt; on the specified<a name="line.280"></a>
+<span class="sourceLineNo">281</span>     * GraphicsConfiguration.<a name="line.281"></a>
+<span class="sourceLineNo">282</span>     * @see java.awt.image.VolatileImage#getCapabilities()<a name="line.282"></a>
+<span class="sourceLineNo">283</span>     * VolatileImage.getCapabilities()<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * @since 1.5<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     */<a name="line.285"></a>
+<span class="sourceLineNo">286</span>    public ImageCapabilities getCapabilities(GraphicsConfiguration gc) {<a name="line.286"></a>
+<span class="sourceLineNo">287</span>        if (surfaceManager != null) {<a name="line.287"></a>
+<span class="sourceLineNo">288</span>            return surfaceManager.getCapabilities(gc);<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        }<a name="line.289"></a>
+<span class="sourceLineNo">290</span>        // Note: this is just a default object that gets returned in the<a name="line.290"></a>
+<span class="sourceLineNo">291</span>        // absence of any more specific information from a surfaceManager.<a name="line.291"></a>
+<span class="sourceLineNo">292</span>        // Subclasses of Image should either override this method or<a name="line.292"></a>
+<span class="sourceLineNo">293</span>        // make sure that they always have a non-null SurfaceManager<a name="line.293"></a>
+<span class="sourceLineNo">294</span>        // to return an ImageCapabilities object that is appropriate<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        // for their given subclass type.<a name="line.295"></a>
+<span class="sourceLineNo">296</span>        return defaultImageCaps;<a name="line.296"></a>
+<span class="sourceLineNo">297</span>    }<a name="line.297"></a>
+<span class="sourceLineNo">298</span><a name="line.298"></a>
+<span class="sourceLineNo">299</span>    /**<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * Sets a hint for this image about how important acceleration is.<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * This priority hint is used to compare to the priorities of other<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     * Image objects when determining how to use scarce acceleration<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * resources such as video memory.  When and if it is possible to<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * accelerate this Image, if there are not enough resources available<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * to provide that acceleration but enough can be freed up by<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * de-accelerating some other image of lower priority, then that other<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * Image may be de-accelerated in deference to this one.  Images<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * that have the same priority take up resources on a first-come,<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * first-served basis.<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     * @param priority a value between 0 and 1, inclusive, where higher<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * values indicate more importance for acceleration.  A value of 0<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * means that this Image should never be accelerated.  Other values<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * are used simply to determine acceleration priority relative to other<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     * Images.<a name="line.314"></a>
+<span class="sourceLineNo">315</span>     * @throws IllegalArgumentException if &lt;code&gt;priority&lt;/code&gt; is less<a name="line.315"></a>
+<span class="sourceLineNo">316</span>     * than zero or greater than 1.<a name="line.316"></a>
+<span class="sourceLineNo">317</span>     * @since 1.5<a name="line.317"></a>
+<span class="sourceLineNo">318</span>     */<a name="line.318"></a>
+<span class="sourceLineNo">319</span>    public void setAccelerationPriority(float priority) {<a name="line.319"></a>
+<span class="sourceLineNo">320</span>        if (priority &lt; 0 || priority &gt; 1) {<a name="line.320"></a>
+<span class="sourceLineNo">321</span>            throw new IllegalArgumentException("Priority must be a value " +<a name="line.321"></a>
+<span class="sourceLineNo">322</span>                                               "between 0 and 1, inclusive");<a name="line.322"></a>
+<span class="sourceLineNo">323</span>        }<a name="line.323"></a>
+<span class="sourceLineNo">324</span>        accelerationPriority = priority;<a name="line.324"></a>
+<span class="sourceLineNo">325</span>        if (surfaceManager != null) {<a name="line.325"></a>
+<span class="sourceLineNo">326</span>            surfaceManager.setAccelerationPriority(accelerationPriority);<a name="line.326"></a>
+<span class="sourceLineNo">327</span>        }<a name="line.327"></a>
+<span class="sourceLineNo">328</span>    }<a name="line.328"></a>
+<span class="sourceLineNo">329</span><a name="line.329"></a>
+<span class="sourceLineNo">330</span>    /**<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * Returns the current value of the acceleration priority hint.<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * @see #setAccelerationPriority(float priority) setAccelerationPriority<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * @return value between 0 and 1, inclusive, which represents the current<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * priority value<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * @since 1.5<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     */<a name="line.336"></a>
+<span class="sourceLineNo">337</span>    public float getAccelerationPriority() {<a name="line.337"></a>
+<span class="sourceLineNo">338</span>        return accelerationPriority;<a name="line.338"></a>
+<span class="sourceLineNo">339</span>    }<a name="line.339"></a>
+<span class="sourceLineNo">340</span><a name="line.340"></a>
+<span class="sourceLineNo">341</span>    SurfaceManager surfaceManager;<a name="line.341"></a>
+<span class="sourceLineNo">342</span><a name="line.342"></a>
+<span class="sourceLineNo">343</span>    static {<a name="line.343"></a>
+<span class="sourceLineNo">344</span>        SurfaceManager.setImageAccessor(new SurfaceManager.ImageAccessor() {<a name="line.344"></a>
+<span class="sourceLineNo">345</span>            public SurfaceManager getSurfaceManager(Image img) {<a name="line.345"></a>
+<span class="sourceLineNo">346</span>                return img.surfaceManager;<a name="line.346"></a>
+<span class="sourceLineNo">347</span>            }<a name="line.347"></a>
+<span class="sourceLineNo">348</span>            public void setSurfaceManager(Image img, SurfaceManager mgr) {<a name="line.348"></a>
+<span class="sourceLineNo">349</span>                img.surfaceManager = mgr;<a name="line.349"></a>
+<span class="sourceLineNo">350</span>            }<a name="line.350"></a>
+<span class="sourceLineNo">351</span>        });<a name="line.351"></a>
+<span class="sourceLineNo">352</span>    }<a name="line.352"></a>
+<span class="sourceLineNo">353</span>}<a name="line.353"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

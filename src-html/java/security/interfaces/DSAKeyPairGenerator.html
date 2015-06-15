@@ -1,0 +1,187 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2005, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.security.interfaces;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.security.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * An interface to an object capable of generating DSA key pairs.<a name="line.31"></a>
+<span class="sourceLineNo">032</span> *<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * &lt;p&gt;The &lt;code&gt;initialize&lt;/code&gt; methods may each be called any number<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * of times. If no &lt;code&gt;initialize&lt;/code&gt; method is called on a<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * DSAKeyPairGenerator, the default is to generate 1024-bit keys, using<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * precomputed p, q and g parameters and an instance of SecureRandom as<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * the random bit source.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> *<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * &lt;p&gt;Users wishing to indicate DSA-specific parameters, and to generate a key<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * pair suitable for use with the DSA algorithm typically<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;ol&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;li&gt;Get a key pair generator for the DSA algorithm by calling the<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * KeyPairGenerator &lt;code&gt;getInstance&lt;/code&gt; method with "DSA"<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * as its argument.&lt;p&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;li&gt;Initialize the generator by casting the result to a DSAKeyPairGenerator<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * and calling one of the<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;code&gt;initialize&lt;/code&gt; methods from this DSAKeyPairGenerator interface.&lt;p&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;li&gt;Generate a key pair by calling the &lt;code&gt;generateKeyPair&lt;/code&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * method from the KeyPairGenerator class.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;/ol&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;p&gt;Note: it is not always necessary to do do algorithm-specific<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * initialization for a DSA key pair generator. That is, it is not always<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * necessary to call an &lt;code&gt;initialize&lt;/code&gt; method in this interface.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * Algorithm-independent initialization using the &lt;code&gt;initialize&lt;/code&gt; method<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * in the KeyPairGenerator<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * interface is all that is needed when you accept defaults for algorithm-specific<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * parameters.<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * @see java.security.KeyPairGenerator<a name="line.65"></a>
+<span class="sourceLineNo">066</span> */<a name="line.66"></a>
+<span class="sourceLineNo">067</span>public interface DSAKeyPairGenerator {<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>    /**<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * Initializes the key pair generator using the DSA family parameters<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * (p,q and g) and an optional SecureRandom bit source. If a<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     * SecureRandom bit source is needed but not supplied, i.e. null, a<a name="line.72"></a>
+<span class="sourceLineNo">073</span>     * default SecureRandom instance will be used.<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     *<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * @param params the parameters to use to generate the keys.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     *<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * @param random the random bit source to use to generate key bits;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * can be null.<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     *<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * @exception InvalidParameterException if the &lt;code&gt;params&lt;/code&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * value is invalid or null.<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     */<a name="line.82"></a>
+<span class="sourceLineNo">083</span>   public void initialize(DSAParams params, SecureRandom random)<a name="line.83"></a>
+<span class="sourceLineNo">084</span>   throws InvalidParameterException;<a name="line.84"></a>
+<span class="sourceLineNo">085</span><a name="line.85"></a>
+<span class="sourceLineNo">086</span>    /**<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * Initializes the key pair generator for a given modulus length<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * (instead of parameters), and an optional SecureRandom bit source.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * If a SecureRandom bit source is needed but not supplied, i.e.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * null, a default SecureRandom instance will be used.<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * &lt;p&gt;If &lt;code&gt;genParams&lt;/code&gt; is true, this method generates new<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * p, q and g parameters. If it is false, the method uses precomputed<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * parameters for the modulus length requested. If there are no<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * precomputed parameters for that modulus length, an exception will be<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * thrown. It is guaranteed that there will always be<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * default parameters for modulus lengths of 512 and 1024 bits.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @param modlen the modulus length in bits. Valid values are any<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * multiple of 8 between 512 and 1024, inclusive.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @param random the random bit source to use to generate key bits;<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * can be null.<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     *<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     * @param genParams whether or not to generate new parameters for<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * the modulus length requested.<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     *<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * @exception InvalidParameterException if &lt;code&gt;modlen&lt;/code&gt; is not<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * between 512 and 1024, or if &lt;code&gt;genParams&lt;/code&gt; is false and<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * there are no precomputed parameters for the requested modulus<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * length.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     */<a name="line.112"></a>
+<span class="sourceLineNo">113</span>    public void initialize(int modlen, boolean genParams, SecureRandom random)<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    throws InvalidParameterException;<a name="line.114"></a>
+<span class="sourceLineNo">115</span>}<a name="line.115"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

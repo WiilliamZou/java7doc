@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.nio.file.attribute;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.nio.file.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.util.List;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.IOException;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * A file attribute view that supports reading or updating a file's Access<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * Control Lists (ACL) or file owner attributes.<a name="line.34"></a>
+<span class="sourceLineNo">035</span> *<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;p&gt; ACLs are used to specify access rights to file system objects. An ACL is<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * an ordered list of {@link AclEntry access-control-entries}, each specifying a<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * {@link UserPrincipal} and the level of access for that user principal. This<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * file attribute view defines the {@link #getAcl() getAcl}, and {@link<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * #setAcl(List) setAcl} methods to read and write ACLs based on the ACL<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * model specified in &lt;a href="http://www.ietf.org/rfc/rfc3530.txt"&gt;&lt;i&gt;RFC&amp;nbsp;3530:<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * Network File System (NFS) version 4 Protocol&lt;/i&gt;&lt;/a&gt;. This file attribute view<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * is intended for file system implementations that support the NFSv4 ACL model<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * or have a &lt;em&gt;well-defined&lt;/em&gt; mapping between the NFSv4 ACL model and the ACL<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * model used by the file system. The details of such mapping are implementation<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * dependent and are therefore unspecified.<a name="line.46"></a>
+<span class="sourceLineNo">047</span> *<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;p&gt; This class also extends {@code FileOwnerAttributeView} so as to define<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * methods to get and set the file owner.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;p&gt; When a file system provides access to a set of {@link FileStore<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * file-systems} that are not homogeneous then only some of the file systems may<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * support ACLs. The {@link FileStore#supportsFileAttributeView<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * supportsFileAttributeView} method can be used to test if a file system<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * supports ACLs.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;a name="interop"&gt;&lt;h4&gt;Interoperability&lt;/h4&gt;&lt;/a&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * RFC&amp;nbsp;3530 allows for special user identities to be used on platforms that<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * support the POSIX defined access permissions. The special user identities<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * are "{@code OWNER@}", "{@code GROUP@}", and "{@code EVERYONE@}". When both<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * the {@code AclFileAttributeView} and the {@link PosixFileAttributeView}<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * are supported then these special user identities may be included in ACL {@link<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * AclEntry entries} that are read or written. The file system's {@link<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * UserPrincipalLookupService} may be used to obtain a {@link UserPrincipal}<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * to represent these special identities by invoking the {@link<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * UserPrincipalLookupService#lookupPrincipalByName lookupPrincipalByName}<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * method. &lt;/p&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * &lt;p&gt; &lt;b&gt;Usage Example:&lt;/b&gt;<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * Suppose we wish to add an entry to an existing ACL to grant "joe" access:<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;pre&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *     // lookup "joe"<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *     UserPrincipal joe = file.getFileSystem().getUserPrincipalLookupService()<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *         .lookupPrincipalByName("joe");<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *     // get view<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *     AclFileAttributeView view = Files.getFileAttributeView(file, AclFileAttributeView.class);<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *     // create ACE to give "joe" read access<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *     AclEntry entry = AclEntry.newBuilder()<a name="line.81"></a>
+<span class="sourceLineNo">082</span> *         .setType(AclEntryType.ALLOW)<a name="line.82"></a>
+<span class="sourceLineNo">083</span> *         .setPrincipal(joe)<a name="line.83"></a>
+<span class="sourceLineNo">084</span> *         .setPermissions(AclEntryPermission.READ_DATA, AclEntryPermission.READ_ATTRIBUTES)<a name="line.84"></a>
+<span class="sourceLineNo">085</span> *         .build();<a name="line.85"></a>
+<span class="sourceLineNo">086</span> *<a name="line.86"></a>
+<span class="sourceLineNo">087</span> *     // read ACL, insert ACE, re-write ACL<a name="line.87"></a>
+<span class="sourceLineNo">088</span> *     List&amp;lt;AclEntry&amp;gt acl = view.getAcl();<a name="line.88"></a>
+<span class="sourceLineNo">089</span> *     acl.add(0, entry);   // insert before any DENY entries<a name="line.89"></a>
+<span class="sourceLineNo">090</span> *     view.setAcl(acl);<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * &lt;/pre&gt;<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;h4&gt; Dynamic Access &lt;/h4&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;p&gt; Where dynamic access to file attributes is required, the attributes<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * supported by this attribute view are as follows:<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;blockquote&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * &lt;table border="1" cellpadding="8"&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> *   &lt;tr&gt;<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *     &lt;th&gt; Name &lt;/th&gt;<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *     &lt;th&gt; Type &lt;/th&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> *   &lt;/tr&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> *   &lt;tr&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span> *     &lt;td&gt; "acl" &lt;/td&gt;<a name="line.103"></a>
+<span class="sourceLineNo">104</span> *     &lt;td&gt; {@link List}&amp;lt;{@link AclEntry}&amp;gt; &lt;/td&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *   &lt;/tr&gt;<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *   &lt;tr&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *     &lt;td&gt; "owner" &lt;/td&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *     &lt;td&gt; {@link UserPrincipal} &lt;/td&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *   &lt;/tr&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * &lt;/table&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * &lt;/blockquote&gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span> *<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * &lt;p&gt; The {@link Files#getAttribute getAttribute} method may be used to read<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * the ACL or owner attributes as if by invoking the {@link #getAcl getAcl} or<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * {@link #getOwner getOwner} methods.<a name="line.115"></a>
+<span class="sourceLineNo">116</span> *<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * &lt;p&gt; The {@link Files#setAttribute setAttribute} method may be used to<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * update the ACL or owner attributes as if by invoking the {@link #setAcl setAcl}<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * or {@link #setOwner setOwner} methods.<a name="line.119"></a>
+<span class="sourceLineNo">120</span> *<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * &lt;h4&gt; Setting the ACL when creating a file &lt;/h4&gt;<a name="line.121"></a>
+<span class="sourceLineNo">122</span> *<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * &lt;p&gt; Implementations supporting this attribute view may also support setting<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * the initial ACL when creating a file or directory. The initial ACL<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * may be provided to methods such as {@link Files#createFile createFile} or {@link<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * Files#createDirectory createDirectory} as an {@link FileAttribute} with {@link<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * FileAttribute#name name} {@code "acl:acl"} and a {@link FileAttribute#value<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * value} that is the list of {@code AclEntry} objects.<a name="line.128"></a>
+<span class="sourceLineNo">129</span> *<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * &lt;p&gt; Where an implementation supports an ACL model that differs from the NFSv4<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * defined ACL model then setting the initial ACL when creating the file must<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * translate the ACL to the model supported by the file system. Methods that<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * create a file should reject (by throwing {@link IOException IOException})<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * any attempt to create a file that would be less secure as a result of the<a name="line.134"></a>
+<span class="sourceLineNo">135</span> * translation.<a name="line.135"></a>
+<span class="sourceLineNo">136</span> *<a name="line.136"></a>
+<span class="sourceLineNo">137</span> * @since 1.7<a name="line.137"></a>
+<span class="sourceLineNo">138</span> */<a name="line.138"></a>
+<span class="sourceLineNo">139</span><a name="line.139"></a>
+<span class="sourceLineNo">140</span>public interface AclFileAttributeView<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    extends FileOwnerAttributeView<a name="line.141"></a>
+<span class="sourceLineNo">142</span>{<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    /**<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * Returns the name of the attribute view. Attribute views of this type<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * have the name {@code "acl"}.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     */<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    @Override<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    String name();<a name="line.148"></a>
+<span class="sourceLineNo">149</span><a name="line.149"></a>
+<span class="sourceLineNo">150</span>    /**<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * Reads the access control list.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * &lt;p&gt; When the file system uses an ACL model that differs from the NFSv4<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * defined ACL model, then this method returns an ACL that is the translation<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * of the ACL to the NFSv4 ACL model.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     *<a name="line.156"></a>
+<span class="sourceLineNo">157</span>     * &lt;p&gt; The returned list is modifiable so as to facilitate changes to the<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * existing ACL. The {@link #setAcl setAcl} method is used to update<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * the file's ACL attribute.<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     *<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     * @return  an ordered list of {@link AclEntry entries} representing the<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     *          ACL<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     *<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     * @throws  IOException<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     *          if an I/O error occurs<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     * @throws  SecurityException<a name="line.166"></a>
+<span class="sourceLineNo">167</span>     *          In the case of the default provider, a security manager is<a name="line.167"></a>
+<span class="sourceLineNo">168</span>     *          installed, and it denies {@link RuntimePermission}&lt;tt&gt;("accessUserInformation")&lt;/tt&gt;<a name="line.168"></a>
+<span class="sourceLineNo">169</span>     *          or its {@link SecurityManager#checkRead(String) checkRead} method<a name="line.169"></a>
+<span class="sourceLineNo">170</span>     *          denies read access to the file.<a name="line.170"></a>
+<span class="sourceLineNo">171</span>     */<a name="line.171"></a>
+<span class="sourceLineNo">172</span>    List&lt;AclEntry&gt; getAcl() throws IOException;<a name="line.172"></a>
+<span class="sourceLineNo">173</span><a name="line.173"></a>
+<span class="sourceLineNo">174</span>    /**<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * Updates (replace) the access control list.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     *<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * &lt;p&gt; Where the file system supports Access Control Lists, and it uses an<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * ACL model that differs from the NFSv4 defined ACL model, then this method<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * must translate the ACL to the model supported by the file system. This<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * method should reject (by throwing {@link IOException IOException}) any<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * attempt to write an ACL that would appear to make the file more secure<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * than would be the case if the ACL were updated. Where an implementation<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * does not support a mapping of {@link AclEntryType#AUDIT} or {@link<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * AclEntryType#ALARM} entries, then this method ignores these entries when<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * writing the ACL.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     *<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * &lt;p&gt; If an ACL entry contains a {@link AclEntry#principal user-principal}<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * that is not associated with the same provider as this attribute view then<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * {@link ProviderMismatchException} is thrown. Additional validation, if<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * any, is implementation dependent.<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     *<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * &lt;p&gt; If the file system supports other security related file attributes<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * (such as a file {@link PosixFileAttributes#permissions<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * access-permissions} for example), the updating the access control list<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * may also cause these security related attributes to be updated.<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     *<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @param   acl<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     *          the new access control list<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     *<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * @throws  IOException<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     *          if an I/O error occurs or the ACL is invalid<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * @throws  SecurityException<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     *          In the case of the default provider, a security manager is<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     *          installed, it denies {@link RuntimePermission}&lt;tt&gt;("accessUserInformation")&lt;/tt&gt;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     *          or its {@link SecurityManager#checkWrite(String) checkWrite}<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     *          method denies write access to the file.<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     */<a name="line.207"></a>
+<span class="sourceLineNo">208</span>    void setAcl(List&lt;AclEntry&gt; acl) throws IOException;<a name="line.208"></a>
+<span class="sourceLineNo">209</span>}<a name="line.209"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

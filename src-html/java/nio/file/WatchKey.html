@@ -1,0 +1,222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.nio.file;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.List;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * A token representing the registration of a {@link Watchable watchable} object<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * with a {@link WatchService}.<a name="line.32"></a>
+<span class="sourceLineNo">033</span> *<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * &lt;p&gt; A watch key is created when a watchable object is registered with a watch<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * service. The key remains {@link #isValid valid} until:<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;ol&gt;<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *   &lt;li&gt; It is cancelled, explicitly, by invoking its {@link #cancel cancel}<a name="line.37"></a>
+<span class="sourceLineNo">038</span> *     method, or&lt;/li&gt;<a name="line.38"></a>
+<span class="sourceLineNo">039</span> *   &lt;li&gt; Cancelled implicitly, because the object is no longer accessible,<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *     or &lt;/li&gt;<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *   &lt;li&gt; By {@link WatchService#close closing} the watch service. &lt;/li&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * &lt;/ol&gt;<a name="line.42"></a>
+<span class="sourceLineNo">043</span> *<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * &lt;p&gt; A watch key has a state. When initially created the key is said to be<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;em&gt;ready&lt;/em&gt;. When an event is detected then the key is &lt;em&gt;signalled&lt;/em&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * and queued so that it can be retrieved by invoking the watch service's {@link<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * WatchService#poll() poll} or {@link WatchService#take() take} methods. Once<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * signalled, a key remains in this state until its {@link #reset reset} method<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * is invoked to return the key to the ready state. Events detected while the<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * key is in the signalled state are queued but do not cause the key to be<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * re-queued for retrieval from the watch service. Events are retrieved by<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * invoking the key's {@link #pollEvents pollEvents} method. This method<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * retrieves and removes all events accumulated for the object. When initially<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * created, a watch key has no pending events. Typically events are retrieved<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * when the key is in the signalled state leading to the following idiom:<a name="line.55"></a>
+<span class="sourceLineNo">056</span> *<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * &lt;pre&gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *     for (;;) {<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *         // retrieve key<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *         WatchKey key = watcher.take();<a name="line.60"></a>
+<span class="sourceLineNo">061</span> *<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *         // process events<a name="line.62"></a>
+<span class="sourceLineNo">063</span> *         for (WatchEvent&amp;lt;?&amp;gt; event: key.pollEvents()) {<a name="line.63"></a>
+<span class="sourceLineNo">064</span> *             :<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *         }<a name="line.65"></a>
+<span class="sourceLineNo">066</span> *<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *         // reset the key<a name="line.67"></a>
+<span class="sourceLineNo">068</span> *         boolean valid = key.reset();<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *         if (!valid) {<a name="line.69"></a>
+<span class="sourceLineNo">070</span> *             // object no longer registered<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *         }<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *     }<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * &lt;/pre&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &lt;p&gt; Watch keys are safe for use by multiple concurrent threads. Where there<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * are several threads retrieving signalled keys from a watch service then care<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * should be taken to ensure that the {@code reset} method is only invoked after<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * the events for the object have been processed. This ensures that one thread<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * is processing the events for an object at any time.<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * @since 1.7<a name="line.81"></a>
+<span class="sourceLineNo">082</span> */<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>public interface WatchKey {<a name="line.84"></a>
+<span class="sourceLineNo">085</span><a name="line.85"></a>
+<span class="sourceLineNo">086</span>    /**<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * Tells whether or not this watch key is valid.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * &lt;p&gt; A watch key is valid upon creation and remains until it is cancelled,<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * or its watch service is closed.<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @return  {@code true} if, and only if, this watch key is valid<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     */<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    boolean isValid();<a name="line.94"></a>
+<span class="sourceLineNo">095</span><a name="line.95"></a>
+<span class="sourceLineNo">096</span>    /**<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * Retrieves and removes all pending events for this watch key, returning<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * a {@code List} of the events that were retrieved.<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     *<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * &lt;p&gt; Note that this method does not wait if there are no events pending.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     *<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * @return  the list of the events retrieved; may be empty<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>    List&lt;WatchEvent&lt;?&gt;&gt; pollEvents();<a name="line.104"></a>
+<span class="sourceLineNo">105</span><a name="line.105"></a>
+<span class="sourceLineNo">106</span>    /**<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     * Resets this watch key.<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     *<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * &lt;p&gt; If this watch key has been cancelled or this watch key is already in<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * the ready state then invoking this method has no effect. Otherwise<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * if there are pending events for the object then this watch key is<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * immediately re-queued to the watch service. If there are no pending<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * events then the watch key is put into the ready state and will remain in<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * that state until an event is detected or the watch key is cancelled.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * @return  {@code true} if the watch key is valid and has been reset, and<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     *          {@code false} if the watch key could not be reset because it is<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *          no longer {@link #isValid valid}<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     */<a name="line.119"></a>
+<span class="sourceLineNo">120</span>    boolean reset();<a name="line.120"></a>
+<span class="sourceLineNo">121</span><a name="line.121"></a>
+<span class="sourceLineNo">122</span>    /**<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * Cancels the registration with the watch service. Upon return the watch key<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     * will be invalid. If the watch key is enqueued, waiting to be retrieved<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * from the watch service, then it will remain in the queue until it is<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * removed. Pending events, if any, remain pending and may be retrieved by<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * invoking the {@link #pollEvents pollEvents} method after the key is<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * cancelled.<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     *<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * &lt;p&gt; If this watch key has already been cancelled then invoking this<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * method has no effect.  Once cancelled, a watch key remains forever invalid.<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     */<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    void cancel();<a name="line.133"></a>
+<span class="sourceLineNo">134</span><a name="line.134"></a>
+<span class="sourceLineNo">135</span>    /**<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * Returns the object for which this watch key was created. This method will<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * continue to return the object even after the key is cancelled.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     *<a name="line.138"></a>
+<span class="sourceLineNo">139</span>     * &lt;p&gt; As the {@code WatchService} is intended to map directly on to the<a name="line.139"></a>
+<span class="sourceLineNo">140</span>     * native file event notification facility (where available) then many of<a name="line.140"></a>
+<span class="sourceLineNo">141</span>     * details on how registered objects are watched is highly implementation<a name="line.141"></a>
+<span class="sourceLineNo">142</span>     * specific. When watching a directory for changes for example, and the<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * directory is moved or renamed in the file system, there is no guarantee<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * that the watch key will be cancelled and so the object returned by this<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * method may no longer be a valid path to the directory.<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     *<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * @return the object for which this watch key was created<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     */<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    Watchable watchable();<a name="line.149"></a>
+<span class="sourceLineNo">150</span>}<a name="line.150"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

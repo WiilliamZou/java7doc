@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1999, 2004, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.naming.spi;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.Hashtable;<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.naming.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span>  * This interface represents a factory for creating an object.<a name="line.33"></a>
+<span class="sourceLineNo">034</span>  *&lt;p&gt;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>  * The JNDI framework allows for object implementations to<a name="line.35"></a>
+<span class="sourceLineNo">036</span>  * be loaded in dynamically via &lt;em&gt;object factories&lt;/em&gt;.<a name="line.36"></a>
+<span class="sourceLineNo">037</span>  * For example, when looking up a printer bound in the name space,<a name="line.37"></a>
+<span class="sourceLineNo">038</span>  * if the print service binds printer names to References, the printer<a name="line.38"></a>
+<span class="sourceLineNo">039</span>  * Reference could be used to create a printer object, so that<a name="line.39"></a>
+<span class="sourceLineNo">040</span>  * the caller of lookup can directly operate on the printer object<a name="line.40"></a>
+<span class="sourceLineNo">041</span>  * after the lookup.<a name="line.41"></a>
+<span class="sourceLineNo">042</span>  * &lt;p&gt;An &lt;tt&gt;ObjectFactory&lt;/tt&gt; is responsible<a name="line.42"></a>
+<span class="sourceLineNo">043</span>  * for creating objects of a specific type.  In the above example,<a name="line.43"></a>
+<span class="sourceLineNo">044</span>  * you may have a PrinterObjectFactory for creating Printer objects.<a name="line.44"></a>
+<span class="sourceLineNo">045</span>  *&lt;p&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>  * An object factory must implement the &lt;tt&gt;ObjectFactory&lt;/tt&gt; interface.<a name="line.46"></a>
+<span class="sourceLineNo">047</span>  * In addition, the factory class must be public and must have a<a name="line.47"></a>
+<span class="sourceLineNo">048</span>  * public constructor that accepts no parameters.<a name="line.48"></a>
+<span class="sourceLineNo">049</span>  *&lt;p&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span>  * The &lt;tt&gt;getObjectInstance()&lt;/tt&gt; method of an object factory may<a name="line.50"></a>
+<span class="sourceLineNo">051</span>  * be invoked multiple times, possibly using different parameters.<a name="line.51"></a>
+<span class="sourceLineNo">052</span>  * The implementation is thread-safe.<a name="line.52"></a>
+<span class="sourceLineNo">053</span>  *&lt;p&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span>  * The mention of URL in the documentation for this class refers to<a name="line.54"></a>
+<span class="sourceLineNo">055</span>  * a URL string as defined by RFC 1738 and its related RFCs. It is<a name="line.55"></a>
+<span class="sourceLineNo">056</span>  * any string that conforms to the syntax described therein, and<a name="line.56"></a>
+<span class="sourceLineNo">057</span>  * may not always have corresponding support in the java.net.URL<a name="line.57"></a>
+<span class="sourceLineNo">058</span>  * class or Web browsers.<a name="line.58"></a>
+<span class="sourceLineNo">059</span>  *<a name="line.59"></a>
+<span class="sourceLineNo">060</span>  * @author Rosanna Lee<a name="line.60"></a>
+<span class="sourceLineNo">061</span>  * @author Scott Seligman<a name="line.61"></a>
+<span class="sourceLineNo">062</span>  *<a name="line.62"></a>
+<span class="sourceLineNo">063</span>  * @see NamingManager#getObjectInstance<a name="line.63"></a>
+<span class="sourceLineNo">064</span>  * @see NamingManager#getURLContext<a name="line.64"></a>
+<span class="sourceLineNo">065</span>  * @see ObjectFactoryBuilder<a name="line.65"></a>
+<span class="sourceLineNo">066</span>  * @see StateFactory<a name="line.66"></a>
+<span class="sourceLineNo">067</span>  * @since 1.3<a name="line.67"></a>
+<span class="sourceLineNo">068</span>  */<a name="line.68"></a>
+<span class="sourceLineNo">069</span><a name="line.69"></a>
+<span class="sourceLineNo">070</span>public interface ObjectFactory {<a name="line.70"></a>
+<span class="sourceLineNo">071</span>/**<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * Creates an object using the location or reference information<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * specified.<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &lt;p&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * Special requirements of this object are supplied<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * using &lt;code&gt;environment&lt;/code&gt;.<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * An example of such an environment property is user identity<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * information.<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *&lt;p&gt;<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * &lt;tt&gt;NamingManager.getObjectInstance()&lt;/tt&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * successively loads in object factories and invokes this method<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * on them until one produces a non-null answer.  When an exception<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * is thrown by an object factory, the exception is passed on to the caller<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * of &lt;tt&gt;NamingManager.getObjectInstance()&lt;/tt&gt;<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * (and no search is made for other factories<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * that may produce a non-null answer).<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * An object factory should only throw an exception if it is sure that<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * it is the only intended factory and that no other object factories<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * should be tried.<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * If this factory cannot create an object using the arguments supplied,<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * it should return null.<a name="line.91"></a>
+<span class="sourceLineNo">092</span> *&lt;p&gt;<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * A &lt;em&gt;URL context factory&lt;/em&gt; is a special ObjectFactory that<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * creates contexts for resolving URLs or objects whose locations<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * are specified by URLs.  The &lt;tt&gt;getObjectInstance()&lt;/tt&gt; method<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * of a URL context factory will obey the following rules.<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * &lt;ol&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * &lt;li&gt;If &lt;code&gt;obj&lt;/code&gt; is null, create a context for resolving URLs of the<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * scheme associated with this factory. The resulting context is not tied<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * to a specific URL:  it is able to handle arbitrary URLs with this factory's<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * scheme id.  For example, invoking &lt;tt&gt;getObjectInstance()&lt;/tt&gt; with<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * &lt;code&gt;obj&lt;/code&gt; set to null on an LDAP URL context factory would return a<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * context that can resolve LDAP URLs<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * such as "ldap://ldap.wiz.com/o=wiz,c=us" and<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * "ldap://ldap.umich.edu/o=umich,c=us".<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * &lt;li&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * If &lt;code&gt;obj&lt;/code&gt; is a URL string, create an object (typically a context)<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * identified by the URL.  For example, suppose this is an LDAP URL context<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * factory.  If &lt;code&gt;obj&lt;/code&gt; is "ldap://ldap.wiz.com/o=wiz,c=us",<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * getObjectInstance() would return the context named by the distinguished<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * name "o=wiz, c=us" at the LDAP server ldap.wiz.com.  This context can<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * then be used to resolve LDAP names (such as "cn=George")<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * relative to that context.<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * &lt;li&gt;<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * If &lt;code&gt;obj&lt;/code&gt; is an array of URL strings, the assumption is that the<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * URLs are equivalent in terms of the context to which they refer.<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * Verification of whether the URLs are, or need to be, equivalent is up<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * to the context factory. The order of the URLs in the array is<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * not significant.<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * The object returned by getObjectInstance() is like that of the single<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * URL case.  It is the object named by the URLs.<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * &lt;li&gt;<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * If &lt;code&gt;obj&lt;/code&gt; is of any other type, the behavior of<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * &lt;tt&gt;getObjectInstance()&lt;/tt&gt; is determined by the context factory<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * implementation.<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * &lt;/ol&gt;<a name="line.126"></a>
+<span class="sourceLineNo">127</span> *<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * &lt;p&gt;<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * The &lt;tt&gt;name&lt;/tt&gt; and &lt;tt&gt;environment&lt;/tt&gt; parameters<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * are owned by the caller.<a name="line.130"></a>
+<span class="sourceLineNo">131</span> * The implementation will not modify these objects or keep references<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * to them, although it may keep references to clones or copies.<a name="line.132"></a>
+<span class="sourceLineNo">133</span> *<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * &lt;p&gt;<a name="line.134"></a>
+<span class="sourceLineNo">135</span> * &lt;b&gt;Name and Context Parameters.&lt;/b&gt; &amp;nbsp;&amp;nbsp;&amp;nbsp;<a name="line.135"></a>
+<span class="sourceLineNo">136</span> * &lt;a name=NAMECTX&gt;&lt;/a&gt;<a name="line.136"></a>
+<span class="sourceLineNo">137</span> *<a name="line.137"></a>
+<span class="sourceLineNo">138</span> * The &lt;code&gt;name&lt;/code&gt; and &lt;code&gt;nameCtx&lt;/code&gt; parameters may<a name="line.138"></a>
+<span class="sourceLineNo">139</span> * optionally be used to specify the name of the object being created.<a name="line.139"></a>
+<span class="sourceLineNo">140</span> * &lt;code&gt;name&lt;/code&gt; is the name of the object, relative to context<a name="line.140"></a>
+<span class="sourceLineNo">141</span> * &lt;code&gt;nameCtx&lt;/code&gt;.<a name="line.141"></a>
+<span class="sourceLineNo">142</span> * If there are several possible contexts from which the object<a name="line.142"></a>
+<span class="sourceLineNo">143</span> * could be named -- as will often be the case -- it is up to<a name="line.143"></a>
+<span class="sourceLineNo">144</span> * the caller to select one.  A good rule of thumb is to select the<a name="line.144"></a>
+<span class="sourceLineNo">145</span> * "deepest" context available.<a name="line.145"></a>
+<span class="sourceLineNo">146</span> * If &lt;code&gt;nameCtx&lt;/code&gt; is null, &lt;code&gt;name&lt;/code&gt; is relative<a name="line.146"></a>
+<span class="sourceLineNo">147</span> * to the default initial context.  If no name is being specified, the<a name="line.147"></a>
+<span class="sourceLineNo">148</span> * &lt;code&gt;name&lt;/code&gt; parameter should be null.<a name="line.148"></a>
+<span class="sourceLineNo">149</span> * If a factory uses &lt;code&gt;nameCtx&lt;/code&gt; it should synchronize its use<a name="line.149"></a>
+<span class="sourceLineNo">150</span> * against concurrent access, since context implementations are not<a name="line.150"></a>
+<span class="sourceLineNo">151</span> * guaranteed to be thread-safe.<a name="line.151"></a>
+<span class="sourceLineNo">152</span> * &lt;p&gt;<a name="line.152"></a>
+<span class="sourceLineNo">153</span> *<a name="line.153"></a>
+<span class="sourceLineNo">154</span> * @param obj The possibly null object containing location or reference<a name="line.154"></a>
+<span class="sourceLineNo">155</span> *              information that can be used in creating an object.<a name="line.155"></a>
+<span class="sourceLineNo">156</span> * @param name The name of this object relative to &lt;code&gt;nameCtx&lt;/code&gt;,<a name="line.156"></a>
+<span class="sourceLineNo">157</span> *              or null if no name is specified.<a name="line.157"></a>
+<span class="sourceLineNo">158</span> * @param nameCtx The context relative to which the &lt;code&gt;name&lt;/code&gt;<a name="line.158"></a>
+<span class="sourceLineNo">159</span> *              parameter is specified, or null if &lt;code&gt;name&lt;/code&gt; is<a name="line.159"></a>
+<span class="sourceLineNo">160</span> *              relative to the default initial context.<a name="line.160"></a>
+<span class="sourceLineNo">161</span> * @param environment The possibly null environment that is used in<a name="line.161"></a>
+<span class="sourceLineNo">162</span> *              creating the object.<a name="line.162"></a>
+<span class="sourceLineNo">163</span> * @return The object created; null if an object cannot be created.<a name="line.163"></a>
+<span class="sourceLineNo">164</span> * @exception Exception if this object factory encountered an exception<a name="line.164"></a>
+<span class="sourceLineNo">165</span> * while attempting to create an object, and no other object factories are<a name="line.165"></a>
+<span class="sourceLineNo">166</span> * to be tried.<a name="line.166"></a>
+<span class="sourceLineNo">167</span> *<a name="line.167"></a>
+<span class="sourceLineNo">168</span> * @see NamingManager#getObjectInstance<a name="line.168"></a>
+<span class="sourceLineNo">169</span> * @see NamingManager#getURLContext<a name="line.169"></a>
+<span class="sourceLineNo">170</span> */<a name="line.170"></a>
+<span class="sourceLineNo">171</span>    public Object getObjectInstance(Object obj, Name name, Context nameCtx,<a name="line.171"></a>
+<span class="sourceLineNo">172</span>                                    Hashtable&lt;?,?&gt; environment)<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        throws Exception;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>}<a name="line.174"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

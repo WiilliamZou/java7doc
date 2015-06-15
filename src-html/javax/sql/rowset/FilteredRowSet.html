@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2004, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.sql.rowset;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.sql.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.sql.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import javax.naming.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.io.*;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.math.*;<a name="line.32"></a>
+<span class="sourceLineNo">033</span><a name="line.33"></a>
+<span class="sourceLineNo">034</span>/**<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * The standard interface that all standard implementations of<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * &lt;code&gt;FilteredRowSet&lt;/code&gt; must implement. The &lt;code&gt;FilteredRowSetImpl&lt;/code&gt; class<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * provides the reference implementation which may be extended if required.<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * Alternatively, a vendor is free to implement its own version<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * by implementing this interface.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> *<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;h3&gt;1.0 Background&lt;/h3&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * There are occasions when a &lt;code&gt;RowSet&lt;/code&gt; object has a need to provide a degree<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * of filtering to its contents. One possible solution is to provide<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * a query language for all standard &lt;code&gt;RowSet&lt;/code&gt; implementations; however,<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * this is an impractical approach for lightweight components such as disconnected<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;code&gt;RowSet&lt;/code&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * objects. The &lt;code&gt;FilteredRowSet&lt;/code&gt; interface seeks to address this need<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * without supplying a heavyweight query language along with the processing that<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * such a query language would require.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;p&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * A JDBC &lt;code&gt;FilteredRowSet&lt;/code&gt; standard implementation implements the<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * &lt;code&gt;RowSet&lt;/code&gt; interfaces and extends the<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;code&gt;CachedRowSet&lt;/code&gt;&lt;sup&gt;&lt;font size=-2&gt;TM&lt;/font&gt;&lt;/sup&gt; class. The<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * &lt;code&gt;CachedRowSet&lt;/code&gt; class provides a set of protected cursor manipulation<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * methods, which a &lt;code&gt;FilteredRowSet&lt;/code&gt; implementation can override<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * to supply filtering support.<a name="line.57"></a>
+<span class="sourceLineNo">058</span> *<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * &lt;h3&gt;2.0 Predicate Sharing&lt;/h3&gt;<a name="line.59"></a>
+<span class="sourceLineNo">060</span> *<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * If a &lt;code&gt;FilteredRowSet&lt;/code&gt; implementation is shared using the<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * inherited &lt;code&gt;createShared&lt;/code&gt; method in parent interfaces, the<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;code&gt;Predicate&lt;/code&gt; should be shared without modification by all<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;code&gt;FilteredRowSet&lt;/code&gt; instance clones.<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;h3&gt;3.0 Usage&lt;/h3&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * &lt;p&gt;<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * By implementing a &lt;code&gt;Predicate&lt;/code&gt; (see example in &lt;a href="Predicate.html"&gt;Predicate&lt;/a&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * class JavaDoc), a &lt;code&gt;FilteredRowSet&lt;/code&gt; could then be used as described<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * below.<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;P&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &lt;code&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> * &lt;pre&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *     FilteredRowSet frs = new FilteredRowSetImpl();<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *     frs.populate(rs);<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *<a name="line.76"></a>
+<span class="sourceLineNo">077</span> *     Range name = new Range("Alpha", "Bravo", "columnName");<a name="line.77"></a>
+<span class="sourceLineNo">078</span> *     frs.setFilter(name);<a name="line.78"></a>
+<span class="sourceLineNo">079</span> *<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *     frs.next() // only names from "Alpha" to "Bravo" will be returned<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * &lt;/pre&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;/code&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * In the example above, we initialize a &lt;code&gt;Range&lt;/code&gt; object which<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * implements the &lt;code&gt;Predicate&lt;/code&gt; interface. This object expresses<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * the following constraints: All rows outputted or modified from this<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;code&gt;FilteredRowSet&lt;/code&gt; object must fall between the values 'Alpha' and<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * 'Bravo' both values inclusive, in the column 'columnName'. If a filter is<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * applied to a &lt;code&gt;FilteredRowSet&lt;/code&gt; object that contains no data that<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * falls within the range of the filter, no rows are returned.<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * &lt;p&gt;<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * This framework allows multiple classes implementing predicates to be<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * used in combination to achieved the required filtering result with<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * out the need for query language processing.<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * &lt;p&gt;<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * &lt;h3&gt;4.0 Updating a &lt;code&gt;FilteredRowSet&lt;/code&gt; Object&lt;/h3&gt;<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * The predicate set on a &lt;code&gt;FilteredRowSet&lt;/code&gt; object<a name="line.96"></a>
+<span class="sourceLineNo">097</span> * applies a criterion on all rows in a<a name="line.97"></a>
+<span class="sourceLineNo">098</span> * &lt;code&gt;RowSet&lt;/code&gt; object to manage a subset of rows in a &lt;code&gt;RowSet&lt;/code&gt;<a name="line.98"></a>
+<span class="sourceLineNo">099</span> * object. This criterion governs the subset of rows that are visible and also<a name="line.99"></a>
+<span class="sourceLineNo">100</span> * defines which rows can be modified, deleted or inserted.<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * &lt;p&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * Therefore, the predicate set on a &lt;code&gt;FilteredRowSet&lt;/code&gt; object must be<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * considered as bi-directional and the set criterion as the gating mechanism<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * for all views and updates to the &lt;code&gt;FilteredRowSet&lt;/code&gt; object. Any attempt<a name="line.104"></a>
+<span class="sourceLineNo">105</span> * to update the &lt;code&gt;FilteredRowSet&lt;/code&gt; that violates the criterion will<a name="line.105"></a>
+<span class="sourceLineNo">106</span> * result in a &lt;code&gt;SQLException&lt;/code&gt; object being thrown.<a name="line.106"></a>
+<span class="sourceLineNo">107</span> * &lt;p&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> * The &lt;code&gt;FilteredRowSet&lt;/code&gt; range criterion can be modified by applying<a name="line.108"></a>
+<span class="sourceLineNo">109</span> * a new &lt;code&gt;Predicate&lt;/code&gt; object to the &lt;code&gt;FilteredRowSet&lt;/code&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> * instance at any time. This is  possible if no additional references to the<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * &lt;code&gt;FilteredRowSet&lt;/code&gt; object are detected. A new filter has has an<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * immediate effect on criterion enforcement within the<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * &lt;code&gt;FilteredRowSet&lt;/code&gt; object, and all subsequent views and updates will be<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * subject to similar enforcement.<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * &lt;p&gt;<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * &lt;h3&gt;5.0 Behavior of Rows Outside the Filter&lt;/h3&gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * Rows that fall outside of the filter set on a &lt;code&gt;FilteredRowSet&lt;/code&gt;<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * object cannot be modified until the filter is removed or a<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * new filter is applied.<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * &lt;p&gt;<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * Furthermore, only rows that fall within the bounds of a filter will be<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * synchronized with the data source.<a name="line.122"></a>
+<span class="sourceLineNo">123</span> *<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * @author Jonathan Bruce<a name="line.124"></a>
+<span class="sourceLineNo">125</span> */<a name="line.125"></a>
+<span class="sourceLineNo">126</span><a name="line.126"></a>
+<span class="sourceLineNo">127</span>public interface FilteredRowSet extends WebRowSet {<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>   /**<a name="line.129"></a>
+<span class="sourceLineNo">130</span>    * Applies the given &lt;code&gt;Predicate&lt;/code&gt; object to this<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    * &lt;code&gt;FilteredRowSet&lt;/code&gt;<a name="line.131"></a>
+<span class="sourceLineNo">132</span>    * object. The filter applies controls both to inbound and outbound views,<a name="line.132"></a>
+<span class="sourceLineNo">133</span>    * constraining which rows are visible and which<a name="line.133"></a>
+<span class="sourceLineNo">134</span>    * rows can be manipulated.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    * &lt;p&gt;<a name="line.135"></a>
+<span class="sourceLineNo">136</span>    * A new &lt;code&gt;Predicate&lt;/code&gt; object may be set at any time. This has the<a name="line.136"></a>
+<span class="sourceLineNo">137</span>    * effect of changing constraints on the &lt;code&gt;RowSet&lt;/code&gt; object's data.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>    * In addition, modifying the filter at runtime presents issues whereby<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    * multiple components may be operating on one &lt;code&gt;FilteredRowSet&lt;/code&gt; object.<a name="line.139"></a>
+<span class="sourceLineNo">140</span>    * Application developers must take responsibility for managing multiple handles<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    * to &lt;code&gt;FilteredRowSet&lt;/code&gt; objects when their underling &lt;code&gt;Predicate&lt;/code&gt;<a name="line.141"></a>
+<span class="sourceLineNo">142</span>    * objects change.<a name="line.142"></a>
+<span class="sourceLineNo">143</span>    *<a name="line.143"></a>
+<span class="sourceLineNo">144</span>    * @param p a &lt;code&gt;Predicate&lt;/code&gt; object defining the filter for this<a name="line.144"></a>
+<span class="sourceLineNo">145</span>    * &lt;code&gt;FilteredRowSet&lt;/code&gt; object. Setting a &lt;b&gt;null&lt;/b&gt; value<a name="line.145"></a>
+<span class="sourceLineNo">146</span>    * will clear the predicate, allowing all rows to become visible.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>    *<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    * @throws SQLException if an error occurs when setting the<a name="line.148"></a>
+<span class="sourceLineNo">149</span>    *     &lt;code&gt;Predicate&lt;/code&gt; object<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    */<a name="line.150"></a>
+<span class="sourceLineNo">151</span>    public void setFilter(Predicate p) throws SQLException;<a name="line.151"></a>
+<span class="sourceLineNo">152</span><a name="line.152"></a>
+<span class="sourceLineNo">153</span>   /**<a name="line.153"></a>
+<span class="sourceLineNo">154</span>    * Retrieves the active filter for this &lt;code&gt;FilteredRowSet&lt;/code&gt; object.<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    *<a name="line.155"></a>
+<span class="sourceLineNo">156</span>    * @return p the &lt;code&gt;Predicate&lt;/code&gt; for this &lt;code&gt;FilteredRowSet&lt;/code&gt;<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    * object; &lt;code&gt;null&lt;/code&gt; if no filter has been set.<a name="line.157"></a>
+<span class="sourceLineNo">158</span>    */<a name="line.158"></a>
+<span class="sourceLineNo">159</span>    public Predicate getFilter() ;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>}<a name="line.160"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

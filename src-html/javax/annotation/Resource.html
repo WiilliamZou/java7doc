@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.annotation;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.lang.annotation.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import static java.lang.annotation.ElementType.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import static java.lang.annotation.RetentionPolicy.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span><a name="line.31"></a>
+<span class="sourceLineNo">032</span>/**<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * The Resource annotation marks a resource that is needed<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * by the application.  This annotation may be applied to an<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * application component class, or to fields or methods of the<a name="line.35"></a>
+<span class="sourceLineNo">036</span> * component class.  When the annotation is applied to a<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * field or method, the container will inject an instance<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * of the requested resource into the application component<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * when the component is initialized.  If the annotation is<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * applied to the component class, the annotation declares a<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * resource that the application will look up at runtime. &lt;p&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * Even though this annotation is not marked Inherited, deployment<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * tools are required to examine all superclasses of any component<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * class to discover all uses of this annotation in all superclasses.<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * All such annotation instances specify resources that are needed<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * by the application component.  Note that this annotation may<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * appear on private fields and methods of superclasses; the container<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * is required to perform injection in these cases as well.<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * @since Common Annotations 1.0<a name="line.51"></a>
+<span class="sourceLineNo">052</span> */<a name="line.52"></a>
+<span class="sourceLineNo">053</span>@Target({TYPE, FIELD, METHOD})<a name="line.53"></a>
+<span class="sourceLineNo">054</span>@Retention(RUNTIME)<a name="line.54"></a>
+<span class="sourceLineNo">055</span>public @interface Resource {<a name="line.55"></a>
+<span class="sourceLineNo">056</span>    /**<a name="line.56"></a>
+<span class="sourceLineNo">057</span>     * The JNDI name of the resource.  For field annotations,<a name="line.57"></a>
+<span class="sourceLineNo">058</span>     * the default is the field name.  For method annotations,<a name="line.58"></a>
+<span class="sourceLineNo">059</span>     * the default is the JavaBeans property name corresponding<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * to the method.  For class annotations, there is no default<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * and this must be specified.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     */<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    String name() default "";<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>    /**<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * The name of the resource that the reference points to. It can<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * link to any compatible resource using the global JNDI names.<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     *<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * @since Common Annotations 1.1<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     */<a name="line.70"></a>
+<span class="sourceLineNo">071</span><a name="line.71"></a>
+<span class="sourceLineNo">072</span>    String lookup() default "";<a name="line.72"></a>
+<span class="sourceLineNo">073</span><a name="line.73"></a>
+<span class="sourceLineNo">074</span>    /**<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * The Java type of the resource.  For field annotations,<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * the default is the type of the field.  For method annotations,<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * the default is the type of the JavaBeans property.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * For class annotations, there is no default and this must be<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * specified.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     */<a name="line.80"></a>
+<span class="sourceLineNo">081</span>    Class type() default java.lang.Object.class;<a name="line.81"></a>
+<span class="sourceLineNo">082</span><a name="line.82"></a>
+<span class="sourceLineNo">083</span>    /**<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * The two possible authentication types for a resource.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     */<a name="line.85"></a>
+<span class="sourceLineNo">086</span>    enum AuthenticationType {<a name="line.86"></a>
+<span class="sourceLineNo">087</span>            CONTAINER,<a name="line.87"></a>
+<span class="sourceLineNo">088</span>            APPLICATION<a name="line.88"></a>
+<span class="sourceLineNo">089</span>    }<a name="line.89"></a>
+<span class="sourceLineNo">090</span><a name="line.90"></a>
+<span class="sourceLineNo">091</span>    /**<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * The authentication type to use for this resource.<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * This may be specified for resources representing a<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     * connection factory of any supported type, and must<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * not be specified for resources of other types.<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     */<a name="line.96"></a>
+<span class="sourceLineNo">097</span>    AuthenticationType authenticationType() default AuthenticationType.CONTAINER;<a name="line.97"></a>
+<span class="sourceLineNo">098</span><a name="line.98"></a>
+<span class="sourceLineNo">099</span>    /**<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     * Indicates whether this resource can be shared between<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * this component and other components.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     * This may be specified for resources representing a<a name="line.102"></a>
+<span class="sourceLineNo">103</span>     * connection factory of any supported type, and must<a name="line.103"></a>
+<span class="sourceLineNo">104</span>     * not be specified for resources of other types.<a name="line.104"></a>
+<span class="sourceLineNo">105</span>     */<a name="line.105"></a>
+<span class="sourceLineNo">106</span>    boolean shareable() default true;<a name="line.106"></a>
+<span class="sourceLineNo">107</span><a name="line.107"></a>
+<span class="sourceLineNo">108</span>    /**<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * A product specific name that this resource should be mapped to.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     * The name of this resource, as defined by the &lt;code&gt;name&lt;/code&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * element or defaulted, is a name that is local to the application<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * component using the resource.  (It's a name in the JNDI<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     * &lt;code&gt;java:comp/env&lt;/code&gt; namespace.)  Many application servers<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * provide a way to map these local names to names of resources<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * known to the application server.  This mapped name is often a<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * &lt;i&gt;global&lt;/i&gt; JNDI name, but may be a name of any form. &lt;p&gt;<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     *<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     * Application servers are not required to support any particular<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * form or type of mapped name, nor the ability to use mapped names.<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * The mapped name is product-dependent and often installation-dependent.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     * No use of a mapped name is portable.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     */<a name="line.122"></a>
+<span class="sourceLineNo">123</span>    String mappedName() default "";<a name="line.123"></a>
+<span class="sourceLineNo">124</span><a name="line.124"></a>
+<span class="sourceLineNo">125</span>    /**<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     * Description of this resource.  The description is expected<a name="line.126"></a>
+<span class="sourceLineNo">127</span>     * to be in the default language of the system on which the<a name="line.127"></a>
+<span class="sourceLineNo">128</span>     * application is deployed.  The description can be presented<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * to the Deployer to help in choosing the correct resource.<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     */<a name="line.130"></a>
+<span class="sourceLineNo">131</span>    String description() default "";<a name="line.131"></a>
+<span class="sourceLineNo">132</span>}<a name="line.132"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

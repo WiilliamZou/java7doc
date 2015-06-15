@@ -1,0 +1,354 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1997, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>/**********************************************************************<a name="line.26"></a>
+<span class="sourceLineNo">027</span> **********************************************************************<a name="line.27"></a>
+<span class="sourceLineNo">028</span> **********************************************************************<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *** COPYRIGHT (c) Eastman Kodak Company, 1997                      ***<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *** As  an unpublished  work pursuant to Title 17 of the United    ***<a name="line.30"></a>
+<span class="sourceLineNo">031</span> *** States Code.  All rights reserved.                             ***<a name="line.31"></a>
+<span class="sourceLineNo">032</span> **********************************************************************<a name="line.32"></a>
+<span class="sourceLineNo">033</span> **********************************************************************<a name="line.33"></a>
+<span class="sourceLineNo">034</span> **********************************************************************/<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>package java.awt.color;<a name="line.36"></a>
+<span class="sourceLineNo">037</span><a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.awt.image.LookupTable;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import sun.java2d.cmm.ProfileDeferralInfo;<a name="line.39"></a>
+<span class="sourceLineNo">040</span><a name="line.40"></a>
+<span class="sourceLineNo">041</span>/**<a name="line.41"></a>
+<span class="sourceLineNo">042</span> *<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * The ICC_ProfileRGB class is a subclass of the ICC_Profile class<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * that represents profiles which meet the following criteria:<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * &lt;ul&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * &lt;li&gt;The profile's color space type is RGB.&lt;/li&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;li&gt;The profile includes the &lt;code&gt;redColorantTag&lt;/code&gt;,<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;code&gt;greenColorantTag&lt;/code&gt;, &lt;code&gt;blueColorantTag&lt;/code&gt;,<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;code&gt;redTRCTag&lt;/code&gt;, &lt;code&gt;greenTRCTag&lt;/code&gt;,<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;code&gt;blueTRCTag&lt;/code&gt;, and &lt;code&gt;mediaWhitePointTag&lt;/code&gt; tags.&lt;/li&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;/ul&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * The &lt;code&gt;ICC_Profile&lt;/code&gt; &lt;code&gt;getInstance&lt;/code&gt; method will<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * return an &lt;code&gt;ICC_ProfileRGB&lt;/code&gt; object when these conditions are met.<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * Three-component, matrix-based input profiles and RGB display profiles are<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * examples of this type of profile.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;p&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * This profile class provides color transform matrices and lookup tables<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * that Java or native methods can use directly to<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * optimize color conversion in some cases.<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;p&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * To transform from a device profile color space to the CIEXYZ Profile<a name="line.61"></a>
+<span class="sourceLineNo">062</span> * Connection Space, each device color component is first linearized by<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * a lookup through the corresponding tone reproduction curve (TRC).<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * The resulting linear RGB components are converted to the CIEXYZ PCS<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * using a a 3x3 matrix constructed from the RGB colorants.<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;pre&gt;<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &amp;nbsp;               linearR = redTRC[deviceR]<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * &amp;nbsp;               linearG = greenTRC[deviceG]<a name="line.70"></a>
+<span class="sourceLineNo">071</span> *<a name="line.71"></a>
+<span class="sourceLineNo">072</span> * &amp;nbsp;               linearB = blueTRC[deviceB]<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *<a name="line.73"></a>
+<span class="sourceLineNo">074</span> * &amp;nbsp; _      _       _                                             _   _         _<a name="line.74"></a>
+<span class="sourceLineNo">075</span> * &amp;nbsp;[  PCSX  ]     [  redColorantX  greenColorantX  blueColorantX  ] [  linearR  ]<a name="line.75"></a>
+<span class="sourceLineNo">076</span> * &amp;nbsp;[        ]     [                                               ] [           ]<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &amp;nbsp;[  PCSY  ]  =  [  redColorantY  greenColorantY  blueColorantY  ] [  linearG  ]<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * &amp;nbsp;[        ]     [                                               ] [           ]<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * &amp;nbsp;[_ PCSZ _]     [_ redColorantZ  greenColorantZ  blueColorantZ _] [_ linearB _]<a name="line.79"></a>
+<span class="sourceLineNo">080</span> *<a name="line.80"></a>
+<span class="sourceLineNo">081</span> * &lt;/pre&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * The inverse transform is performed by converting PCS XYZ components to linear<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * RGB components through the inverse of the above 3x3 matrix, and then converting<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * linear RGB to device RGB through inverses of the TRCs.<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;p&gt;<a name="line.85"></a>
+<span class="sourceLineNo">086</span> */<a name="line.86"></a>
+<span class="sourceLineNo">087</span><a name="line.87"></a>
+<span class="sourceLineNo">088</span><a name="line.88"></a>
+<span class="sourceLineNo">089</span><a name="line.89"></a>
+<span class="sourceLineNo">090</span>public class ICC_ProfileRGB<a name="line.90"></a>
+<span class="sourceLineNo">091</span>extends ICC_Profile {<a name="line.91"></a>
+<span class="sourceLineNo">092</span><a name="line.92"></a>
+<span class="sourceLineNo">093</span>    static final long serialVersionUID = 8505067385152579334L;<a name="line.93"></a>
+<span class="sourceLineNo">094</span><a name="line.94"></a>
+<span class="sourceLineNo">095</span>    /**<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * Used to get a gamma value or TRC for the red component.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     */<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    public static final int REDCOMPONENT = 0;<a name="line.98"></a>
+<span class="sourceLineNo">099</span><a name="line.99"></a>
+<span class="sourceLineNo">100</span>    /**<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     * Used to get a gamma value or TRC for the green component.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>     */<a name="line.102"></a>
+<span class="sourceLineNo">103</span>    public static final int GREENCOMPONENT = 1;<a name="line.103"></a>
+<span class="sourceLineNo">104</span><a name="line.104"></a>
+<span class="sourceLineNo">105</span>    /**<a name="line.105"></a>
+<span class="sourceLineNo">106</span>     * Used to get a gamma value or TRC for the blue component.<a name="line.106"></a>
+<span class="sourceLineNo">107</span>     */<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    public static final int BLUECOMPONENT = 2;<a name="line.108"></a>
+<span class="sourceLineNo">109</span><a name="line.109"></a>
+<span class="sourceLineNo">110</span><a name="line.110"></a>
+<span class="sourceLineNo">111</span>    /**<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * Constructs an new &lt;code&gt;ICC_ProfileRGB&lt;/code&gt; from a CMM ID.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     *<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * @param ID The CMM ID for the profile.<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     *<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     */<a name="line.116"></a>
+<span class="sourceLineNo">117</span>    ICC_ProfileRGB(long ID) {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>        super(ID);<a name="line.118"></a>
+<span class="sourceLineNo">119</span>    }<a name="line.119"></a>
+<span class="sourceLineNo">120</span><a name="line.120"></a>
+<span class="sourceLineNo">121</span>    /**<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * Constructs a new &lt;code&gt;ICC_ProfileRGB&lt;/code&gt; from a<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     * ProfileDeferralInfo object.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>     *<a name="line.124"></a>
+<span class="sourceLineNo">125</span>     * @param pdi<a name="line.125"></a>
+<span class="sourceLineNo">126</span>     */<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    ICC_ProfileRGB(ProfileDeferralInfo pdi) {<a name="line.127"></a>
+<span class="sourceLineNo">128</span>        super(pdi);<a name="line.128"></a>
+<span class="sourceLineNo">129</span>    }<a name="line.129"></a>
+<span class="sourceLineNo">130</span><a name="line.130"></a>
+<span class="sourceLineNo">131</span><a name="line.131"></a>
+<span class="sourceLineNo">132</span>    /**<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * Returns an array that contains the components of the profile's<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * &lt;CODE&gt;mediaWhitePointTag&lt;/CODE&gt;.<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     *<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     * @return A 3-element &lt;CODE&gt;float&lt;/CODE&gt; array containing the x, y,<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     * and z components of the profile's &lt;CODE&gt;mediaWhitePointTag&lt;/CODE&gt;.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     */<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    public float[] getMediaWhitePoint() {<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        return super.getMediaWhitePoint();<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    }<a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span><a name="line.143"></a>
+<span class="sourceLineNo">144</span>    /**<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * Returns a 3x3 &lt;CODE&gt;float&lt;/CODE&gt; matrix constructed from the<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * X, Y, and Z components of the profile's &lt;CODE&gt;redColorantTag&lt;/CODE&gt;,<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     * &lt;CODE&gt;greenColorantTag&lt;/CODE&gt;, and &lt;CODE&gt;blueColorantTag&lt;/CODE&gt;.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * &lt;p&gt;<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * This matrix can be used for color transforms in the forward<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     * direction of the profile--from the profile color space<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     * to the CIEXYZ PCS.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     *<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * @return A 3x3 &lt;CODE&gt;float&lt;/CODE&gt; array that contains the x, y, and z<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * components of the profile's &lt;CODE&gt;redColorantTag&lt;/CODE&gt;,<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * &lt;CODE&gt;greenColorantTag&lt;/CODE&gt;, and &lt;CODE&gt;blueColorantTag&lt;/CODE&gt;.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     */<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    public float[][] getMatrix() {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>        float[][] theMatrix = new float[3][3];<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        float[] tmpMatrix;<a name="line.159"></a>
+<span class="sourceLineNo">160</span><a name="line.160"></a>
+<span class="sourceLineNo">161</span>        tmpMatrix = getXYZTag(ICC_Profile.icSigRedColorantTag);<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        theMatrix[0][0] = tmpMatrix[0];<a name="line.162"></a>
+<span class="sourceLineNo">163</span>        theMatrix[1][0] = tmpMatrix[1];<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        theMatrix[2][0] = tmpMatrix[2];<a name="line.164"></a>
+<span class="sourceLineNo">165</span>        tmpMatrix = getXYZTag(ICC_Profile.icSigGreenColorantTag);<a name="line.165"></a>
+<span class="sourceLineNo">166</span>        theMatrix[0][1] = tmpMatrix[0];<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        theMatrix[1][1] = tmpMatrix[1];<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        theMatrix[2][1] = tmpMatrix[2];<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        tmpMatrix = getXYZTag(ICC_Profile.icSigBlueColorantTag);<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        theMatrix[0][2] = tmpMatrix[0];<a name="line.170"></a>
+<span class="sourceLineNo">171</span>        theMatrix[1][2] = tmpMatrix[1];<a name="line.171"></a>
+<span class="sourceLineNo">172</span>        theMatrix[2][2] = tmpMatrix[2];<a name="line.172"></a>
+<span class="sourceLineNo">173</span>        return theMatrix;<a name="line.173"></a>
+<span class="sourceLineNo">174</span>    }<a name="line.174"></a>
+<span class="sourceLineNo">175</span><a name="line.175"></a>
+<span class="sourceLineNo">176</span>    /**<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * Returns a gamma value representing the tone reproduction curve<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * (TRC) for a particular component.  The component parameter<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * must be one of REDCOMPONENT, GREENCOMPONENT, or BLUECOMPONENT.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     * &lt;p&gt;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * If the profile<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * represents the TRC for the corresponding component<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     * as a table rather than a single gamma value, an<a name="line.183"></a>
+<span class="sourceLineNo">184</span>     * exception is thrown.  In this case the actual table<a name="line.184"></a>
+<span class="sourceLineNo">185</span>     * can be obtained through the {@link #getTRC(int)} method.<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * When using a gamma value,<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * the linear component (R, G, or B) is computed as follows:<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * &lt;pre&gt;<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * &amp;nbsp;                                         gamma<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * &amp;nbsp;        linearComponent = deviceComponent<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     *<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     *&lt;/pre&gt;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * @param component The &lt;CODE&gt;ICC_ProfileRGB&lt;/CODE&gt; constant that<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     * represents the component whose TRC you want to retrieve<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @return the gamma value as a float.<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @exception ProfileDataException if the profile does not specify<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     *            the corresponding TRC as a single gamma value.<a name="line.198"></a>
+<span class="sourceLineNo">199</span>     */<a name="line.199"></a>
+<span class="sourceLineNo">200</span>    public float getGamma(int component) {<a name="line.200"></a>
+<span class="sourceLineNo">201</span>    float theGamma;<a name="line.201"></a>
+<span class="sourceLineNo">202</span>    int theSignature;<a name="line.202"></a>
+<span class="sourceLineNo">203</span><a name="line.203"></a>
+<span class="sourceLineNo">204</span>        switch (component) {<a name="line.204"></a>
+<span class="sourceLineNo">205</span>        case REDCOMPONENT:<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            theSignature = ICC_Profile.icSigRedTRCTag;<a name="line.206"></a>
+<span class="sourceLineNo">207</span>            break;<a name="line.207"></a>
+<span class="sourceLineNo">208</span><a name="line.208"></a>
+<span class="sourceLineNo">209</span>        case GREENCOMPONENT:<a name="line.209"></a>
+<span class="sourceLineNo">210</span>            theSignature = ICC_Profile.icSigGreenTRCTag;<a name="line.210"></a>
+<span class="sourceLineNo">211</span>            break;<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>        case BLUECOMPONENT:<a name="line.213"></a>
+<span class="sourceLineNo">214</span>            theSignature = ICC_Profile.icSigBlueTRCTag;<a name="line.214"></a>
+<span class="sourceLineNo">215</span>            break;<a name="line.215"></a>
+<span class="sourceLineNo">216</span><a name="line.216"></a>
+<span class="sourceLineNo">217</span>        default:<a name="line.217"></a>
+<span class="sourceLineNo">218</span>            throw new IllegalArgumentException("Must be Red, Green, or Blue");<a name="line.218"></a>
+<span class="sourceLineNo">219</span>        }<a name="line.219"></a>
+<span class="sourceLineNo">220</span><a name="line.220"></a>
+<span class="sourceLineNo">221</span>        theGamma = super.getGamma(theSignature);<a name="line.221"></a>
+<span class="sourceLineNo">222</span><a name="line.222"></a>
+<span class="sourceLineNo">223</span>        return theGamma;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>    }<a name="line.224"></a>
+<span class="sourceLineNo">225</span><a name="line.225"></a>
+<span class="sourceLineNo">226</span>    /**<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * Returns the TRC for a particular component as an array.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * Component must be &lt;code&gt;REDCOMPONENT&lt;/code&gt;,<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * &lt;code&gt;GREENCOMPONENT&lt;/code&gt;, or &lt;code&gt;BLUECOMPONENT&lt;/code&gt;.<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * Otherwise the returned array<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * represents a lookup table where the input component value<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * is conceptually in the range [0.0, 1.0].  Value 0.0 maps<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * to array index 0 and value 1.0 maps to array index length-1.<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     * Interpolation might be used to generate output values for<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     * input values that do not map exactly to an index in the<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     * array.  Output values also map linearly to the range [0.0, 1.0].<a name="line.236"></a>
+<span class="sourceLineNo">237</span>     * Value 0.0 is represented by an array value of 0x0000 and<a name="line.237"></a>
+<span class="sourceLineNo">238</span>     * value 1.0 by 0xFFFF.  In other words, the values are really unsigned<a name="line.238"></a>
+<span class="sourceLineNo">239</span>     * &lt;code&gt;short&lt;/code&gt; values even though they are returned in a<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * &lt;code&gt;short&lt;/code&gt; array.<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     *<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * If the profile has specified the corresponding TRC<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * as linear (gamma = 1.0) or as a simple gamma value, this method<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * throws an exception.  In this case, the {@link #getGamma(int)}<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * method should be used to get the gamma value.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * @param component The &lt;CODE&gt;ICC_ProfileRGB&lt;/CODE&gt; constant that<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * represents the component whose TRC you want to retrieve:<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     * &lt;CODE&gt;REDCOMPONENT&lt;/CODE&gt;, &lt;CODE&gt;GREENCOMPONENT&lt;/CODE&gt;, or<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * &lt;CODE&gt;BLUECOMPONENT&lt;/CODE&gt;.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     *<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * @return a short array representing the TRC.<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     * @exception ProfileDataException if the profile does not specify<a name="line.253"></a>
+<span class="sourceLineNo">254</span>     *            the corresponding TRC as a table.<a name="line.254"></a>
+<span class="sourceLineNo">255</span>     */<a name="line.255"></a>
+<span class="sourceLineNo">256</span>    public short[] getTRC(int component) {<a name="line.256"></a>
+<span class="sourceLineNo">257</span>    short[] theTRC;<a name="line.257"></a>
+<span class="sourceLineNo">258</span>    int theSignature;<a name="line.258"></a>
+<span class="sourceLineNo">259</span><a name="line.259"></a>
+<span class="sourceLineNo">260</span>        switch (component) {<a name="line.260"></a>
+<span class="sourceLineNo">261</span>        case REDCOMPONENT:<a name="line.261"></a>
+<span class="sourceLineNo">262</span>            theSignature = ICC_Profile.icSigRedTRCTag;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            break;<a name="line.263"></a>
+<span class="sourceLineNo">264</span><a name="line.264"></a>
+<span class="sourceLineNo">265</span>        case GREENCOMPONENT:<a name="line.265"></a>
+<span class="sourceLineNo">266</span>            theSignature = ICC_Profile.icSigGreenTRCTag;<a name="line.266"></a>
+<span class="sourceLineNo">267</span>            break;<a name="line.267"></a>
+<span class="sourceLineNo">268</span><a name="line.268"></a>
+<span class="sourceLineNo">269</span>        case BLUECOMPONENT:<a name="line.269"></a>
+<span class="sourceLineNo">270</span>            theSignature = ICC_Profile.icSigBlueTRCTag;<a name="line.270"></a>
+<span class="sourceLineNo">271</span>            break;<a name="line.271"></a>
+<span class="sourceLineNo">272</span><a name="line.272"></a>
+<span class="sourceLineNo">273</span>        default:<a name="line.273"></a>
+<span class="sourceLineNo">274</span>            throw new IllegalArgumentException("Must be Red, Green, or Blue");<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        }<a name="line.275"></a>
+<span class="sourceLineNo">276</span><a name="line.276"></a>
+<span class="sourceLineNo">277</span>        theTRC = super.getTRC(theSignature);<a name="line.277"></a>
+<span class="sourceLineNo">278</span><a name="line.278"></a>
+<span class="sourceLineNo">279</span>        return theTRC;<a name="line.279"></a>
+<span class="sourceLineNo">280</span>    }<a name="line.280"></a>
+<span class="sourceLineNo">281</span><a name="line.281"></a>
+<span class="sourceLineNo">282</span>}<a name="line.282"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

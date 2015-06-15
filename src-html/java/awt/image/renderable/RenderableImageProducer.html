@@ -1,0 +1,291 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1998, 2008, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>/* ********************************************************************<a name="line.26"></a>
+<span class="sourceLineNo">027</span> **********************************************************************<a name="line.27"></a>
+<span class="sourceLineNo">028</span> **********************************************************************<a name="line.28"></a>
+<span class="sourceLineNo">029</span> *** COPYRIGHT (c) Eastman Kodak Company, 1997                      ***<a name="line.29"></a>
+<span class="sourceLineNo">030</span> *** As  an unpublished  work pursuant to Title 17 of the United    ***<a name="line.30"></a>
+<span class="sourceLineNo">031</span> *** States Code.  All rights reserved.                             ***<a name="line.31"></a>
+<span class="sourceLineNo">032</span> **********************************************************************<a name="line.32"></a>
+<span class="sourceLineNo">033</span> **********************************************************************<a name="line.33"></a>
+<span class="sourceLineNo">034</span> **********************************************************************/<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>package java.awt.image.renderable;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.awt.color.ColorSpace;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.awt.image.ColorModel;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import java.awt.image.DataBuffer;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import java.awt.image.DirectColorModel;<a name="line.40"></a>
+<span class="sourceLineNo">041</span>import java.awt.image.ImageConsumer;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>import java.awt.image.ImageProducer;<a name="line.42"></a>
+<span class="sourceLineNo">043</span>import java.awt.image.Raster;<a name="line.43"></a>
+<span class="sourceLineNo">044</span>import java.awt.image.RenderedImage;<a name="line.44"></a>
+<span class="sourceLineNo">045</span>import java.awt.image.SampleModel;<a name="line.45"></a>
+<span class="sourceLineNo">046</span>import java.util.Enumeration;<a name="line.46"></a>
+<span class="sourceLineNo">047</span>import java.util.Vector;<a name="line.47"></a>
+<span class="sourceLineNo">048</span><a name="line.48"></a>
+<span class="sourceLineNo">049</span>/**<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * An adapter class that implements ImageProducer to allow the<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * asynchronous production of a RenderableImage.  The size of the<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * ImageConsumer is determined by the scale factor of the usr2dev<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * transform in the RenderContext.  If the RenderContext is null, the<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * default rendering of the RenderableImage is used.  This class<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * implements an asynchronous production that produces the image in<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * one thread at one resolution.  This class may be subclassed to<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * implement versions that will render the image using several<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * threads.  These threads could render either the same image at<a name="line.58"></a>
+<span class="sourceLineNo">059</span> * progressively better quality, or different sections of the image at<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * a single resolution.<a name="line.60"></a>
+<span class="sourceLineNo">061</span> */<a name="line.61"></a>
+<span class="sourceLineNo">062</span>public class RenderableImageProducer implements ImageProducer, Runnable {<a name="line.62"></a>
+<span class="sourceLineNo">063</span><a name="line.63"></a>
+<span class="sourceLineNo">064</span>    /** The RenderableImage source for the producer. */<a name="line.64"></a>
+<span class="sourceLineNo">065</span>    RenderableImage rdblImage;<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>    /** The RenderContext to use for producing the image. */<a name="line.67"></a>
+<span class="sourceLineNo">068</span>    RenderContext rc;<a name="line.68"></a>
+<span class="sourceLineNo">069</span><a name="line.69"></a>
+<span class="sourceLineNo">070</span>    /** A Vector of image consumers. */<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    Vector ics = new Vector();<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * Constructs a new RenderableImageProducer from a RenderableImage<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * and a RenderContext.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     *<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * @param rdblImage the RenderableImage to be rendered.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * @param rc the RenderContext to use for producing the pixels.<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     */<a name="line.79"></a>
+<span class="sourceLineNo">080</span>    public RenderableImageProducer(RenderableImage rdblImage,<a name="line.80"></a>
+<span class="sourceLineNo">081</span>                                   RenderContext rc) {<a name="line.81"></a>
+<span class="sourceLineNo">082</span>        this.rdblImage = rdblImage;<a name="line.82"></a>
+<span class="sourceLineNo">083</span>        this.rc = rc;<a name="line.83"></a>
+<span class="sourceLineNo">084</span>    }<a name="line.84"></a>
+<span class="sourceLineNo">085</span><a name="line.85"></a>
+<span class="sourceLineNo">086</span>    /**<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * Sets a new RenderContext to use for the next startProduction() call.<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     *<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @param rc the new RenderContext.<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     */<a name="line.90"></a>
+<span class="sourceLineNo">091</span>    public synchronized void setRenderContext(RenderContext rc) {<a name="line.91"></a>
+<span class="sourceLineNo">092</span>        this.rc = rc;<a name="line.92"></a>
+<span class="sourceLineNo">093</span>    }<a name="line.93"></a>
+<span class="sourceLineNo">094</span><a name="line.94"></a>
+<span class="sourceLineNo">095</span>   /**<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     * Adds an ImageConsumer to the list of consumers interested in<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * data for this image.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     *<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     * @param ic an ImageConsumer to be added to the interest list.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     */<a name="line.100"></a>
+<span class="sourceLineNo">101</span>    public synchronized void addConsumer(ImageConsumer ic) {<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        if (!ics.contains(ic)) {<a name="line.102"></a>
+<span class="sourceLineNo">103</span>            ics.addElement(ic);<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        }<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    }<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>    /**<a name="line.107"></a>
+<span class="sourceLineNo">108</span>     * Determine if an ImageConsumer is on the list of consumers<a name="line.108"></a>
+<span class="sourceLineNo">109</span>     * currently interested in data for this image.<a name="line.109"></a>
+<span class="sourceLineNo">110</span>     *<a name="line.110"></a>
+<span class="sourceLineNo">111</span>     * @param ic the ImageConsumer to be checked.<a name="line.111"></a>
+<span class="sourceLineNo">112</span>     * @return true if the ImageConsumer is on the list; false otherwise.<a name="line.112"></a>
+<span class="sourceLineNo">113</span>     */<a name="line.113"></a>
+<span class="sourceLineNo">114</span>    public synchronized boolean isConsumer(ImageConsumer ic) {<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        return ics.contains(ic);<a name="line.115"></a>
+<span class="sourceLineNo">116</span>    }<a name="line.116"></a>
+<span class="sourceLineNo">117</span><a name="line.117"></a>
+<span class="sourceLineNo">118</span>    /**<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * Remove an ImageConsumer from the list of consumers interested in<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * data for this image.<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     * @param ic the ImageConsumer to be removed.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    public synchronized void removeConsumer(ImageConsumer ic) {<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        ics.removeElement(ic);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>    }<a name="line.126"></a>
+<span class="sourceLineNo">127</span><a name="line.127"></a>
+<span class="sourceLineNo">128</span>    /**<a name="line.128"></a>
+<span class="sourceLineNo">129</span>     * Adds an ImageConsumer to the list of consumers interested in<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * data for this image, and immediately starts delivery of the<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * image data through the ImageConsumer interface.<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     *<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     * @param ic the ImageConsumer to be added to the list of consumers.<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     */<a name="line.134"></a>
+<span class="sourceLineNo">135</span>    public synchronized void startProduction(ImageConsumer ic) {<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        addConsumer(ic);<a name="line.136"></a>
+<span class="sourceLineNo">137</span>        // Need to build a runnable object for the Thread.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>        Thread thread = new Thread(this, "RenderableImageProducer Thread");<a name="line.138"></a>
+<span class="sourceLineNo">139</span>        thread.start();<a name="line.139"></a>
+<span class="sourceLineNo">140</span>    }<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>    /**<a name="line.142"></a>
+<span class="sourceLineNo">143</span>     * Requests that a given ImageConsumer have the image data delivered<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * one more time in top-down, left-right order.<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     *<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * @param ic the ImageConsumer requesting the resend.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     */<a name="line.147"></a>
+<span class="sourceLineNo">148</span>    public void requestTopDownLeftRightResend(ImageConsumer ic) {<a name="line.148"></a>
+<span class="sourceLineNo">149</span>        // So far, all pixels are already sent in TDLR order<a name="line.149"></a>
+<span class="sourceLineNo">150</span>    }<a name="line.150"></a>
+<span class="sourceLineNo">151</span><a name="line.151"></a>
+<span class="sourceLineNo">152</span>    /**<a name="line.152"></a>
+<span class="sourceLineNo">153</span>     * The runnable method for this class. This will produce an image using<a name="line.153"></a>
+<span class="sourceLineNo">154</span>     * the current RenderableImage and RenderContext and send it to all the<a name="line.154"></a>
+<span class="sourceLineNo">155</span>     * ImageConsumer currently registered with this class.<a name="line.155"></a>
+<span class="sourceLineNo">156</span>     */<a name="line.156"></a>
+<span class="sourceLineNo">157</span>    public void run() {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>        // First get the rendered image<a name="line.158"></a>
+<span class="sourceLineNo">159</span>        RenderedImage rdrdImage;<a name="line.159"></a>
+<span class="sourceLineNo">160</span>        if (rc != null) {<a name="line.160"></a>
+<span class="sourceLineNo">161</span>            rdrdImage = rdblImage.createRendering(rc);<a name="line.161"></a>
+<span class="sourceLineNo">162</span>        } else {<a name="line.162"></a>
+<span class="sourceLineNo">163</span>            rdrdImage = rdblImage.createDefaultRendering();<a name="line.163"></a>
+<span class="sourceLineNo">164</span>        }<a name="line.164"></a>
+<span class="sourceLineNo">165</span><a name="line.165"></a>
+<span class="sourceLineNo">166</span>        // And its ColorModel<a name="line.166"></a>
+<span class="sourceLineNo">167</span>        ColorModel colorModel = rdrdImage.getColorModel();<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        Raster raster = rdrdImage.getData();<a name="line.168"></a>
+<span class="sourceLineNo">169</span>        SampleModel sampleModel = raster.getSampleModel();<a name="line.169"></a>
+<span class="sourceLineNo">170</span>        DataBuffer dataBuffer = raster.getDataBuffer();<a name="line.170"></a>
+<span class="sourceLineNo">171</span><a name="line.171"></a>
+<span class="sourceLineNo">172</span>        if (colorModel == null) {<a name="line.172"></a>
+<span class="sourceLineNo">173</span>            colorModel = ColorModel.getRGBdefault();<a name="line.173"></a>
+<span class="sourceLineNo">174</span>        }<a name="line.174"></a>
+<span class="sourceLineNo">175</span>        int minX = raster.getMinX();<a name="line.175"></a>
+<span class="sourceLineNo">176</span>        int minY = raster.getMinY();<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        int width = raster.getWidth();<a name="line.177"></a>
+<span class="sourceLineNo">178</span>        int height = raster.getHeight();<a name="line.178"></a>
+<span class="sourceLineNo">179</span><a name="line.179"></a>
+<span class="sourceLineNo">180</span>        Enumeration icList;<a name="line.180"></a>
+<span class="sourceLineNo">181</span>        ImageConsumer ic;<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        // Set up the ImageConsumers<a name="line.182"></a>
+<span class="sourceLineNo">183</span>        icList = ics.elements();<a name="line.183"></a>
+<span class="sourceLineNo">184</span>        while (icList.hasMoreElements()) {<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            ic = (ImageConsumer)icList.nextElement();<a name="line.185"></a>
+<span class="sourceLineNo">186</span>            ic.setDimensions(width,height);<a name="line.186"></a>
+<span class="sourceLineNo">187</span>            ic.setHints(ImageConsumer.TOPDOWNLEFTRIGHT |<a name="line.187"></a>
+<span class="sourceLineNo">188</span>                        ImageConsumer.COMPLETESCANLINES |<a name="line.188"></a>
+<span class="sourceLineNo">189</span>                        ImageConsumer.SINGLEPASS |<a name="line.189"></a>
+<span class="sourceLineNo">190</span>                        ImageConsumer.SINGLEFRAME);<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        }<a name="line.191"></a>
+<span class="sourceLineNo">192</span><a name="line.192"></a>
+<span class="sourceLineNo">193</span>        // Get RGB pixels from the raster scanline by scanline and<a name="line.193"></a>
+<span class="sourceLineNo">194</span>        // send to consumers.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>        int pix[] = new int[width];<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        int i,j;<a name="line.196"></a>
+<span class="sourceLineNo">197</span>        int numBands = sampleModel.getNumBands();<a name="line.197"></a>
+<span class="sourceLineNo">198</span>        int tmpPixel[] = new int[numBands];<a name="line.198"></a>
+<span class="sourceLineNo">199</span>        for (j = 0; j &lt; height; j++) {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>            for(i = 0; i &lt; width; i++) {<a name="line.200"></a>
+<span class="sourceLineNo">201</span>                sampleModel.getPixel(i, j, tmpPixel, dataBuffer);<a name="line.201"></a>
+<span class="sourceLineNo">202</span>                pix[i] = colorModel.getDataElement(tmpPixel, 0);<a name="line.202"></a>
+<span class="sourceLineNo">203</span>            }<a name="line.203"></a>
+<span class="sourceLineNo">204</span>            // Now send the scanline to the Consumers<a name="line.204"></a>
+<span class="sourceLineNo">205</span>            icList = ics.elements();<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            while (icList.hasMoreElements()) {<a name="line.206"></a>
+<span class="sourceLineNo">207</span>                ic = (ImageConsumer)icList.nextElement();<a name="line.207"></a>
+<span class="sourceLineNo">208</span>                ic.setPixels(0, j, width, 1, colorModel, pix, 0, width);<a name="line.208"></a>
+<span class="sourceLineNo">209</span>            }<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        }<a name="line.210"></a>
+<span class="sourceLineNo">211</span><a name="line.211"></a>
+<span class="sourceLineNo">212</span>        // Now tell the consumers we're done.<a name="line.212"></a>
+<span class="sourceLineNo">213</span>        icList = ics.elements();<a name="line.213"></a>
+<span class="sourceLineNo">214</span>        while (icList.hasMoreElements()) {<a name="line.214"></a>
+<span class="sourceLineNo">215</span>            ic = (ImageConsumer)icList.nextElement();<a name="line.215"></a>
+<span class="sourceLineNo">216</span>            ic.imageComplete(ImageConsumer.STATICIMAGEDONE);<a name="line.216"></a>
+<span class="sourceLineNo">217</span>        }<a name="line.217"></a>
+<span class="sourceLineNo">218</span>    }<a name="line.218"></a>
+<span class="sourceLineNo">219</span>}<a name="line.219"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

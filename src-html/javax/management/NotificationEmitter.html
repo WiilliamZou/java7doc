@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2002, 2007, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.management;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.util.concurrent.CopyOnWriteArrayList;  // for Javadoc<a name="line.28"></a>
+<span class="sourceLineNo">029</span><a name="line.29"></a>
+<span class="sourceLineNo">030</span>/**<a name="line.30"></a>
+<span class="sourceLineNo">031</span> * &lt;p&gt;Interface implemented by an MBean that emits Notifications. It<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * allows a listener to be registered with the MBean as a notification<a name="line.32"></a>
+<span class="sourceLineNo">033</span> * listener.&lt;/p&gt;<a name="line.33"></a>
+<span class="sourceLineNo">034</span> *<a name="line.34"></a>
+<span class="sourceLineNo">035</span> * &lt;h3&gt;Notification dispatch&lt;/h3&gt;<a name="line.35"></a>
+<span class="sourceLineNo">036</span> *<a name="line.36"></a>
+<span class="sourceLineNo">037</span> *&lt;p&gt;When an MBean emits a notification, it considers each listener that has been<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * added with {@link #addNotificationListener addNotificationListener} and not<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * subsequently removed with {@link #removeNotificationListener removeNotificationListener}.<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * If a filter was provided with that listener, and if the filter's<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * {@link NotificationFilter#isNotificationEnabled isNotificationEnabled} method returns<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * false, the listener is ignored.  Otherwise, the listener's<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * {@link NotificationListener#handleNotification handleNotification} method is called with<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * the notification, as well as the handback object that was provided to<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * {@code addNotificationListener}.&lt;/p&gt;<a name="line.45"></a>
+<span class="sourceLineNo">046</span> *<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * &lt;p&gt;If the same listener is added more than once, it is considered as many times as it was<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * added.  It is often useful to add the same listener with different filters or handback<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * objects.&lt;/p&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> *<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * &lt;p&gt;Implementations of this interface can differ regarding the thread in which the methods<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * of filters and listeners are called.&lt;/p&gt;<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * &lt;p&gt;If the method call of a filter or listener throws an {@link Exception}, then that<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * exception should not prevent other listeners from being invoked.  However, if the method<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * call throws an {@link Error}, then it is recommended that processing of the notification<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * stop at that point, and if it is possible to propagate the {@code Error} to the sender of<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * the notification, this should be done.&lt;/p&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;p&gt;This interface should be used by new code in preference to the<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * {@link NotificationBroadcaster} interface.&lt;/p&gt;<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;p&gt;Implementations of this interface and of {@code NotificationBroadcaster}<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * should be careful about synchronization.  In particular, it is not a good<a name="line.64"></a>
+<span class="sourceLineNo">065</span> * idea for an implementation to hold any locks while it is calling a<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * listener.  To deal with the possibility that the list of listeners might<a name="line.66"></a>
+<span class="sourceLineNo">067</span> * change while a notification is being dispatched, a good strategy is to<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * use a {@link CopyOnWriteArrayList} for this list.<a name="line.68"></a>
+<span class="sourceLineNo">069</span> *<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * @since 1.5<a name="line.70"></a>
+<span class="sourceLineNo">071</span> */<a name="line.71"></a>
+<span class="sourceLineNo">072</span>public interface NotificationEmitter extends NotificationBroadcaster {<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>     * &lt;p&gt;Removes a listener from this MBean.  The MBean must have a<a name="line.74"></a>
+<span class="sourceLineNo">075</span>     * listener that exactly matches the given &lt;code&gt;listener&lt;/code&gt;,<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * &lt;code&gt;filter&lt;/code&gt;, and &lt;code&gt;handback&lt;/code&gt; parameters.  If<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * there is more than one such listener, only one is removed.&lt;/p&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     *<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * &lt;p&gt;The &lt;code&gt;filter&lt;/code&gt; and &lt;code&gt;handback&lt;/code&gt; parameters<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * may be null if and only if they are null in a listener to be<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * removed.&lt;/p&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     *<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     * @param listener A listener that was previously added to this<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * MBean.<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * @param filter The filter that was specified when the listener<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     * was added.<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @param handback The handback that was specified when the listener was<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * added.<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     *<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @exception ListenerNotFoundException The listener is not<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * registered with the MBean, or it is not registered with the<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * given filter and handback.<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     */<a name="line.93"></a>
+<span class="sourceLineNo">094</span>    public void removeNotificationListener(NotificationListener listener,<a name="line.94"></a>
+<span class="sourceLineNo">095</span>                                           NotificationFilter filter,<a name="line.95"></a>
+<span class="sourceLineNo">096</span>                                           Object handback)<a name="line.96"></a>
+<span class="sourceLineNo">097</span>            throws ListenerNotFoundException;<a name="line.97"></a>
+<span class="sourceLineNo">098</span>}<a name="line.98"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

@@ -1,0 +1,690 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package javax.sql.rowset.serial;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.sql.*;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import javax.sql.*;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.*;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.lang.String;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.math.*;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.Map;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.util.Vector;<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>/**<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * The output stream for writing the attributes of a<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * custom-mapped user-defined type (UDT) back to the database.<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * The driver uses this interface internally, and its<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * methods are never directly invoked by an application programmer.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> * &lt;p&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * When an application calls the<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * method &lt;code&gt;PreparedStatement.setObject&lt;/code&gt;, the driver<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * checks to see whether the value to be written is a UDT with<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * a custom mapping.  If it is, there will be an entry in a<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * type map containing the &lt;code&gt;Class&lt;/code&gt; object for the<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * class that implements &lt;code&gt;SQLData&lt;/code&gt; for this UDT.<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * If the value to be written is an instance of &lt;code&gt;SQLData&lt;/code&gt;,<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * the driver will create an instance of &lt;code&gt;SQLOutputImpl&lt;/code&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * and pass it to the method &lt;code&gt;SQLData.writeSQL&lt;/code&gt;.<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * The method &lt;code&gt;writeSQL&lt;/code&gt; in turn calls the<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * appropriate &lt;code&gt;SQLOutputImpl.writeXXX&lt;/code&gt; methods<a name="line.52"></a>
+<span class="sourceLineNo">053</span> * to write data from the &lt;code&gt;SQLData&lt;/code&gt; object to<a name="line.53"></a>
+<span class="sourceLineNo">054</span> * the &lt;code&gt;SQLOutputImpl&lt;/code&gt; output stream as the<a name="line.54"></a>
+<span class="sourceLineNo">055</span> * representation of an SQL user-defined type.<a name="line.55"></a>
+<span class="sourceLineNo">056</span> */<a name="line.56"></a>
+<span class="sourceLineNo">057</span>public class SQLOutputImpl implements SQLOutput {<a name="line.57"></a>
+<span class="sourceLineNo">058</span><a name="line.58"></a>
+<span class="sourceLineNo">059</span>    /**<a name="line.59"></a>
+<span class="sourceLineNo">060</span>     * A reference to an existing vector that<a name="line.60"></a>
+<span class="sourceLineNo">061</span>     * contains the attributes of a &lt;code&gt;Struct&lt;/code&gt; object.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>     */<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    private Vector attribs;<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>    /**<a name="line.65"></a>
+<span class="sourceLineNo">066</span>     * The type map the driver supplies to a newly created<a name="line.66"></a>
+<span class="sourceLineNo">067</span>     * &lt;code&gt;SQLOutputImpl&lt;/code&gt; object.  This type map<a name="line.67"></a>
+<span class="sourceLineNo">068</span>     * indicates the &lt;code&gt;SQLData&lt;/code&gt; class whose<a name="line.68"></a>
+<span class="sourceLineNo">069</span>     * &lt;code&gt;writeSQL&lt;/code&gt; method will be called.  This<a name="line.69"></a>
+<span class="sourceLineNo">070</span>     * method will in turn call the appropriate<a name="line.70"></a>
+<span class="sourceLineNo">071</span>     * &lt;code&gt;SQLOutputImpl&lt;/code&gt; writer methods.<a name="line.71"></a>
+<span class="sourceLineNo">072</span>     */<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    private Map map;<a name="line.73"></a>
+<span class="sourceLineNo">074</span><a name="line.74"></a>
+<span class="sourceLineNo">075</span>    /**<a name="line.75"></a>
+<span class="sourceLineNo">076</span>     * Creates a new &lt;code&gt;SQLOutputImpl&lt;/code&gt; object<a name="line.76"></a>
+<span class="sourceLineNo">077</span>     * initialized with the given vector of attributes and<a name="line.77"></a>
+<span class="sourceLineNo">078</span>     * type map.  The driver will use the type map to determine<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * which &lt;code&gt;SQLData.writeSQL&lt;/code&gt; method to invoke.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * This method will then call the appropriate<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     * &lt;code&gt;SQLOutputImpl&lt;/code&gt; writer methods in order and<a name="line.81"></a>
+<span class="sourceLineNo">082</span>     * thereby write the attributes to the new output stream.<a name="line.82"></a>
+<span class="sourceLineNo">083</span>     *<a name="line.83"></a>
+<span class="sourceLineNo">084</span>     * @param attributes a &lt;code&gt;Vector&lt;/code&gt; object containing the attributes of<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     *        the UDT to be mapped to one or more objects in the Java<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     *        programming language<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     *<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * @param map a &lt;code&gt;java.util.Map&lt;/code&gt; object containing zero or<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     *        more entries, with each entry consisting of 1) a &lt;code&gt;String&lt;/code&gt;<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     *        giving the fully qualified name of a UDT and 2) the<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     *        &lt;code&gt;Class&lt;/code&gt; object for the &lt;code&gt;SQLData&lt;/code&gt; implementation<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     *        that defines how the UDT is to be mapped<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @throws SQLException if the &lt;code&gt;attributes&lt;/code&gt; or the &lt;code&gt;map&lt;/code&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     *        is a &lt;code&gt;null&lt;/code&gt; value<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     */<a name="line.95"></a>
+<span class="sourceLineNo">096</span>    public SQLOutputImpl(Vector&lt;?&gt; attributes, Map&lt;String,?&gt; map)<a name="line.96"></a>
+<span class="sourceLineNo">097</span>        throws SQLException<a name="line.97"></a>
+<span class="sourceLineNo">098</span>    {<a name="line.98"></a>
+<span class="sourceLineNo">099</span>        if ((attributes == null) || (map == null)) {<a name="line.99"></a>
+<span class="sourceLineNo">100</span>            throw new SQLException("Cannot instantiate a SQLOutputImpl " +<a name="line.100"></a>
+<span class="sourceLineNo">101</span>            "instance with null parameters");<a name="line.101"></a>
+<span class="sourceLineNo">102</span>        }<a name="line.102"></a>
+<span class="sourceLineNo">103</span>        this.attribs = attributes;<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        this.map = map;<a name="line.104"></a>
+<span class="sourceLineNo">105</span>    }<a name="line.105"></a>
+<span class="sourceLineNo">106</span><a name="line.106"></a>
+<span class="sourceLineNo">107</span>    //================================================================<a name="line.107"></a>
+<span class="sourceLineNo">108</span>    // Methods for writing attributes to the stream of SQL data.<a name="line.108"></a>
+<span class="sourceLineNo">109</span>    // These methods correspond to the column-accessor methods of<a name="line.109"></a>
+<span class="sourceLineNo">110</span>    // java.sql.ResultSet.<a name="line.110"></a>
+<span class="sourceLineNo">111</span>    //================================================================<a name="line.111"></a>
+<span class="sourceLineNo">112</span><a name="line.112"></a>
+<span class="sourceLineNo">113</span>    /**<a name="line.113"></a>
+<span class="sourceLineNo">114</span>     * Writes a &lt;code&gt;String&lt;/code&gt; in the Java programming language<a name="line.114"></a>
+<span class="sourceLineNo">115</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.115"></a>
+<span class="sourceLineNo">116</span>     * it to an SQL &lt;code&gt;CHAR&lt;/code&gt;, &lt;code&gt;VARCHAR&lt;/code&gt;, or<a name="line.116"></a>
+<span class="sourceLineNo">117</span>     * &lt;code&gt;LONGVARCHAR&lt;/code&gt; before returning it to the database.<a name="line.117"></a>
+<span class="sourceLineNo">118</span>     *<a name="line.118"></a>
+<span class="sourceLineNo">119</span>     * @param x the value to pass to the database<a name="line.119"></a>
+<span class="sourceLineNo">120</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.120"></a>
+<span class="sourceLineNo">121</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.121"></a>
+<span class="sourceLineNo">122</span>     *        values of a UDT to the database.<a name="line.122"></a>
+<span class="sourceLineNo">123</span>     */<a name="line.123"></a>
+<span class="sourceLineNo">124</span>    public void writeString(String x) throws SQLException {<a name="line.124"></a>
+<span class="sourceLineNo">125</span>        //System.out.println("Adding :"+x);<a name="line.125"></a>
+<span class="sourceLineNo">126</span>        attribs.add(x);<a name="line.126"></a>
+<span class="sourceLineNo">127</span>    }<a name="line.127"></a>
+<span class="sourceLineNo">128</span><a name="line.128"></a>
+<span class="sourceLineNo">129</span>    /**<a name="line.129"></a>
+<span class="sourceLineNo">130</span>     * Writes a &lt;code&gt;boolean&lt;/code&gt; in the Java programming language<a name="line.130"></a>
+<span class="sourceLineNo">131</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.131"></a>
+<span class="sourceLineNo">132</span>     * it to an SQL &lt;code&gt;BIT&lt;/code&gt; before returning it to the database.<a name="line.132"></a>
+<span class="sourceLineNo">133</span>     *<a name="line.133"></a>
+<span class="sourceLineNo">134</span>     * @param x the value to pass to the database<a name="line.134"></a>
+<span class="sourceLineNo">135</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.135"></a>
+<span class="sourceLineNo">136</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.136"></a>
+<span class="sourceLineNo">137</span>     *        values of a UDT to the database.<a name="line.137"></a>
+<span class="sourceLineNo">138</span>     */<a name="line.138"></a>
+<span class="sourceLineNo">139</span>    public void writeBoolean(boolean x) throws SQLException {<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        attribs.add(Boolean.valueOf(x));<a name="line.140"></a>
+<span class="sourceLineNo">141</span>    }<a name="line.141"></a>
+<span class="sourceLineNo">142</span><a name="line.142"></a>
+<span class="sourceLineNo">143</span>    /**<a name="line.143"></a>
+<span class="sourceLineNo">144</span>     * Writes a &lt;code&gt;byte&lt;/code&gt; in the Java programming language<a name="line.144"></a>
+<span class="sourceLineNo">145</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.145"></a>
+<span class="sourceLineNo">146</span>     * it to an SQL &lt;code&gt;BIT&lt;/code&gt; before returning it to the database.<a name="line.146"></a>
+<span class="sourceLineNo">147</span>     *<a name="line.147"></a>
+<span class="sourceLineNo">148</span>     * @param x the value to pass to the database<a name="line.148"></a>
+<span class="sourceLineNo">149</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.149"></a>
+<span class="sourceLineNo">150</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.150"></a>
+<span class="sourceLineNo">151</span>     *        values of a UDT to the database.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>     */<a name="line.152"></a>
+<span class="sourceLineNo">153</span>    public void writeByte(byte x) throws SQLException {<a name="line.153"></a>
+<span class="sourceLineNo">154</span>        attribs.add(Byte.valueOf(x));<a name="line.154"></a>
+<span class="sourceLineNo">155</span>    }<a name="line.155"></a>
+<span class="sourceLineNo">156</span><a name="line.156"></a>
+<span class="sourceLineNo">157</span>    /**<a name="line.157"></a>
+<span class="sourceLineNo">158</span>     * Writes a &lt;code&gt;short&lt;/code&gt; in the Java programming language<a name="line.158"></a>
+<span class="sourceLineNo">159</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.159"></a>
+<span class="sourceLineNo">160</span>     * it to an SQL &lt;code&gt;SMALLINT&lt;/code&gt; before returning it to the database.<a name="line.160"></a>
+<span class="sourceLineNo">161</span>     *<a name="line.161"></a>
+<span class="sourceLineNo">162</span>     * @param x the value to pass to the database<a name="line.162"></a>
+<span class="sourceLineNo">163</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.163"></a>
+<span class="sourceLineNo">164</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.164"></a>
+<span class="sourceLineNo">165</span>     *        values of a UDT to the database.<a name="line.165"></a>
+<span class="sourceLineNo">166</span>     */<a name="line.166"></a>
+<span class="sourceLineNo">167</span>    public void writeShort(short x) throws SQLException {<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        attribs.add(Short.valueOf(x));<a name="line.168"></a>
+<span class="sourceLineNo">169</span>    }<a name="line.169"></a>
+<span class="sourceLineNo">170</span><a name="line.170"></a>
+<span class="sourceLineNo">171</span>    /**<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * Writes an &lt;code&gt;int&lt;/code&gt; in the Java programming language<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * it to an SQL &lt;code&gt;INTEGER&lt;/code&gt; before returning it to the database.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     *<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * @param x the value to pass to the database<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     *        values of a UDT to the database.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     */<a name="line.180"></a>
+<span class="sourceLineNo">181</span>    public void writeInt(int x) throws SQLException {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>        attribs.add(Integer.valueOf(x));<a name="line.182"></a>
+<span class="sourceLineNo">183</span>    }<a name="line.183"></a>
+<span class="sourceLineNo">184</span><a name="line.184"></a>
+<span class="sourceLineNo">185</span>    /**<a name="line.185"></a>
+<span class="sourceLineNo">186</span>     * Writes a &lt;code&gt;long&lt;/code&gt; in the Java programming language<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * it to an SQL &lt;code&gt;BIGINT&lt;/code&gt; before returning it to the database.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     *<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * @param x the value to pass to the database<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     *        values of a UDT to the database.<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     */<a name="line.194"></a>
+<span class="sourceLineNo">195</span>    public void writeLong(long x) throws SQLException {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>        attribs.add(Long.valueOf(x));<a name="line.196"></a>
+<span class="sourceLineNo">197</span>    }<a name="line.197"></a>
+<span class="sourceLineNo">198</span><a name="line.198"></a>
+<span class="sourceLineNo">199</span>    /**<a name="line.199"></a>
+<span class="sourceLineNo">200</span>     * Writes a &lt;code&gt;float&lt;/code&gt; in the Java programming language<a name="line.200"></a>
+<span class="sourceLineNo">201</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * it to an SQL &lt;code&gt;REAL&lt;/code&gt; before returning it to the database.<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     *<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * @param x the value to pass to the database<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     *        values of a UDT to the database.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     */<a name="line.208"></a>
+<span class="sourceLineNo">209</span>    public void writeFloat(float x) throws SQLException {<a name="line.209"></a>
+<span class="sourceLineNo">210</span>        attribs.add(new Float(x));<a name="line.210"></a>
+<span class="sourceLineNo">211</span>    }<a name="line.211"></a>
+<span class="sourceLineNo">212</span><a name="line.212"></a>
+<span class="sourceLineNo">213</span>    /**<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * Writes a &lt;code&gt;double&lt;/code&gt; in the Java programming language<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     * it to an SQL &lt;code&gt;DOUBLE&lt;/code&gt; before returning it to the database.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     *<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * @param x the value to pass to the database<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     *        values of a UDT to the database.<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     */<a name="line.222"></a>
+<span class="sourceLineNo">223</span>    public void writeDouble(double x) throws SQLException{<a name="line.223"></a>
+<span class="sourceLineNo">224</span>        attribs.add(new Double(x));<a name="line.224"></a>
+<span class="sourceLineNo">225</span>    }<a name="line.225"></a>
+<span class="sourceLineNo">226</span><a name="line.226"></a>
+<span class="sourceLineNo">227</span>    /**<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * Writes a &lt;code&gt;java.math.BigDecimal&lt;/code&gt; object in the Java programming<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * language to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     * it to an SQL &lt;code&gt;NUMERIC&lt;/code&gt; before returning it to the database.<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     *<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * @param x the value to pass to the database<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.234"></a>
+<span class="sourceLineNo">235</span>     *        values of a UDT to the database.<a name="line.235"></a>
+<span class="sourceLineNo">236</span>     */<a name="line.236"></a>
+<span class="sourceLineNo">237</span>    public void writeBigDecimal(java.math.BigDecimal x) throws SQLException{<a name="line.237"></a>
+<span class="sourceLineNo">238</span>        attribs.add(x);<a name="line.238"></a>
+<span class="sourceLineNo">239</span>    }<a name="line.239"></a>
+<span class="sourceLineNo">240</span><a name="line.240"></a>
+<span class="sourceLineNo">241</span>    /**<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * Writes an array of &lt;code&gt;bytes&lt;/code&gt; in the Java programming language<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * it to an SQL &lt;code&gt;VARBINARY&lt;/code&gt; or &lt;code&gt;LONGVARBINARY&lt;/code&gt;<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * before returning it to the database.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     *<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * @param x the value to pass to the database<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     *        values of a UDT to the database.<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     */<a name="line.251"></a>
+<span class="sourceLineNo">252</span>    public void writeBytes(byte[] x) throws SQLException {<a name="line.252"></a>
+<span class="sourceLineNo">253</span>        attribs.add(x);<a name="line.253"></a>
+<span class="sourceLineNo">254</span>    }<a name="line.254"></a>
+<span class="sourceLineNo">255</span><a name="line.255"></a>
+<span class="sourceLineNo">256</span>    /**<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * Writes a &lt;code&gt;java.sql.Date&lt;/code&gt; object in the Java programming<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * language to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * it to an SQL &lt;code&gt;DATE&lt;/code&gt; before returning it to the database.<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     *<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * @param x the value to pass to the database<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     *        values of a UDT to the database.<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     */<a name="line.265"></a>
+<span class="sourceLineNo">266</span>    public void writeDate(java.sql.Date x) throws SQLException {<a name="line.266"></a>
+<span class="sourceLineNo">267</span>        attribs.add(x);<a name="line.267"></a>
+<span class="sourceLineNo">268</span>    }<a name="line.268"></a>
+<span class="sourceLineNo">269</span><a name="line.269"></a>
+<span class="sourceLineNo">270</span>    /**<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * Writes a &lt;code&gt;java.sql.Time&lt;/code&gt; object in the Java programming<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * language to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     * it to an SQL &lt;code&gt;TIME&lt;/code&gt; before returning it to the database.<a name="line.273"></a>
+<span class="sourceLineNo">274</span>     *<a name="line.274"></a>
+<span class="sourceLineNo">275</span>     * @param x the value to pass to the database<a name="line.275"></a>
+<span class="sourceLineNo">276</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     *        values of a UDT to the database.<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     */<a name="line.279"></a>
+<span class="sourceLineNo">280</span>    public void writeTime(java.sql.Time x) throws SQLException {<a name="line.280"></a>
+<span class="sourceLineNo">281</span>        attribs.add(x);<a name="line.281"></a>
+<span class="sourceLineNo">282</span>    }<a name="line.282"></a>
+<span class="sourceLineNo">283</span><a name="line.283"></a>
+<span class="sourceLineNo">284</span>    /**<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     * Writes a &lt;code&gt;java.sql.Timestamp&lt;/code&gt; object in the Java programming<a name="line.285"></a>
+<span class="sourceLineNo">286</span>     * language to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver converts<a name="line.286"></a>
+<span class="sourceLineNo">287</span>     * it to an SQL &lt;code&gt;TIMESTAMP&lt;/code&gt; before returning it to the database.<a name="line.287"></a>
+<span class="sourceLineNo">288</span>     *<a name="line.288"></a>
+<span class="sourceLineNo">289</span>     * @param x the value to pass to the database<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.291"></a>
+<span class="sourceLineNo">292</span>     *        values of a UDT to the database.<a name="line.292"></a>
+<span class="sourceLineNo">293</span>     */<a name="line.293"></a>
+<span class="sourceLineNo">294</span>    public void writeTimestamp(java.sql.Timestamp x) throws SQLException {<a name="line.294"></a>
+<span class="sourceLineNo">295</span>        attribs.add(x);<a name="line.295"></a>
+<span class="sourceLineNo">296</span>    }<a name="line.296"></a>
+<span class="sourceLineNo">297</span><a name="line.297"></a>
+<span class="sourceLineNo">298</span>    /**<a name="line.298"></a>
+<span class="sourceLineNo">299</span>     * Writes a stream of Unicode characters to this<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver will do any necessary<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     * conversion from Unicode to the database &lt;code&gt;CHAR&lt;/code&gt; format.<a name="line.301"></a>
+<span class="sourceLineNo">302</span>     *<a name="line.302"></a>
+<span class="sourceLineNo">303</span>     * @param x the value to pass to the database<a name="line.303"></a>
+<span class="sourceLineNo">304</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     *        values of a UDT to the database.<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     */<a name="line.307"></a>
+<span class="sourceLineNo">308</span>    public void writeCharacterStream(java.io.Reader x) throws SQLException {<a name="line.308"></a>
+<span class="sourceLineNo">309</span>         BufferedReader bufReader = new BufferedReader(x);<a name="line.309"></a>
+<span class="sourceLineNo">310</span>         try {<a name="line.310"></a>
+<span class="sourceLineNo">311</span>             int i;<a name="line.311"></a>
+<span class="sourceLineNo">312</span>             while( (i = bufReader.read()) != -1 ) {<a name="line.312"></a>
+<span class="sourceLineNo">313</span>                char ch = (char)i;<a name="line.313"></a>
+<span class="sourceLineNo">314</span>                StringBuffer strBuf = new StringBuffer();<a name="line.314"></a>
+<span class="sourceLineNo">315</span>                strBuf.append(ch);<a name="line.315"></a>
+<span class="sourceLineNo">316</span><a name="line.316"></a>
+<span class="sourceLineNo">317</span>                String str = new String(strBuf);<a name="line.317"></a>
+<span class="sourceLineNo">318</span>                String strLine = bufReader.readLine();<a name="line.318"></a>
+<span class="sourceLineNo">319</span><a name="line.319"></a>
+<span class="sourceLineNo">320</span>                writeString(str.concat(strLine));<a name="line.320"></a>
+<span class="sourceLineNo">321</span>             }<a name="line.321"></a>
+<span class="sourceLineNo">322</span>         } catch(IOException ioe) {<a name="line.322"></a>
+<span class="sourceLineNo">323</span><a name="line.323"></a>
+<span class="sourceLineNo">324</span>         }<a name="line.324"></a>
+<span class="sourceLineNo">325</span>    }<a name="line.325"></a>
+<span class="sourceLineNo">326</span><a name="line.326"></a>
+<span class="sourceLineNo">327</span>    /**<a name="line.327"></a>
+<span class="sourceLineNo">328</span>     * Writes a stream of ASCII characters to this<a name="line.328"></a>
+<span class="sourceLineNo">329</span>     * &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The driver will do any necessary<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * conversion from ASCII to the database &lt;code&gt;CHAR&lt;/code&gt; format.<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     *<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * @param x the value to pass to the database<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     *        values of a UDT to the database.<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     */<a name="line.336"></a>
+<span class="sourceLineNo">337</span>    public void writeAsciiStream(java.io.InputStream x) throws SQLException {<a name="line.337"></a>
+<span class="sourceLineNo">338</span>         BufferedReader bufReader = new BufferedReader(new InputStreamReader(x));<a name="line.338"></a>
+<span class="sourceLineNo">339</span>         try {<a name="line.339"></a>
+<span class="sourceLineNo">340</span>               int i;<a name="line.340"></a>
+<span class="sourceLineNo">341</span>               while( (i=bufReader.read()) != -1 ) {<a name="line.341"></a>
+<span class="sourceLineNo">342</span>                char ch = (char)i;<a name="line.342"></a>
+<span class="sourceLineNo">343</span><a name="line.343"></a>
+<span class="sourceLineNo">344</span>                StringBuffer strBuf = new StringBuffer();<a name="line.344"></a>
+<span class="sourceLineNo">345</span>                strBuf.append(ch);<a name="line.345"></a>
+<span class="sourceLineNo">346</span><a name="line.346"></a>
+<span class="sourceLineNo">347</span>                String str = new String(strBuf);<a name="line.347"></a>
+<span class="sourceLineNo">348</span>                String strLine = bufReader.readLine();<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>                writeString(str.concat(strLine));<a name="line.350"></a>
+<span class="sourceLineNo">351</span>            }<a name="line.351"></a>
+<span class="sourceLineNo">352</span>          }catch(IOException ioe) {<a name="line.352"></a>
+<span class="sourceLineNo">353</span>            throw new SQLException(ioe.getMessage());<a name="line.353"></a>
+<span class="sourceLineNo">354</span>        }<a name="line.354"></a>
+<span class="sourceLineNo">355</span>    }<a name="line.355"></a>
+<span class="sourceLineNo">356</span><a name="line.356"></a>
+<span class="sourceLineNo">357</span>    /**<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * Writes a stream of uninterpreted bytes to this &lt;code&gt;SQLOutputImpl&lt;/code&gt;<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * object.<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     *<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * @param x the value to pass to the database<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     *        values of a UDT to the database.<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     */<a name="line.365"></a>
+<span class="sourceLineNo">366</span>    public void writeBinaryStream(java.io.InputStream x) throws SQLException {<a name="line.366"></a>
+<span class="sourceLineNo">367</span>         BufferedReader bufReader = new BufferedReader(new InputStreamReader(x));<a name="line.367"></a>
+<span class="sourceLineNo">368</span>         try {<a name="line.368"></a>
+<span class="sourceLineNo">369</span>               int i;<a name="line.369"></a>
+<span class="sourceLineNo">370</span>             while( (i=bufReader.read()) != -1 ) {<a name="line.370"></a>
+<span class="sourceLineNo">371</span>                char ch = (char)i;<a name="line.371"></a>
+<span class="sourceLineNo">372</span><a name="line.372"></a>
+<span class="sourceLineNo">373</span>                StringBuffer strBuf = new StringBuffer();<a name="line.373"></a>
+<span class="sourceLineNo">374</span>                strBuf.append(ch);<a name="line.374"></a>
+<span class="sourceLineNo">375</span><a name="line.375"></a>
+<span class="sourceLineNo">376</span>                String str = new String(strBuf);<a name="line.376"></a>
+<span class="sourceLineNo">377</span>                String strLine = bufReader.readLine();<a name="line.377"></a>
+<span class="sourceLineNo">378</span><a name="line.378"></a>
+<span class="sourceLineNo">379</span>                writeString(str.concat(strLine));<a name="line.379"></a>
+<span class="sourceLineNo">380</span>             }<a name="line.380"></a>
+<span class="sourceLineNo">381</span>        } catch(IOException ioe) {<a name="line.381"></a>
+<span class="sourceLineNo">382</span>            throw new SQLException(ioe.getMessage());<a name="line.382"></a>
+<span class="sourceLineNo">383</span>        }<a name="line.383"></a>
+<span class="sourceLineNo">384</span>    }<a name="line.384"></a>
+<span class="sourceLineNo">385</span><a name="line.385"></a>
+<span class="sourceLineNo">386</span>    //================================================================<a name="line.386"></a>
+<span class="sourceLineNo">387</span>    // Methods for writing items of SQL user-defined types to the stream.<a name="line.387"></a>
+<span class="sourceLineNo">388</span>    // These methods pass objects to the database as values of SQL<a name="line.388"></a>
+<span class="sourceLineNo">389</span>    // Structured Types, Distinct Types, Constructed Types, and Locator<a name="line.389"></a>
+<span class="sourceLineNo">390</span>    // Types.  They decompose the Java object(s) and write leaf data<a name="line.390"></a>
+<span class="sourceLineNo">391</span>    // items using the methods above.<a name="line.391"></a>
+<span class="sourceLineNo">392</span>    //================================================================<a name="line.392"></a>
+<span class="sourceLineNo">393</span><a name="line.393"></a>
+<span class="sourceLineNo">394</span>    /**<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     * Writes to the stream the data contained in the given<a name="line.395"></a>
+<span class="sourceLineNo">396</span>     * &lt;code&gt;SQLData&lt;/code&gt; object.<a name="line.396"></a>
+<span class="sourceLineNo">397</span>     * When the &lt;code&gt;SQLData&lt;/code&gt; object is &lt;code&gt;null&lt;/code&gt;, this<a name="line.397"></a>
+<span class="sourceLineNo">398</span>     * method writes an SQL &lt;code&gt;NULL&lt;/code&gt; to the stream.<a name="line.398"></a>
+<span class="sourceLineNo">399</span>     * Otherwise, it calls the &lt;code&gt;SQLData.writeSQL&lt;/code&gt;<a name="line.399"></a>
+<span class="sourceLineNo">400</span>     * method of the given object, which<a name="line.400"></a>
+<span class="sourceLineNo">401</span>     * writes the object's attributes to the stream.<a name="line.401"></a>
+<span class="sourceLineNo">402</span>     * &lt;P&gt;<a name="line.402"></a>
+<span class="sourceLineNo">403</span>     * The implementation of the method &lt;code&gt;SQLData.writeSQ&lt;/code&gt;<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * calls the appropriate &lt;code&gt;SQLOutputImpl.writeXXX&lt;/code&gt; method(s)<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * for writing each of the object's attributes in order.<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * The attributes must be read from an &lt;code&gt;SQLInput&lt;/code&gt;<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * input stream and written to an &lt;code&gt;SQLOutputImpl&lt;/code&gt;<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     * output stream in the same order in which they were<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * listed in the SQL definition of the user-defined type.<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     *<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * @param x the object representing data of an SQL structured or<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     *          distinct type<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.414"></a>
+<span class="sourceLineNo">415</span>     *        values of a UDT to the database.<a name="line.415"></a>
+<span class="sourceLineNo">416</span>     */<a name="line.416"></a>
+<span class="sourceLineNo">417</span>    public void writeObject(SQLData x) throws SQLException {<a name="line.417"></a>
+<span class="sourceLineNo">418</span><a name="line.418"></a>
+<span class="sourceLineNo">419</span>        /*<a name="line.419"></a>
+<span class="sourceLineNo">420</span>         * Except for the types that are passed as objects<a name="line.420"></a>
+<span class="sourceLineNo">421</span>         * this seems to be the only way for an object to<a name="line.421"></a>
+<span class="sourceLineNo">422</span>         * get a null value for a field in a structure.<a name="line.422"></a>
+<span class="sourceLineNo">423</span>         *<a name="line.423"></a>
+<span class="sourceLineNo">424</span>         * Note: this means that the class defining SQLData<a name="line.424"></a>
+<span class="sourceLineNo">425</span>         * will need to track if a field is SQL null for itself<a name="line.425"></a>
+<span class="sourceLineNo">426</span>         */<a name="line.426"></a>
+<span class="sourceLineNo">427</span>        if (x == null) {<a name="line.427"></a>
+<span class="sourceLineNo">428</span>            attribs.add(x);<a name="line.428"></a>
+<span class="sourceLineNo">429</span>            return;<a name="line.429"></a>
+<span class="sourceLineNo">430</span>        }<a name="line.430"></a>
+<span class="sourceLineNo">431</span><a name="line.431"></a>
+<span class="sourceLineNo">432</span>        /*<a name="line.432"></a>
+<span class="sourceLineNo">433</span>         * We have to write out a SerialStruct that contains<a name="line.433"></a>
+<span class="sourceLineNo">434</span>         * the name of this class otherwise we don't know<a name="line.434"></a>
+<span class="sourceLineNo">435</span>         * what to re-instantiate during readSQL()<a name="line.435"></a>
+<span class="sourceLineNo">436</span>         */<a name="line.436"></a>
+<span class="sourceLineNo">437</span>        attribs.add(new SerialStruct((SQLData)x, map));<a name="line.437"></a>
+<span class="sourceLineNo">438</span>    }<a name="line.438"></a>
+<span class="sourceLineNo">439</span><a name="line.439"></a>
+<span class="sourceLineNo">440</span>    /**<a name="line.440"></a>
+<span class="sourceLineNo">441</span>     * Writes a &lt;code&gt;Ref&lt;/code&gt; object in the Java programming language<a name="line.441"></a>
+<span class="sourceLineNo">442</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object.  The driver converts<a name="line.442"></a>
+<span class="sourceLineNo">443</span>     * it to a serializable &lt;code&gt;SerialRef&lt;/code&gt; SQL &lt;code&gt;REF&lt;/code&gt; value<a name="line.443"></a>
+<span class="sourceLineNo">444</span>     * before returning it to the database.<a name="line.444"></a>
+<span class="sourceLineNo">445</span>     *<a name="line.445"></a>
+<span class="sourceLineNo">446</span>     * @param x an object representing an SQL &lt;code&gt;REF&lt;/code&gt; value<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     *        values of a UDT to the database.<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     */<a name="line.450"></a>
+<span class="sourceLineNo">451</span>    public void writeRef(Ref x) throws SQLException {<a name="line.451"></a>
+<span class="sourceLineNo">452</span>        if (x == null) {<a name="line.452"></a>
+<span class="sourceLineNo">453</span>            attribs.add(x);<a name="line.453"></a>
+<span class="sourceLineNo">454</span>            return;<a name="line.454"></a>
+<span class="sourceLineNo">455</span>        }<a name="line.455"></a>
+<span class="sourceLineNo">456</span>        attribs.add(new SerialRef(x));<a name="line.456"></a>
+<span class="sourceLineNo">457</span>    }<a name="line.457"></a>
+<span class="sourceLineNo">458</span><a name="line.458"></a>
+<span class="sourceLineNo">459</span>    /**<a name="line.459"></a>
+<span class="sourceLineNo">460</span>     * Writes a &lt;code&gt;Blob&lt;/code&gt; object in the Java programming language<a name="line.460"></a>
+<span class="sourceLineNo">461</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object.  The driver converts<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     * it to a serializable &lt;code&gt;SerialBlob&lt;/code&gt; SQL &lt;code&gt;BLOB&lt;/code&gt; value<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     * before returning it to the database.<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     *<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     * @param x an object representing an SQL &lt;code&gt;BLOB&lt;/code&gt; value<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.466"></a>
+<span class="sourceLineNo">467</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.467"></a>
+<span class="sourceLineNo">468</span>     *        values of a UDT to the database.<a name="line.468"></a>
+<span class="sourceLineNo">469</span>     */<a name="line.469"></a>
+<span class="sourceLineNo">470</span>    public void writeBlob(Blob x) throws SQLException {<a name="line.470"></a>
+<span class="sourceLineNo">471</span>        if (x == null) {<a name="line.471"></a>
+<span class="sourceLineNo">472</span>            attribs.add(x);<a name="line.472"></a>
+<span class="sourceLineNo">473</span>            return;<a name="line.473"></a>
+<span class="sourceLineNo">474</span>        }<a name="line.474"></a>
+<span class="sourceLineNo">475</span>        attribs.add(new SerialBlob(x));<a name="line.475"></a>
+<span class="sourceLineNo">476</span>    }<a name="line.476"></a>
+<span class="sourceLineNo">477</span><a name="line.477"></a>
+<span class="sourceLineNo">478</span>    /**<a name="line.478"></a>
+<span class="sourceLineNo">479</span>     * Writes a &lt;code&gt;Clob&lt;/code&gt; object in the Java programming language<a name="line.479"></a>
+<span class="sourceLineNo">480</span>     * to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object.  The driver converts<a name="line.480"></a>
+<span class="sourceLineNo">481</span>     * it to a serializable &lt;code&gt;SerialClob&lt;/code&gt; SQL &lt;code&gt;CLOB&lt;/code&gt; value<a name="line.481"></a>
+<span class="sourceLineNo">482</span>     * before returning it to the database.<a name="line.482"></a>
+<span class="sourceLineNo">483</span>     *<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * @param x an object representing an SQL &lt;code&gt;CLOB&lt;/code&gt; value<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     *        values of a UDT to the database.<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     */<a name="line.488"></a>
+<span class="sourceLineNo">489</span>    public void writeClob(Clob x) throws SQLException {<a name="line.489"></a>
+<span class="sourceLineNo">490</span>        if (x == null) {<a name="line.490"></a>
+<span class="sourceLineNo">491</span>            attribs.add(x);<a name="line.491"></a>
+<span class="sourceLineNo">492</span>            return;<a name="line.492"></a>
+<span class="sourceLineNo">493</span>        }<a name="line.493"></a>
+<span class="sourceLineNo">494</span>        attribs.add(new SerialClob(x));<a name="line.494"></a>
+<span class="sourceLineNo">495</span>    }<a name="line.495"></a>
+<span class="sourceLineNo">496</span><a name="line.496"></a>
+<span class="sourceLineNo">497</span>    /**<a name="line.497"></a>
+<span class="sourceLineNo">498</span>     * Writes a &lt;code&gt;Struct&lt;/code&gt; object in the Java<a name="line.498"></a>
+<span class="sourceLineNo">499</span>     * programming language to this &lt;code&gt;SQLOutputImpl&lt;/code&gt;<a name="line.499"></a>
+<span class="sourceLineNo">500</span>     * object. The driver converts this value to an SQL structured type<a name="line.500"></a>
+<span class="sourceLineNo">501</span>     * before returning it to the database.<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * &lt;P&gt;<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * This method should be used when an SQL structured type has been<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     * mapped to a &lt;code&gt;Struct&lt;/code&gt; object in the Java programming<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     * language (the standard mapping).  The method<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     * &lt;code&gt;writeObject&lt;/code&gt; should be used if an SQL structured type<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     * has been custom mapped to a class in the Java programming language.<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     *<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     * @param x an object representing the attributes of an SQL structured type<a name="line.509"></a>
+<span class="sourceLineNo">510</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.510"></a>
+<span class="sourceLineNo">511</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.511"></a>
+<span class="sourceLineNo">512</span>     *        values of a UDT to the database.<a name="line.512"></a>
+<span class="sourceLineNo">513</span>     */<a name="line.513"></a>
+<span class="sourceLineNo">514</span>    public void writeStruct(Struct x) throws SQLException {<a name="line.514"></a>
+<span class="sourceLineNo">515</span>        SerialStruct s = new SerialStruct(x,map);;<a name="line.515"></a>
+<span class="sourceLineNo">516</span>        attribs.add(s);<a name="line.516"></a>
+<span class="sourceLineNo">517</span>    }<a name="line.517"></a>
+<span class="sourceLineNo">518</span><a name="line.518"></a>
+<span class="sourceLineNo">519</span>    /**<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     * Writes an &lt;code&gt;Array&lt;/code&gt; object in the Java<a name="line.520"></a>
+<span class="sourceLineNo">521</span>     * programming language to this &lt;code&gt;SQLOutputImpl&lt;/code&gt;<a name="line.521"></a>
+<span class="sourceLineNo">522</span>     * object. The driver converts this value to a serializable<a name="line.522"></a>
+<span class="sourceLineNo">523</span>     * &lt;code&gt;SerialArray&lt;/code&gt; SQL &lt;code&gt;ARRAY&lt;/code&gt;<a name="line.523"></a>
+<span class="sourceLineNo">524</span>     * value before returning it to the database.<a name="line.524"></a>
+<span class="sourceLineNo">525</span>     *<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     * @param x an object representing an SQL &lt;code&gt;ARRAY&lt;/code&gt; value<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     *        values of a UDT to the database.<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     */<a name="line.530"></a>
+<span class="sourceLineNo">531</span>    public void writeArray(Array x) throws SQLException {<a name="line.531"></a>
+<span class="sourceLineNo">532</span>        if (x == null) {<a name="line.532"></a>
+<span class="sourceLineNo">533</span>            attribs.add(x);<a name="line.533"></a>
+<span class="sourceLineNo">534</span>            return;<a name="line.534"></a>
+<span class="sourceLineNo">535</span>        }<a name="line.535"></a>
+<span class="sourceLineNo">536</span>        attribs.add(new SerialArray(x, map));<a name="line.536"></a>
+<span class="sourceLineNo">537</span>    }<a name="line.537"></a>
+<span class="sourceLineNo">538</span><a name="line.538"></a>
+<span class="sourceLineNo">539</span>    /**<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     * Writes an &lt;code&gt;java.sql.Type.DATALINK&lt;/code&gt; object in the Java<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     * programming language to this &lt;code&gt;SQLOutputImpl&lt;/code&gt; object. The<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * driver converts this value to a serializable &lt;code&gt;SerialDatalink&lt;/code&gt;<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     * SQL &lt;code&gt;DATALINK&lt;/code&gt; value before return it to the database.<a name="line.543"></a>
+<span class="sourceLineNo">544</span>     *<a name="line.544"></a>
+<span class="sourceLineNo">545</span>     * @param url an object representing a SQL &lt;code&gt;DATALINK&lt;/code&gt; value<a name="line.545"></a>
+<span class="sourceLineNo">546</span>     * @throws SQLException if the &lt;code&gt;SQLOutputImpl&lt;/code&gt; object is in<a name="line.546"></a>
+<span class="sourceLineNo">547</span>     *        use by a &lt;code&gt;SQLData&lt;/code&gt; object attempting to write the attribute<a name="line.547"></a>
+<span class="sourceLineNo">548</span>     *        values of a UDT to the database.<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     */<a name="line.549"></a>
+<span class="sourceLineNo">550</span>    public void writeURL(java.net.URL url) throws SQLException {<a name="line.550"></a>
+<span class="sourceLineNo">551</span>        if (url == null) {<a name="line.551"></a>
+<span class="sourceLineNo">552</span>            attribs.add(url);<a name="line.552"></a>
+<span class="sourceLineNo">553</span>            return;<a name="line.553"></a>
+<span class="sourceLineNo">554</span>        }<a name="line.554"></a>
+<span class="sourceLineNo">555</span>        attribs.add(new SerialDatalink(url));<a name="line.555"></a>
+<span class="sourceLineNo">556</span><a name="line.556"></a>
+<span class="sourceLineNo">557</span>    }<a name="line.557"></a>
+<span class="sourceLineNo">558</span><a name="line.558"></a>
+<span class="sourceLineNo">559</span><a name="line.559"></a>
+<span class="sourceLineNo">560</span>    /**<a name="line.560"></a>
+<span class="sourceLineNo">561</span>   * Writes the next attribute to the stream as a &lt;code&gt;String&lt;/code&gt;<a name="line.561"></a>
+<span class="sourceLineNo">562</span>   * in the Java programming language. The driver converts this to a<a name="line.562"></a>
+<span class="sourceLineNo">563</span>   * SQL &lt;code&gt;NCHAR&lt;/code&gt; or<a name="line.563"></a>
+<span class="sourceLineNo">564</span>   * &lt;code&gt;NVARCHAR&lt;/code&gt; or &lt;code&gt;LONGNVARCHAR&lt;/code&gt; value<a name="line.564"></a>
+<span class="sourceLineNo">565</span>   * (depending on the argument's<a name="line.565"></a>
+<span class="sourceLineNo">566</span>   * size relative to the driver's limits on &lt;code&gt;NVARCHAR&lt;/code&gt; values)<a name="line.566"></a>
+<span class="sourceLineNo">567</span>   * when it sends it to the stream.<a name="line.567"></a>
+<span class="sourceLineNo">568</span>   *<a name="line.568"></a>
+<span class="sourceLineNo">569</span>   * @param x the value to pass to the database<a name="line.569"></a>
+<span class="sourceLineNo">570</span>   * @exception SQLException if a database access error occurs<a name="line.570"></a>
+<span class="sourceLineNo">571</span>   * @since 1.6<a name="line.571"></a>
+<span class="sourceLineNo">572</span>   */<a name="line.572"></a>
+<span class="sourceLineNo">573</span>   public void writeNString(String x) throws SQLException {<a name="line.573"></a>
+<span class="sourceLineNo">574</span>        throw new UnsupportedOperationException("Operation not supported");<a name="line.574"></a>
+<span class="sourceLineNo">575</span>    }<a name="line.575"></a>
+<span class="sourceLineNo">576</span><a name="line.576"></a>
+<span class="sourceLineNo">577</span>  /**<a name="line.577"></a>
+<span class="sourceLineNo">578</span>   * Writes an SQL &lt;code&gt;NCLOB&lt;/code&gt; value to the stream.<a name="line.578"></a>
+<span class="sourceLineNo">579</span>   *<a name="line.579"></a>
+<span class="sourceLineNo">580</span>   * @param x a &lt;code&gt;NClob&lt;/code&gt; object representing data of an SQL<a name="line.580"></a>
+<span class="sourceLineNo">581</span>   * &lt;code&gt;NCLOB&lt;/code&gt; value<a name="line.581"></a>
+<span class="sourceLineNo">582</span>   *<a name="line.582"></a>
+<span class="sourceLineNo">583</span>   * @exception SQLException if a database access error occurs<a name="line.583"></a>
+<span class="sourceLineNo">584</span>   * @since 1.6<a name="line.584"></a>
+<span class="sourceLineNo">585</span>   */<a name="line.585"></a>
+<span class="sourceLineNo">586</span>   public void writeNClob(NClob x) throws SQLException {<a name="line.586"></a>
+<span class="sourceLineNo">587</span>        throw new UnsupportedOperationException("Operation not supported");<a name="line.587"></a>
+<span class="sourceLineNo">588</span>    }<a name="line.588"></a>
+<span class="sourceLineNo">589</span><a name="line.589"></a>
+<span class="sourceLineNo">590</span><a name="line.590"></a>
+<span class="sourceLineNo">591</span>  /**<a name="line.591"></a>
+<span class="sourceLineNo">592</span>   * Writes an SQL &lt;code&gt;ROWID&lt;/code&gt; value to the stream.<a name="line.592"></a>
+<span class="sourceLineNo">593</span>   *<a name="line.593"></a>
+<span class="sourceLineNo">594</span>   * @param x a &lt;code&gt;RowId&lt;/code&gt; object representing data of an SQL<a name="line.594"></a>
+<span class="sourceLineNo">595</span>   * &lt;code&gt;ROWID&lt;/code&gt; value<a name="line.595"></a>
+<span class="sourceLineNo">596</span>   *<a name="line.596"></a>
+<span class="sourceLineNo">597</span>   * @exception SQLException if a database access error occurs<a name="line.597"></a>
+<span class="sourceLineNo">598</span>   * @since 1.6<a name="line.598"></a>
+<span class="sourceLineNo">599</span>   */<a name="line.599"></a>
+<span class="sourceLineNo">600</span>   public void writeRowId(RowId x) throws SQLException {<a name="line.600"></a>
+<span class="sourceLineNo">601</span>        throw new UnsupportedOperationException("Operation not supported");<a name="line.601"></a>
+<span class="sourceLineNo">602</span>    }<a name="line.602"></a>
+<span class="sourceLineNo">603</span><a name="line.603"></a>
+<span class="sourceLineNo">604</span><a name="line.604"></a>
+<span class="sourceLineNo">605</span>  /**<a name="line.605"></a>
+<span class="sourceLineNo">606</span>   * Writes an SQL &lt;code&gt;XML&lt;/code&gt; value to the stream.<a name="line.606"></a>
+<span class="sourceLineNo">607</span>   *<a name="line.607"></a>
+<span class="sourceLineNo">608</span>   * @param x a &lt;code&gt;SQLXML&lt;/code&gt; object representing data of an SQL<a name="line.608"></a>
+<span class="sourceLineNo">609</span>   * &lt;code&gt;XML&lt;/code&gt; value<a name="line.609"></a>
+<span class="sourceLineNo">610</span>   *<a name="line.610"></a>
+<span class="sourceLineNo">611</span>   * @exception SQLException if a database access error occurs<a name="line.611"></a>
+<span class="sourceLineNo">612</span>   * @since 1.6<a name="line.612"></a>
+<span class="sourceLineNo">613</span>   */<a name="line.613"></a>
+<span class="sourceLineNo">614</span>   public void writeSQLXML(SQLXML x) throws SQLException {<a name="line.614"></a>
+<span class="sourceLineNo">615</span>        throw new UnsupportedOperationException("Operation not supported");<a name="line.615"></a>
+<span class="sourceLineNo">616</span>    }<a name="line.616"></a>
+<span class="sourceLineNo">617</span><a name="line.617"></a>
+<span class="sourceLineNo">618</span>}<a name="line.618"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

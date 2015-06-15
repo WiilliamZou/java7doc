@@ -1,0 +1,352 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 2005, 2006, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span>package javax.swing.plaf.nimbus;<a name="line.25"></a>
+<span class="sourceLineNo">026</span><a name="line.26"></a>
+<span class="sourceLineNo">027</span>import java.awt.Graphics;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.awt.Image;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.awt.Insets;<a name="line.29"></a>
+<span class="sourceLineNo">030</span><a name="line.30"></a>
+<span class="sourceLineNo">031</span>/**<a name="line.31"></a>
+<span class="sourceLineNo">032</span> * ImageScalingHelper<a name="line.32"></a>
+<span class="sourceLineNo">033</span> *<a name="line.33"></a>
+<span class="sourceLineNo">034</span> * @author Created by Jasper Potts (Aug 8, 2007)<a name="line.34"></a>
+<span class="sourceLineNo">035</span> */<a name="line.35"></a>
+<span class="sourceLineNo">036</span>class ImageScalingHelper {<a name="line.36"></a>
+<span class="sourceLineNo">037</span><a name="line.37"></a>
+<span class="sourceLineNo">038</span>    /** Enumeration for the types of painting this class can handle. */<a name="line.38"></a>
+<span class="sourceLineNo">039</span>    enum PaintType {<a name="line.39"></a>
+<span class="sourceLineNo">040</span>        /**<a name="line.40"></a>
+<span class="sourceLineNo">041</span>         * Painting type indicating the image should be centered in the space provided.  When used the &lt;code&gt;mask&lt;/code&gt;<a name="line.41"></a>
+<span class="sourceLineNo">042</span>         * is ignored.<a name="line.42"></a>
+<span class="sourceLineNo">043</span>         */<a name="line.43"></a>
+<span class="sourceLineNo">044</span>        CENTER,<a name="line.44"></a>
+<span class="sourceLineNo">045</span><a name="line.45"></a>
+<span class="sourceLineNo">046</span>        /**<a name="line.46"></a>
+<span class="sourceLineNo">047</span>         * Painting type indicating the image should be tiled across the specified width and height.  When used the<a name="line.47"></a>
+<span class="sourceLineNo">048</span>         * &lt;code&gt;mask&lt;/code&gt; is ignored.<a name="line.48"></a>
+<span class="sourceLineNo">049</span>         */<a name="line.49"></a>
+<span class="sourceLineNo">050</span>        TILE,<a name="line.50"></a>
+<span class="sourceLineNo">051</span><a name="line.51"></a>
+<span class="sourceLineNo">052</span>        /**<a name="line.52"></a>
+<span class="sourceLineNo">053</span>         * Painting type indicating the image should be split into nine regions with the top, left, bottom and right<a name="line.53"></a>
+<span class="sourceLineNo">054</span>         * areas stretched.<a name="line.54"></a>
+<span class="sourceLineNo">055</span>         */<a name="line.55"></a>
+<span class="sourceLineNo">056</span>        PAINT9_STRETCH,<a name="line.56"></a>
+<span class="sourceLineNo">057</span><a name="line.57"></a>
+<span class="sourceLineNo">058</span>        /**<a name="line.58"></a>
+<span class="sourceLineNo">059</span>         * Painting type indicating the image should be split into nine regions with the top, left, bottom and right<a name="line.59"></a>
+<span class="sourceLineNo">060</span>         * areas tiled.<a name="line.60"></a>
+<span class="sourceLineNo">061</span>         */<a name="line.61"></a>
+<span class="sourceLineNo">062</span>        PAINT9_TILE<a name="line.62"></a>
+<span class="sourceLineNo">063</span>    }<a name="line.63"></a>
+<span class="sourceLineNo">064</span><a name="line.64"></a>
+<span class="sourceLineNo">065</span>    ;<a name="line.65"></a>
+<span class="sourceLineNo">066</span><a name="line.66"></a>
+<span class="sourceLineNo">067</span>    private static final Insets EMPTY_INSETS = new Insets(0, 0, 0, 0);<a name="line.67"></a>
+<span class="sourceLineNo">068</span><a name="line.68"></a>
+<span class="sourceLineNo">069</span>    static final int PAINT_TOP_LEFT = 1;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>    static final int PAINT_TOP = 2;<a name="line.70"></a>
+<span class="sourceLineNo">071</span>    static final int PAINT_TOP_RIGHT = 4;<a name="line.71"></a>
+<span class="sourceLineNo">072</span>    static final int PAINT_LEFT = 8;<a name="line.72"></a>
+<span class="sourceLineNo">073</span>    static final int PAINT_CENTER = 16;<a name="line.73"></a>
+<span class="sourceLineNo">074</span>    static final int PAINT_RIGHT = 32;<a name="line.74"></a>
+<span class="sourceLineNo">075</span>    static final int PAINT_BOTTOM_RIGHT = 64;<a name="line.75"></a>
+<span class="sourceLineNo">076</span>    static final int PAINT_BOTTOM = 128;<a name="line.76"></a>
+<span class="sourceLineNo">077</span>    static final int PAINT_BOTTOM_LEFT = 256;<a name="line.77"></a>
+<span class="sourceLineNo">078</span>    /**<a name="line.78"></a>
+<span class="sourceLineNo">079</span>     * Specifies that all regions should be painted.  If this is set any other regions specified will not be painted.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>     * For example PAINT_ALL | PAINT_CENTER will paint all but the center.<a name="line.80"></a>
+<span class="sourceLineNo">081</span>     */<a name="line.81"></a>
+<span class="sourceLineNo">082</span>    static final int PAINT_ALL = 512;<a name="line.82"></a>
+<span class="sourceLineNo">083</span><a name="line.83"></a>
+<span class="sourceLineNo">084</span>    /**<a name="line.84"></a>
+<span class="sourceLineNo">085</span>     * Paints using the algorightm specified by &lt;code&gt;paintType&lt;/code&gt;.<a name="line.85"></a>
+<span class="sourceLineNo">086</span>     *<a name="line.86"></a>
+<span class="sourceLineNo">087</span>     * @param g         Graphics to render to<a name="line.87"></a>
+<span class="sourceLineNo">088</span>     * @param x         X-coordinate<a name="line.88"></a>
+<span class="sourceLineNo">089</span>     * @param y         Y-coordinate<a name="line.89"></a>
+<span class="sourceLineNo">090</span>     * @param w         Width to render to<a name="line.90"></a>
+<span class="sourceLineNo">091</span>     * @param h         Height to render to<a name="line.91"></a>
+<span class="sourceLineNo">092</span>     * @param image     Image to render from, if &lt;code&gt;null&lt;/code&gt; this method will do nothing<a name="line.92"></a>
+<span class="sourceLineNo">093</span>     * @param sInsets   Insets specifying the portion of the image that will be stretched or tiled, if &lt;code&gt;null&lt;/code&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span>     *                  empty &lt;code&gt;Insets&lt;/code&gt; will be used.<a name="line.94"></a>
+<span class="sourceLineNo">095</span>     * @param dInsets   Destination insets specifying the portion of the image will be stretched or tiled, if<a name="line.95"></a>
+<span class="sourceLineNo">096</span>     *                  &lt;code&gt;null&lt;/code&gt; empty &lt;code&gt;Insets&lt;/code&gt; will be used.<a name="line.96"></a>
+<span class="sourceLineNo">097</span>     * @param paintType Specifies what type of algorithm to use in painting<a name="line.97"></a>
+<span class="sourceLineNo">098</span>     * @param mask      Specifies portion of image to render, if &lt;code&gt;PAINT_ALL&lt;/code&gt; is specified, any other regions<a name="line.98"></a>
+<span class="sourceLineNo">099</span>     *                  specified will not be painted, for example PAINT_ALL | PAINT_CENTER paints everything but the<a name="line.99"></a>
+<span class="sourceLineNo">100</span>     *                  center.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>     */<a name="line.101"></a>
+<span class="sourceLineNo">102</span>    public static void paint(Graphics g, int x, int y, int w, int h,<a name="line.102"></a>
+<span class="sourceLineNo">103</span>                      Image image, Insets sInsets,<a name="line.103"></a>
+<span class="sourceLineNo">104</span>                      Insets dInsets, PaintType paintType, int mask) {<a name="line.104"></a>
+<span class="sourceLineNo">105</span>        if (image == null || image.getWidth(null) &lt;= 0 || image.getHeight(null) &lt;= 0) {<a name="line.105"></a>
+<span class="sourceLineNo">106</span>            return;<a name="line.106"></a>
+<span class="sourceLineNo">107</span>        }<a name="line.107"></a>
+<span class="sourceLineNo">108</span>        if (sInsets == null) {<a name="line.108"></a>
+<span class="sourceLineNo">109</span>            sInsets = EMPTY_INSETS;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>        }<a name="line.110"></a>
+<span class="sourceLineNo">111</span>        if (dInsets == null) {<a name="line.111"></a>
+<span class="sourceLineNo">112</span>            dInsets = EMPTY_INSETS;<a name="line.112"></a>
+<span class="sourceLineNo">113</span>        }<a name="line.113"></a>
+<span class="sourceLineNo">114</span>        int iw = image.getWidth(null);<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        int ih = image.getHeight(null);<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>        if (paintType == PaintType.CENTER) {<a name="line.117"></a>
+<span class="sourceLineNo">118</span>            // Center the image<a name="line.118"></a>
+<span class="sourceLineNo">119</span>            g.drawImage(image, x + (w - iw) / 2,<a name="line.119"></a>
+<span class="sourceLineNo">120</span>                    y + (h - ih) / 2, null);<a name="line.120"></a>
+<span class="sourceLineNo">121</span>        } else if (paintType == PaintType.TILE) {<a name="line.121"></a>
+<span class="sourceLineNo">122</span>            // Tile the image<a name="line.122"></a>
+<span class="sourceLineNo">123</span>            int lastIY = 0;<a name="line.123"></a>
+<span class="sourceLineNo">124</span>            for (int yCounter = y, maxY = y + h; yCounter &lt; maxY;<a name="line.124"></a>
+<span class="sourceLineNo">125</span>                 yCounter += (ih - lastIY), lastIY = 0) {<a name="line.125"></a>
+<span class="sourceLineNo">126</span>                int lastIX = 0;<a name="line.126"></a>
+<span class="sourceLineNo">127</span>                for (int xCounter = x, maxX = x + w; xCounter &lt; maxX;<a name="line.127"></a>
+<span class="sourceLineNo">128</span>                     xCounter += (iw - lastIX), lastIX = 0) {<a name="line.128"></a>
+<span class="sourceLineNo">129</span>                    int dx2 = Math.min(maxX, xCounter + iw - lastIX);<a name="line.129"></a>
+<span class="sourceLineNo">130</span>                    int dy2 = Math.min(maxY, yCounter + ih - lastIY);<a name="line.130"></a>
+<span class="sourceLineNo">131</span>                    g.drawImage(image, xCounter, yCounter, dx2, dy2,<a name="line.131"></a>
+<span class="sourceLineNo">132</span>                            lastIX, lastIY, lastIX + dx2 - xCounter,<a name="line.132"></a>
+<span class="sourceLineNo">133</span>                            lastIY + dy2 - yCounter, null);<a name="line.133"></a>
+<span class="sourceLineNo">134</span>                }<a name="line.134"></a>
+<span class="sourceLineNo">135</span>            }<a name="line.135"></a>
+<span class="sourceLineNo">136</span>        } else {<a name="line.136"></a>
+<span class="sourceLineNo">137</span>            int st = sInsets.top;<a name="line.137"></a>
+<span class="sourceLineNo">138</span>            int sl = sInsets.left;<a name="line.138"></a>
+<span class="sourceLineNo">139</span>            int sb = sInsets.bottom;<a name="line.139"></a>
+<span class="sourceLineNo">140</span>            int sr = sInsets.right;<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>            int dt = dInsets.top;<a name="line.142"></a>
+<span class="sourceLineNo">143</span>            int dl = dInsets.left;<a name="line.143"></a>
+<span class="sourceLineNo">144</span>            int db = dInsets.bottom;<a name="line.144"></a>
+<span class="sourceLineNo">145</span>            int dr = dInsets.right;<a name="line.145"></a>
+<span class="sourceLineNo">146</span><a name="line.146"></a>
+<span class="sourceLineNo">147</span>            // Constrain the insets to the size of the image<a name="line.147"></a>
+<span class="sourceLineNo">148</span>            if (st + sb &gt; ih) {<a name="line.148"></a>
+<span class="sourceLineNo">149</span>                db = dt = sb = st = Math.max(0, ih / 2);<a name="line.149"></a>
+<span class="sourceLineNo">150</span>            }<a name="line.150"></a>
+<span class="sourceLineNo">151</span>            if (sl + sr &gt; iw) {<a name="line.151"></a>
+<span class="sourceLineNo">152</span>                dl = dr = sl = sr = Math.max(0, iw / 2);<a name="line.152"></a>
+<span class="sourceLineNo">153</span>            }<a name="line.153"></a>
+<span class="sourceLineNo">154</span><a name="line.154"></a>
+<span class="sourceLineNo">155</span>            // Constrain the insets to the size of the region we're painting<a name="line.155"></a>
+<span class="sourceLineNo">156</span>            // in.<a name="line.156"></a>
+<span class="sourceLineNo">157</span>            if (dt + db &gt; h) {<a name="line.157"></a>
+<span class="sourceLineNo">158</span>                dt = db = Math.max(0, h / 2 - 1);<a name="line.158"></a>
+<span class="sourceLineNo">159</span>            }<a name="line.159"></a>
+<span class="sourceLineNo">160</span>            if (dl + dr &gt; w) {<a name="line.160"></a>
+<span class="sourceLineNo">161</span>                dl = dr = Math.max(0, w / 2 - 1);<a name="line.161"></a>
+<span class="sourceLineNo">162</span>            }<a name="line.162"></a>
+<span class="sourceLineNo">163</span><a name="line.163"></a>
+<span class="sourceLineNo">164</span>            boolean stretch = (paintType == PaintType.PAINT9_STRETCH);<a name="line.164"></a>
+<span class="sourceLineNo">165</span>            if ((mask &amp; PAINT_ALL) != 0) {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>                mask = (PAINT_ALL - 1) &amp; ~mask;<a name="line.166"></a>
+<span class="sourceLineNo">167</span>            }<a name="line.167"></a>
+<span class="sourceLineNo">168</span><a name="line.168"></a>
+<span class="sourceLineNo">169</span>            if ((mask &amp; PAINT_LEFT) != 0) {<a name="line.169"></a>
+<span class="sourceLineNo">170</span>                drawChunk(image, g, stretch, x, y + dt, x + dl, y + h - db,<a name="line.170"></a>
+<span class="sourceLineNo">171</span>                        0, st, sl, ih - sb, false);<a name="line.171"></a>
+<span class="sourceLineNo">172</span>            }<a name="line.172"></a>
+<span class="sourceLineNo">173</span>            if ((mask &amp; PAINT_TOP_LEFT) != 0) {<a name="line.173"></a>
+<span class="sourceLineNo">174</span>                drawImage(image, g, x, y, x + dl, y + dt,<a name="line.174"></a>
+<span class="sourceLineNo">175</span>                        0, 0, sl, st);<a name="line.175"></a>
+<span class="sourceLineNo">176</span>            }<a name="line.176"></a>
+<span class="sourceLineNo">177</span>            if ((mask &amp; PAINT_TOP) != 0) {<a name="line.177"></a>
+<span class="sourceLineNo">178</span>                drawChunk(image, g, stretch, x + dl, y, x + w - dr, y + dt,<a name="line.178"></a>
+<span class="sourceLineNo">179</span>                        sl, 0, iw - sr, st, true);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>            }<a name="line.180"></a>
+<span class="sourceLineNo">181</span>            if ((mask &amp; PAINT_TOP_RIGHT) != 0) {<a name="line.181"></a>
+<span class="sourceLineNo">182</span>                drawImage(image, g, x + w - dr, y, x + w, y + dt,<a name="line.182"></a>
+<span class="sourceLineNo">183</span>                        iw - sr, 0, iw, st);<a name="line.183"></a>
+<span class="sourceLineNo">184</span>            }<a name="line.184"></a>
+<span class="sourceLineNo">185</span>            if ((mask &amp; PAINT_RIGHT) != 0) {<a name="line.185"></a>
+<span class="sourceLineNo">186</span>                drawChunk(image, g, stretch,<a name="line.186"></a>
+<span class="sourceLineNo">187</span>                        x + w - dr, y + dt, x + w, y + h - db,<a name="line.187"></a>
+<span class="sourceLineNo">188</span>                        iw - sr, st, iw, ih - sb, false);<a name="line.188"></a>
+<span class="sourceLineNo">189</span>            }<a name="line.189"></a>
+<span class="sourceLineNo">190</span>            if ((mask &amp; PAINT_BOTTOM_RIGHT) != 0) {<a name="line.190"></a>
+<span class="sourceLineNo">191</span>                drawImage(image, g, x + w - dr, y + h - db, x + w, y + h,<a name="line.191"></a>
+<span class="sourceLineNo">192</span>                        iw - sr, ih - sb, iw, ih);<a name="line.192"></a>
+<span class="sourceLineNo">193</span>            }<a name="line.193"></a>
+<span class="sourceLineNo">194</span>            if ((mask &amp; PAINT_BOTTOM) != 0) {<a name="line.194"></a>
+<span class="sourceLineNo">195</span>                drawChunk(image, g, stretch,<a name="line.195"></a>
+<span class="sourceLineNo">196</span>                        x + dl, y + h - db, x + w - dr, y + h,<a name="line.196"></a>
+<span class="sourceLineNo">197</span>                        sl, ih - sb, iw - sr, ih, true);<a name="line.197"></a>
+<span class="sourceLineNo">198</span>            }<a name="line.198"></a>
+<span class="sourceLineNo">199</span>            if ((mask &amp; PAINT_BOTTOM_LEFT) != 0) {<a name="line.199"></a>
+<span class="sourceLineNo">200</span>                drawImage(image, g, x, y + h - db, x + dl, y + h,<a name="line.200"></a>
+<span class="sourceLineNo">201</span>                        0, ih - sb, sl, ih);<a name="line.201"></a>
+<span class="sourceLineNo">202</span>            }<a name="line.202"></a>
+<span class="sourceLineNo">203</span>            if ((mask &amp; PAINT_CENTER) != 0) {<a name="line.203"></a>
+<span class="sourceLineNo">204</span>                drawImage(image, g, x + dl, y + dt, x + w - dr, y + h - db,<a name="line.204"></a>
+<span class="sourceLineNo">205</span>                        sl, st, iw - sr, ih - sb);<a name="line.205"></a>
+<span class="sourceLineNo">206</span>            }<a name="line.206"></a>
+<span class="sourceLineNo">207</span>        }<a name="line.207"></a>
+<span class="sourceLineNo">208</span>    }<a name="line.208"></a>
+<span class="sourceLineNo">209</span><a name="line.209"></a>
+<span class="sourceLineNo">210</span>    /**<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * Draws a portion of an image, stretched or tiled.<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     *<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     * @param image Image to render.<a name="line.213"></a>
+<span class="sourceLineNo">214</span>     * @param g Graphics to render to<a name="line.214"></a>
+<span class="sourceLineNo">215</span>     * @param stretch Whether the image should be stretched or timed in the<a name="line.215"></a>
+<span class="sourceLineNo">216</span>     *                provided space.<a name="line.216"></a>
+<span class="sourceLineNo">217</span>     * @param dx1 X origin to draw to<a name="line.217"></a>
+<span class="sourceLineNo">218</span>     * @param dy1 Y origin to draw to<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * @param dx2 End x location to draw to<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * @param dy2 End y location to draw to<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * @param sx1 X origin to draw from<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * @param sy1 Y origin to draw from<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * @param sx2 Max x location to draw from<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * @param sy2 Max y location to draw from<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * @param xDirection Used if the image is not stretched. If true it<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     *        indicates the image should be tiled along the x axis.<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     */<a name="line.227"></a>
+<span class="sourceLineNo">228</span>    private static void drawChunk(Image image, Graphics g, boolean stretch,<a name="line.228"></a>
+<span class="sourceLineNo">229</span>                           int dx1, int dy1, int dx2, int dy2, int sx1,<a name="line.229"></a>
+<span class="sourceLineNo">230</span>                           int sy1, int sx2, int sy2,<a name="line.230"></a>
+<span class="sourceLineNo">231</span>                           boolean xDirection) {<a name="line.231"></a>
+<span class="sourceLineNo">232</span>        if (dx2 - dx1 &lt;= 0 || dy2 - dy1 &lt;= 0 || sx2 - sx1 &lt;= 0 ||<a name="line.232"></a>
+<span class="sourceLineNo">233</span>                              sy2 - sy1 &lt;= 0) {<a name="line.233"></a>
+<span class="sourceLineNo">234</span>            // Bogus location, nothing to paint<a name="line.234"></a>
+<span class="sourceLineNo">235</span>            return;<a name="line.235"></a>
+<span class="sourceLineNo">236</span>        }<a name="line.236"></a>
+<span class="sourceLineNo">237</span>        if (stretch) {<a name="line.237"></a>
+<span class="sourceLineNo">238</span>            g.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, null);<a name="line.238"></a>
+<span class="sourceLineNo">239</span>        }<a name="line.239"></a>
+<span class="sourceLineNo">240</span>        else {<a name="line.240"></a>
+<span class="sourceLineNo">241</span>            int xSize = sx2 - sx1;<a name="line.241"></a>
+<span class="sourceLineNo">242</span>            int ySize = sy2 - sy1;<a name="line.242"></a>
+<span class="sourceLineNo">243</span>            int deltaX;<a name="line.243"></a>
+<span class="sourceLineNo">244</span>            int deltaY;<a name="line.244"></a>
+<span class="sourceLineNo">245</span><a name="line.245"></a>
+<span class="sourceLineNo">246</span>            if (xDirection) {<a name="line.246"></a>
+<span class="sourceLineNo">247</span>                deltaX = xSize;<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                deltaY = 0;<a name="line.248"></a>
+<span class="sourceLineNo">249</span>            }<a name="line.249"></a>
+<span class="sourceLineNo">250</span>            else {<a name="line.250"></a>
+<span class="sourceLineNo">251</span>                deltaX = 0;<a name="line.251"></a>
+<span class="sourceLineNo">252</span>                deltaY = ySize;<a name="line.252"></a>
+<span class="sourceLineNo">253</span>            }<a name="line.253"></a>
+<span class="sourceLineNo">254</span>            while (dx1 &lt; dx2 &amp;&amp; dy1 &lt; dy2) {<a name="line.254"></a>
+<span class="sourceLineNo">255</span>                int newDX2 = Math.min(dx2, dx1 + xSize);<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                int newDY2 = Math.min(dy2, dy1 + ySize);<a name="line.256"></a>
+<span class="sourceLineNo">257</span><a name="line.257"></a>
+<span class="sourceLineNo">258</span>                g.drawImage(image, dx1, dy1, newDX2, newDY2,<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                            sx1, sy1, sx1 + newDX2 - dx1,<a name="line.259"></a>
+<span class="sourceLineNo">260</span>                            sy1 + newDY2 - dy1, null);<a name="line.260"></a>
+<span class="sourceLineNo">261</span>                dx1 += deltaX;<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                dy1 += deltaY;<a name="line.262"></a>
+<span class="sourceLineNo">263</span>            }<a name="line.263"></a>
+<span class="sourceLineNo">264</span>        }<a name="line.264"></a>
+<span class="sourceLineNo">265</span>    }<a name="line.265"></a>
+<span class="sourceLineNo">266</span><a name="line.266"></a>
+<span class="sourceLineNo">267</span>    private static void drawImage(Image image, Graphics g,<a name="line.267"></a>
+<span class="sourceLineNo">268</span>                           int dx1, int dy1, int dx2, int dy2, int sx1,<a name="line.268"></a>
+<span class="sourceLineNo">269</span>                           int sy1, int sx2, int sy2) {<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        // PENDING: is this necessary, will G2D do it for me?<a name="line.270"></a>
+<span class="sourceLineNo">271</span>        if (dx2 - dx1 &lt;= 0 || dy2 - dy1 &lt;= 0 || sx2 - sx1 &lt;= 0 ||<a name="line.271"></a>
+<span class="sourceLineNo">272</span>                sy2 - sy1 &lt;= 0) {<a name="line.272"></a>
+<span class="sourceLineNo">273</span>            // Bogus location, nothing to paint<a name="line.273"></a>
+<span class="sourceLineNo">274</span>            return;<a name="line.274"></a>
+<span class="sourceLineNo">275</span>        }<a name="line.275"></a>
+<span class="sourceLineNo">276</span>        g.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, null);<a name="line.276"></a>
+<span class="sourceLineNo">277</span>    }<a name="line.277"></a>
+<span class="sourceLineNo">278</span><a name="line.278"></a>
+<span class="sourceLineNo">279</span><a name="line.279"></a>
+<span class="sourceLineNo">280</span>}<a name="line.280"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>

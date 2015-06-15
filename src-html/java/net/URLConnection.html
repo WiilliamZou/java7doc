@@ -1,0 +1,1869 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../stylesheet.css" title="Style">
+</head>
+<body>
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span>/*<a name="line.1"></a>
+<span class="sourceLineNo">002</span> * Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.<a name="line.2"></a>
+<span class="sourceLineNo">003</span> * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.<a name="line.3"></a>
+<span class="sourceLineNo">004</span> *<a name="line.4"></a>
+<span class="sourceLineNo">005</span> *<a name="line.5"></a>
+<span class="sourceLineNo">006</span> *<a name="line.6"></a>
+<span class="sourceLineNo">007</span> *<a name="line.7"></a>
+<span class="sourceLineNo">008</span> *<a name="line.8"></a>
+<span class="sourceLineNo">009</span> *<a name="line.9"></a>
+<span class="sourceLineNo">010</span> *<a name="line.10"></a>
+<span class="sourceLineNo">011</span> *<a name="line.11"></a>
+<span class="sourceLineNo">012</span> *<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> *<a name="line.16"></a>
+<span class="sourceLineNo">017</span> *<a name="line.17"></a>
+<span class="sourceLineNo">018</span> *<a name="line.18"></a>
+<span class="sourceLineNo">019</span> *<a name="line.19"></a>
+<span class="sourceLineNo">020</span> *<a name="line.20"></a>
+<span class="sourceLineNo">021</span> *<a name="line.21"></a>
+<span class="sourceLineNo">022</span> *<a name="line.22"></a>
+<span class="sourceLineNo">023</span> *<a name="line.23"></a>
+<span class="sourceLineNo">024</span> */<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>package java.net;<a name="line.26"></a>
+<span class="sourceLineNo">027</span><a name="line.27"></a>
+<span class="sourceLineNo">028</span>import java.io.IOException;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import java.io.InputStream;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import java.io.OutputStream;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import java.util.Hashtable;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import java.util.Date;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import java.util.StringTokenizer;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import java.util.Collections;<a name="line.34"></a>
+<span class="sourceLineNo">035</span>import java.util.Map;<a name="line.35"></a>
+<span class="sourceLineNo">036</span>import java.util.List;<a name="line.36"></a>
+<span class="sourceLineNo">037</span>import java.security.Permission;<a name="line.37"></a>
+<span class="sourceLineNo">038</span>import java.security.AccessController;<a name="line.38"></a>
+<span class="sourceLineNo">039</span>import sun.security.util.SecurityConstants;<a name="line.39"></a>
+<span class="sourceLineNo">040</span>import sun.net.www.MessageHeader;<a name="line.40"></a>
+<span class="sourceLineNo">041</span><a name="line.41"></a>
+<span class="sourceLineNo">042</span>/**<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * The abstract class &lt;code&gt;URLConnection&lt;/code&gt; is the superclass<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * of all classes that represent a communications link between the<a name="line.44"></a>
+<span class="sourceLineNo">045</span> * application and a URL. Instances of this class can be used both to<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * read from and to write to the resource referenced by the URL. In<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * general, creating a connection to a URL is a multistep process:<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * &lt;p&gt;<a name="line.48"></a>
+<span class="sourceLineNo">049</span> * &lt;center&gt;&lt;table border=2 summary="Describes the process of creating a connection to a URL: openConnection() and connect() over time."&gt;<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * &lt;tr&gt;&lt;th&gt;&lt;code&gt;openConnection()&lt;/code&gt;&lt;/th&gt;<a name="line.50"></a>
+<span class="sourceLineNo">051</span> *     &lt;th&gt;&lt;code&gt;connect()&lt;/code&gt;&lt;/th&gt;&lt;/tr&gt;<a name="line.51"></a>
+<span class="sourceLineNo">052</span> * &lt;tr&gt;&lt;td&gt;Manipulate parameters that affect the connection to the remote<a name="line.52"></a>
+<span class="sourceLineNo">053</span> *         resource.&lt;/td&gt;<a name="line.53"></a>
+<span class="sourceLineNo">054</span> *     &lt;td&gt;Interact with the resource; query header fields and<a name="line.54"></a>
+<span class="sourceLineNo">055</span> *         contents.&lt;/td&gt;&lt;/tr&gt;<a name="line.55"></a>
+<span class="sourceLineNo">056</span> * &lt;/table&gt;<a name="line.56"></a>
+<span class="sourceLineNo">057</span> * ----------------------------&amp;gt;<a name="line.57"></a>
+<span class="sourceLineNo">058</span> * &lt;br&gt;time&lt;/center&gt;<a name="line.58"></a>
+<span class="sourceLineNo">059</span> *<a name="line.59"></a>
+<span class="sourceLineNo">060</span> * &lt;ol&gt;<a name="line.60"></a>
+<span class="sourceLineNo">061</span> * &lt;li&gt;The connection object is created by invoking the<a name="line.61"></a>
+<span class="sourceLineNo">062</span> *     &lt;code&gt;openConnection&lt;/code&gt; method on a URL.<a name="line.62"></a>
+<span class="sourceLineNo">063</span> * &lt;li&gt;The setup parameters and general request properties are manipulated.<a name="line.63"></a>
+<span class="sourceLineNo">064</span> * &lt;li&gt;The actual connection to the remote object is made, using the<a name="line.64"></a>
+<span class="sourceLineNo">065</span> *    &lt;code&gt;connect&lt;/code&gt; method.<a name="line.65"></a>
+<span class="sourceLineNo">066</span> * &lt;li&gt;The remote object becomes available. The header fields and the contents<a name="line.66"></a>
+<span class="sourceLineNo">067</span> *     of the remote object can be accessed.<a name="line.67"></a>
+<span class="sourceLineNo">068</span> * &lt;/ol&gt;<a name="line.68"></a>
+<span class="sourceLineNo">069</span> * &lt;p&gt;<a name="line.69"></a>
+<span class="sourceLineNo">070</span> * The setup parameters are modified using the following methods:<a name="line.70"></a>
+<span class="sourceLineNo">071</span> * &lt;ul&gt;<a name="line.71"></a>
+<span class="sourceLineNo">072</span> *   &lt;li&gt;&lt;code&gt;setAllowUserInteraction&lt;/code&gt;<a name="line.72"></a>
+<span class="sourceLineNo">073</span> *   &lt;li&gt;&lt;code&gt;setDoInput&lt;/code&gt;<a name="line.73"></a>
+<span class="sourceLineNo">074</span> *   &lt;li&gt;&lt;code&gt;setDoOutput&lt;/code&gt;<a name="line.74"></a>
+<span class="sourceLineNo">075</span> *   &lt;li&gt;&lt;code&gt;setIfModifiedSince&lt;/code&gt;<a name="line.75"></a>
+<span class="sourceLineNo">076</span> *   &lt;li&gt;&lt;code&gt;setUseCaches&lt;/code&gt;<a name="line.76"></a>
+<span class="sourceLineNo">077</span> * &lt;/ul&gt;<a name="line.77"></a>
+<span class="sourceLineNo">078</span> * &lt;p&gt;<a name="line.78"></a>
+<span class="sourceLineNo">079</span> * and the general request properties are modified using the method:<a name="line.79"></a>
+<span class="sourceLineNo">080</span> * &lt;ul&gt;<a name="line.80"></a>
+<span class="sourceLineNo">081</span> *   &lt;li&gt;&lt;code&gt;setRequestProperty&lt;/code&gt;<a name="line.81"></a>
+<span class="sourceLineNo">082</span> * &lt;/ul&gt;<a name="line.82"></a>
+<span class="sourceLineNo">083</span> * &lt;p&gt;<a name="line.83"></a>
+<span class="sourceLineNo">084</span> * Default values for the &lt;code&gt;AllowUserInteraction&lt;/code&gt; and<a name="line.84"></a>
+<span class="sourceLineNo">085</span> * &lt;code&gt;UseCaches&lt;/code&gt; parameters can be set using the methods<a name="line.85"></a>
+<span class="sourceLineNo">086</span> * &lt;code&gt;setDefaultAllowUserInteraction&lt;/code&gt; and<a name="line.86"></a>
+<span class="sourceLineNo">087</span> * &lt;code&gt;setDefaultUseCaches&lt;/code&gt;.<a name="line.87"></a>
+<span class="sourceLineNo">088</span> * &lt;p&gt;<a name="line.88"></a>
+<span class="sourceLineNo">089</span> * Each of the above &lt;code&gt;set&lt;/code&gt; methods has a corresponding<a name="line.89"></a>
+<span class="sourceLineNo">090</span> * &lt;code&gt;get&lt;/code&gt; method to retrieve the value of the parameter or<a name="line.90"></a>
+<span class="sourceLineNo">091</span> * general request property. The specific parameters and general<a name="line.91"></a>
+<span class="sourceLineNo">092</span> * request properties that are applicable are protocol specific.<a name="line.92"></a>
+<span class="sourceLineNo">093</span> * &lt;p&gt;<a name="line.93"></a>
+<span class="sourceLineNo">094</span> * The following methods are used to access the header fields and<a name="line.94"></a>
+<span class="sourceLineNo">095</span> * the contents after the connection is made to the remote object:<a name="line.95"></a>
+<span class="sourceLineNo">096</span> * &lt;ul&gt;<a name="line.96"></a>
+<span class="sourceLineNo">097</span> *   &lt;li&gt;&lt;code&gt;getContent&lt;/code&gt;<a name="line.97"></a>
+<span class="sourceLineNo">098</span> *   &lt;li&gt;&lt;code&gt;getHeaderField&lt;/code&gt;<a name="line.98"></a>
+<span class="sourceLineNo">099</span> *   &lt;li&gt;&lt;code&gt;getInputStream&lt;/code&gt;<a name="line.99"></a>
+<span class="sourceLineNo">100</span> *   &lt;li&gt;&lt;code&gt;getOutputStream&lt;/code&gt;<a name="line.100"></a>
+<span class="sourceLineNo">101</span> * &lt;/ul&gt;<a name="line.101"></a>
+<span class="sourceLineNo">102</span> * &lt;p&gt;<a name="line.102"></a>
+<span class="sourceLineNo">103</span> * Certain header fields are accessed frequently. The methods:<a name="line.103"></a>
+<span class="sourceLineNo">104</span> * &lt;ul&gt;<a name="line.104"></a>
+<span class="sourceLineNo">105</span> *   &lt;li&gt;&lt;code&gt;getContentEncoding&lt;/code&gt;<a name="line.105"></a>
+<span class="sourceLineNo">106</span> *   &lt;li&gt;&lt;code&gt;getContentLength&lt;/code&gt;<a name="line.106"></a>
+<span class="sourceLineNo">107</span> *   &lt;li&gt;&lt;code&gt;getContentType&lt;/code&gt;<a name="line.107"></a>
+<span class="sourceLineNo">108</span> *   &lt;li&gt;&lt;code&gt;getDate&lt;/code&gt;<a name="line.108"></a>
+<span class="sourceLineNo">109</span> *   &lt;li&gt;&lt;code&gt;getExpiration&lt;/code&gt;<a name="line.109"></a>
+<span class="sourceLineNo">110</span> *   &lt;li&gt;&lt;code&gt;getLastModifed&lt;/code&gt;<a name="line.110"></a>
+<span class="sourceLineNo">111</span> * &lt;/ul&gt;<a name="line.111"></a>
+<span class="sourceLineNo">112</span> * &lt;p&gt;<a name="line.112"></a>
+<span class="sourceLineNo">113</span> * provide convenient access to these fields. The<a name="line.113"></a>
+<span class="sourceLineNo">114</span> * &lt;code&gt;getContentType&lt;/code&gt; method is used by the<a name="line.114"></a>
+<span class="sourceLineNo">115</span> * &lt;code&gt;getContent&lt;/code&gt; method to determine the type of the remote<a name="line.115"></a>
+<span class="sourceLineNo">116</span> * object; subclasses may find it convenient to override the<a name="line.116"></a>
+<span class="sourceLineNo">117</span> * &lt;code&gt;getContentType&lt;/code&gt; method.<a name="line.117"></a>
+<span class="sourceLineNo">118</span> * &lt;p&gt;<a name="line.118"></a>
+<span class="sourceLineNo">119</span> * In the common case, all of the pre-connection parameters and<a name="line.119"></a>
+<span class="sourceLineNo">120</span> * general request properties can be ignored: the pre-connection<a name="line.120"></a>
+<span class="sourceLineNo">121</span> * parameters and request properties default to sensible values. For<a name="line.121"></a>
+<span class="sourceLineNo">122</span> * most clients of this interface, there are only two interesting<a name="line.122"></a>
+<span class="sourceLineNo">123</span> * methods: &lt;code&gt;getInputStream&lt;/code&gt; and &lt;code&gt;getContent&lt;/code&gt;,<a name="line.123"></a>
+<span class="sourceLineNo">124</span> * which are mirrored in the &lt;code&gt;URL&lt;/code&gt; class by convenience methods.<a name="line.124"></a>
+<span class="sourceLineNo">125</span> * &lt;p&gt;<a name="line.125"></a>
+<span class="sourceLineNo">126</span> * More information on the request properties and header fields of<a name="line.126"></a>
+<span class="sourceLineNo">127</span> * an &lt;code&gt;http&lt;/code&gt; connection can be found at:<a name="line.127"></a>
+<span class="sourceLineNo">128</span> * &lt;blockquote&gt;&lt;pre&gt;<a name="line.128"></a>
+<span class="sourceLineNo">129</span> * &lt;a href="http://www.ietf.org/rfc/rfc2616.txt"&gt;http://www.ietf.org/rfc/rfc2616.txt&lt;/a&gt;<a name="line.129"></a>
+<span class="sourceLineNo">130</span> * &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.130"></a>
+<span class="sourceLineNo">131</span> *<a name="line.131"></a>
+<span class="sourceLineNo">132</span> * Note about &lt;code&gt;fileNameMap&lt;/code&gt;: In versions prior to JDK 1.1.6,<a name="line.132"></a>
+<span class="sourceLineNo">133</span> * field &lt;code&gt;fileNameMap&lt;/code&gt; of &lt;code&gt;URLConnection&lt;/code&gt; was public.<a name="line.133"></a>
+<span class="sourceLineNo">134</span> * In JDK 1.1.6 and later, &lt;code&gt;fileNameMap&lt;/code&gt; is private; accessor<a name="line.134"></a>
+<span class="sourceLineNo">135</span> * and mutator methods {@link #getFileNameMap() getFileNameMap} and<a name="line.135"></a>
+<span class="sourceLineNo">136</span> * {@link #setFileNameMap(java.net.FileNameMap) setFileNameMap} are added<a name="line.136"></a>
+<span class="sourceLineNo">137</span> * to access it.  This change is also described on the &lt;a href=<a name="line.137"></a>
+<span class="sourceLineNo">138</span> * "http://java.sun.com/products/jdk/1.2/compatibility.html"&gt;<a name="line.138"></a>
+<span class="sourceLineNo">139</span> * Compatibility&lt;/a&gt; page.<a name="line.139"></a>
+<span class="sourceLineNo">140</span> *<a name="line.140"></a>
+<span class="sourceLineNo">141</span> * Invoking the &lt;tt&gt;close()&lt;/tt&gt; methods on the &lt;tt&gt;InputStream&lt;/tt&gt; or &lt;tt&gt;OutputStream&lt;/tt&gt; of an<a name="line.141"></a>
+<span class="sourceLineNo">142</span> * &lt;tt&gt;URLConnection&lt;/tt&gt; after a request may free network resources associated with this<a name="line.142"></a>
+<span class="sourceLineNo">143</span> * instance, unless particular protocol specifications specify different behaviours<a name="line.143"></a>
+<span class="sourceLineNo">144</span> * for it.<a name="line.144"></a>
+<span class="sourceLineNo">145</span> *<a name="line.145"></a>
+<span class="sourceLineNo">146</span> * @author  James Gosling<a name="line.146"></a>
+<span class="sourceLineNo">147</span> * @see     java.net.URL#openConnection()<a name="line.147"></a>
+<span class="sourceLineNo">148</span> * @see     java.net.URLConnection#connect()<a name="line.148"></a>
+<span class="sourceLineNo">149</span> * @see     java.net.URLConnection#getContent()<a name="line.149"></a>
+<span class="sourceLineNo">150</span> * @see     java.net.URLConnection#getContentEncoding()<a name="line.150"></a>
+<span class="sourceLineNo">151</span> * @see     java.net.URLConnection#getContentLength()<a name="line.151"></a>
+<span class="sourceLineNo">152</span> * @see     java.net.URLConnection#getContentType()<a name="line.152"></a>
+<span class="sourceLineNo">153</span> * @see     java.net.URLConnection#getDate()<a name="line.153"></a>
+<span class="sourceLineNo">154</span> * @see     java.net.URLConnection#getExpiration()<a name="line.154"></a>
+<span class="sourceLineNo">155</span> * @see     java.net.URLConnection#getHeaderField(int)<a name="line.155"></a>
+<span class="sourceLineNo">156</span> * @see     java.net.URLConnection#getHeaderField(java.lang.String)<a name="line.156"></a>
+<span class="sourceLineNo">157</span> * @see     java.net.URLConnection#getInputStream()<a name="line.157"></a>
+<span class="sourceLineNo">158</span> * @see     java.net.URLConnection#getLastModified()<a name="line.158"></a>
+<span class="sourceLineNo">159</span> * @see     java.net.URLConnection#getOutputStream()<a name="line.159"></a>
+<span class="sourceLineNo">160</span> * @see     java.net.URLConnection#setAllowUserInteraction(boolean)<a name="line.160"></a>
+<span class="sourceLineNo">161</span> * @see     java.net.URLConnection#setDefaultUseCaches(boolean)<a name="line.161"></a>
+<span class="sourceLineNo">162</span> * @see     java.net.URLConnection#setDoInput(boolean)<a name="line.162"></a>
+<span class="sourceLineNo">163</span> * @see     java.net.URLConnection#setDoOutput(boolean)<a name="line.163"></a>
+<span class="sourceLineNo">164</span> * @see     java.net.URLConnection#setIfModifiedSince(long)<a name="line.164"></a>
+<span class="sourceLineNo">165</span> * @see     java.net.URLConnection#setRequestProperty(java.lang.String, java.lang.String)<a name="line.165"></a>
+<span class="sourceLineNo">166</span> * @see     java.net.URLConnection#setUseCaches(boolean)<a name="line.166"></a>
+<span class="sourceLineNo">167</span> * @since   JDK1.0<a name="line.167"></a>
+<span class="sourceLineNo">168</span> */<a name="line.168"></a>
+<span class="sourceLineNo">169</span>public abstract class URLConnection {<a name="line.169"></a>
+<span class="sourceLineNo">170</span><a name="line.170"></a>
+<span class="sourceLineNo">171</span>   /**<a name="line.171"></a>
+<span class="sourceLineNo">172</span>     * The URL represents the remote object on the World Wide Web to<a name="line.172"></a>
+<span class="sourceLineNo">173</span>     * which this connection is opened.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>     * &lt;p&gt;<a name="line.174"></a>
+<span class="sourceLineNo">175</span>     * The value of this field can be accessed by the<a name="line.175"></a>
+<span class="sourceLineNo">176</span>     * &lt;code&gt;getURL&lt;/code&gt; method.<a name="line.176"></a>
+<span class="sourceLineNo">177</span>     * &lt;p&gt;<a name="line.177"></a>
+<span class="sourceLineNo">178</span>     * The default value of this variable is the value of the URL<a name="line.178"></a>
+<span class="sourceLineNo">179</span>     * argument in the &lt;code&gt;URLConnection&lt;/code&gt; constructor.<a name="line.179"></a>
+<span class="sourceLineNo">180</span>     *<a name="line.180"></a>
+<span class="sourceLineNo">181</span>     * @see     java.net.URLConnection#getURL()<a name="line.181"></a>
+<span class="sourceLineNo">182</span>     * @see     java.net.URLConnection#url<a name="line.182"></a>
+<span class="sourceLineNo">183</span>     */<a name="line.183"></a>
+<span class="sourceLineNo">184</span>    protected URL url;<a name="line.184"></a>
+<span class="sourceLineNo">185</span><a name="line.185"></a>
+<span class="sourceLineNo">186</span>   /**<a name="line.186"></a>
+<span class="sourceLineNo">187</span>     * This variable is set by the &lt;code&gt;setDoInput&lt;/code&gt; method. Its<a name="line.187"></a>
+<span class="sourceLineNo">188</span>     * value is returned by the &lt;code&gt;getDoInput&lt;/code&gt; method.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>     * &lt;p&gt;<a name="line.189"></a>
+<span class="sourceLineNo">190</span>     * A URL connection can be used for input and/or output. Setting the<a name="line.190"></a>
+<span class="sourceLineNo">191</span>     * &lt;code&gt;doInput&lt;/code&gt; flag to &lt;code&gt;true&lt;/code&gt; indicates that<a name="line.191"></a>
+<span class="sourceLineNo">192</span>     * the application intends to read data from the URL connection.<a name="line.192"></a>
+<span class="sourceLineNo">193</span>     * &lt;p&gt;<a name="line.193"></a>
+<span class="sourceLineNo">194</span>     * The default value of this field is &lt;code&gt;true&lt;/code&gt;.<a name="line.194"></a>
+<span class="sourceLineNo">195</span>     *<a name="line.195"></a>
+<span class="sourceLineNo">196</span>     * @see     java.net.URLConnection#getDoInput()<a name="line.196"></a>
+<span class="sourceLineNo">197</span>     * @see     java.net.URLConnection#setDoInput(boolean)<a name="line.197"></a>
+<span class="sourceLineNo">198</span>     */<a name="line.198"></a>
+<span class="sourceLineNo">199</span>    protected boolean doInput = true;<a name="line.199"></a>
+<span class="sourceLineNo">200</span><a name="line.200"></a>
+<span class="sourceLineNo">201</span>   /**<a name="line.201"></a>
+<span class="sourceLineNo">202</span>     * This variable is set by the &lt;code&gt;setDoOutput&lt;/code&gt; method. Its<a name="line.202"></a>
+<span class="sourceLineNo">203</span>     * value is returned by the &lt;code&gt;getDoOutput&lt;/code&gt; method.<a name="line.203"></a>
+<span class="sourceLineNo">204</span>     * &lt;p&gt;<a name="line.204"></a>
+<span class="sourceLineNo">205</span>     * A URL connection can be used for input and/or output. Setting the<a name="line.205"></a>
+<span class="sourceLineNo">206</span>     * &lt;code&gt;doOutput&lt;/code&gt; flag to &lt;code&gt;true&lt;/code&gt; indicates<a name="line.206"></a>
+<span class="sourceLineNo">207</span>     * that the application intends to write data to the URL connection.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>     * &lt;p&gt;<a name="line.208"></a>
+<span class="sourceLineNo">209</span>     * The default value of this field is &lt;code&gt;false&lt;/code&gt;.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>     *<a name="line.210"></a>
+<span class="sourceLineNo">211</span>     * @see     java.net.URLConnection#getDoOutput()<a name="line.211"></a>
+<span class="sourceLineNo">212</span>     * @see     java.net.URLConnection#setDoOutput(boolean)<a name="line.212"></a>
+<span class="sourceLineNo">213</span>     */<a name="line.213"></a>
+<span class="sourceLineNo">214</span>    protected boolean doOutput = false;<a name="line.214"></a>
+<span class="sourceLineNo">215</span><a name="line.215"></a>
+<span class="sourceLineNo">216</span>    private static boolean defaultAllowUserInteraction = false;<a name="line.216"></a>
+<span class="sourceLineNo">217</span><a name="line.217"></a>
+<span class="sourceLineNo">218</span>   /**<a name="line.218"></a>
+<span class="sourceLineNo">219</span>     * If &lt;code&gt;true&lt;/code&gt;, this &lt;code&gt;URL&lt;/code&gt; is being examined in<a name="line.219"></a>
+<span class="sourceLineNo">220</span>     * a context in which it makes sense to allow user interactions such<a name="line.220"></a>
+<span class="sourceLineNo">221</span>     * as popping up an authentication dialog. If &lt;code&gt;false&lt;/code&gt;,<a name="line.221"></a>
+<span class="sourceLineNo">222</span>     * then no user interaction is allowed.<a name="line.222"></a>
+<span class="sourceLineNo">223</span>     * &lt;p&gt;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>     * The value of this field can be set by the<a name="line.224"></a>
+<span class="sourceLineNo">225</span>     * &lt;code&gt;setAllowUserInteraction&lt;/code&gt; method.<a name="line.225"></a>
+<span class="sourceLineNo">226</span>     * Its value is returned by the<a name="line.226"></a>
+<span class="sourceLineNo">227</span>     * &lt;code&gt;getAllowUserInteraction&lt;/code&gt; method.<a name="line.227"></a>
+<span class="sourceLineNo">228</span>     * Its default value is the value of the argument in the last invocation<a name="line.228"></a>
+<span class="sourceLineNo">229</span>     * of the &lt;code&gt;setDefaultAllowUserInteraction&lt;/code&gt; method.<a name="line.229"></a>
+<span class="sourceLineNo">230</span>     *<a name="line.230"></a>
+<span class="sourceLineNo">231</span>     * @see     java.net.URLConnection#getAllowUserInteraction()<a name="line.231"></a>
+<span class="sourceLineNo">232</span>     * @see     java.net.URLConnection#setAllowUserInteraction(boolean)<a name="line.232"></a>
+<span class="sourceLineNo">233</span>     * @see     java.net.URLConnection#setDefaultAllowUserInteraction(boolean)<a name="line.233"></a>
+<span class="sourceLineNo">234</span>     */<a name="line.234"></a>
+<span class="sourceLineNo">235</span>    protected boolean allowUserInteraction = defaultAllowUserInteraction;<a name="line.235"></a>
+<span class="sourceLineNo">236</span><a name="line.236"></a>
+<span class="sourceLineNo">237</span>    private static boolean defaultUseCaches = true;<a name="line.237"></a>
+<span class="sourceLineNo">238</span><a name="line.238"></a>
+<span class="sourceLineNo">239</span>   /**<a name="line.239"></a>
+<span class="sourceLineNo">240</span>     * If &lt;code&gt;true&lt;/code&gt;, the protocol is allowed to use caching<a name="line.240"></a>
+<span class="sourceLineNo">241</span>     * whenever it can. If &lt;code&gt;false&lt;/code&gt;, the protocol must always<a name="line.241"></a>
+<span class="sourceLineNo">242</span>     * try to get a fresh copy of the object.<a name="line.242"></a>
+<span class="sourceLineNo">243</span>     * &lt;p&gt;<a name="line.243"></a>
+<span class="sourceLineNo">244</span>     * This field is set by the &lt;code&gt;setUseCaches&lt;/code&gt; method. Its<a name="line.244"></a>
+<span class="sourceLineNo">245</span>     * value is returned by the &lt;code&gt;getUseCaches&lt;/code&gt; method.<a name="line.245"></a>
+<span class="sourceLineNo">246</span>     * &lt;p&gt;<a name="line.246"></a>
+<span class="sourceLineNo">247</span>     * Its default value is the value given in the last invocation of the<a name="line.247"></a>
+<span class="sourceLineNo">248</span>     * &lt;code&gt;setDefaultUseCaches&lt;/code&gt; method.<a name="line.248"></a>
+<span class="sourceLineNo">249</span>     *<a name="line.249"></a>
+<span class="sourceLineNo">250</span>     * @see     java.net.URLConnection#setUseCaches(boolean)<a name="line.250"></a>
+<span class="sourceLineNo">251</span>     * @see     java.net.URLConnection#getUseCaches()<a name="line.251"></a>
+<span class="sourceLineNo">252</span>     * @see     java.net.URLConnection#setDefaultUseCaches(boolean)<a name="line.252"></a>
+<span class="sourceLineNo">253</span>     */<a name="line.253"></a>
+<span class="sourceLineNo">254</span>    protected boolean useCaches = defaultUseCaches;<a name="line.254"></a>
+<span class="sourceLineNo">255</span><a name="line.255"></a>
+<span class="sourceLineNo">256</span>   /**<a name="line.256"></a>
+<span class="sourceLineNo">257</span>     * Some protocols support skipping the fetching of the object unless<a name="line.257"></a>
+<span class="sourceLineNo">258</span>     * the object has been modified more recently than a certain time.<a name="line.258"></a>
+<span class="sourceLineNo">259</span>     * &lt;p&gt;<a name="line.259"></a>
+<span class="sourceLineNo">260</span>     * A nonzero value gives a time as the number of milliseconds since<a name="line.260"></a>
+<span class="sourceLineNo">261</span>     * January 1, 1970, GMT. The object is fetched only if it has been<a name="line.261"></a>
+<span class="sourceLineNo">262</span>     * modified more recently than that time.<a name="line.262"></a>
+<span class="sourceLineNo">263</span>     * &lt;p&gt;<a name="line.263"></a>
+<span class="sourceLineNo">264</span>     * This variable is set by the &lt;code&gt;setIfModifiedSince&lt;/code&gt;<a name="line.264"></a>
+<span class="sourceLineNo">265</span>     * method. Its value is returned by the<a name="line.265"></a>
+<span class="sourceLineNo">266</span>     * &lt;code&gt;getIfModifiedSince&lt;/code&gt; method.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>     * &lt;p&gt;<a name="line.267"></a>
+<span class="sourceLineNo">268</span>     * The default value of this field is &lt;code&gt;0&lt;/code&gt;, indicating<a name="line.268"></a>
+<span class="sourceLineNo">269</span>     * that the fetching must always occur.<a name="line.269"></a>
+<span class="sourceLineNo">270</span>     *<a name="line.270"></a>
+<span class="sourceLineNo">271</span>     * @see     java.net.URLConnection#getIfModifiedSince()<a name="line.271"></a>
+<span class="sourceLineNo">272</span>     * @see     java.net.URLConnection#setIfModifiedSince(long)<a name="line.272"></a>
+<span class="sourceLineNo">273</span>     */<a name="line.273"></a>
+<span class="sourceLineNo">274</span>    protected long ifModifiedSince = 0;<a name="line.274"></a>
+<span class="sourceLineNo">275</span><a name="line.275"></a>
+<span class="sourceLineNo">276</span>   /**<a name="line.276"></a>
+<span class="sourceLineNo">277</span>     * If &lt;code&gt;false&lt;/code&gt;, this connection object has not created a<a name="line.277"></a>
+<span class="sourceLineNo">278</span>     * communications link to the specified URL. If &lt;code&gt;true&lt;/code&gt;,<a name="line.278"></a>
+<span class="sourceLineNo">279</span>     * the communications link has been established.<a name="line.279"></a>
+<span class="sourceLineNo">280</span>     */<a name="line.280"></a>
+<span class="sourceLineNo">281</span>    protected boolean connected = false;<a name="line.281"></a>
+<span class="sourceLineNo">282</span><a name="line.282"></a>
+<span class="sourceLineNo">283</span>    /**<a name="line.283"></a>
+<span class="sourceLineNo">284</span>     * @since 1.5<a name="line.284"></a>
+<span class="sourceLineNo">285</span>     */<a name="line.285"></a>
+<span class="sourceLineNo">286</span>    private int connectTimeout;<a name="line.286"></a>
+<span class="sourceLineNo">287</span>    private int readTimeout;<a name="line.287"></a>
+<span class="sourceLineNo">288</span><a name="line.288"></a>
+<span class="sourceLineNo">289</span>    /**<a name="line.289"></a>
+<span class="sourceLineNo">290</span>     * @since 1.6<a name="line.290"></a>
+<span class="sourceLineNo">291</span>     */<a name="line.291"></a>
+<span class="sourceLineNo">292</span>    private MessageHeader requests;<a name="line.292"></a>
+<span class="sourceLineNo">293</span><a name="line.293"></a>
+<span class="sourceLineNo">294</span>   /**<a name="line.294"></a>
+<span class="sourceLineNo">295</span>    * @since   JDK1.1<a name="line.295"></a>
+<span class="sourceLineNo">296</span>    */<a name="line.296"></a>
+<span class="sourceLineNo">297</span>    private static FileNameMap fileNameMap;<a name="line.297"></a>
+<span class="sourceLineNo">298</span><a name="line.298"></a>
+<span class="sourceLineNo">299</span>    /**<a name="line.299"></a>
+<span class="sourceLineNo">300</span>     * @since 1.2.2<a name="line.300"></a>
+<span class="sourceLineNo">301</span>     */<a name="line.301"></a>
+<span class="sourceLineNo">302</span>    private static boolean fileNameMapLoaded = false;<a name="line.302"></a>
+<span class="sourceLineNo">303</span><a name="line.303"></a>
+<span class="sourceLineNo">304</span>    /**<a name="line.304"></a>
+<span class="sourceLineNo">305</span>     * Loads filename map (a mimetable) from a data file. It will<a name="line.305"></a>
+<span class="sourceLineNo">306</span>     * first try to load the user-specific table, defined<a name="line.306"></a>
+<span class="sourceLineNo">307</span>     * by &amp;quot;content.types.user.table&amp;quot; property. If that fails,<a name="line.307"></a>
+<span class="sourceLineNo">308</span>     * it tries to load the default built-in table at<a name="line.308"></a>
+<span class="sourceLineNo">309</span>     * lib/content-types.properties under java home.<a name="line.309"></a>
+<span class="sourceLineNo">310</span>     *<a name="line.310"></a>
+<span class="sourceLineNo">311</span>     * @return the FileNameMap<a name="line.311"></a>
+<span class="sourceLineNo">312</span>     * @since 1.2<a name="line.312"></a>
+<span class="sourceLineNo">313</span>     * @see #setFileNameMap(java.net.FileNameMap)<a name="line.313"></a>
+<span class="sourceLineNo">314</span>     */<a name="line.314"></a>
+<span class="sourceLineNo">315</span>    public static synchronized FileNameMap getFileNameMap() {<a name="line.315"></a>
+<span class="sourceLineNo">316</span>        if ((fileNameMap == null) &amp;&amp; !fileNameMapLoaded) {<a name="line.316"></a>
+<span class="sourceLineNo">317</span>            fileNameMap = sun.net.www.MimeTable.loadTable();<a name="line.317"></a>
+<span class="sourceLineNo">318</span>            fileNameMapLoaded = true;<a name="line.318"></a>
+<span class="sourceLineNo">319</span>        }<a name="line.319"></a>
+<span class="sourceLineNo">320</span><a name="line.320"></a>
+<span class="sourceLineNo">321</span>        return new FileNameMap() {<a name="line.321"></a>
+<span class="sourceLineNo">322</span>            private FileNameMap map = fileNameMap;<a name="line.322"></a>
+<span class="sourceLineNo">323</span>            public String getContentTypeFor(String fileName) {<a name="line.323"></a>
+<span class="sourceLineNo">324</span>                return map.getContentTypeFor(fileName);<a name="line.324"></a>
+<span class="sourceLineNo">325</span>            }<a name="line.325"></a>
+<span class="sourceLineNo">326</span>        };<a name="line.326"></a>
+<span class="sourceLineNo">327</span>    }<a name="line.327"></a>
+<span class="sourceLineNo">328</span><a name="line.328"></a>
+<span class="sourceLineNo">329</span>    /**<a name="line.329"></a>
+<span class="sourceLineNo">330</span>     * Sets the FileNameMap.<a name="line.330"></a>
+<span class="sourceLineNo">331</span>     * &lt;p&gt;<a name="line.331"></a>
+<span class="sourceLineNo">332</span>     * If there is a security manager, this method first calls<a name="line.332"></a>
+<span class="sourceLineNo">333</span>     * the security manager's &lt;code&gt;checkSetFactory&lt;/code&gt; method<a name="line.333"></a>
+<span class="sourceLineNo">334</span>     * to ensure the operation is allowed.<a name="line.334"></a>
+<span class="sourceLineNo">335</span>     * This could result in a SecurityException.<a name="line.335"></a>
+<span class="sourceLineNo">336</span>     *<a name="line.336"></a>
+<span class="sourceLineNo">337</span>     * @param map the FileNameMap to be set<a name="line.337"></a>
+<span class="sourceLineNo">338</span>     * @exception  SecurityException  if a security manager exists and its<a name="line.338"></a>
+<span class="sourceLineNo">339</span>     *             &lt;code&gt;checkSetFactory&lt;/code&gt; method doesn't allow the operation.<a name="line.339"></a>
+<span class="sourceLineNo">340</span>     * @see        SecurityManager#checkSetFactory<a name="line.340"></a>
+<span class="sourceLineNo">341</span>     * @see #getFileNameMap()<a name="line.341"></a>
+<span class="sourceLineNo">342</span>     * @since 1.2<a name="line.342"></a>
+<span class="sourceLineNo">343</span>     */<a name="line.343"></a>
+<span class="sourceLineNo">344</span>    public static void setFileNameMap(FileNameMap map) {<a name="line.344"></a>
+<span class="sourceLineNo">345</span>        SecurityManager sm = System.getSecurityManager();<a name="line.345"></a>
+<span class="sourceLineNo">346</span>        if (sm != null) sm.checkSetFactory();<a name="line.346"></a>
+<span class="sourceLineNo">347</span>        fileNameMap = map;<a name="line.347"></a>
+<span class="sourceLineNo">348</span>    }<a name="line.348"></a>
+<span class="sourceLineNo">349</span><a name="line.349"></a>
+<span class="sourceLineNo">350</span>    /**<a name="line.350"></a>
+<span class="sourceLineNo">351</span>     * Opens a communications link to the resource referenced by this<a name="line.351"></a>
+<span class="sourceLineNo">352</span>     * URL, if such a connection has not already been established.<a name="line.352"></a>
+<span class="sourceLineNo">353</span>     * &lt;p&gt;<a name="line.353"></a>
+<span class="sourceLineNo">354</span>     * If the &lt;code&gt;connect&lt;/code&gt; method is called when the connection<a name="line.354"></a>
+<span class="sourceLineNo">355</span>     * has already been opened (indicated by the &lt;code&gt;connected&lt;/code&gt;<a name="line.355"></a>
+<span class="sourceLineNo">356</span>     * field having the value &lt;code&gt;true&lt;/code&gt;), the call is ignored.<a name="line.356"></a>
+<span class="sourceLineNo">357</span>     * &lt;p&gt;<a name="line.357"></a>
+<span class="sourceLineNo">358</span>     * URLConnection objects go through two phases: first they are<a name="line.358"></a>
+<span class="sourceLineNo">359</span>     * created, then they are connected.  After being created, and<a name="line.359"></a>
+<span class="sourceLineNo">360</span>     * before being connected, various options can be specified<a name="line.360"></a>
+<span class="sourceLineNo">361</span>     * (e.g., doInput and UseCaches).  After connecting, it is an<a name="line.361"></a>
+<span class="sourceLineNo">362</span>     * error to try to set them.  Operations that depend on being<a name="line.362"></a>
+<span class="sourceLineNo">363</span>     * connected, like getContentLength, will implicitly perform the<a name="line.363"></a>
+<span class="sourceLineNo">364</span>     * connection, if necessary.<a name="line.364"></a>
+<span class="sourceLineNo">365</span>     *<a name="line.365"></a>
+<span class="sourceLineNo">366</span>     * @throws SocketTimeoutException if the timeout expires before<a name="line.366"></a>
+<span class="sourceLineNo">367</span>     *               the connection can be established<a name="line.367"></a>
+<span class="sourceLineNo">368</span>     * @exception  IOException  if an I/O error occurs while opening the<a name="line.368"></a>
+<span class="sourceLineNo">369</span>     *               connection.<a name="line.369"></a>
+<span class="sourceLineNo">370</span>     * @see java.net.URLConnection#connected<a name="line.370"></a>
+<span class="sourceLineNo">371</span>     * @see #getConnectTimeout()<a name="line.371"></a>
+<span class="sourceLineNo">372</span>     * @see #setConnectTimeout(int)<a name="line.372"></a>
+<span class="sourceLineNo">373</span>     */<a name="line.373"></a>
+<span class="sourceLineNo">374</span>    abstract public void connect() throws IOException;<a name="line.374"></a>
+<span class="sourceLineNo">375</span><a name="line.375"></a>
+<span class="sourceLineNo">376</span>    /**<a name="line.376"></a>
+<span class="sourceLineNo">377</span>     * Sets a specified timeout value, in milliseconds, to be used<a name="line.377"></a>
+<span class="sourceLineNo">378</span>     * when opening a communications link to the resource referenced<a name="line.378"></a>
+<span class="sourceLineNo">379</span>     * by this URLConnection.  If the timeout expires before the<a name="line.379"></a>
+<span class="sourceLineNo">380</span>     * connection can be established, a<a name="line.380"></a>
+<span class="sourceLineNo">381</span>     * java.net.SocketTimeoutException is raised. A timeout of zero is<a name="line.381"></a>
+<span class="sourceLineNo">382</span>     * interpreted as an infinite timeout.<a name="line.382"></a>
+<span class="sourceLineNo">383</span><a name="line.383"></a>
+<span class="sourceLineNo">384</span>     * &lt;p&gt; Some non-standard implmentation of this method may ignore<a name="line.384"></a>
+<span class="sourceLineNo">385</span>     * the specified timeout. To see the connect timeout set, please<a name="line.385"></a>
+<span class="sourceLineNo">386</span>     * call getConnectTimeout().<a name="line.386"></a>
+<span class="sourceLineNo">387</span>     *<a name="line.387"></a>
+<span class="sourceLineNo">388</span>     * @param timeout an &lt;code&gt;int&lt;/code&gt; that specifies the connect<a name="line.388"></a>
+<span class="sourceLineNo">389</span>     *               timeout value in milliseconds<a name="line.389"></a>
+<span class="sourceLineNo">390</span>     * @throws IllegalArgumentException if the timeout parameter is negative<a name="line.390"></a>
+<span class="sourceLineNo">391</span>     *<a name="line.391"></a>
+<span class="sourceLineNo">392</span>     * @see #getConnectTimeout()<a name="line.392"></a>
+<span class="sourceLineNo">393</span>     * @see #connect()<a name="line.393"></a>
+<span class="sourceLineNo">394</span>     * @since 1.5<a name="line.394"></a>
+<span class="sourceLineNo">395</span>     */<a name="line.395"></a>
+<span class="sourceLineNo">396</span>    public void setConnectTimeout(int timeout) {<a name="line.396"></a>
+<span class="sourceLineNo">397</span>        if (timeout &lt; 0) {<a name="line.397"></a>
+<span class="sourceLineNo">398</span>            throw new IllegalArgumentException("timeout can not be negative");<a name="line.398"></a>
+<span class="sourceLineNo">399</span>        }<a name="line.399"></a>
+<span class="sourceLineNo">400</span>        connectTimeout = timeout;<a name="line.400"></a>
+<span class="sourceLineNo">401</span>    }<a name="line.401"></a>
+<span class="sourceLineNo">402</span><a name="line.402"></a>
+<span class="sourceLineNo">403</span>    /**<a name="line.403"></a>
+<span class="sourceLineNo">404</span>     * Returns setting for connect timeout.<a name="line.404"></a>
+<span class="sourceLineNo">405</span>     * &lt;p&gt;<a name="line.405"></a>
+<span class="sourceLineNo">406</span>     * 0 return implies that the option is disabled<a name="line.406"></a>
+<span class="sourceLineNo">407</span>     * (i.e., timeout of infinity).<a name="line.407"></a>
+<span class="sourceLineNo">408</span>     *<a name="line.408"></a>
+<span class="sourceLineNo">409</span>     * @return an &lt;code&gt;int&lt;/code&gt; that indicates the connect timeout<a name="line.409"></a>
+<span class="sourceLineNo">410</span>     *         value in milliseconds<a name="line.410"></a>
+<span class="sourceLineNo">411</span>     * @see #setConnectTimeout(int)<a name="line.411"></a>
+<span class="sourceLineNo">412</span>     * @see #connect()<a name="line.412"></a>
+<span class="sourceLineNo">413</span>     * @since 1.5<a name="line.413"></a>
+<span class="sourceLineNo">414</span>     */<a name="line.414"></a>
+<span class="sourceLineNo">415</span>    public int getConnectTimeout() {<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        return connectTimeout;<a name="line.416"></a>
+<span class="sourceLineNo">417</span>    }<a name="line.417"></a>
+<span class="sourceLineNo">418</span><a name="line.418"></a>
+<span class="sourceLineNo">419</span>    /**<a name="line.419"></a>
+<span class="sourceLineNo">420</span>     * Sets the read timeout to a specified timeout, in<a name="line.420"></a>
+<span class="sourceLineNo">421</span>     * milliseconds. A non-zero value specifies the timeout when<a name="line.421"></a>
+<span class="sourceLineNo">422</span>     * reading from Input stream when a connection is established to a<a name="line.422"></a>
+<span class="sourceLineNo">423</span>     * resource. If the timeout expires before there is data available<a name="line.423"></a>
+<span class="sourceLineNo">424</span>     * for read, a java.net.SocketTimeoutException is raised. A<a name="line.424"></a>
+<span class="sourceLineNo">425</span>     * timeout of zero is interpreted as an infinite timeout.<a name="line.425"></a>
+<span class="sourceLineNo">426</span>     *<a name="line.426"></a>
+<span class="sourceLineNo">427</span>     *&lt;p&gt; Some non-standard implementation of this method ignores the<a name="line.427"></a>
+<span class="sourceLineNo">428</span>     * specified timeout. To see the read timeout set, please call<a name="line.428"></a>
+<span class="sourceLineNo">429</span>     * getReadTimeout().<a name="line.429"></a>
+<span class="sourceLineNo">430</span>     *<a name="line.430"></a>
+<span class="sourceLineNo">431</span>     * @param timeout an &lt;code&gt;int&lt;/code&gt; that specifies the timeout<a name="line.431"></a>
+<span class="sourceLineNo">432</span>     * value to be used in milliseconds<a name="line.432"></a>
+<span class="sourceLineNo">433</span>     * @throws IllegalArgumentException if the timeout parameter is negative<a name="line.433"></a>
+<span class="sourceLineNo">434</span>     *<a name="line.434"></a>
+<span class="sourceLineNo">435</span>     * @see #getReadTimeout()<a name="line.435"></a>
+<span class="sourceLineNo">436</span>     * @see InputStream#read()<a name="line.436"></a>
+<span class="sourceLineNo">437</span>     * @since 1.5<a name="line.437"></a>
+<span class="sourceLineNo">438</span>     */<a name="line.438"></a>
+<span class="sourceLineNo">439</span>    public void setReadTimeout(int timeout) {<a name="line.439"></a>
+<span class="sourceLineNo">440</span>        if (timeout &lt; 0) {<a name="line.440"></a>
+<span class="sourceLineNo">441</span>            throw new IllegalArgumentException("timeout can not be negative");<a name="line.441"></a>
+<span class="sourceLineNo">442</span>        }<a name="line.442"></a>
+<span class="sourceLineNo">443</span>        readTimeout = timeout;<a name="line.443"></a>
+<span class="sourceLineNo">444</span>    }<a name="line.444"></a>
+<span class="sourceLineNo">445</span><a name="line.445"></a>
+<span class="sourceLineNo">446</span>    /**<a name="line.446"></a>
+<span class="sourceLineNo">447</span>     * Returns setting for read timeout. 0 return implies that the<a name="line.447"></a>
+<span class="sourceLineNo">448</span>     * option is disabled (i.e., timeout of infinity).<a name="line.448"></a>
+<span class="sourceLineNo">449</span>     *<a name="line.449"></a>
+<span class="sourceLineNo">450</span>     * @return an &lt;code&gt;int&lt;/code&gt; that indicates the read timeout<a name="line.450"></a>
+<span class="sourceLineNo">451</span>     *         value in milliseconds<a name="line.451"></a>
+<span class="sourceLineNo">452</span>     *<a name="line.452"></a>
+<span class="sourceLineNo">453</span>     * @see #setReadTimeout(int)<a name="line.453"></a>
+<span class="sourceLineNo">454</span>     * @see InputStream#read()<a name="line.454"></a>
+<span class="sourceLineNo">455</span>     * @since 1.5<a name="line.455"></a>
+<span class="sourceLineNo">456</span>     */<a name="line.456"></a>
+<span class="sourceLineNo">457</span>    public int getReadTimeout() {<a name="line.457"></a>
+<span class="sourceLineNo">458</span>        return readTimeout;<a name="line.458"></a>
+<span class="sourceLineNo">459</span>    }<a name="line.459"></a>
+<span class="sourceLineNo">460</span><a name="line.460"></a>
+<span class="sourceLineNo">461</span>    /**<a name="line.461"></a>
+<span class="sourceLineNo">462</span>     * Constructs a URL connection to the specified URL. A connection to<a name="line.462"></a>
+<span class="sourceLineNo">463</span>     * the object referenced by the URL is not created.<a name="line.463"></a>
+<span class="sourceLineNo">464</span>     *<a name="line.464"></a>
+<span class="sourceLineNo">465</span>     * @param   url   the specified URL.<a name="line.465"></a>
+<span class="sourceLineNo">466</span>     */<a name="line.466"></a>
+<span class="sourceLineNo">467</span>    protected URLConnection(URL url) {<a name="line.467"></a>
+<span class="sourceLineNo">468</span>        this.url = url;<a name="line.468"></a>
+<span class="sourceLineNo">469</span>    }<a name="line.469"></a>
+<span class="sourceLineNo">470</span><a name="line.470"></a>
+<span class="sourceLineNo">471</span>    /**<a name="line.471"></a>
+<span class="sourceLineNo">472</span>     * Returns the value of this &lt;code&gt;URLConnection&lt;/code&gt;'s &lt;code&gt;URL&lt;/code&gt;<a name="line.472"></a>
+<span class="sourceLineNo">473</span>     * field.<a name="line.473"></a>
+<span class="sourceLineNo">474</span>     *<a name="line.474"></a>
+<span class="sourceLineNo">475</span>     * @return  the value of this &lt;code&gt;URLConnection&lt;/code&gt;'s &lt;code&gt;URL&lt;/code&gt;<a name="line.475"></a>
+<span class="sourceLineNo">476</span>     *          field.<a name="line.476"></a>
+<span class="sourceLineNo">477</span>     * @see     java.net.URLConnection#url<a name="line.477"></a>
+<span class="sourceLineNo">478</span>     */<a name="line.478"></a>
+<span class="sourceLineNo">479</span>    public URL getURL() {<a name="line.479"></a>
+<span class="sourceLineNo">480</span>        return url;<a name="line.480"></a>
+<span class="sourceLineNo">481</span>    }<a name="line.481"></a>
+<span class="sourceLineNo">482</span><a name="line.482"></a>
+<span class="sourceLineNo">483</span>    /**<a name="line.483"></a>
+<span class="sourceLineNo">484</span>     * Returns the value of the &lt;code&gt;content-length&lt;/code&gt; header field.<a name="line.484"></a>
+<span class="sourceLineNo">485</span>     * &lt;P&gt;<a name="line.485"></a>
+<span class="sourceLineNo">486</span>     * &lt;B&gt;Note&lt;/B&gt;: {@link #getContentLengthLong() getContentLengthLong()}<a name="line.486"></a>
+<span class="sourceLineNo">487</span>     * should be preferred over this method, since it returns a {@code long}<a name="line.487"></a>
+<span class="sourceLineNo">488</span>     * instead and is therefore more portable.&lt;/P&gt;<a name="line.488"></a>
+<span class="sourceLineNo">489</span>     *<a name="line.489"></a>
+<span class="sourceLineNo">490</span>     * @return  the content length of the resource that this connection's URL<a name="line.490"></a>
+<span class="sourceLineNo">491</span>     *          references, {@code -1} if the content length is not known,<a name="line.491"></a>
+<span class="sourceLineNo">492</span>     *          or if the content length is greater than Integer.MAX_VALUE.<a name="line.492"></a>
+<span class="sourceLineNo">493</span>     */<a name="line.493"></a>
+<span class="sourceLineNo">494</span>    public int getContentLength() {<a name="line.494"></a>
+<span class="sourceLineNo">495</span>        long l = getContentLengthLong();<a name="line.495"></a>
+<span class="sourceLineNo">496</span>        if (l &gt; Integer.MAX_VALUE)<a name="line.496"></a>
+<span class="sourceLineNo">497</span>            return -1;<a name="line.497"></a>
+<span class="sourceLineNo">498</span>        return (int) l;<a name="line.498"></a>
+<span class="sourceLineNo">499</span>    }<a name="line.499"></a>
+<span class="sourceLineNo">500</span><a name="line.500"></a>
+<span class="sourceLineNo">501</span>    /**<a name="line.501"></a>
+<span class="sourceLineNo">502</span>     * Returns the value of the &lt;code&gt;content-length&lt;/code&gt; header field as a<a name="line.502"></a>
+<span class="sourceLineNo">503</span>     * long.<a name="line.503"></a>
+<span class="sourceLineNo">504</span>     *<a name="line.504"></a>
+<span class="sourceLineNo">505</span>     * @return  the content length of the resource that this connection's URL<a name="line.505"></a>
+<span class="sourceLineNo">506</span>     *          references, or &lt;code&gt;-1&lt;/code&gt; if the content length is<a name="line.506"></a>
+<span class="sourceLineNo">507</span>     *          not known.<a name="line.507"></a>
+<span class="sourceLineNo">508</span>     * @since 7.0<a name="line.508"></a>
+<span class="sourceLineNo">509</span>     */<a name="line.509"></a>
+<span class="sourceLineNo">510</span>    public long getContentLengthLong() {<a name="line.510"></a>
+<span class="sourceLineNo">511</span>        return getHeaderFieldLong("content-length", -1);<a name="line.511"></a>
+<span class="sourceLineNo">512</span>    }<a name="line.512"></a>
+<span class="sourceLineNo">513</span><a name="line.513"></a>
+<span class="sourceLineNo">514</span>    /**<a name="line.514"></a>
+<span class="sourceLineNo">515</span>     * Returns the value of the &lt;code&gt;content-type&lt;/code&gt; header field.<a name="line.515"></a>
+<span class="sourceLineNo">516</span>     *<a name="line.516"></a>
+<span class="sourceLineNo">517</span>     * @return  the content type of the resource that the URL references,<a name="line.517"></a>
+<span class="sourceLineNo">518</span>     *          or &lt;code&gt;null&lt;/code&gt; if not known.<a name="line.518"></a>
+<span class="sourceLineNo">519</span>     * @see     java.net.URLConnection#getHeaderField(java.lang.String)<a name="line.519"></a>
+<span class="sourceLineNo">520</span>     */<a name="line.520"></a>
+<span class="sourceLineNo">521</span>    public String getContentType() {<a name="line.521"></a>
+<span class="sourceLineNo">522</span>        return getHeaderField("content-type");<a name="line.522"></a>
+<span class="sourceLineNo">523</span>    }<a name="line.523"></a>
+<span class="sourceLineNo">524</span><a name="line.524"></a>
+<span class="sourceLineNo">525</span>    /**<a name="line.525"></a>
+<span class="sourceLineNo">526</span>     * Returns the value of the &lt;code&gt;content-encoding&lt;/code&gt; header field.<a name="line.526"></a>
+<span class="sourceLineNo">527</span>     *<a name="line.527"></a>
+<span class="sourceLineNo">528</span>     * @return  the content encoding of the resource that the URL references,<a name="line.528"></a>
+<span class="sourceLineNo">529</span>     *          or &lt;code&gt;null&lt;/code&gt; if not known.<a name="line.529"></a>
+<span class="sourceLineNo">530</span>     * @see     java.net.URLConnection#getHeaderField(java.lang.String)<a name="line.530"></a>
+<span class="sourceLineNo">531</span>     */<a name="line.531"></a>
+<span class="sourceLineNo">532</span>    public String getContentEncoding() {<a name="line.532"></a>
+<span class="sourceLineNo">533</span>        return getHeaderField("content-encoding");<a name="line.533"></a>
+<span class="sourceLineNo">534</span>    }<a name="line.534"></a>
+<span class="sourceLineNo">535</span><a name="line.535"></a>
+<span class="sourceLineNo">536</span>    /**<a name="line.536"></a>
+<span class="sourceLineNo">537</span>     * Returns the value of the &lt;code&gt;expires&lt;/code&gt; header field.<a name="line.537"></a>
+<span class="sourceLineNo">538</span>     *<a name="line.538"></a>
+<span class="sourceLineNo">539</span>     * @return  the expiration date of the resource that this URL references,<a name="line.539"></a>
+<span class="sourceLineNo">540</span>     *          or 0 if not known. The value is the number of milliseconds since<a name="line.540"></a>
+<span class="sourceLineNo">541</span>     *          January 1, 1970 GMT.<a name="line.541"></a>
+<span class="sourceLineNo">542</span>     * @see     java.net.URLConnection#getHeaderField(java.lang.String)<a name="line.542"></a>
+<span class="sourceLineNo">543</span>     */<a name="line.543"></a>
+<span class="sourceLineNo">544</span>    public long getExpiration() {<a name="line.544"></a>
+<span class="sourceLineNo">545</span>        return getHeaderFieldDate("expires", 0);<a name="line.545"></a>
+<span class="sourceLineNo">546</span>    }<a name="line.546"></a>
+<span class="sourceLineNo">547</span><a name="line.547"></a>
+<span class="sourceLineNo">548</span>    /**<a name="line.548"></a>
+<span class="sourceLineNo">549</span>     * Returns the value of the &lt;code&gt;date&lt;/code&gt; header field.<a name="line.549"></a>
+<span class="sourceLineNo">550</span>     *<a name="line.550"></a>
+<span class="sourceLineNo">551</span>     * @return  the sending date of the resource that the URL references,<a name="line.551"></a>
+<span class="sourceLineNo">552</span>     *          or &lt;code&gt;0&lt;/code&gt; if not known. The value returned is the<a name="line.552"></a>
+<span class="sourceLineNo">553</span>     *          number of milliseconds since January 1, 1970 GMT.<a name="line.553"></a>
+<span class="sourceLineNo">554</span>     * @see     java.net.URLConnection#getHeaderField(java.lang.String)<a name="line.554"></a>
+<span class="sourceLineNo">555</span>     */<a name="line.555"></a>
+<span class="sourceLineNo">556</span>    public long getDate() {<a name="line.556"></a>
+<span class="sourceLineNo">557</span>        return getHeaderFieldDate("date", 0);<a name="line.557"></a>
+<span class="sourceLineNo">558</span>    }<a name="line.558"></a>
+<span class="sourceLineNo">559</span><a name="line.559"></a>
+<span class="sourceLineNo">560</span>    /**<a name="line.560"></a>
+<span class="sourceLineNo">561</span>     * Returns the value of the &lt;code&gt;last-modified&lt;/code&gt; header field.<a name="line.561"></a>
+<span class="sourceLineNo">562</span>     * The result is the number of milliseconds since January 1, 1970 GMT.<a name="line.562"></a>
+<span class="sourceLineNo">563</span>     *<a name="line.563"></a>
+<span class="sourceLineNo">564</span>     * @return  the date the resource referenced by this<a name="line.564"></a>
+<span class="sourceLineNo">565</span>     *          &lt;code&gt;URLConnection&lt;/code&gt; was last modified, or 0 if not known.<a name="line.565"></a>
+<span class="sourceLineNo">566</span>     * @see     java.net.URLConnection#getHeaderField(java.lang.String)<a name="line.566"></a>
+<span class="sourceLineNo">567</span>     */<a name="line.567"></a>
+<span class="sourceLineNo">568</span>    public long getLastModified() {<a name="line.568"></a>
+<span class="sourceLineNo">569</span>        return getHeaderFieldDate("last-modified", 0);<a name="line.569"></a>
+<span class="sourceLineNo">570</span>    }<a name="line.570"></a>
+<span class="sourceLineNo">571</span><a name="line.571"></a>
+<span class="sourceLineNo">572</span>    /**<a name="line.572"></a>
+<span class="sourceLineNo">573</span>     * Returns the value of the named header field.<a name="line.573"></a>
+<span class="sourceLineNo">574</span>     * &lt;p&gt;<a name="line.574"></a>
+<span class="sourceLineNo">575</span>     * If called on a connection that sets the same header multiple times<a name="line.575"></a>
+<span class="sourceLineNo">576</span>     * with possibly different values, only the last value is returned.<a name="line.576"></a>
+<span class="sourceLineNo">577</span>     *<a name="line.577"></a>
+<span class="sourceLineNo">578</span>     *<a name="line.578"></a>
+<span class="sourceLineNo">579</span>     * @param   name   the name of a header field.<a name="line.579"></a>
+<span class="sourceLineNo">580</span>     * @return  the value of the named header field, or &lt;code&gt;null&lt;/code&gt;<a name="line.580"></a>
+<span class="sourceLineNo">581</span>     *          if there is no such field in the header.<a name="line.581"></a>
+<span class="sourceLineNo">582</span>     */<a name="line.582"></a>
+<span class="sourceLineNo">583</span>    public String getHeaderField(String name) {<a name="line.583"></a>
+<span class="sourceLineNo">584</span>        return null;<a name="line.584"></a>
+<span class="sourceLineNo">585</span>    }<a name="line.585"></a>
+<span class="sourceLineNo">586</span><a name="line.586"></a>
+<span class="sourceLineNo">587</span>    /**<a name="line.587"></a>
+<span class="sourceLineNo">588</span>     * Returns an unmodifiable Map of the header fields.<a name="line.588"></a>
+<span class="sourceLineNo">589</span>     * The Map keys are Strings that represent the<a name="line.589"></a>
+<span class="sourceLineNo">590</span>     * response-header field names. Each Map value is an<a name="line.590"></a>
+<span class="sourceLineNo">591</span>     * unmodifiable List of Strings that represents<a name="line.591"></a>
+<span class="sourceLineNo">592</span>     * the corresponding field values.<a name="line.592"></a>
+<span class="sourceLineNo">593</span>     *<a name="line.593"></a>
+<span class="sourceLineNo">594</span>     * @return a Map of header fields<a name="line.594"></a>
+<span class="sourceLineNo">595</span>     * @since 1.4<a name="line.595"></a>
+<span class="sourceLineNo">596</span>     */<a name="line.596"></a>
+<span class="sourceLineNo">597</span>    public Map&lt;String,List&lt;String&gt;&gt; getHeaderFields() {<a name="line.597"></a>
+<span class="sourceLineNo">598</span>        return Collections.EMPTY_MAP;<a name="line.598"></a>
+<span class="sourceLineNo">599</span>    }<a name="line.599"></a>
+<span class="sourceLineNo">600</span><a name="line.600"></a>
+<span class="sourceLineNo">601</span>    /**<a name="line.601"></a>
+<span class="sourceLineNo">602</span>     * Returns the value of the named field parsed as a number.<a name="line.602"></a>
+<span class="sourceLineNo">603</span>     * &lt;p&gt;<a name="line.603"></a>
+<span class="sourceLineNo">604</span>     * This form of &lt;code&gt;getHeaderField&lt;/code&gt; exists because some<a name="line.604"></a>
+<span class="sourceLineNo">605</span>     * connection types (e.g., &lt;code&gt;http-ng&lt;/code&gt;) have pre-parsed<a name="line.605"></a>
+<span class="sourceLineNo">606</span>     * headers. Classes for that connection type can override this method<a name="line.606"></a>
+<span class="sourceLineNo">607</span>     * and short-circuit the parsing.<a name="line.607"></a>
+<span class="sourceLineNo">608</span>     *<a name="line.608"></a>
+<span class="sourceLineNo">609</span>     * @param   name      the name of the header field.<a name="line.609"></a>
+<span class="sourceLineNo">610</span>     * @param   Default   the default value.<a name="line.610"></a>
+<span class="sourceLineNo">611</span>     * @return  the value of the named field, parsed as an integer. The<a name="line.611"></a>
+<span class="sourceLineNo">612</span>     *          &lt;code&gt;Default&lt;/code&gt; value is returned if the field is<a name="line.612"></a>
+<span class="sourceLineNo">613</span>     *          missing or malformed.<a name="line.613"></a>
+<span class="sourceLineNo">614</span>     */<a name="line.614"></a>
+<span class="sourceLineNo">615</span>    public int getHeaderFieldInt(String name, int Default) {<a name="line.615"></a>
+<span class="sourceLineNo">616</span>        String value = getHeaderField(name);<a name="line.616"></a>
+<span class="sourceLineNo">617</span>        try {<a name="line.617"></a>
+<span class="sourceLineNo">618</span>            return Integer.parseInt(value);<a name="line.618"></a>
+<span class="sourceLineNo">619</span>        } catch (Exception e) { }<a name="line.619"></a>
+<span class="sourceLineNo">620</span>        return Default;<a name="line.620"></a>
+<span class="sourceLineNo">621</span>    }<a name="line.621"></a>
+<span class="sourceLineNo">622</span><a name="line.622"></a>
+<span class="sourceLineNo">623</span>    /**<a name="line.623"></a>
+<span class="sourceLineNo">624</span>     * Returns the value of the named field parsed as a number.<a name="line.624"></a>
+<span class="sourceLineNo">625</span>     * &lt;p&gt;<a name="line.625"></a>
+<span class="sourceLineNo">626</span>     * This form of &lt;code&gt;getHeaderField&lt;/code&gt; exists because some<a name="line.626"></a>
+<span class="sourceLineNo">627</span>     * connection types (e.g., &lt;code&gt;http-ng&lt;/code&gt;) have pre-parsed<a name="line.627"></a>
+<span class="sourceLineNo">628</span>     * headers. Classes for that connection type can override this method<a name="line.628"></a>
+<span class="sourceLineNo">629</span>     * and short-circuit the parsing.<a name="line.629"></a>
+<span class="sourceLineNo">630</span>     *<a name="line.630"></a>
+<span class="sourceLineNo">631</span>     * @param   name      the name of the header field.<a name="line.631"></a>
+<span class="sourceLineNo">632</span>     * @param   Default   the default value.<a name="line.632"></a>
+<span class="sourceLineNo">633</span>     * @return  the value of the named field, parsed as a long. The<a name="line.633"></a>
+<span class="sourceLineNo">634</span>     *          &lt;code&gt;Default&lt;/code&gt; value is returned if the field is<a name="line.634"></a>
+<span class="sourceLineNo">635</span>     *          missing or malformed.<a name="line.635"></a>
+<span class="sourceLineNo">636</span>     * @since 7.0<a name="line.636"></a>
+<span class="sourceLineNo">637</span>     */<a name="line.637"></a>
+<span class="sourceLineNo">638</span>    public long getHeaderFieldLong(String name, long Default) {<a name="line.638"></a>
+<span class="sourceLineNo">639</span>        String value = getHeaderField(name);<a name="line.639"></a>
+<span class="sourceLineNo">640</span>        try {<a name="line.640"></a>
+<span class="sourceLineNo">641</span>            return Long.parseLong(value);<a name="line.641"></a>
+<span class="sourceLineNo">642</span>        } catch (Exception e) { }<a name="line.642"></a>
+<span class="sourceLineNo">643</span>        return Default;<a name="line.643"></a>
+<span class="sourceLineNo">644</span>    }<a name="line.644"></a>
+<span class="sourceLineNo">645</span><a name="line.645"></a>
+<span class="sourceLineNo">646</span>    /**<a name="line.646"></a>
+<span class="sourceLineNo">647</span>     * Returns the value of the named field parsed as date.<a name="line.647"></a>
+<span class="sourceLineNo">648</span>     * The result is the number of milliseconds since January 1, 1970 GMT<a name="line.648"></a>
+<span class="sourceLineNo">649</span>     * represented by the named field.<a name="line.649"></a>
+<span class="sourceLineNo">650</span>     * &lt;p&gt;<a name="line.650"></a>
+<span class="sourceLineNo">651</span>     * This form of &lt;code&gt;getHeaderField&lt;/code&gt; exists because some<a name="line.651"></a>
+<span class="sourceLineNo">652</span>     * connection types (e.g., &lt;code&gt;http-ng&lt;/code&gt;) have pre-parsed<a name="line.652"></a>
+<span class="sourceLineNo">653</span>     * headers. Classes for that connection type can override this method<a name="line.653"></a>
+<span class="sourceLineNo">654</span>     * and short-circuit the parsing.<a name="line.654"></a>
+<span class="sourceLineNo">655</span>     *<a name="line.655"></a>
+<span class="sourceLineNo">656</span>     * @param   name     the name of the header field.<a name="line.656"></a>
+<span class="sourceLineNo">657</span>     * @param   Default   a default value.<a name="line.657"></a>
+<span class="sourceLineNo">658</span>     * @return  the value of the field, parsed as a date. The value of the<a name="line.658"></a>
+<span class="sourceLineNo">659</span>     *          &lt;code&gt;Default&lt;/code&gt; argument is returned if the field is<a name="line.659"></a>
+<span class="sourceLineNo">660</span>     *          missing or malformed.<a name="line.660"></a>
+<span class="sourceLineNo">661</span>     */<a name="line.661"></a>
+<span class="sourceLineNo">662</span>    public long getHeaderFieldDate(String name, long Default) {<a name="line.662"></a>
+<span class="sourceLineNo">663</span>        String value = getHeaderField(name);<a name="line.663"></a>
+<span class="sourceLineNo">664</span>        try {<a name="line.664"></a>
+<span class="sourceLineNo">665</span>            return Date.parse(value);<a name="line.665"></a>
+<span class="sourceLineNo">666</span>        } catch (Exception e) { }<a name="line.666"></a>
+<span class="sourceLineNo">667</span>        return Default;<a name="line.667"></a>
+<span class="sourceLineNo">668</span>    }<a name="line.668"></a>
+<span class="sourceLineNo">669</span><a name="line.669"></a>
+<span class="sourceLineNo">670</span>    /**<a name="line.670"></a>
+<span class="sourceLineNo">671</span>     * Returns the key for the &lt;code&gt;n&lt;/code&gt;&lt;sup&gt;th&lt;/sup&gt; header field.<a name="line.671"></a>
+<span class="sourceLineNo">672</span>     * It returns &lt;code&gt;null&lt;/code&gt; if there are fewer than &lt;code&gt;n+1&lt;/code&gt; fields.<a name="line.672"></a>
+<span class="sourceLineNo">673</span>     *<a name="line.673"></a>
+<span class="sourceLineNo">674</span>     * @param   n   an index, where n&gt;=0<a name="line.674"></a>
+<span class="sourceLineNo">675</span>     * @return  the key for the &lt;code&gt;n&lt;/code&gt;&lt;sup&gt;th&lt;/sup&gt; header field,<a name="line.675"></a>
+<span class="sourceLineNo">676</span>     *          or &lt;code&gt;null&lt;/code&gt; if there are fewer than &lt;code&gt;n+1&lt;/code&gt;<a name="line.676"></a>
+<span class="sourceLineNo">677</span>     *          fields.<a name="line.677"></a>
+<span class="sourceLineNo">678</span>     */<a name="line.678"></a>
+<span class="sourceLineNo">679</span>    public String getHeaderFieldKey(int n) {<a name="line.679"></a>
+<span class="sourceLineNo">680</span>        return null;<a name="line.680"></a>
+<span class="sourceLineNo">681</span>    }<a name="line.681"></a>
+<span class="sourceLineNo">682</span><a name="line.682"></a>
+<span class="sourceLineNo">683</span>    /**<a name="line.683"></a>
+<span class="sourceLineNo">684</span>     * Returns the value for the &lt;code&gt;n&lt;/code&gt;&lt;sup&gt;th&lt;/sup&gt; header field.<a name="line.684"></a>
+<span class="sourceLineNo">685</span>     * It returns &lt;code&gt;null&lt;/code&gt; if there are fewer than<a name="line.685"></a>
+<span class="sourceLineNo">686</span>     * &lt;code&gt;n+1&lt;/code&gt;fields.<a name="line.686"></a>
+<span class="sourceLineNo">687</span>     * &lt;p&gt;<a name="line.687"></a>
+<span class="sourceLineNo">688</span>     * This method can be used in conjunction with the<a name="line.688"></a>
+<span class="sourceLineNo">689</span>     * {@link #getHeaderFieldKey(int) getHeaderFieldKey} method to iterate through all<a name="line.689"></a>
+<span class="sourceLineNo">690</span>     * the headers in the message.<a name="line.690"></a>
+<span class="sourceLineNo">691</span>     *<a name="line.691"></a>
+<span class="sourceLineNo">692</span>     * @param   n   an index, where n&gt;=0<a name="line.692"></a>
+<span class="sourceLineNo">693</span>     * @return  the value of the &lt;code&gt;n&lt;/code&gt;&lt;sup&gt;th&lt;/sup&gt; header field<a name="line.693"></a>
+<span class="sourceLineNo">694</span>     *          or &lt;code&gt;null&lt;/code&gt; if there are fewer than &lt;code&gt;n+1&lt;/code&gt; fields<a name="line.694"></a>
+<span class="sourceLineNo">695</span>     * @see     java.net.URLConnection#getHeaderFieldKey(int)<a name="line.695"></a>
+<span class="sourceLineNo">696</span>     */<a name="line.696"></a>
+<span class="sourceLineNo">697</span>    public String getHeaderField(int n) {<a name="line.697"></a>
+<span class="sourceLineNo">698</span>        return null;<a name="line.698"></a>
+<span class="sourceLineNo">699</span>    }<a name="line.699"></a>
+<span class="sourceLineNo">700</span><a name="line.700"></a>
+<span class="sourceLineNo">701</span>    /**<a name="line.701"></a>
+<span class="sourceLineNo">702</span>     * Retrieves the contents of this URL connection.<a name="line.702"></a>
+<span class="sourceLineNo">703</span>     * &lt;p&gt;<a name="line.703"></a>
+<span class="sourceLineNo">704</span>     * This method first determines the content type of the object by<a name="line.704"></a>
+<span class="sourceLineNo">705</span>     * calling the &lt;code&gt;getContentType&lt;/code&gt; method. If this is<a name="line.705"></a>
+<span class="sourceLineNo">706</span>     * the first time that the application has seen that specific content<a name="line.706"></a>
+<span class="sourceLineNo">707</span>     * type, a content handler for that content type is created:<a name="line.707"></a>
+<span class="sourceLineNo">708</span>     * &lt;ol&gt;<a name="line.708"></a>
+<span class="sourceLineNo">709</span>     * &lt;li&gt;If the application has set up a content handler factory instance<a name="line.709"></a>
+<span class="sourceLineNo">710</span>     *     using the &lt;code&gt;setContentHandlerFactory&lt;/code&gt; method, the<a name="line.710"></a>
+<span class="sourceLineNo">711</span>     *     &lt;code&gt;createContentHandler&lt;/code&gt; method of that instance is called<a name="line.711"></a>
+<span class="sourceLineNo">712</span>     *     with the content type as an argument; the result is a content<a name="line.712"></a>
+<span class="sourceLineNo">713</span>     *     handler for that content type.<a name="line.713"></a>
+<span class="sourceLineNo">714</span>     * &lt;li&gt;If no content handler factory has yet been set up, or if the<a name="line.714"></a>
+<span class="sourceLineNo">715</span>     *     factory's &lt;code&gt;createContentHandler&lt;/code&gt; method returns<a name="line.715"></a>
+<span class="sourceLineNo">716</span>     *     &lt;code&gt;null&lt;/code&gt;, then the application loads the class named:<a name="line.716"></a>
+<span class="sourceLineNo">717</span>     *     &lt;blockquote&gt;&lt;pre&gt;<a name="line.717"></a>
+<span class="sourceLineNo">718</span>     *         sun.net.www.content.&amp;lt;&lt;i&gt;contentType&lt;/i&gt;&amp;gt;<a name="line.718"></a>
+<span class="sourceLineNo">719</span>     *     &lt;/pre&gt;&lt;/blockquote&gt;<a name="line.719"></a>
+<span class="sourceLineNo">720</span>     *     where &amp;lt;&lt;i&gt;contentType&lt;/i&gt;&amp;gt; is formed by taking the<a name="line.720"></a>
+<span class="sourceLineNo">721</span>     *     content-type string, replacing all slash characters with a<a name="line.721"></a>
+<span class="sourceLineNo">722</span>     *     &lt;code&gt;period&lt;/code&gt; ('.'), and all other non-alphanumeric characters<a name="line.722"></a>
+<span class="sourceLineNo">723</span>     *     with the underscore character '&lt;code&gt;_&lt;/code&gt;'. The alphanumeric<a name="line.723"></a>
+<span class="sourceLineNo">724</span>     *     characters are specifically the 26 uppercase ASCII letters<a name="line.724"></a>
+<span class="sourceLineNo">725</span>     *     '&lt;code&gt;A&lt;/code&gt;' through '&lt;code&gt;Z&lt;/code&gt;', the 26 lowercase ASCII<a name="line.725"></a>
+<span class="sourceLineNo">726</span>     *     letters '&lt;code&gt;a&lt;/code&gt;' through '&lt;code&gt;z&lt;/code&gt;', and the 10 ASCII<a name="line.726"></a>
+<span class="sourceLineNo">727</span>     *     digits '&lt;code&gt;0&lt;/code&gt;' through '&lt;code&gt;9&lt;/code&gt;'. If the specified<a name="line.727"></a>
+<span class="sourceLineNo">728</span>     *     class does not exist, or is not a subclass of<a name="line.728"></a>
+<span class="sourceLineNo">729</span>     *     &lt;code&gt;ContentHandler&lt;/code&gt;, then an<a name="line.729"></a>
+<span class="sourceLineNo">730</span>     *     &lt;code&gt;UnknownServiceException&lt;/code&gt; is thrown.<a name="line.730"></a>
+<span class="sourceLineNo">731</span>     * &lt;/ol&gt;<a name="line.731"></a>
+<span class="sourceLineNo">732</span>     *<a name="line.732"></a>
+<span class="sourceLineNo">733</span>     * @return     the object fetched. The &lt;code&gt;instanceof&lt;/code&gt; operator<a name="line.733"></a>
+<span class="sourceLineNo">734</span>     *               should be used to determine the specific kind of object<a name="line.734"></a>
+<span class="sourceLineNo">735</span>     *               returned.<a name="line.735"></a>
+<span class="sourceLineNo">736</span>     * @exception  IOException              if an I/O error occurs while<a name="line.736"></a>
+<span class="sourceLineNo">737</span>     *               getting the content.<a name="line.737"></a>
+<span class="sourceLineNo">738</span>     * @exception  UnknownServiceException  if the protocol does not support<a name="line.738"></a>
+<span class="sourceLineNo">739</span>     *               the content type.<a name="line.739"></a>
+<span class="sourceLineNo">740</span>     * @see        java.net.ContentHandlerFactory#createContentHandler(java.lang.String)<a name="line.740"></a>
+<span class="sourceLineNo">741</span>     * @see        java.net.URLConnection#getContentType()<a name="line.741"></a>
+<span class="sourceLineNo">742</span>     * @see        java.net.URLConnection#setContentHandlerFactory(java.net.ContentHandlerFactory)<a name="line.742"></a>
+<span class="sourceLineNo">743</span>     */<a name="line.743"></a>
+<span class="sourceLineNo">744</span>    public Object getContent() throws IOException {<a name="line.744"></a>
+<span class="sourceLineNo">745</span>        // Must call getInputStream before GetHeaderField gets called<a name="line.745"></a>
+<span class="sourceLineNo">746</span>        // so that FileNotFoundException has a chance to be thrown up<a name="line.746"></a>
+<span class="sourceLineNo">747</span>        // from here without being caught.<a name="line.747"></a>
+<span class="sourceLineNo">748</span>        getInputStream();<a name="line.748"></a>
+<span class="sourceLineNo">749</span>        return getContentHandler().getContent(this);<a name="line.749"></a>
+<span class="sourceLineNo">750</span>    }<a name="line.750"></a>
+<span class="sourceLineNo">751</span><a name="line.751"></a>
+<span class="sourceLineNo">752</span>    /**<a name="line.752"></a>
+<span class="sourceLineNo">753</span>     * Retrieves the contents of this URL connection.<a name="line.753"></a>
+<span class="sourceLineNo">754</span>     *<a name="line.754"></a>
+<span class="sourceLineNo">755</span>     * @param classes the &lt;code&gt;Class&lt;/code&gt; array<a name="line.755"></a>
+<span class="sourceLineNo">756</span>     * indicating the requested types<a name="line.756"></a>
+<span class="sourceLineNo">757</span>     * @return     the object fetched that is the first match of the type<a name="line.757"></a>
+<span class="sourceLineNo">758</span>     *               specified in the classes array. null if none of<a name="line.758"></a>
+<span class="sourceLineNo">759</span>     *               the requested types are supported.<a name="line.759"></a>
+<span class="sourceLineNo">760</span>     *               The &lt;code&gt;instanceof&lt;/code&gt; operator should be used to<a name="line.760"></a>
+<span class="sourceLineNo">761</span>     *               determine the specific kind of object returned.<a name="line.761"></a>
+<span class="sourceLineNo">762</span>     * @exception  IOException              if an I/O error occurs while<a name="line.762"></a>
+<span class="sourceLineNo">763</span>     *               getting the content.<a name="line.763"></a>
+<span class="sourceLineNo">764</span>     * @exception  UnknownServiceException  if the protocol does not support<a name="line.764"></a>
+<span class="sourceLineNo">765</span>     *               the content type.<a name="line.765"></a>
+<span class="sourceLineNo">766</span>     * @see        java.net.URLConnection#getContent()<a name="line.766"></a>
+<span class="sourceLineNo">767</span>     * @see        java.net.ContentHandlerFactory#createContentHandler(java.lang.String)<a name="line.767"></a>
+<span class="sourceLineNo">768</span>     * @see        java.net.URLConnection#getContent(java.lang.Class[])<a name="line.768"></a>
+<span class="sourceLineNo">769</span>     * @see        java.net.URLConnection#setContentHandlerFactory(java.net.ContentHandlerFactory)<a name="line.769"></a>
+<span class="sourceLineNo">770</span>     * @since 1.3<a name="line.770"></a>
+<span class="sourceLineNo">771</span>     */<a name="line.771"></a>
+<span class="sourceLineNo">772</span>    public Object getContent(Class[] classes) throws IOException {<a name="line.772"></a>
+<span class="sourceLineNo">773</span>        // Must call getInputStream before GetHeaderField gets called<a name="line.773"></a>
+<span class="sourceLineNo">774</span>        // so that FileNotFoundException has a chance to be thrown up<a name="line.774"></a>
+<span class="sourceLineNo">775</span>        // from here without being caught.<a name="line.775"></a>
+<span class="sourceLineNo">776</span>        getInputStream();<a name="line.776"></a>
+<span class="sourceLineNo">777</span>        return getContentHandler().getContent(this, classes);<a name="line.777"></a>
+<span class="sourceLineNo">778</span>    }<a name="line.778"></a>
+<span class="sourceLineNo">779</span><a name="line.779"></a>
+<span class="sourceLineNo">780</span>    /**<a name="line.780"></a>
+<span class="sourceLineNo">781</span>     * Returns a permission object representing the permission<a name="line.781"></a>
+<span class="sourceLineNo">782</span>     * necessary to make the connection represented by this<a name="line.782"></a>
+<span class="sourceLineNo">783</span>     * object. This method returns null if no permission is<a name="line.783"></a>
+<span class="sourceLineNo">784</span>     * required to make the connection. By default, this method<a name="line.784"></a>
+<span class="sourceLineNo">785</span>     * returns &lt;code&gt;java.security.AllPermission&lt;/code&gt;. Subclasses<a name="line.785"></a>
+<span class="sourceLineNo">786</span>     * should override this method and return the permission<a name="line.786"></a>
+<span class="sourceLineNo">787</span>     * that best represents the permission required to make a<a name="line.787"></a>
+<span class="sourceLineNo">788</span>     * a connection to the URL. For example, a &lt;code&gt;URLConnection&lt;/code&gt;<a name="line.788"></a>
+<span class="sourceLineNo">789</span>     * representing a &lt;code&gt;file:&lt;/code&gt; URL would return a<a name="line.789"></a>
+<span class="sourceLineNo">790</span>     * &lt;code&gt;java.io.FilePermission&lt;/code&gt; object.<a name="line.790"></a>
+<span class="sourceLineNo">791</span>     *<a name="line.791"></a>
+<span class="sourceLineNo">792</span>     * &lt;p&gt;The permission returned may dependent upon the state of the<a name="line.792"></a>
+<span class="sourceLineNo">793</span>     * connection. For example, the permission before connecting may be<a name="line.793"></a>
+<span class="sourceLineNo">794</span>     * different from that after connecting. For example, an HTTP<a name="line.794"></a>
+<span class="sourceLineNo">795</span>     * sever, say foo.com, may redirect the connection to a different<a name="line.795"></a>
+<span class="sourceLineNo">796</span>     * host, say bar.com. Before connecting the permission returned by<a name="line.796"></a>
+<span class="sourceLineNo">797</span>     * the connection will represent the permission needed to connect<a name="line.797"></a>
+<span class="sourceLineNo">798</span>     * to foo.com, while the permission returned after connecting will<a name="line.798"></a>
+<span class="sourceLineNo">799</span>     * be to bar.com.<a name="line.799"></a>
+<span class="sourceLineNo">800</span>     *<a name="line.800"></a>
+<span class="sourceLineNo">801</span>     * &lt;p&gt;Permissions are generally used for two purposes: to protect<a name="line.801"></a>
+<span class="sourceLineNo">802</span>     * caches of objects obtained through URLConnections, and to check<a name="line.802"></a>
+<span class="sourceLineNo">803</span>     * the right of a recipient to learn about a particular URL. In<a name="line.803"></a>
+<span class="sourceLineNo">804</span>     * the first case, the permission should be obtained<a name="line.804"></a>
+<span class="sourceLineNo">805</span>     * &lt;em&gt;after&lt;/em&gt; the object has been obtained. For example, in an<a name="line.805"></a>
+<span class="sourceLineNo">806</span>     * HTTP connection, this will represent the permission to connect<a name="line.806"></a>
+<span class="sourceLineNo">807</span>     * to the host from which the data was ultimately fetched. In the<a name="line.807"></a>
+<span class="sourceLineNo">808</span>     * second case, the permission should be obtained and tested<a name="line.808"></a>
+<span class="sourceLineNo">809</span>     * &lt;em&gt;before&lt;/em&gt; connecting.<a name="line.809"></a>
+<span class="sourceLineNo">810</span>     *<a name="line.810"></a>
+<span class="sourceLineNo">811</span>     * @return the permission object representing the permission<a name="line.811"></a>
+<span class="sourceLineNo">812</span>     * necessary to make the connection represented by this<a name="line.812"></a>
+<span class="sourceLineNo">813</span>     * URLConnection.<a name="line.813"></a>
+<span class="sourceLineNo">814</span>     *<a name="line.814"></a>
+<span class="sourceLineNo">815</span>     * @exception IOException if the computation of the permission<a name="line.815"></a>
+<span class="sourceLineNo">816</span>     * requires network or file I/O and an exception occurs while<a name="line.816"></a>
+<span class="sourceLineNo">817</span>     * computing it.<a name="line.817"></a>
+<span class="sourceLineNo">818</span>     */<a name="line.818"></a>
+<span class="sourceLineNo">819</span>    public Permission getPermission() throws IOException {<a name="line.819"></a>
+<span class="sourceLineNo">820</span>        return SecurityConstants.ALL_PERMISSION;<a name="line.820"></a>
+<span class="sourceLineNo">821</span>    }<a name="line.821"></a>
+<span class="sourceLineNo">822</span><a name="line.822"></a>
+<span class="sourceLineNo">823</span>    /**<a name="line.823"></a>
+<span class="sourceLineNo">824</span>     * Returns an input stream that reads from this open connection.<a name="line.824"></a>
+<span class="sourceLineNo">825</span>     *<a name="line.825"></a>
+<span class="sourceLineNo">826</span>     * A SocketTimeoutException can be thrown when reading from the<a name="line.826"></a>
+<span class="sourceLineNo">827</span>     * returned input stream if the read timeout expires before data<a name="line.827"></a>
+<span class="sourceLineNo">828</span>     * is available for read.<a name="line.828"></a>
+<span class="sourceLineNo">829</span>     *<a name="line.829"></a>
+<span class="sourceLineNo">830</span>     * @return     an input stream that reads from this open connection.<a name="line.830"></a>
+<span class="sourceLineNo">831</span>     * @exception  IOException              if an I/O error occurs while<a name="line.831"></a>
+<span class="sourceLineNo">832</span>     *               creating the input stream.<a name="line.832"></a>
+<span class="sourceLineNo">833</span>     * @exception  UnknownServiceException  if the protocol does not support<a name="line.833"></a>
+<span class="sourceLineNo">834</span>     *               input.<a name="line.834"></a>
+<span class="sourceLineNo">835</span>     * @see #setReadTimeout(int)<a name="line.835"></a>
+<span class="sourceLineNo">836</span>     * @see #getReadTimeout()<a name="line.836"></a>
+<span class="sourceLineNo">837</span>     */<a name="line.837"></a>
+<span class="sourceLineNo">838</span>    public InputStream getInputStream() throws IOException {<a name="line.838"></a>
+<span class="sourceLineNo">839</span>        throw new UnknownServiceException("protocol doesn't support input");<a name="line.839"></a>
+<span class="sourceLineNo">840</span>    }<a name="line.840"></a>
+<span class="sourceLineNo">841</span><a name="line.841"></a>
+<span class="sourceLineNo">842</span>    /**<a name="line.842"></a>
+<span class="sourceLineNo">843</span>     * Returns an output stream that writes to this connection.<a name="line.843"></a>
+<span class="sourceLineNo">844</span>     *<a name="line.844"></a>
+<span class="sourceLineNo">845</span>     * @return     an output stream that writes to this connection.<a name="line.845"></a>
+<span class="sourceLineNo">846</span>     * @exception  IOException              if an I/O error occurs while<a name="line.846"></a>
+<span class="sourceLineNo">847</span>     *               creating the output stream.<a name="line.847"></a>
+<span class="sourceLineNo">848</span>     * @exception  UnknownServiceException  if the protocol does not support<a name="line.848"></a>
+<span class="sourceLineNo">849</span>     *               output.<a name="line.849"></a>
+<span class="sourceLineNo">850</span>     */<a name="line.850"></a>
+<span class="sourceLineNo">851</span>    public OutputStream getOutputStream() throws IOException {<a name="line.851"></a>
+<span class="sourceLineNo">852</span>        throw new UnknownServiceException("protocol doesn't support output");<a name="line.852"></a>
+<span class="sourceLineNo">853</span>    }<a name="line.853"></a>
+<span class="sourceLineNo">854</span><a name="line.854"></a>
+<span class="sourceLineNo">855</span>    /**<a name="line.855"></a>
+<span class="sourceLineNo">856</span>     * Returns a &lt;code&gt;String&lt;/code&gt; representation of this URL connection.<a name="line.856"></a>
+<span class="sourceLineNo">857</span>     *<a name="line.857"></a>
+<span class="sourceLineNo">858</span>     * @return  a string representation of this &lt;code&gt;URLConnection&lt;/code&gt;.<a name="line.858"></a>
+<span class="sourceLineNo">859</span>     */<a name="line.859"></a>
+<span class="sourceLineNo">860</span>    public String toString() {<a name="line.860"></a>
+<span class="sourceLineNo">861</span>        return this.getClass().getName() + ":" + url;<a name="line.861"></a>
+<span class="sourceLineNo">862</span>    }<a name="line.862"></a>
+<span class="sourceLineNo">863</span><a name="line.863"></a>
+<span class="sourceLineNo">864</span>    /**<a name="line.864"></a>
+<span class="sourceLineNo">865</span>     * Sets the value of the &lt;code&gt;doInput&lt;/code&gt; field for this<a name="line.865"></a>
+<span class="sourceLineNo">866</span>     * &lt;code&gt;URLConnection&lt;/code&gt; to the specified value.<a name="line.866"></a>
+<span class="sourceLineNo">867</span>     * &lt;p&gt;<a name="line.867"></a>
+<span class="sourceLineNo">868</span>     * A URL connection can be used for input and/or output.  Set the DoInput<a name="line.868"></a>
+<span class="sourceLineNo">869</span>     * flag to true if you intend to use the URL connection for input,<a name="line.869"></a>
+<span class="sourceLineNo">870</span>     * false if not.  The default is true.<a name="line.870"></a>
+<span class="sourceLineNo">871</span>     *<a name="line.871"></a>
+<span class="sourceLineNo">872</span>     * @param   doinput   the new value.<a name="line.872"></a>
+<span class="sourceLineNo">873</span>     * @throws IllegalStateException if already connected<a name="line.873"></a>
+<span class="sourceLineNo">874</span>     * @see     java.net.URLConnection#doInput<a name="line.874"></a>
+<span class="sourceLineNo">875</span>     * @see #getDoInput()<a name="line.875"></a>
+<span class="sourceLineNo">876</span>     */<a name="line.876"></a>
+<span class="sourceLineNo">877</span>    public void setDoInput(boolean doinput) {<a name="line.877"></a>
+<span class="sourceLineNo">878</span>        if (connected)<a name="line.878"></a>
+<span class="sourceLineNo">879</span>            throw new IllegalStateException("Already connected");<a name="line.879"></a>
+<span class="sourceLineNo">880</span>        doInput = doinput;<a name="line.880"></a>
+<span class="sourceLineNo">881</span>    }<a name="line.881"></a>
+<span class="sourceLineNo">882</span><a name="line.882"></a>
+<span class="sourceLineNo">883</span>    /**<a name="line.883"></a>
+<span class="sourceLineNo">884</span>     * Returns the value of this &lt;code&gt;URLConnection&lt;/code&gt;'s<a name="line.884"></a>
+<span class="sourceLineNo">885</span>     * &lt;code&gt;doInput&lt;/code&gt; flag.<a name="line.885"></a>
+<span class="sourceLineNo">886</span>     *<a name="line.886"></a>
+<span class="sourceLineNo">887</span>     * @return  the value of this &lt;code&gt;URLConnection&lt;/code&gt;'s<a name="line.887"></a>
+<span class="sourceLineNo">888</span>     *          &lt;code&gt;doInput&lt;/code&gt; flag.<a name="line.888"></a>
+<span class="sourceLineNo">889</span>     * @see     #setDoInput(boolean)<a name="line.889"></a>
+<span class="sourceLineNo">890</span>     */<a name="line.890"></a>
+<span class="sourceLineNo">891</span>    public boolean getDoInput() {<a name="line.891"></a>
+<span class="sourceLineNo">892</span>        return doInput;<a name="line.892"></a>
+<span class="sourceLineNo">893</span>    }<a name="line.893"></a>
+<span class="sourceLineNo">894</span><a name="line.894"></a>
+<span class="sourceLineNo">895</span>    /**<a name="line.895"></a>
+<span class="sourceLineNo">896</span>     * Sets the value of the &lt;code&gt;doOutput&lt;/code&gt; field for this<a name="line.896"></a>
+<span class="sourceLineNo">897</span>     * &lt;code&gt;URLConnection&lt;/code&gt; to the specified value.<a name="line.897"></a>
+<span class="sourceLineNo">898</span>     * &lt;p&gt;<a name="line.898"></a>
+<span class="sourceLineNo">899</span>     * A URL connection can be used for input and/or output.  Set the DoOutput<a name="line.899"></a>
+<span class="sourceLineNo">900</span>     * flag to true if you intend to use the URL connection for output,<a name="line.900"></a>
+<span class="sourceLineNo">901</span>     * false if not.  The default is false.<a name="line.901"></a>
+<span class="sourceLineNo">902</span>     *<a name="line.902"></a>
+<span class="sourceLineNo">903</span>     * @param   dooutput   the new value.<a name="line.903"></a>
+<span class="sourceLineNo">904</span>     * @throws IllegalStateException if already connected<a name="line.904"></a>
+<span class="sourceLineNo">905</span>     * @see #getDoOutput()<a name="line.905"></a>
+<span class="sourceLineNo">906</span>     */<a name="line.906"></a>
+<span class="sourceLineNo">907</span>    public void setDoOutput(boolean dooutput) {<a name="line.907"></a>
+<span class="sourceLineNo">908</span>        if (connected)<a name="line.908"></a>
+<span class="sourceLineNo">909</span>            throw new IllegalStateException("Already connected");<a name="line.909"></a>
+<span class="sourceLineNo">910</span>        doOutput = dooutput;<a name="line.910"></a>
+<span class="sourceLineNo">911</span>    }<a name="line.911"></a>
+<span class="sourceLineNo">912</span><a name="line.912"></a>
+<span class="sourceLineNo">913</span>    /**<a name="line.913"></a>
+<span class="sourceLineNo">914</span>     * Returns the value of this &lt;code&gt;URLConnection&lt;/code&gt;'s<a name="line.914"></a>
+<span class="sourceLineNo">915</span>     * &lt;code&gt;doOutput&lt;/code&gt; flag.<a name="line.915"></a>
+<span class="sourceLineNo">916</span>     *<a name="line.916"></a>
+<span class="sourceLineNo">917</span>     * @return  the value of this &lt;code&gt;URLConnection&lt;/code&gt;'s<a name="line.917"></a>
+<span class="sourceLineNo">918</span>     *          &lt;code&gt;doOutput&lt;/code&gt; flag.<a name="line.918"></a>
+<span class="sourceLineNo">919</span>     * @see     #setDoOutput(boolean)<a name="line.919"></a>
+<span class="sourceLineNo">920</span>     */<a name="line.920"></a>
+<span class="sourceLineNo">921</span>    public boolean getDoOutput() {<a name="line.921"></a>
+<span class="sourceLineNo">922</span>        return doOutput;<a name="line.922"></a>
+<span class="sourceLineNo">923</span>    }<a name="line.923"></a>
+<span class="sourceLineNo">924</span><a name="line.924"></a>
+<span class="sourceLineNo">925</span>    /**<a name="line.925"></a>
+<span class="sourceLineNo">926</span>     * Set the value of the &lt;code&gt;allowUserInteraction&lt;/code&gt; field of<a name="line.926"></a>
+<span class="sourceLineNo">927</span>     * this &lt;code&gt;URLConnection&lt;/code&gt;.<a name="line.927"></a>
+<span class="sourceLineNo">928</span>     *<a name="line.928"></a>
+<span class="sourceLineNo">929</span>     * @param   allowuserinteraction   the new value.<a name="line.929"></a>
+<span class="sourceLineNo">930</span>     * @throws IllegalStateException if already connected<a name="line.930"></a>
+<span class="sourceLineNo">931</span>     * @see     #getAllowUserInteraction()<a name="line.931"></a>
+<span class="sourceLineNo">932</span>     */<a name="line.932"></a>
+<span class="sourceLineNo">933</span>    public void setAllowUserInteraction(boolean allowuserinteraction) {<a name="line.933"></a>
+<span class="sourceLineNo">934</span>        if (connected)<a name="line.934"></a>
+<span class="sourceLineNo">935</span>            throw new IllegalStateException("Already connected");<a name="line.935"></a>
+<span class="sourceLineNo">936</span>        allowUserInteraction = allowuserinteraction;<a name="line.936"></a>
+<span class="sourceLineNo">937</span>    }<a name="line.937"></a>
+<span class="sourceLineNo">938</span><a name="line.938"></a>
+<span class="sourceLineNo">939</span>    /**<a name="line.939"></a>
+<span class="sourceLineNo">940</span>     * Returns the value of the &lt;code&gt;allowUserInteraction&lt;/code&gt; field for<a name="line.940"></a>
+<span class="sourceLineNo">941</span>     * this object.<a name="line.941"></a>
+<span class="sourceLineNo">942</span>     *<a name="line.942"></a>
+<span class="sourceLineNo">943</span>     * @return  the value of the &lt;code&gt;allowUserInteraction&lt;/code&gt; field for<a name="line.943"></a>
+<span class="sourceLineNo">944</span>     *          this object.<a name="line.944"></a>
+<span class="sourceLineNo">945</span>     * @see     #setAllowUserInteraction(boolean)<a name="line.945"></a>
+<span class="sourceLineNo">946</span>     */<a name="line.946"></a>
+<span class="sourceLineNo">947</span>    public boolean getAllowUserInteraction() {<a name="line.947"></a>
+<span class="sourceLineNo">948</span>        return allowUserInteraction;<a name="line.948"></a>
+<span class="sourceLineNo">949</span>    }<a name="line.949"></a>
+<span class="sourceLineNo">950</span><a name="line.950"></a>
+<span class="sourceLineNo">951</span>    /**<a name="line.951"></a>
+<span class="sourceLineNo">952</span>     * Sets the default value of the<a name="line.952"></a>
+<span class="sourceLineNo">953</span>     * &lt;code&gt;allowUserInteraction&lt;/code&gt; field for all future<a name="line.953"></a>
+<span class="sourceLineNo">954</span>     * &lt;code&gt;URLConnection&lt;/code&gt; objects to the specified value.<a name="line.954"></a>
+<span class="sourceLineNo">955</span>     *<a name="line.955"></a>
+<span class="sourceLineNo">956</span>     * @param   defaultallowuserinteraction   the new value.<a name="line.956"></a>
+<span class="sourceLineNo">957</span>     * @see     #getDefaultAllowUserInteraction()<a name="line.957"></a>
+<span class="sourceLineNo">958</span>     */<a name="line.958"></a>
+<span class="sourceLineNo">959</span>    public static void setDefaultAllowUserInteraction(boolean defaultallowuserinteraction) {<a name="line.959"></a>
+<span class="sourceLineNo">960</span>        defaultAllowUserInteraction = defaultallowuserinteraction;<a name="line.960"></a>
+<span class="sourceLineNo">961</span>    }<a name="line.961"></a>
+<span class="sourceLineNo">962</span><a name="line.962"></a>
+<span class="sourceLineNo">963</span>    /**<a name="line.963"></a>
+<span class="sourceLineNo">964</span>     * Returns the default value of the &lt;code&gt;allowUserInteraction&lt;/code&gt;<a name="line.964"></a>
+<span class="sourceLineNo">965</span>     * field.<a name="line.965"></a>
+<span class="sourceLineNo">966</span>     * &lt;p&gt;<a name="line.966"></a>
+<span class="sourceLineNo">967</span>     * Ths default is "sticky", being a part of the static state of all<a name="line.967"></a>
+<span class="sourceLineNo">968</span>     * URLConnections.  This flag applies to the next, and all following<a name="line.968"></a>
+<span class="sourceLineNo">969</span>     * URLConnections that are created.<a name="line.969"></a>
+<span class="sourceLineNo">970</span>     *<a name="line.970"></a>
+<span class="sourceLineNo">971</span>     * @return  the default value of the &lt;code&gt;allowUserInteraction&lt;/code&gt;<a name="line.971"></a>
+<span class="sourceLineNo">972</span>     *          field.<a name="line.972"></a>
+<span class="sourceLineNo">973</span>     * @see     #setDefaultAllowUserInteraction(boolean)<a name="line.973"></a>
+<span class="sourceLineNo">974</span>     */<a name="line.974"></a>
+<span class="sourceLineNo">975</span>    public static boolean getDefaultAllowUserInteraction() {<a name="line.975"></a>
+<span class="sourceLineNo">976</span>        return defaultAllowUserInteraction;<a name="line.976"></a>
+<span class="sourceLineNo">977</span>    }<a name="line.977"></a>
+<span class="sourceLineNo">978</span><a name="line.978"></a>
+<span class="sourceLineNo">979</span>    /**<a name="line.979"></a>
+<span class="sourceLineNo">980</span>     * Sets the value of the &lt;code&gt;useCaches&lt;/code&gt; field of this<a name="line.980"></a>
+<span class="sourceLineNo">981</span>     * &lt;code&gt;URLConnection&lt;/code&gt; to the specified value.<a name="line.981"></a>
+<span class="sourceLineNo">982</span>     * &lt;p&gt;<a name="line.982"></a>
+<span class="sourceLineNo">983</span>     * Some protocols do caching of documents.  Occasionally, it is important<a name="line.983"></a>
+<span class="sourceLineNo">984</span>     * to be able to "tunnel through" and ignore the caches (e.g., the<a name="line.984"></a>
+<span class="sourceLineNo">985</span>     * "reload" button in a browser).  If the UseCaches flag on a connection<a name="line.985"></a>
+<span class="sourceLineNo">986</span>     * is true, the connection is allowed to use whatever caches it can.<a name="line.986"></a>
+<span class="sourceLineNo">987</span>     *  If false, caches are to be ignored.<a name="line.987"></a>
+<span class="sourceLineNo">988</span>     *  The default value comes from DefaultUseCaches, which defaults to<a name="line.988"></a>
+<span class="sourceLineNo">989</span>     * true.<a name="line.989"></a>
+<span class="sourceLineNo">990</span>     *<a name="line.990"></a>
+<span class="sourceLineNo">991</span>     * @param usecaches a &lt;code&gt;boolean&lt;/code&gt; indicating whether<a name="line.991"></a>
+<span class="sourceLineNo">992</span>     * or not to allow caching<a name="line.992"></a>
+<span class="sourceLineNo">993</span>     * @throws IllegalStateException if already connected<a name="line.993"></a>
+<span class="sourceLineNo">994</span>     * @see #getUseCaches()<a name="line.994"></a>
+<span class="sourceLineNo">995</span>     */<a name="line.995"></a>
+<span class="sourceLineNo">996</span>    public void setUseCaches(boolean usecaches) {<a name="line.996"></a>
+<span class="sourceLineNo">997</span>        if (connected)<a name="line.997"></a>
+<span class="sourceLineNo">998</span>            throw new IllegalStateException("Already connected");<a name="line.998"></a>
+<span class="sourceLineNo">999</span>        useCaches = usecaches;<a name="line.999"></a>
+<span class="sourceLineNo">1000</span>    }<a name="line.1000"></a>
+<span class="sourceLineNo">1001</span><a name="line.1001"></a>
+<span class="sourceLineNo">1002</span>    /**<a name="line.1002"></a>
+<span class="sourceLineNo">1003</span>     * Returns the value of this &lt;code&gt;URLConnection&lt;/code&gt;'s<a name="line.1003"></a>
+<span class="sourceLineNo">1004</span>     * &lt;code&gt;useCaches&lt;/code&gt; field.<a name="line.1004"></a>
+<span class="sourceLineNo">1005</span>     *<a name="line.1005"></a>
+<span class="sourceLineNo">1006</span>     * @return  the value of this &lt;code&gt;URLConnection&lt;/code&gt;'s<a name="line.1006"></a>
+<span class="sourceLineNo">1007</span>     *          &lt;code&gt;useCaches&lt;/code&gt; field.<a name="line.1007"></a>
+<span class="sourceLineNo">1008</span>     * @see #setUseCaches(boolean)<a name="line.1008"></a>
+<span class="sourceLineNo">1009</span>     */<a name="line.1009"></a>
+<span class="sourceLineNo">1010</span>    public boolean getUseCaches() {<a name="line.1010"></a>
+<span class="sourceLineNo">1011</span>        return useCaches;<a name="line.1011"></a>
+<span class="sourceLineNo">1012</span>    }<a name="line.1012"></a>
+<span class="sourceLineNo">1013</span><a name="line.1013"></a>
+<span class="sourceLineNo">1014</span>    /**<a name="line.1014"></a>
+<span class="sourceLineNo">1015</span>     * Sets the value of the &lt;code&gt;ifModifiedSince&lt;/code&gt; field of<a name="line.1015"></a>
+<span class="sourceLineNo">1016</span>     * this &lt;code&gt;URLConnection&lt;/code&gt; to the specified value.<a name="line.1016"></a>
+<span class="sourceLineNo">1017</span>     *<a name="line.1017"></a>
+<span class="sourceLineNo">1018</span>     * @param   ifmodifiedsince   the new value.<a name="line.1018"></a>
+<span class="sourceLineNo">1019</span>     * @throws IllegalStateException if already connected<a name="line.1019"></a>
+<span class="sourceLineNo">1020</span>     * @see     #getIfModifiedSince()<a name="line.1020"></a>
+<span class="sourceLineNo">1021</span>     */<a name="line.1021"></a>
+<span class="sourceLineNo">1022</span>    public void setIfModifiedSince(long ifmodifiedsince) {<a name="line.1022"></a>
+<span class="sourceLineNo">1023</span>        if (connected)<a name="line.1023"></a>
+<span class="sourceLineNo">1024</span>            throw new IllegalStateException("Already connected");<a name="line.1024"></a>
+<span class="sourceLineNo">1025</span>        ifModifiedSince = ifmodifiedsince;<a name="line.1025"></a>
+<span class="sourceLineNo">1026</span>    }<a name="line.1026"></a>
+<span class="sourceLineNo">1027</span><a name="line.1027"></a>
+<span class="sourceLineNo">1028</span>    /**<a name="line.1028"></a>
+<span class="sourceLineNo">1029</span>     * Returns the value of this object's &lt;code&gt;ifModifiedSince&lt;/code&gt; field.<a name="line.1029"></a>
+<span class="sourceLineNo">1030</span>     *<a name="line.1030"></a>
+<span class="sourceLineNo">1031</span>     * @return  the value of this object's &lt;code&gt;ifModifiedSince&lt;/code&gt; field.<a name="line.1031"></a>
+<span class="sourceLineNo">1032</span>     * @see #setIfModifiedSince(long)<a name="line.1032"></a>
+<span class="sourceLineNo">1033</span>     */<a name="line.1033"></a>
+<span class="sourceLineNo">1034</span>    public long getIfModifiedSince() {<a name="line.1034"></a>
+<span class="sourceLineNo">1035</span>        return ifModifiedSince;<a name="line.1035"></a>
+<span class="sourceLineNo">1036</span>    }<a name="line.1036"></a>
+<span class="sourceLineNo">1037</span><a name="line.1037"></a>
+<span class="sourceLineNo">1038</span>   /**<a name="line.1038"></a>
+<span class="sourceLineNo">1039</span>     * Returns the default value of a &lt;code&gt;URLConnection&lt;/code&gt;'s<a name="line.1039"></a>
+<span class="sourceLineNo">1040</span>     * &lt;code&gt;useCaches&lt;/code&gt; flag.<a name="line.1040"></a>
+<span class="sourceLineNo">1041</span>     * &lt;p&gt;<a name="line.1041"></a>
+<span class="sourceLineNo">1042</span>     * Ths default is "sticky", being a part of the static state of all<a name="line.1042"></a>
+<span class="sourceLineNo">1043</span>     * URLConnections.  This flag applies to the next, and all following<a name="line.1043"></a>
+<span class="sourceLineNo">1044</span>     * URLConnections that are created.<a name="line.1044"></a>
+<span class="sourceLineNo">1045</span>     *<a name="line.1045"></a>
+<span class="sourceLineNo">1046</span>     * @return  the default value of a &lt;code&gt;URLConnection&lt;/code&gt;'s<a name="line.1046"></a>
+<span class="sourceLineNo">1047</span>     *          &lt;code&gt;useCaches&lt;/code&gt; flag.<a name="line.1047"></a>
+<span class="sourceLineNo">1048</span>     * @see     #setDefaultUseCaches(boolean)<a name="line.1048"></a>
+<span class="sourceLineNo">1049</span>     */<a name="line.1049"></a>
+<span class="sourceLineNo">1050</span>    public boolean getDefaultUseCaches() {<a name="line.1050"></a>
+<span class="sourceLineNo">1051</span>        return defaultUseCaches;<a name="line.1051"></a>
+<span class="sourceLineNo">1052</span>    }<a name="line.1052"></a>
+<span class="sourceLineNo">1053</span><a name="line.1053"></a>
+<span class="sourceLineNo">1054</span>   /**<a name="line.1054"></a>
+<span class="sourceLineNo">1055</span>     * Sets the default value of the &lt;code&gt;useCaches&lt;/code&gt; field to the<a name="line.1055"></a>
+<span class="sourceLineNo">1056</span>     * specified value.<a name="line.1056"></a>
+<span class="sourceLineNo">1057</span>     *<a name="line.1057"></a>
+<span class="sourceLineNo">1058</span>     * @param   defaultusecaches   the new value.<a name="line.1058"></a>
+<span class="sourceLineNo">1059</span>     * @see     #getDefaultUseCaches()<a name="line.1059"></a>
+<span class="sourceLineNo">1060</span>     */<a name="line.1060"></a>
+<span class="sourceLineNo">1061</span>    public void setDefaultUseCaches(boolean defaultusecaches) {<a name="line.1061"></a>
+<span class="sourceLineNo">1062</span>        defaultUseCaches = defaultusecaches;<a name="line.1062"></a>
+<span class="sourceLineNo">1063</span>    }<a name="line.1063"></a>
+<span class="sourceLineNo">1064</span><a name="line.1064"></a>
+<span class="sourceLineNo">1065</span>    /**<a name="line.1065"></a>
+<span class="sourceLineNo">1066</span>     * Sets the general request property. If a property with the key already<a name="line.1066"></a>
+<span class="sourceLineNo">1067</span>     * exists, overwrite its value with the new value.<a name="line.1067"></a>
+<span class="sourceLineNo">1068</span>     *<a name="line.1068"></a>
+<span class="sourceLineNo">1069</span>     * &lt;p&gt; NOTE: HTTP requires all request properties which can<a name="line.1069"></a>
+<span class="sourceLineNo">1070</span>     * legally have multiple instances with the same key<a name="line.1070"></a>
+<span class="sourceLineNo">1071</span>     * to use a comma-seperated list syntax which enables multiple<a name="line.1071"></a>
+<span class="sourceLineNo">1072</span>     * properties to be appended into a single property.<a name="line.1072"></a>
+<span class="sourceLineNo">1073</span>     *<a name="line.1073"></a>
+<span class="sourceLineNo">1074</span>     * @param   key     the keyword by which the request is known<a name="line.1074"></a>
+<span class="sourceLineNo">1075</span>     *                  (e.g., "&lt;code&gt;Accept&lt;/code&gt;").<a name="line.1075"></a>
+<span class="sourceLineNo">1076</span>     * @param   value   the value associated with it.<a name="line.1076"></a>
+<span class="sourceLineNo">1077</span>     * @throws IllegalStateException if already connected<a name="line.1077"></a>
+<span class="sourceLineNo">1078</span>     * @throws NullPointerException if key is &lt;CODE&gt;null&lt;/CODE&gt;<a name="line.1078"></a>
+<span class="sourceLineNo">1079</span>     * @see #getRequestProperty(java.lang.String)<a name="line.1079"></a>
+<span class="sourceLineNo">1080</span>     */<a name="line.1080"></a>
+<span class="sourceLineNo">1081</span>    public void setRequestProperty(String key, String value) {<a name="line.1081"></a>
+<span class="sourceLineNo">1082</span>        if (connected)<a name="line.1082"></a>
+<span class="sourceLineNo">1083</span>            throw new IllegalStateException("Already connected");<a name="line.1083"></a>
+<span class="sourceLineNo">1084</span>        if (key == null)<a name="line.1084"></a>
+<span class="sourceLineNo">1085</span>            throw new NullPointerException ("key is null");<a name="line.1085"></a>
+<span class="sourceLineNo">1086</span><a name="line.1086"></a>
+<span class="sourceLineNo">1087</span>        if (requests == null)<a name="line.1087"></a>
+<span class="sourceLineNo">1088</span>            requests = new MessageHeader();<a name="line.1088"></a>
+<span class="sourceLineNo">1089</span><a name="line.1089"></a>
+<span class="sourceLineNo">1090</span>        requests.set(key, value);<a name="line.1090"></a>
+<span class="sourceLineNo">1091</span>    }<a name="line.1091"></a>
+<span class="sourceLineNo">1092</span><a name="line.1092"></a>
+<span class="sourceLineNo">1093</span>    /**<a name="line.1093"></a>
+<span class="sourceLineNo">1094</span>     * Adds a general request property specified by a<a name="line.1094"></a>
+<span class="sourceLineNo">1095</span>     * key-value pair.  This method will not overwrite<a name="line.1095"></a>
+<span class="sourceLineNo">1096</span>     * existing values associated with the same key.<a name="line.1096"></a>
+<span class="sourceLineNo">1097</span>     *<a name="line.1097"></a>
+<span class="sourceLineNo">1098</span>     * @param   key     the keyword by which the request is known<a name="line.1098"></a>
+<span class="sourceLineNo">1099</span>     *                  (e.g., "&lt;code&gt;Accept&lt;/code&gt;").<a name="line.1099"></a>
+<span class="sourceLineNo">1100</span>     * @param   value  the value associated with it.<a name="line.1100"></a>
+<span class="sourceLineNo">1101</span>     * @throws IllegalStateException if already connected<a name="line.1101"></a>
+<span class="sourceLineNo">1102</span>     * @throws NullPointerException if key is null<a name="line.1102"></a>
+<span class="sourceLineNo">1103</span>     * @see #getRequestProperties()<a name="line.1103"></a>
+<span class="sourceLineNo">1104</span>     * @since 1.4<a name="line.1104"></a>
+<span class="sourceLineNo">1105</span>     */<a name="line.1105"></a>
+<span class="sourceLineNo">1106</span>    public void addRequestProperty(String key, String value) {<a name="line.1106"></a>
+<span class="sourceLineNo">1107</span>        if (connected)<a name="line.1107"></a>
+<span class="sourceLineNo">1108</span>            throw new IllegalStateException("Already connected");<a name="line.1108"></a>
+<span class="sourceLineNo">1109</span>        if (key == null)<a name="line.1109"></a>
+<span class="sourceLineNo">1110</span>            throw new NullPointerException ("key is null");<a name="line.1110"></a>
+<span class="sourceLineNo">1111</span><a name="line.1111"></a>
+<span class="sourceLineNo">1112</span>        if (requests == null)<a name="line.1112"></a>
+<span class="sourceLineNo">1113</span>            requests = new MessageHeader();<a name="line.1113"></a>
+<span class="sourceLineNo">1114</span><a name="line.1114"></a>
+<span class="sourceLineNo">1115</span>        requests.add(key, value);<a name="line.1115"></a>
+<span class="sourceLineNo">1116</span>    }<a name="line.1116"></a>
+<span class="sourceLineNo">1117</span><a name="line.1117"></a>
+<span class="sourceLineNo">1118</span><a name="line.1118"></a>
+<span class="sourceLineNo">1119</span>    /**<a name="line.1119"></a>
+<span class="sourceLineNo">1120</span>     * Returns the value of the named general request property for this<a name="line.1120"></a>
+<span class="sourceLineNo">1121</span>     * connection.<a name="line.1121"></a>
+<span class="sourceLineNo">1122</span>     *<a name="line.1122"></a>
+<span class="sourceLineNo">1123</span>     * @param key the keyword by which the request is known (e.g., "Accept").<a name="line.1123"></a>
+<span class="sourceLineNo">1124</span>     * @return  the value of the named general request property for this<a name="line.1124"></a>
+<span class="sourceLineNo">1125</span>     *           connection. If key is null, then null is returned.<a name="line.1125"></a>
+<span class="sourceLineNo">1126</span>     * @throws IllegalStateException if already connected<a name="line.1126"></a>
+<span class="sourceLineNo">1127</span>     * @see #setRequestProperty(java.lang.String, java.lang.String)<a name="line.1127"></a>
+<span class="sourceLineNo">1128</span>     */<a name="line.1128"></a>
+<span class="sourceLineNo">1129</span>    public String getRequestProperty(String key) {<a name="line.1129"></a>
+<span class="sourceLineNo">1130</span>        if (connected)<a name="line.1130"></a>
+<span class="sourceLineNo">1131</span>            throw new IllegalStateException("Already connected");<a name="line.1131"></a>
+<span class="sourceLineNo">1132</span><a name="line.1132"></a>
+<span class="sourceLineNo">1133</span>        if (requests == null)<a name="line.1133"></a>
+<span class="sourceLineNo">1134</span>            return null;<a name="line.1134"></a>
+<span class="sourceLineNo">1135</span><a name="line.1135"></a>
+<span class="sourceLineNo">1136</span>        return requests.findValue(key);<a name="line.1136"></a>
+<span class="sourceLineNo">1137</span>    }<a name="line.1137"></a>
+<span class="sourceLineNo">1138</span><a name="line.1138"></a>
+<span class="sourceLineNo">1139</span>    /**<a name="line.1139"></a>
+<span class="sourceLineNo">1140</span>     * Returns an unmodifiable Map of general request<a name="line.1140"></a>
+<span class="sourceLineNo">1141</span>     * properties for this connection. The Map keys<a name="line.1141"></a>
+<span class="sourceLineNo">1142</span>     * are Strings that represent the request-header<a name="line.1142"></a>
+<span class="sourceLineNo">1143</span>     * field names. Each Map value is a unmodifiable List<a name="line.1143"></a>
+<span class="sourceLineNo">1144</span>     * of Strings that represents the corresponding<a name="line.1144"></a>
+<span class="sourceLineNo">1145</span>     * field values.<a name="line.1145"></a>
+<span class="sourceLineNo">1146</span>     *<a name="line.1146"></a>
+<span class="sourceLineNo">1147</span>     * @return  a Map of the general request properties for this connection.<a name="line.1147"></a>
+<span class="sourceLineNo">1148</span>     * @throws IllegalStateException if already connected<a name="line.1148"></a>
+<span class="sourceLineNo">1149</span>     * @since 1.4<a name="line.1149"></a>
+<span class="sourceLineNo">1150</span>     */<a name="line.1150"></a>
+<span class="sourceLineNo">1151</span>    public Map&lt;String,List&lt;String&gt;&gt; getRequestProperties() {<a name="line.1151"></a>
+<span class="sourceLineNo">1152</span>        if (connected)<a name="line.1152"></a>
+<span class="sourceLineNo">1153</span>            throw new IllegalStateException("Already connected");<a name="line.1153"></a>
+<span class="sourceLineNo">1154</span><a name="line.1154"></a>
+<span class="sourceLineNo">1155</span>        if (requests == null)<a name="line.1155"></a>
+<span class="sourceLineNo">1156</span>            return Collections.EMPTY_MAP;<a name="line.1156"></a>
+<span class="sourceLineNo">1157</span><a name="line.1157"></a>
+<span class="sourceLineNo">1158</span>        return requests.getHeaders(null);<a name="line.1158"></a>
+<span class="sourceLineNo">1159</span>    }<a name="line.1159"></a>
+<span class="sourceLineNo">1160</span><a name="line.1160"></a>
+<span class="sourceLineNo">1161</span>    /**<a name="line.1161"></a>
+<span class="sourceLineNo">1162</span>     * Sets the default value of a general request property. When a<a name="line.1162"></a>
+<span class="sourceLineNo">1163</span>     * &lt;code&gt;URLConnection&lt;/code&gt; is created, it is initialized with<a name="line.1163"></a>
+<span class="sourceLineNo">1164</span>     * these properties.<a name="line.1164"></a>
+<span class="sourceLineNo">1165</span>     *<a name="line.1165"></a>
+<span class="sourceLineNo">1166</span>     * @param   key     the keyword by which the request is known<a name="line.1166"></a>
+<span class="sourceLineNo">1167</span>     *                  (e.g., "&lt;code&gt;Accept&lt;/code&gt;").<a name="line.1167"></a>
+<span class="sourceLineNo">1168</span>     * @param   value   the value associated with the key.<a name="line.1168"></a>
+<span class="sourceLineNo">1169</span>     *<a name="line.1169"></a>
+<span class="sourceLineNo">1170</span>     * @see java.net.URLConnection#setRequestProperty(java.lang.String,java.lang.String)<a name="line.1170"></a>
+<span class="sourceLineNo">1171</span>     *<a name="line.1171"></a>
+<span class="sourceLineNo">1172</span>     * @deprecated The instance specific setRequestProperty method<a name="line.1172"></a>
+<span class="sourceLineNo">1173</span>     * should be used after an appropriate instance of URLConnection<a name="line.1173"></a>
+<span class="sourceLineNo">1174</span>     * is obtained. Invoking this method will have no effect.<a name="line.1174"></a>
+<span class="sourceLineNo">1175</span>     *<a name="line.1175"></a>
+<span class="sourceLineNo">1176</span>     * @see #getDefaultRequestProperty(java.lang.String)<a name="line.1176"></a>
+<span class="sourceLineNo">1177</span>     */<a name="line.1177"></a>
+<span class="sourceLineNo">1178</span>    @Deprecated<a name="line.1178"></a>
+<span class="sourceLineNo">1179</span>    public static void setDefaultRequestProperty(String key, String value) {<a name="line.1179"></a>
+<span class="sourceLineNo">1180</span>    }<a name="line.1180"></a>
+<span class="sourceLineNo">1181</span><a name="line.1181"></a>
+<span class="sourceLineNo">1182</span>    /**<a name="line.1182"></a>
+<span class="sourceLineNo">1183</span>     * Returns the value of the default request property. Default request<a name="line.1183"></a>
+<span class="sourceLineNo">1184</span>     * properties are set for every connection.<a name="line.1184"></a>
+<span class="sourceLineNo">1185</span>     *<a name="line.1185"></a>
+<span class="sourceLineNo">1186</span>     * @param key the keyword by which the request is known (e.g., "Accept").<a name="line.1186"></a>
+<span class="sourceLineNo">1187</span>     * @return  the value of the default request property<a name="line.1187"></a>
+<span class="sourceLineNo">1188</span>     * for the specified key.<a name="line.1188"></a>
+<span class="sourceLineNo">1189</span>     *<a name="line.1189"></a>
+<span class="sourceLineNo">1190</span>     * @see java.net.URLConnection#getRequestProperty(java.lang.String)<a name="line.1190"></a>
+<span class="sourceLineNo">1191</span>     *<a name="line.1191"></a>
+<span class="sourceLineNo">1192</span>     * @deprecated The instance specific getRequestProperty method<a name="line.1192"></a>
+<span class="sourceLineNo">1193</span>     * should be used after an appropriate instance of URLConnection<a name="line.1193"></a>
+<span class="sourceLineNo">1194</span>     * is obtained.<a name="line.1194"></a>
+<span class="sourceLineNo">1195</span>     *<a name="line.1195"></a>
+<span class="sourceLineNo">1196</span>     * @see #setDefaultRequestProperty(java.lang.String, java.lang.String)<a name="line.1196"></a>
+<span class="sourceLineNo">1197</span>     */<a name="line.1197"></a>
+<span class="sourceLineNo">1198</span>    @Deprecated<a name="line.1198"></a>
+<span class="sourceLineNo">1199</span>    public static String getDefaultRequestProperty(String key) {<a name="line.1199"></a>
+<span class="sourceLineNo">1200</span>        return null;<a name="line.1200"></a>
+<span class="sourceLineNo">1201</span>    }<a name="line.1201"></a>
+<span class="sourceLineNo">1202</span><a name="line.1202"></a>
+<span class="sourceLineNo">1203</span>    /**<a name="line.1203"></a>
+<span class="sourceLineNo">1204</span>     * The ContentHandler factory.<a name="line.1204"></a>
+<span class="sourceLineNo">1205</span>     */<a name="line.1205"></a>
+<span class="sourceLineNo">1206</span>    static ContentHandlerFactory factory;<a name="line.1206"></a>
+<span class="sourceLineNo">1207</span><a name="line.1207"></a>
+<span class="sourceLineNo">1208</span>    /**<a name="line.1208"></a>
+<span class="sourceLineNo">1209</span>     * Sets the &lt;code&gt;ContentHandlerFactory&lt;/code&gt; of an<a name="line.1209"></a>
+<span class="sourceLineNo">1210</span>     * application. It can be called at most once by an application.<a name="line.1210"></a>
+<span class="sourceLineNo">1211</span>     * &lt;p&gt;<a name="line.1211"></a>
+<span class="sourceLineNo">1212</span>     * The &lt;code&gt;ContentHandlerFactory&lt;/code&gt; instance is used to<a name="line.1212"></a>
+<span class="sourceLineNo">1213</span>     * construct a content handler from a content type<a name="line.1213"></a>
+<span class="sourceLineNo">1214</span>     * &lt;p&gt;<a name="line.1214"></a>
+<span class="sourceLineNo">1215</span>     * If there is a security manager, this method first calls<a name="line.1215"></a>
+<span class="sourceLineNo">1216</span>     * the security manager's &lt;code&gt;checkSetFactory&lt;/code&gt; method<a name="line.1216"></a>
+<span class="sourceLineNo">1217</span>     * to ensure the operation is allowed.<a name="line.1217"></a>
+<span class="sourceLineNo">1218</span>     * This could result in a SecurityException.<a name="line.1218"></a>
+<span class="sourceLineNo">1219</span>     *<a name="line.1219"></a>
+<span class="sourceLineNo">1220</span>     * @param      fac   the desired factory.<a name="line.1220"></a>
+<span class="sourceLineNo">1221</span>     * @exception  Error  if the factory has already been defined.<a name="line.1221"></a>
+<span class="sourceLineNo">1222</span>     * @exception  SecurityException  if a security manager exists and its<a name="line.1222"></a>
+<span class="sourceLineNo">1223</span>     *             &lt;code&gt;checkSetFactory&lt;/code&gt; method doesn't allow the operation.<a name="line.1223"></a>
+<span class="sourceLineNo">1224</span>     * @see        java.net.ContentHandlerFactory<a name="line.1224"></a>
+<span class="sourceLineNo">1225</span>     * @see        java.net.URLConnection#getContent()<a name="line.1225"></a>
+<span class="sourceLineNo">1226</span>     * @see        SecurityManager#checkSetFactory<a name="line.1226"></a>
+<span class="sourceLineNo">1227</span>     */<a name="line.1227"></a>
+<span class="sourceLineNo">1228</span>    public static synchronized void setContentHandlerFactory(ContentHandlerFactory fac) {<a name="line.1228"></a>
+<span class="sourceLineNo">1229</span>        if (factory != null) {<a name="line.1229"></a>
+<span class="sourceLineNo">1230</span>            throw new Error("factory already defined");<a name="line.1230"></a>
+<span class="sourceLineNo">1231</span>        }<a name="line.1231"></a>
+<span class="sourceLineNo">1232</span>        SecurityManager security = System.getSecurityManager();<a name="line.1232"></a>
+<span class="sourceLineNo">1233</span>        if (security != null) {<a name="line.1233"></a>
+<span class="sourceLineNo">1234</span>            security.checkSetFactory();<a name="line.1234"></a>
+<span class="sourceLineNo">1235</span>        }<a name="line.1235"></a>
+<span class="sourceLineNo">1236</span>        factory = fac;<a name="line.1236"></a>
+<span class="sourceLineNo">1237</span>    }<a name="line.1237"></a>
+<span class="sourceLineNo">1238</span><a name="line.1238"></a>
+<span class="sourceLineNo">1239</span>    private static Hashtable handlers = new Hashtable();<a name="line.1239"></a>
+<span class="sourceLineNo">1240</span><a name="line.1240"></a>
+<span class="sourceLineNo">1241</span>    /**<a name="line.1241"></a>
+<span class="sourceLineNo">1242</span>     * Gets the Content Handler appropriate for this connection.<a name="line.1242"></a>
+<span class="sourceLineNo">1243</span>     * @param connection the connection to use.<a name="line.1243"></a>
+<span class="sourceLineNo">1244</span>     */<a name="line.1244"></a>
+<span class="sourceLineNo">1245</span>    synchronized ContentHandler getContentHandler()<a name="line.1245"></a>
+<span class="sourceLineNo">1246</span>    throws UnknownServiceException<a name="line.1246"></a>
+<span class="sourceLineNo">1247</span>    {<a name="line.1247"></a>
+<span class="sourceLineNo">1248</span>        String contentType = stripOffParameters(getContentType());<a name="line.1248"></a>
+<span class="sourceLineNo">1249</span>        ContentHandler handler = null;<a name="line.1249"></a>
+<span class="sourceLineNo">1250</span>        if (contentType == null)<a name="line.1250"></a>
+<span class="sourceLineNo">1251</span>            throw new UnknownServiceException("no content-type");<a name="line.1251"></a>
+<span class="sourceLineNo">1252</span>        try {<a name="line.1252"></a>
+<span class="sourceLineNo">1253</span>            handler = (ContentHandler) handlers.get(contentType);<a name="line.1253"></a>
+<span class="sourceLineNo">1254</span>            if (handler != null)<a name="line.1254"></a>
+<span class="sourceLineNo">1255</span>                return handler;<a name="line.1255"></a>
+<span class="sourceLineNo">1256</span>        } catch(Exception e) {<a name="line.1256"></a>
+<span class="sourceLineNo">1257</span>        }<a name="line.1257"></a>
+<span class="sourceLineNo">1258</span><a name="line.1258"></a>
+<span class="sourceLineNo">1259</span>        if (factory != null)<a name="line.1259"></a>
+<span class="sourceLineNo">1260</span>            handler = factory.createContentHandler(contentType);<a name="line.1260"></a>
+<span class="sourceLineNo">1261</span>        if (handler == null) {<a name="line.1261"></a>
+<span class="sourceLineNo">1262</span>            try {<a name="line.1262"></a>
+<span class="sourceLineNo">1263</span>                handler = lookupContentHandlerClassFor(contentType);<a name="line.1263"></a>
+<span class="sourceLineNo">1264</span>            } catch(Exception e) {<a name="line.1264"></a>
+<span class="sourceLineNo">1265</span>                e.printStackTrace();<a name="line.1265"></a>
+<span class="sourceLineNo">1266</span>                handler = UnknownContentHandler.INSTANCE;<a name="line.1266"></a>
+<span class="sourceLineNo">1267</span>            }<a name="line.1267"></a>
+<span class="sourceLineNo">1268</span>            handlers.put(contentType, handler);<a name="line.1268"></a>
+<span class="sourceLineNo">1269</span>        }<a name="line.1269"></a>
+<span class="sourceLineNo">1270</span>        return handler;<a name="line.1270"></a>
+<span class="sourceLineNo">1271</span>    }<a name="line.1271"></a>
+<span class="sourceLineNo">1272</span><a name="line.1272"></a>
+<span class="sourceLineNo">1273</span>    /*<a name="line.1273"></a>
+<span class="sourceLineNo">1274</span>     * Media types are in the format: type/subtype*(; parameter).<a name="line.1274"></a>
+<span class="sourceLineNo">1275</span>     * For looking up the content handler, we should ignore those<a name="line.1275"></a>
+<span class="sourceLineNo">1276</span>     * parameters.<a name="line.1276"></a>
+<span class="sourceLineNo">1277</span>     */<a name="line.1277"></a>
+<span class="sourceLineNo">1278</span>    private String stripOffParameters(String contentType)<a name="line.1278"></a>
+<span class="sourceLineNo">1279</span>    {<a name="line.1279"></a>
+<span class="sourceLineNo">1280</span>        if (contentType == null)<a name="line.1280"></a>
+<span class="sourceLineNo">1281</span>            return null;<a name="line.1281"></a>
+<span class="sourceLineNo">1282</span>        int index = contentType.indexOf(';');<a name="line.1282"></a>
+<span class="sourceLineNo">1283</span><a name="line.1283"></a>
+<span class="sourceLineNo">1284</span>        if (index &gt; 0)<a name="line.1284"></a>
+<span class="sourceLineNo">1285</span>            return contentType.substring(0, index);<a name="line.1285"></a>
+<span class="sourceLineNo">1286</span>        else<a name="line.1286"></a>
+<span class="sourceLineNo">1287</span>            return contentType;<a name="line.1287"></a>
+<span class="sourceLineNo">1288</span>    }<a name="line.1288"></a>
+<span class="sourceLineNo">1289</span><a name="line.1289"></a>
+<span class="sourceLineNo">1290</span>    private static final String contentClassPrefix = "sun.net.www.content";<a name="line.1290"></a>
+<span class="sourceLineNo">1291</span>    private static final String contentPathProp = "java.content.handler.pkgs";<a name="line.1291"></a>
+<span class="sourceLineNo">1292</span><a name="line.1292"></a>
+<span class="sourceLineNo">1293</span>    /**<a name="line.1293"></a>
+<span class="sourceLineNo">1294</span>     * Looks for a content handler in a user-defineable set of places.<a name="line.1294"></a>
+<span class="sourceLineNo">1295</span>     * By default it looks in sun.net.www.content, but users can define a<a name="line.1295"></a>
+<span class="sourceLineNo">1296</span>     * vertical-bar delimited set of class prefixes to search through in<a name="line.1296"></a>
+<span class="sourceLineNo">1297</span>     * addition by defining the java.content.handler.pkgs property.<a name="line.1297"></a>
+<span class="sourceLineNo">1298</span>     * The class name must be of the form:<a name="line.1298"></a>
+<span class="sourceLineNo">1299</span>     * &lt;pre&gt;<a name="line.1299"></a>
+<span class="sourceLineNo">1300</span>     *     {package-prefix}.{major}.{minor}<a name="line.1300"></a>
+<span class="sourceLineNo">1301</span>     * e.g.<a name="line.1301"></a>
+<span class="sourceLineNo">1302</span>     *     YoyoDyne.experimental.text.plain<a name="line.1302"></a>
+<span class="sourceLineNo">1303</span>     * &lt;/pre&gt;<a name="line.1303"></a>
+<span class="sourceLineNo">1304</span>     */<a name="line.1304"></a>
+<span class="sourceLineNo">1305</span>    private ContentHandler lookupContentHandlerClassFor(String contentType)<a name="line.1305"></a>
+<span class="sourceLineNo">1306</span>        throws InstantiationException, IllegalAccessException, ClassNotFoundException {<a name="line.1306"></a>
+<span class="sourceLineNo">1307</span>        String contentHandlerClassName = typeToPackageName(contentType);<a name="line.1307"></a>
+<span class="sourceLineNo">1308</span><a name="line.1308"></a>
+<span class="sourceLineNo">1309</span>        String contentHandlerPkgPrefixes =getContentHandlerPkgPrefixes();<a name="line.1309"></a>
+<span class="sourceLineNo">1310</span><a name="line.1310"></a>
+<span class="sourceLineNo">1311</span>        StringTokenizer packagePrefixIter =<a name="line.1311"></a>
+<span class="sourceLineNo">1312</span>            new StringTokenizer(contentHandlerPkgPrefixes, "|");<a name="line.1312"></a>
+<span class="sourceLineNo">1313</span><a name="line.1313"></a>
+<span class="sourceLineNo">1314</span>        while (packagePrefixIter.hasMoreTokens()) {<a name="line.1314"></a>
+<span class="sourceLineNo">1315</span>            String packagePrefix = packagePrefixIter.nextToken().trim();<a name="line.1315"></a>
+<span class="sourceLineNo">1316</span><a name="line.1316"></a>
+<span class="sourceLineNo">1317</span>            try {<a name="line.1317"></a>
+<span class="sourceLineNo">1318</span>                String clsName = packagePrefix + "." + contentHandlerClassName;<a name="line.1318"></a>
+<span class="sourceLineNo">1319</span>                Class cls = null;<a name="line.1319"></a>
+<span class="sourceLineNo">1320</span>                try {<a name="line.1320"></a>
+<span class="sourceLineNo">1321</span>                    cls = Class.forName(clsName);<a name="line.1321"></a>
+<span class="sourceLineNo">1322</span>                } catch (ClassNotFoundException e) {<a name="line.1322"></a>
+<span class="sourceLineNo">1323</span>                    ClassLoader cl = ClassLoader.getSystemClassLoader();<a name="line.1323"></a>
+<span class="sourceLineNo">1324</span>                    if (cl != null) {<a name="line.1324"></a>
+<span class="sourceLineNo">1325</span>                        cls = cl.loadClass(clsName);<a name="line.1325"></a>
+<span class="sourceLineNo">1326</span>                    }<a name="line.1326"></a>
+<span class="sourceLineNo">1327</span>                }<a name="line.1327"></a>
+<span class="sourceLineNo">1328</span>                if (cls != null) {<a name="line.1328"></a>
+<span class="sourceLineNo">1329</span>                    ContentHandler handler =<a name="line.1329"></a>
+<span class="sourceLineNo">1330</span>                        (ContentHandler)cls.newInstance();<a name="line.1330"></a>
+<span class="sourceLineNo">1331</span>                    return handler;<a name="line.1331"></a>
+<span class="sourceLineNo">1332</span>                }<a name="line.1332"></a>
+<span class="sourceLineNo">1333</span>            } catch(Exception e) {<a name="line.1333"></a>
+<span class="sourceLineNo">1334</span>            }<a name="line.1334"></a>
+<span class="sourceLineNo">1335</span>        }<a name="line.1335"></a>
+<span class="sourceLineNo">1336</span><a name="line.1336"></a>
+<span class="sourceLineNo">1337</span>        return UnknownContentHandler.INSTANCE;<a name="line.1337"></a>
+<span class="sourceLineNo">1338</span>    }<a name="line.1338"></a>
+<span class="sourceLineNo">1339</span><a name="line.1339"></a>
+<span class="sourceLineNo">1340</span>    /**<a name="line.1340"></a>
+<span class="sourceLineNo">1341</span>     * Utility function to map a MIME content type into an equivalent<a name="line.1341"></a>
+<span class="sourceLineNo">1342</span>     * pair of class name components.  For example: "text/html" would<a name="line.1342"></a>
+<span class="sourceLineNo">1343</span>     * be returned as "text.html"<a name="line.1343"></a>
+<span class="sourceLineNo">1344</span>     */<a name="line.1344"></a>
+<span class="sourceLineNo">1345</span>    private String typeToPackageName(String contentType) {<a name="line.1345"></a>
+<span class="sourceLineNo">1346</span>        // make sure we canonicalize the class name: all lower case<a name="line.1346"></a>
+<span class="sourceLineNo">1347</span>        contentType = contentType.toLowerCase();<a name="line.1347"></a>
+<span class="sourceLineNo">1348</span>        int len = contentType.length();<a name="line.1348"></a>
+<span class="sourceLineNo">1349</span>        char nm[] = new char[len];<a name="line.1349"></a>
+<span class="sourceLineNo">1350</span>        contentType.getChars(0, len, nm, 0);<a name="line.1350"></a>
+<span class="sourceLineNo">1351</span>        for (int i = 0; i &lt; len; i++) {<a name="line.1351"></a>
+<span class="sourceLineNo">1352</span>            char c = nm[i];<a name="line.1352"></a>
+<span class="sourceLineNo">1353</span>            if (c == '/') {<a name="line.1353"></a>
+<span class="sourceLineNo">1354</span>                nm[i] = '.';<a name="line.1354"></a>
+<span class="sourceLineNo">1355</span>            } else if (!('A' &lt;= c &amp;&amp; c &lt;= 'Z' ||<a name="line.1355"></a>
+<span class="sourceLineNo">1356</span>                       'a' &lt;= c &amp;&amp; c &lt;= 'z' ||<a name="line.1356"></a>
+<span class="sourceLineNo">1357</span>                       '0' &lt;= c &amp;&amp; c &lt;= '9')) {<a name="line.1357"></a>
+<span class="sourceLineNo">1358</span>                nm[i] = '_';<a name="line.1358"></a>
+<span class="sourceLineNo">1359</span>            }<a name="line.1359"></a>
+<span class="sourceLineNo">1360</span>        }<a name="line.1360"></a>
+<span class="sourceLineNo">1361</span>        return new String(nm);<a name="line.1361"></a>
+<span class="sourceLineNo">1362</span>    }<a name="line.1362"></a>
+<span class="sourceLineNo">1363</span><a name="line.1363"></a>
+<span class="sourceLineNo">1364</span><a name="line.1364"></a>
+<span class="sourceLineNo">1365</span>    /**<a name="line.1365"></a>
+<span class="sourceLineNo">1366</span>     * Returns a vertical bar separated list of package prefixes for potential<a name="line.1366"></a>
+<span class="sourceLineNo">1367</span>     * content handlers.  Tries to get the java.content.handler.pkgs property<a name="line.1367"></a>
+<span class="sourceLineNo">1368</span>     * to use as a set of package prefixes to search.  Whether or not<a name="line.1368"></a>
+<span class="sourceLineNo">1369</span>     * that property has been defined, the sun.net.www.content is always<a name="line.1369"></a>
+<span class="sourceLineNo">1370</span>     * the last one on the returned package list.<a name="line.1370"></a>
+<span class="sourceLineNo">1371</span>     */<a name="line.1371"></a>
+<span class="sourceLineNo">1372</span>    private String getContentHandlerPkgPrefixes() {<a name="line.1372"></a>
+<span class="sourceLineNo">1373</span>        String packagePrefixList = AccessController.doPrivileged(<a name="line.1373"></a>
+<span class="sourceLineNo">1374</span>            new sun.security.action.GetPropertyAction(contentPathProp, ""));<a name="line.1374"></a>
+<span class="sourceLineNo">1375</span><a name="line.1375"></a>
+<span class="sourceLineNo">1376</span>        if (packagePrefixList != "") {<a name="line.1376"></a>
+<span class="sourceLineNo">1377</span>            packagePrefixList += "|";<a name="line.1377"></a>
+<span class="sourceLineNo">1378</span>        }<a name="line.1378"></a>
+<span class="sourceLineNo">1379</span><a name="line.1379"></a>
+<span class="sourceLineNo">1380</span>        return packagePrefixList + contentClassPrefix;<a name="line.1380"></a>
+<span class="sourceLineNo">1381</span>    }<a name="line.1381"></a>
+<span class="sourceLineNo">1382</span><a name="line.1382"></a>
+<span class="sourceLineNo">1383</span>    /**<a name="line.1383"></a>
+<span class="sourceLineNo">1384</span>     * Tries to determine the content type of an object, based<a name="line.1384"></a>
+<span class="sourceLineNo">1385</span>     * on the specified "file" component of a URL.<a name="line.1385"></a>
+<span class="sourceLineNo">1386</span>     * This is a convenience method that can be used by<a name="line.1386"></a>
+<span class="sourceLineNo">1387</span>     * subclasses that override the &lt;code&gt;getContentType&lt;/code&gt; method.<a name="line.1387"></a>
+<span class="sourceLineNo">1388</span>     *<a name="line.1388"></a>
+<span class="sourceLineNo">1389</span>     * @param   fname   a filename.<a name="line.1389"></a>
+<span class="sourceLineNo">1390</span>     * @return  a guess as to what the content type of the object is,<a name="line.1390"></a>
+<span class="sourceLineNo">1391</span>     *          based upon its file name.<a name="line.1391"></a>
+<span class="sourceLineNo">1392</span>     * @see     java.net.URLConnection#getContentType()<a name="line.1392"></a>
+<span class="sourceLineNo">1393</span>     */<a name="line.1393"></a>
+<span class="sourceLineNo">1394</span>    public static String guessContentTypeFromName(String fname) {<a name="line.1394"></a>
+<span class="sourceLineNo">1395</span>        return getFileNameMap().getContentTypeFor(fname);<a name="line.1395"></a>
+<span class="sourceLineNo">1396</span>    }<a name="line.1396"></a>
+<span class="sourceLineNo">1397</span><a name="line.1397"></a>
+<span class="sourceLineNo">1398</span>    /**<a name="line.1398"></a>
+<span class="sourceLineNo">1399</span>     * Tries to determine the type of an input stream based on the<a name="line.1399"></a>
+<span class="sourceLineNo">1400</span>     * characters at the beginning of the input stream. This method can<a name="line.1400"></a>
+<span class="sourceLineNo">1401</span>     * be used by subclasses that override the<a name="line.1401"></a>
+<span class="sourceLineNo">1402</span>     * &lt;code&gt;getContentType&lt;/code&gt; method.<a name="line.1402"></a>
+<span class="sourceLineNo">1403</span>     * &lt;p&gt;<a name="line.1403"></a>
+<span class="sourceLineNo">1404</span>     * Ideally, this routine would not be needed. But many<a name="line.1404"></a>
+<span class="sourceLineNo">1405</span>     * &lt;code&gt;http&lt;/code&gt; servers return the incorrect content type; in<a name="line.1405"></a>
+<span class="sourceLineNo">1406</span>     * addition, there are many nonstandard extensions. Direct inspection<a name="line.1406"></a>
+<span class="sourceLineNo">1407</span>     * of the bytes to determine the content type is often more accurate<a name="line.1407"></a>
+<span class="sourceLineNo">1408</span>     * than believing the content type claimed by the &lt;code&gt;http&lt;/code&gt; server.<a name="line.1408"></a>
+<span class="sourceLineNo">1409</span>     *<a name="line.1409"></a>
+<span class="sourceLineNo">1410</span>     * @param      is   an input stream that supports marks.<a name="line.1410"></a>
+<span class="sourceLineNo">1411</span>     * @return     a guess at the content type, or &lt;code&gt;null&lt;/code&gt; if none<a name="line.1411"></a>
+<span class="sourceLineNo">1412</span>     *             can be determined.<a name="line.1412"></a>
+<span class="sourceLineNo">1413</span>     * @exception  IOException  if an I/O error occurs while reading the<a name="line.1413"></a>
+<span class="sourceLineNo">1414</span>     *               input stream.<a name="line.1414"></a>
+<span class="sourceLineNo">1415</span>     * @see        java.io.InputStream#mark(int)<a name="line.1415"></a>
+<span class="sourceLineNo">1416</span>     * @see        java.io.InputStream#markSupported()<a name="line.1416"></a>
+<span class="sourceLineNo">1417</span>     * @see        java.net.URLConnection#getContentType()<a name="line.1417"></a>
+<span class="sourceLineNo">1418</span>     */<a name="line.1418"></a>
+<span class="sourceLineNo">1419</span>    static public String guessContentTypeFromStream(InputStream is)<a name="line.1419"></a>
+<span class="sourceLineNo">1420</span>                        throws IOException {<a name="line.1420"></a>
+<span class="sourceLineNo">1421</span>        // If we can't read ahead safely, just give up on guessing<a name="line.1421"></a>
+<span class="sourceLineNo">1422</span>        if (!is.markSupported())<a name="line.1422"></a>
+<span class="sourceLineNo">1423</span>            return null;<a name="line.1423"></a>
+<span class="sourceLineNo">1424</span><a name="line.1424"></a>
+<span class="sourceLineNo">1425</span>        is.mark(16);<a name="line.1425"></a>
+<span class="sourceLineNo">1426</span>        int c1 = is.read();<a name="line.1426"></a>
+<span class="sourceLineNo">1427</span>        int c2 = is.read();<a name="line.1427"></a>
+<span class="sourceLineNo">1428</span>        int c3 = is.read();<a name="line.1428"></a>
+<span class="sourceLineNo">1429</span>        int c4 = is.read();<a name="line.1429"></a>
+<span class="sourceLineNo">1430</span>        int c5 = is.read();<a name="line.1430"></a>
+<span class="sourceLineNo">1431</span>        int c6 = is.read();<a name="line.1431"></a>
+<span class="sourceLineNo">1432</span>        int c7 = is.read();<a name="line.1432"></a>
+<span class="sourceLineNo">1433</span>        int c8 = is.read();<a name="line.1433"></a>
+<span class="sourceLineNo">1434</span>        int c9 = is.read();<a name="line.1434"></a>
+<span class="sourceLineNo">1435</span>        int c10 = is.read();<a name="line.1435"></a>
+<span class="sourceLineNo">1436</span>        int c11 = is.read();<a name="line.1436"></a>
+<span class="sourceLineNo">1437</span>        int c12 = is.read();<a name="line.1437"></a>
+<span class="sourceLineNo">1438</span>        int c13 = is.read();<a name="line.1438"></a>
+<span class="sourceLineNo">1439</span>        int c14 = is.read();<a name="line.1439"></a>
+<span class="sourceLineNo">1440</span>        int c15 = is.read();<a name="line.1440"></a>
+<span class="sourceLineNo">1441</span>        int c16 = is.read();<a name="line.1441"></a>
+<span class="sourceLineNo">1442</span>        is.reset();<a name="line.1442"></a>
+<span class="sourceLineNo">1443</span><a name="line.1443"></a>
+<span class="sourceLineNo">1444</span>        if (c1 == 0xCA &amp;&amp; c2 == 0xFE &amp;&amp; c3 == 0xBA &amp;&amp; c4 == 0xBE) {<a name="line.1444"></a>
+<span class="sourceLineNo">1445</span>            return "application/java-vm";<a name="line.1445"></a>
+<span class="sourceLineNo">1446</span>        }<a name="line.1446"></a>
+<span class="sourceLineNo">1447</span><a name="line.1447"></a>
+<span class="sourceLineNo">1448</span>        if (c1 == 0xAC &amp;&amp; c2 == 0xED) {<a name="line.1448"></a>
+<span class="sourceLineNo">1449</span>            // next two bytes are version number, currently 0x00 0x05<a name="line.1449"></a>
+<span class="sourceLineNo">1450</span>            return "application/x-java-serialized-object";<a name="line.1450"></a>
+<span class="sourceLineNo">1451</span>        }<a name="line.1451"></a>
+<span class="sourceLineNo">1452</span><a name="line.1452"></a>
+<span class="sourceLineNo">1453</span>        if (c1 == '&lt;') {<a name="line.1453"></a>
+<span class="sourceLineNo">1454</span>            if (c2 == '!'<a name="line.1454"></a>
+<span class="sourceLineNo">1455</span>                || ((c2 == 'h' &amp;&amp; (c3 == 't' &amp;&amp; c4 == 'm' &amp;&amp; c5 == 'l' ||<a name="line.1455"></a>
+<span class="sourceLineNo">1456</span>                                   c3 == 'e' &amp;&amp; c4 == 'a' &amp;&amp; c5 == 'd') ||<a name="line.1456"></a>
+<span class="sourceLineNo">1457</span>                (c2 == 'b' &amp;&amp; c3 == 'o' &amp;&amp; c4 == 'd' &amp;&amp; c5 == 'y'))) ||<a name="line.1457"></a>
+<span class="sourceLineNo">1458</span>                ((c2 == 'H' &amp;&amp; (c3 == 'T' &amp;&amp; c4 == 'M' &amp;&amp; c5 == 'L' ||<a name="line.1458"></a>
+<span class="sourceLineNo">1459</span>                                c3 == 'E' &amp;&amp; c4 == 'A' &amp;&amp; c5 == 'D') ||<a name="line.1459"></a>
+<span class="sourceLineNo">1460</span>                (c2 == 'B' &amp;&amp; c3 == 'O' &amp;&amp; c4 == 'D' &amp;&amp; c5 == 'Y')))) {<a name="line.1460"></a>
+<span class="sourceLineNo">1461</span>                return "text/html";<a name="line.1461"></a>
+<span class="sourceLineNo">1462</span>            }<a name="line.1462"></a>
+<span class="sourceLineNo">1463</span><a name="line.1463"></a>
+<span class="sourceLineNo">1464</span>            if (c2 == '?' &amp;&amp; c3 == 'x' &amp;&amp; c4 == 'm' &amp;&amp; c5 == 'l' &amp;&amp; c6 == ' ') {<a name="line.1464"></a>
+<span class="sourceLineNo">1465</span>                return "application/xml";<a name="line.1465"></a>
+<span class="sourceLineNo">1466</span>            }<a name="line.1466"></a>
+<span class="sourceLineNo">1467</span>        }<a name="line.1467"></a>
+<span class="sourceLineNo">1468</span><a name="line.1468"></a>
+<span class="sourceLineNo">1469</span>        // big and little (identical) endian UTF-8 encodings, with BOM<a name="line.1469"></a>
+<span class="sourceLineNo">1470</span>        if (c1 == 0xef &amp;&amp;  c2 == 0xbb &amp;&amp;  c3 == 0xbf) {<a name="line.1470"></a>
+<span class="sourceLineNo">1471</span>            if (c4 == '&lt;' &amp;&amp;  c5 == '?' &amp;&amp;  c6 == 'x') {<a name="line.1471"></a>
+<span class="sourceLineNo">1472</span>                return "application/xml";<a name="line.1472"></a>
+<span class="sourceLineNo">1473</span>            }<a name="line.1473"></a>
+<span class="sourceLineNo">1474</span>        }<a name="line.1474"></a>
+<span class="sourceLineNo">1475</span><a name="line.1475"></a>
+<span class="sourceLineNo">1476</span>        // big and little endian UTF-16 encodings, with byte order mark<a name="line.1476"></a>
+<span class="sourceLineNo">1477</span>        if (c1 == 0xfe &amp;&amp; c2 == 0xff) {<a name="line.1477"></a>
+<span class="sourceLineNo">1478</span>            if (c3 == 0 &amp;&amp; c4 == '&lt;' &amp;&amp; c5 == 0 &amp;&amp; c6 == '?' &amp;&amp;<a name="line.1478"></a>
+<span class="sourceLineNo">1479</span>                c7 == 0 &amp;&amp; c8 == 'x') {<a name="line.1479"></a>
+<span class="sourceLineNo">1480</span>                return "application/xml";<a name="line.1480"></a>
+<span class="sourceLineNo">1481</span>            }<a name="line.1481"></a>
+<span class="sourceLineNo">1482</span>        }<a name="line.1482"></a>
+<span class="sourceLineNo">1483</span><a name="line.1483"></a>
+<span class="sourceLineNo">1484</span>        if (c1 == 0xff &amp;&amp; c2 == 0xfe) {<a name="line.1484"></a>
+<span class="sourceLineNo">1485</span>            if (c3 == '&lt;' &amp;&amp; c4 == 0 &amp;&amp; c5 == '?' &amp;&amp; c6 == 0 &amp;&amp;<a name="line.1485"></a>
+<span class="sourceLineNo">1486</span>                c7 == 'x' &amp;&amp; c8 == 0) {<a name="line.1486"></a>
+<span class="sourceLineNo">1487</span>                return "application/xml";<a name="line.1487"></a>
+<span class="sourceLineNo">1488</span>            }<a name="line.1488"></a>
+<span class="sourceLineNo">1489</span>        }<a name="line.1489"></a>
+<span class="sourceLineNo">1490</span><a name="line.1490"></a>
+<span class="sourceLineNo">1491</span>        // big and little endian UTF-32 encodings, with BOM<a name="line.1491"></a>
+<span class="sourceLineNo">1492</span>        if (c1 == 0x00 &amp;&amp;  c2 == 0x00 &amp;&amp;  c3 == 0xfe &amp;&amp;  c4 == 0xff) {<a name="line.1492"></a>
+<span class="sourceLineNo">1493</span>            if (c5  == 0 &amp;&amp; c6  == 0 &amp;&amp; c7  == 0 &amp;&amp; c8  == '&lt;' &amp;&amp;<a name="line.1493"></a>
+<span class="sourceLineNo">1494</span>                c9  == 0 &amp;&amp; c10 == 0 &amp;&amp; c11 == 0 &amp;&amp; c12 == '?' &amp;&amp;<a name="line.1494"></a>
+<span class="sourceLineNo">1495</span>                c13 == 0 &amp;&amp; c14 == 0 &amp;&amp; c15 == 0 &amp;&amp; c16 == 'x') {<a name="line.1495"></a>
+<span class="sourceLineNo">1496</span>                return "application/xml";<a name="line.1496"></a>
+<span class="sourceLineNo">1497</span>            }<a name="line.1497"></a>
+<span class="sourceLineNo">1498</span>        }<a name="line.1498"></a>
+<span class="sourceLineNo">1499</span><a name="line.1499"></a>
+<span class="sourceLineNo">1500</span>        if (c1 == 0xff &amp;&amp;  c2 == 0xfe &amp;&amp;  c3 == 0x00 &amp;&amp;  c4 == 0x00) {<a name="line.1500"></a>
+<span class="sourceLineNo">1501</span>            if (c5  == '&lt;' &amp;&amp; c6  == 0 &amp;&amp; c7  == 0 &amp;&amp; c8  == 0 &amp;&amp;<a name="line.1501"></a>
+<span class="sourceLineNo">1502</span>                c9  == '?' &amp;&amp; c10 == 0 &amp;&amp; c11 == 0 &amp;&amp; c12 == 0 &amp;&amp;<a name="line.1502"></a>
+<span class="sourceLineNo">1503</span>                c13 == 'x' &amp;&amp; c14 == 0 &amp;&amp; c15 == 0 &amp;&amp; c16 == 0) {<a name="line.1503"></a>
+<span class="sourceLineNo">1504</span>                return "application/xml";<a name="line.1504"></a>
+<span class="sourceLineNo">1505</span>            }<a name="line.1505"></a>
+<span class="sourceLineNo">1506</span>        }<a name="line.1506"></a>
+<span class="sourceLineNo">1507</span><a name="line.1507"></a>
+<span class="sourceLineNo">1508</span>        if (c1 == 'G' &amp;&amp; c2 == 'I' &amp;&amp; c3 == 'F' &amp;&amp; c4 == '8') {<a name="line.1508"></a>
+<span class="sourceLineNo">1509</span>            return "image/gif";<a name="line.1509"></a>
+<span class="sourceLineNo">1510</span>        }<a name="line.1510"></a>
+<span class="sourceLineNo">1511</span><a name="line.1511"></a>
+<span class="sourceLineNo">1512</span>        if (c1 == '#' &amp;&amp; c2 == 'd' &amp;&amp; c3 == 'e' &amp;&amp; c4 == 'f') {<a name="line.1512"></a>
+<span class="sourceLineNo">1513</span>            return "image/x-bitmap";<a name="line.1513"></a>
+<span class="sourceLineNo">1514</span>        }<a name="line.1514"></a>
+<span class="sourceLineNo">1515</span><a name="line.1515"></a>
+<span class="sourceLineNo">1516</span>        if (c1 == '!' &amp;&amp; c2 == ' ' &amp;&amp; c3 == 'X' &amp;&amp; c4 == 'P' &amp;&amp;<a name="line.1516"></a>
+<span class="sourceLineNo">1517</span>                        c5 == 'M' &amp;&amp; c6 == '2') {<a name="line.1517"></a>
+<span class="sourceLineNo">1518</span>            return "image/x-pixmap";<a name="line.1518"></a>
+<span class="sourceLineNo">1519</span>        }<a name="line.1519"></a>
+<span class="sourceLineNo">1520</span><a name="line.1520"></a>
+<span class="sourceLineNo">1521</span>        if (c1 == 137 &amp;&amp; c2 == 80 &amp;&amp; c3 == 78 &amp;&amp;<a name="line.1521"></a>
+<span class="sourceLineNo">1522</span>                c4 == 71 &amp;&amp; c5 == 13 &amp;&amp; c6 == 10 &amp;&amp;<a name="line.1522"></a>
+<span class="sourceLineNo">1523</span>                c7 == 26 &amp;&amp; c8 == 10) {<a name="line.1523"></a>
+<span class="sourceLineNo">1524</span>            return "image/png";<a name="line.1524"></a>
+<span class="sourceLineNo">1525</span>        }<a name="line.1525"></a>
+<span class="sourceLineNo">1526</span><a name="line.1526"></a>
+<span class="sourceLineNo">1527</span>        if (c1 == 0xFF &amp;&amp; c2 == 0xD8 &amp;&amp; c3 == 0xFF) {<a name="line.1527"></a>
+<span class="sourceLineNo">1528</span>            if (c4 == 0xE0) {<a name="line.1528"></a>
+<span class="sourceLineNo">1529</span>                return "image/jpeg";<a name="line.1529"></a>
+<span class="sourceLineNo">1530</span>            }<a name="line.1530"></a>
+<span class="sourceLineNo">1531</span><a name="line.1531"></a>
+<span class="sourceLineNo">1532</span>            /**<a name="line.1532"></a>
+<span class="sourceLineNo">1533</span>             * File format used by digital cameras to store images.<a name="line.1533"></a>
+<span class="sourceLineNo">1534</span>             * Exif Format can be read by any application supporting<a name="line.1534"></a>
+<span class="sourceLineNo">1535</span>             * JPEG. Exif Spec can be found at:<a name="line.1535"></a>
+<span class="sourceLineNo">1536</span>             * http://www.pima.net/standards/it10/PIMA15740/Exif_2-1.PDF<a name="line.1536"></a>
+<span class="sourceLineNo">1537</span>             */<a name="line.1537"></a>
+<span class="sourceLineNo">1538</span>            if ((c4 == 0xE1) &amp;&amp;<a name="line.1538"></a>
+<span class="sourceLineNo">1539</span>                (c7 == 'E' &amp;&amp; c8 == 'x' &amp;&amp; c9 == 'i' &amp;&amp; c10 =='f' &amp;&amp;<a name="line.1539"></a>
+<span class="sourceLineNo">1540</span>                 c11 == 0)) {<a name="line.1540"></a>
+<span class="sourceLineNo">1541</span>                return "image/jpeg";<a name="line.1541"></a>
+<span class="sourceLineNo">1542</span>            }<a name="line.1542"></a>
+<span class="sourceLineNo">1543</span><a name="line.1543"></a>
+<span class="sourceLineNo">1544</span>            if (c4 == 0xEE) {<a name="line.1544"></a>
+<span class="sourceLineNo">1545</span>                return "image/jpg";<a name="line.1545"></a>
+<span class="sourceLineNo">1546</span>            }<a name="line.1546"></a>
+<span class="sourceLineNo">1547</span>        }<a name="line.1547"></a>
+<span class="sourceLineNo">1548</span><a name="line.1548"></a>
+<span class="sourceLineNo">1549</span>        if (c1 == 0xD0 &amp;&amp; c2 == 0xCF &amp;&amp; c3 == 0x11 &amp;&amp; c4 == 0xE0 &amp;&amp;<a name="line.1549"></a>
+<span class="sourceLineNo">1550</span>            c5 == 0xA1 &amp;&amp; c6 == 0xB1 &amp;&amp; c7 == 0x1A &amp;&amp; c8 == 0xE1) {<a name="line.1550"></a>
+<span class="sourceLineNo">1551</span><a name="line.1551"></a>
+<span class="sourceLineNo">1552</span>            /* Above is signature of Microsoft Structured Storage.<a name="line.1552"></a>
+<span class="sourceLineNo">1553</span>             * Below this, could have tests for various SS entities.<a name="line.1553"></a>
+<span class="sourceLineNo">1554</span>             * For now, just test for FlashPix.<a name="line.1554"></a>
+<span class="sourceLineNo">1555</span>             */<a name="line.1555"></a>
+<span class="sourceLineNo">1556</span>            if (checkfpx(is)) {<a name="line.1556"></a>
+<span class="sourceLineNo">1557</span>                return "image/vnd.fpx";<a name="line.1557"></a>
+<span class="sourceLineNo">1558</span>            }<a name="line.1558"></a>
+<span class="sourceLineNo">1559</span>        }<a name="line.1559"></a>
+<span class="sourceLineNo">1560</span><a name="line.1560"></a>
+<span class="sourceLineNo">1561</span>        if (c1 == 0x2E &amp;&amp; c2 == 0x73 &amp;&amp; c3 == 0x6E &amp;&amp; c4 == 0x64) {<a name="line.1561"></a>
+<span class="sourceLineNo">1562</span>            return "audio/basic";  // .au format, big endian<a name="line.1562"></a>
+<span class="sourceLineNo">1563</span>        }<a name="line.1563"></a>
+<span class="sourceLineNo">1564</span><a name="line.1564"></a>
+<span class="sourceLineNo">1565</span>        if (c1 == 0x64 &amp;&amp; c2 == 0x6E &amp;&amp; c3 == 0x73 &amp;&amp; c4 == 0x2E) {<a name="line.1565"></a>
+<span class="sourceLineNo">1566</span>            return "audio/basic";  // .au format, little endian<a name="line.1566"></a>
+<span class="sourceLineNo">1567</span>        }<a name="line.1567"></a>
+<span class="sourceLineNo">1568</span><a name="line.1568"></a>
+<span class="sourceLineNo">1569</span>        if (c1 == 'R' &amp;&amp; c2 == 'I' &amp;&amp; c3 == 'F' &amp;&amp; c4 == 'F') {<a name="line.1569"></a>
+<span class="sourceLineNo">1570</span>            /* I don't know if this is official but evidence<a name="line.1570"></a>
+<span class="sourceLineNo">1571</span>             * suggests that .wav files start with "RIFF" - brown<a name="line.1571"></a>
+<span class="sourceLineNo">1572</span>             */<a name="line.1572"></a>
+<span class="sourceLineNo">1573</span>            return "audio/x-wav";<a name="line.1573"></a>
+<span class="sourceLineNo">1574</span>        }<a name="line.1574"></a>
+<span class="sourceLineNo">1575</span>        return null;<a name="line.1575"></a>
+<span class="sourceLineNo">1576</span>    }<a name="line.1576"></a>
+<span class="sourceLineNo">1577</span><a name="line.1577"></a>
+<span class="sourceLineNo">1578</span>    /**<a name="line.1578"></a>
+<span class="sourceLineNo">1579</span>     * Check for FlashPix image data in InputStream is.  Return true if<a name="line.1579"></a>
+<span class="sourceLineNo">1580</span>     * the stream has FlashPix data, false otherwise.  Before calling this<a name="line.1580"></a>
+<span class="sourceLineNo">1581</span>     * method, the stream should have already been checked to be sure it<a name="line.1581"></a>
+<span class="sourceLineNo">1582</span>     * contains Microsoft Structured Storage data.<a name="line.1582"></a>
+<span class="sourceLineNo">1583</span>     */<a name="line.1583"></a>
+<span class="sourceLineNo">1584</span>    static private boolean checkfpx(InputStream is) throws IOException {<a name="line.1584"></a>
+<span class="sourceLineNo">1585</span><a name="line.1585"></a>
+<span class="sourceLineNo">1586</span>        /* Test for FlashPix image data in Microsoft Structured Storage format.<a name="line.1586"></a>
+<span class="sourceLineNo">1587</span>         * In general, should do this with calls to an SS implementation.<a name="line.1587"></a>
+<span class="sourceLineNo">1588</span>         * Lacking that, need to dig via offsets to get to the FlashPix<a name="line.1588"></a>
+<span class="sourceLineNo">1589</span>         * ClassID.  Details:<a name="line.1589"></a>
+<span class="sourceLineNo">1590</span>         *<a name="line.1590"></a>
+<span class="sourceLineNo">1591</span>         * Offset to Fpx ClsID from beginning of stream should be:<a name="line.1591"></a>
+<span class="sourceLineNo">1592</span>         *<a name="line.1592"></a>
+<span class="sourceLineNo">1593</span>         * FpxClsidOffset = rootEntryOffset + clsidOffset<a name="line.1593"></a>
+<span class="sourceLineNo">1594</span>         *<a name="line.1594"></a>
+<span class="sourceLineNo">1595</span>         * where: clsidOffset = 0x50.<a name="line.1595"></a>
+<span class="sourceLineNo">1596</span>         *        rootEntryOffset = headerSize + sectorSize*sectDirStart<a name="line.1596"></a>
+<span class="sourceLineNo">1597</span>         *                          + 128*rootEntryDirectory<a name="line.1597"></a>
+<span class="sourceLineNo">1598</span>         *<a name="line.1598"></a>
+<span class="sourceLineNo">1599</span>         *        where:  headerSize = 0x200 (always)<a name="line.1599"></a>
+<span class="sourceLineNo">1600</span>         *                sectorSize = 2 raised to power of uSectorShift,<a name="line.1600"></a>
+<span class="sourceLineNo">1601</span>         *                             which is found in the header at<a name="line.1601"></a>
+<span class="sourceLineNo">1602</span>         *                             offset 0x1E.<a name="line.1602"></a>
+<span class="sourceLineNo">1603</span>         *                sectDirStart = found in the header at offset 0x30.<a name="line.1603"></a>
+<span class="sourceLineNo">1604</span>         *                rootEntryDirectory = in general, should search for<a name="line.1604"></a>
+<span class="sourceLineNo">1605</span>         *                                     directory labelled as root.<a name="line.1605"></a>
+<span class="sourceLineNo">1606</span>         *                                     We will assume value of 0 (i.e.,<a name="line.1606"></a>
+<span class="sourceLineNo">1607</span>         *                                     rootEntry is in first directory)<a name="line.1607"></a>
+<span class="sourceLineNo">1608</span>         */<a name="line.1608"></a>
+<span class="sourceLineNo">1609</span><a name="line.1609"></a>
+<span class="sourceLineNo">1610</span>        // Mark the stream so we can reset it. 0x100 is enough for the first<a name="line.1610"></a>
+<span class="sourceLineNo">1611</span>        // few reads, but the mark will have to be reset and set again once<a name="line.1611"></a>
+<span class="sourceLineNo">1612</span>        // the offset to the root directory entry is computed. That offset<a name="line.1612"></a>
+<span class="sourceLineNo">1613</span>        // can be very large and isn't know until the stream has been read from<a name="line.1613"></a>
+<span class="sourceLineNo">1614</span>        is.mark(0x100);<a name="line.1614"></a>
+<span class="sourceLineNo">1615</span><a name="line.1615"></a>
+<span class="sourceLineNo">1616</span>        // Get the byte ordering located at 0x1E. 0xFE is Intel,<a name="line.1616"></a>
+<span class="sourceLineNo">1617</span>        // 0xFF is other<a name="line.1617"></a>
+<span class="sourceLineNo">1618</span>        long toSkip = (long)0x1C;<a name="line.1618"></a>
+<span class="sourceLineNo">1619</span>        long posn;<a name="line.1619"></a>
+<span class="sourceLineNo">1620</span><a name="line.1620"></a>
+<span class="sourceLineNo">1621</span>        if ((posn = skipForward(is, toSkip)) &lt; toSkip) {<a name="line.1621"></a>
+<span class="sourceLineNo">1622</span>          is.reset();<a name="line.1622"></a>
+<span class="sourceLineNo">1623</span>          return false;<a name="line.1623"></a>
+<span class="sourceLineNo">1624</span>        }<a name="line.1624"></a>
+<span class="sourceLineNo">1625</span><a name="line.1625"></a>
+<span class="sourceLineNo">1626</span>        int c[] = new int[16];<a name="line.1626"></a>
+<span class="sourceLineNo">1627</span>        if (readBytes(c, 2, is) &lt; 0) {<a name="line.1627"></a>
+<span class="sourceLineNo">1628</span>            is.reset();<a name="line.1628"></a>
+<span class="sourceLineNo">1629</span>            return false;<a name="line.1629"></a>
+<span class="sourceLineNo">1630</span>        }<a name="line.1630"></a>
+<span class="sourceLineNo">1631</span><a name="line.1631"></a>
+<span class="sourceLineNo">1632</span>        int byteOrder = c[0];<a name="line.1632"></a>
+<span class="sourceLineNo">1633</span><a name="line.1633"></a>
+<span class="sourceLineNo">1634</span>        posn+=2;<a name="line.1634"></a>
+<span class="sourceLineNo">1635</span>        int uSectorShift;<a name="line.1635"></a>
+<span class="sourceLineNo">1636</span>        if (readBytes(c, 2, is) &lt; 0) {<a name="line.1636"></a>
+<span class="sourceLineNo">1637</span>            is.reset();<a name="line.1637"></a>
+<span class="sourceLineNo">1638</span>            return false;<a name="line.1638"></a>
+<span class="sourceLineNo">1639</span>        }<a name="line.1639"></a>
+<span class="sourceLineNo">1640</span><a name="line.1640"></a>
+<span class="sourceLineNo">1641</span>        if(byteOrder == 0xFE) {<a name="line.1641"></a>
+<span class="sourceLineNo">1642</span>            uSectorShift = c[0];<a name="line.1642"></a>
+<span class="sourceLineNo">1643</span>            uSectorShift += c[1] &lt;&lt; 8;<a name="line.1643"></a>
+<span class="sourceLineNo">1644</span>        }<a name="line.1644"></a>
+<span class="sourceLineNo">1645</span>        else {<a name="line.1645"></a>
+<span class="sourceLineNo">1646</span>            uSectorShift = c[0] &lt;&lt; 8;<a name="line.1646"></a>
+<span class="sourceLineNo">1647</span>            uSectorShift += c[1];<a name="line.1647"></a>
+<span class="sourceLineNo">1648</span>        }<a name="line.1648"></a>
+<span class="sourceLineNo">1649</span><a name="line.1649"></a>
+<span class="sourceLineNo">1650</span>        posn += 2;<a name="line.1650"></a>
+<span class="sourceLineNo">1651</span>        toSkip = (long)0x30 - posn;<a name="line.1651"></a>
+<span class="sourceLineNo">1652</span>        long skipped = 0;<a name="line.1652"></a>
+<span class="sourceLineNo">1653</span>        if ((skipped = skipForward(is, toSkip)) &lt; toSkip) {<a name="line.1653"></a>
+<span class="sourceLineNo">1654</span>          is.reset();<a name="line.1654"></a>
+<span class="sourceLineNo">1655</span>          return false;<a name="line.1655"></a>
+<span class="sourceLineNo">1656</span>        }<a name="line.1656"></a>
+<span class="sourceLineNo">1657</span>        posn += skipped;<a name="line.1657"></a>
+<span class="sourceLineNo">1658</span><a name="line.1658"></a>
+<span class="sourceLineNo">1659</span>        if (readBytes(c, 4, is) &lt; 0) {<a name="line.1659"></a>
+<span class="sourceLineNo">1660</span>            is.reset();<a name="line.1660"></a>
+<span class="sourceLineNo">1661</span>            return false;<a name="line.1661"></a>
+<span class="sourceLineNo">1662</span>        }<a name="line.1662"></a>
+<span class="sourceLineNo">1663</span><a name="line.1663"></a>
+<span class="sourceLineNo">1664</span>        int sectDirStart;<a name="line.1664"></a>
+<span class="sourceLineNo">1665</span>        if(byteOrder == 0xFE) {<a name="line.1665"></a>
+<span class="sourceLineNo">1666</span>            sectDirStart = c[0];<a name="line.1666"></a>
+<span class="sourceLineNo">1667</span>            sectDirStart += c[1] &lt;&lt; 8;<a name="line.1667"></a>
+<span class="sourceLineNo">1668</span>            sectDirStart += c[2] &lt;&lt; 16;<a name="line.1668"></a>
+<span class="sourceLineNo">1669</span>            sectDirStart += c[3] &lt;&lt; 24;<a name="line.1669"></a>
+<span class="sourceLineNo">1670</span>        } else {<a name="line.1670"></a>
+<span class="sourceLineNo">1671</span>            sectDirStart =  c[0] &lt;&lt; 24;<a name="line.1671"></a>
+<span class="sourceLineNo">1672</span>            sectDirStart += c[1] &lt;&lt; 16;<a name="line.1672"></a>
+<span class="sourceLineNo">1673</span>            sectDirStart += c[2] &lt;&lt; 8;<a name="line.1673"></a>
+<span class="sourceLineNo">1674</span>            sectDirStart += c[3];<a name="line.1674"></a>
+<span class="sourceLineNo">1675</span>        }<a name="line.1675"></a>
+<span class="sourceLineNo">1676</span>        posn += 4;<a name="line.1676"></a>
+<span class="sourceLineNo">1677</span>        is.reset(); // Reset back to the beginning<a name="line.1677"></a>
+<span class="sourceLineNo">1678</span><a name="line.1678"></a>
+<span class="sourceLineNo">1679</span>        toSkip = 0x200L + (long)(1&lt;&lt;uSectorShift)*sectDirStart + 0x50L;<a name="line.1679"></a>
+<span class="sourceLineNo">1680</span><a name="line.1680"></a>
+<span class="sourceLineNo">1681</span>        // Sanity check!<a name="line.1681"></a>
+<span class="sourceLineNo">1682</span>        if (toSkip &lt; 0) {<a name="line.1682"></a>
+<span class="sourceLineNo">1683</span>            return false;<a name="line.1683"></a>
+<span class="sourceLineNo">1684</span>        }<a name="line.1684"></a>
+<span class="sourceLineNo">1685</span><a name="line.1685"></a>
+<span class="sourceLineNo">1686</span>        /*<a name="line.1686"></a>
+<span class="sourceLineNo">1687</span>         * How far can we skip? Is there any performance problem here?<a name="line.1687"></a>
+<span class="sourceLineNo">1688</span>         * This skip can be fairly long, at least 0x4c650 in at least<a name="line.1688"></a>
+<span class="sourceLineNo">1689</span>         * one case. Have to assume that the skip will fit in an int.<a name="line.1689"></a>
+<span class="sourceLineNo">1690</span>         * Leave room to read whole root dir<a name="line.1690"></a>
+<span class="sourceLineNo">1691</span>         */<a name="line.1691"></a>
+<span class="sourceLineNo">1692</span>        is.mark((int)toSkip+0x30);<a name="line.1692"></a>
+<span class="sourceLineNo">1693</span><a name="line.1693"></a>
+<span class="sourceLineNo">1694</span>        if ((skipForward(is, toSkip)) &lt; toSkip) {<a name="line.1694"></a>
+<span class="sourceLineNo">1695</span>            is.reset();<a name="line.1695"></a>
+<span class="sourceLineNo">1696</span>            return false;<a name="line.1696"></a>
+<span class="sourceLineNo">1697</span>        }<a name="line.1697"></a>
+<span class="sourceLineNo">1698</span><a name="line.1698"></a>
+<span class="sourceLineNo">1699</span>        /* should be at beginning of ClassID, which is as follows<a name="line.1699"></a>
+<span class="sourceLineNo">1700</span>         * (in Intel byte order):<a name="line.1700"></a>
+<span class="sourceLineNo">1701</span>         *    00 67 61 56 54 C1 CE 11 85 53 00 AA 00 A1 F9 5B<a name="line.1701"></a>
+<span class="sourceLineNo">1702</span>         *<a name="line.1702"></a>
+<span class="sourceLineNo">1703</span>         * This is stored from Windows as long,short,short,char[8]<a name="line.1703"></a>
+<span class="sourceLineNo">1704</span>         * so for byte order changes, the order only changes for<a name="line.1704"></a>
+<span class="sourceLineNo">1705</span>         * the first 8 bytes in the ClassID.<a name="line.1705"></a>
+<span class="sourceLineNo">1706</span>         *<a name="line.1706"></a>
+<span class="sourceLineNo">1707</span>         * Test against this, ignoring second byte (Intel) since<a name="line.1707"></a>
+<span class="sourceLineNo">1708</span>         * this could change depending on part of Fpx file we have.<a name="line.1708"></a>
+<span class="sourceLineNo">1709</span>         */<a name="line.1709"></a>
+<span class="sourceLineNo">1710</span><a name="line.1710"></a>
+<span class="sourceLineNo">1711</span>        if (readBytes(c, 16, is) &lt; 0) {<a name="line.1711"></a>
+<span class="sourceLineNo">1712</span>            is.reset();<a name="line.1712"></a>
+<span class="sourceLineNo">1713</span>            return false;<a name="line.1713"></a>
+<span class="sourceLineNo">1714</span>        }<a name="line.1714"></a>
+<span class="sourceLineNo">1715</span><a name="line.1715"></a>
+<span class="sourceLineNo">1716</span>        // intel byte order<a name="line.1716"></a>
+<span class="sourceLineNo">1717</span>        if (byteOrder == 0xFE &amp;&amp;<a name="line.1717"></a>
+<span class="sourceLineNo">1718</span>            c[0] == 0x00 &amp;&amp; c[2] == 0x61 &amp;&amp; c[3] == 0x56 &amp;&amp;<a name="line.1718"></a>
+<span class="sourceLineNo">1719</span>            c[4] == 0x54 &amp;&amp; c[5] == 0xC1 &amp;&amp; c[6] == 0xCE &amp;&amp;<a name="line.1719"></a>
+<span class="sourceLineNo">1720</span>            c[7] == 0x11 &amp;&amp; c[8] == 0x85 &amp;&amp; c[9] == 0x53 &amp;&amp;<a name="line.1720"></a>
+<span class="sourceLineNo">1721</span>            c[10]== 0x00 &amp;&amp; c[11]== 0xAA &amp;&amp; c[12]== 0x00 &amp;&amp;<a name="line.1721"></a>
+<span class="sourceLineNo">1722</span>            c[13]== 0xA1 &amp;&amp; c[14]== 0xF9 &amp;&amp; c[15]== 0x5B) {<a name="line.1722"></a>
+<span class="sourceLineNo">1723</span>            is.reset();<a name="line.1723"></a>
+<span class="sourceLineNo">1724</span>            return true;<a name="line.1724"></a>
+<span class="sourceLineNo">1725</span>        }<a name="line.1725"></a>
+<span class="sourceLineNo">1726</span><a name="line.1726"></a>
+<span class="sourceLineNo">1727</span>        // non-intel byte order<a name="line.1727"></a>
+<span class="sourceLineNo">1728</span>        else if (c[3] == 0x00 &amp;&amp; c[1] == 0x61 &amp;&amp; c[0] == 0x56 &amp;&amp;<a name="line.1728"></a>
+<span class="sourceLineNo">1729</span>            c[5] == 0x54 &amp;&amp; c[4] == 0xC1 &amp;&amp; c[7] == 0xCE &amp;&amp;<a name="line.1729"></a>
+<span class="sourceLineNo">1730</span>            c[6] == 0x11 &amp;&amp; c[8] == 0x85 &amp;&amp; c[9] == 0x53 &amp;&amp;<a name="line.1730"></a>
+<span class="sourceLineNo">1731</span>            c[10]== 0x00 &amp;&amp; c[11]== 0xAA &amp;&amp; c[12]== 0x00 &amp;&amp;<a name="line.1731"></a>
+<span class="sourceLineNo">1732</span>            c[13]== 0xA1 &amp;&amp; c[14]== 0xF9 &amp;&amp; c[15]== 0x5B) {<a name="line.1732"></a>
+<span class="sourceLineNo">1733</span>            is.reset();<a name="line.1733"></a>
+<span class="sourceLineNo">1734</span>            return true;<a name="line.1734"></a>
+<span class="sourceLineNo">1735</span>        }<a name="line.1735"></a>
+<span class="sourceLineNo">1736</span>        is.reset();<a name="line.1736"></a>
+<span class="sourceLineNo">1737</span>        return false;<a name="line.1737"></a>
+<span class="sourceLineNo">1738</span>    }<a name="line.1738"></a>
+<span class="sourceLineNo">1739</span><a name="line.1739"></a>
+<span class="sourceLineNo">1740</span>    /**<a name="line.1740"></a>
+<span class="sourceLineNo">1741</span>     * Tries to read the specified number of bytes from the stream<a name="line.1741"></a>
+<span class="sourceLineNo">1742</span>     * Returns -1, If EOF is reached before len bytes are read, returns 0<a name="line.1742"></a>
+<span class="sourceLineNo">1743</span>     * otherwise<a name="line.1743"></a>
+<span class="sourceLineNo">1744</span>     */<a name="line.1744"></a>
+<span class="sourceLineNo">1745</span>    static private int readBytes(int c[], int len, InputStream is)<a name="line.1745"></a>
+<span class="sourceLineNo">1746</span>                throws IOException {<a name="line.1746"></a>
+<span class="sourceLineNo">1747</span><a name="line.1747"></a>
+<span class="sourceLineNo">1748</span>        byte buf[] = new byte[len];<a name="line.1748"></a>
+<span class="sourceLineNo">1749</span>        if (is.read(buf, 0, len) &lt; len) {<a name="line.1749"></a>
+<span class="sourceLineNo">1750</span>            return -1;<a name="line.1750"></a>
+<span class="sourceLineNo">1751</span>        }<a name="line.1751"></a>
+<span class="sourceLineNo">1752</span><a name="line.1752"></a>
+<span class="sourceLineNo">1753</span>        // fill the passed in int array<a name="line.1753"></a>
+<span class="sourceLineNo">1754</span>        for (int i = 0; i &lt; len; i++) {<a name="line.1754"></a>
+<span class="sourceLineNo">1755</span>             c[i] = buf[i] &amp; 0xff;<a name="line.1755"></a>
+<span class="sourceLineNo">1756</span>        }<a name="line.1756"></a>
+<span class="sourceLineNo">1757</span>        return 0;<a name="line.1757"></a>
+<span class="sourceLineNo">1758</span>    }<a name="line.1758"></a>
+<span class="sourceLineNo">1759</span><a name="line.1759"></a>
+<span class="sourceLineNo">1760</span><a name="line.1760"></a>
+<span class="sourceLineNo">1761</span>    /**<a name="line.1761"></a>
+<span class="sourceLineNo">1762</span>     * Skips through the specified number of bytes from the stream<a name="line.1762"></a>
+<span class="sourceLineNo">1763</span>     * until either EOF is reached, or the specified<a name="line.1763"></a>
+<span class="sourceLineNo">1764</span>     * number of bytes have been skipped<a name="line.1764"></a>
+<span class="sourceLineNo">1765</span>     */<a name="line.1765"></a>
+<span class="sourceLineNo">1766</span>    static private long skipForward(InputStream is, long toSkip)<a name="line.1766"></a>
+<span class="sourceLineNo">1767</span>                throws IOException {<a name="line.1767"></a>
+<span class="sourceLineNo">1768</span><a name="line.1768"></a>
+<span class="sourceLineNo">1769</span>        long eachSkip = 0;<a name="line.1769"></a>
+<span class="sourceLineNo">1770</span>        long skipped = 0;<a name="line.1770"></a>
+<span class="sourceLineNo">1771</span><a name="line.1771"></a>
+<span class="sourceLineNo">1772</span>        while (skipped != toSkip) {<a name="line.1772"></a>
+<span class="sourceLineNo">1773</span>            eachSkip = is.skip(toSkip - skipped);<a name="line.1773"></a>
+<span class="sourceLineNo">1774</span><a name="line.1774"></a>
+<span class="sourceLineNo">1775</span>            // check if EOF is reached<a name="line.1775"></a>
+<span class="sourceLineNo">1776</span>            if (eachSkip &lt;= 0) {<a name="line.1776"></a>
+<span class="sourceLineNo">1777</span>                if (is.read() == -1) {<a name="line.1777"></a>
+<span class="sourceLineNo">1778</span>                    return skipped ;<a name="line.1778"></a>
+<span class="sourceLineNo">1779</span>                } else {<a name="line.1779"></a>
+<span class="sourceLineNo">1780</span>                    skipped++;<a name="line.1780"></a>
+<span class="sourceLineNo">1781</span>                }<a name="line.1781"></a>
+<span class="sourceLineNo">1782</span>            }<a name="line.1782"></a>
+<span class="sourceLineNo">1783</span>            skipped += eachSkip;<a name="line.1783"></a>
+<span class="sourceLineNo">1784</span>        }<a name="line.1784"></a>
+<span class="sourceLineNo">1785</span>        return skipped;<a name="line.1785"></a>
+<span class="sourceLineNo">1786</span>    }<a name="line.1786"></a>
+<span class="sourceLineNo">1787</span><a name="line.1787"></a>
+<span class="sourceLineNo">1788</span>}<a name="line.1788"></a>
+<span class="sourceLineNo">1789</span><a name="line.1789"></a>
+<span class="sourceLineNo">1790</span><a name="line.1790"></a>
+<span class="sourceLineNo">1791</span>class UnknownContentHandler extends ContentHandler {<a name="line.1791"></a>
+<span class="sourceLineNo">1792</span>    static final ContentHandler INSTANCE = new UnknownContentHandler();<a name="line.1792"></a>
+<span class="sourceLineNo">1793</span><a name="line.1793"></a>
+<span class="sourceLineNo">1794</span>    public Object getContent(URLConnection uc) throws IOException {<a name="line.1794"></a>
+<span class="sourceLineNo">1795</span>        return uc.getInputStream();<a name="line.1795"></a>
+<span class="sourceLineNo">1796</span>    }<a name="line.1796"></a>
+<span class="sourceLineNo">1797</span>}<a name="line.1797"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</body>
+</html>
